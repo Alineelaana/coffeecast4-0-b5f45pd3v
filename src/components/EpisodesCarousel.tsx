@@ -16,9 +16,16 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
+  const isDraggingRef = useRef(false)
   const [startX, setStartX] = useState(0)
   const [scrollLeftState, setScrollLeftState] = useState(0)
-  const [hasMovedSignificantly, setHasMovedSignificantly] = useState(false)
+  const dragDistanceRef = useRef(0)
+  const isClickPreventedRef = useRef(false)
+  const [touchStartX, setTouchStartX] = useState<number | null>(null)
+  const touchDistanceRef = useRef(0)
+
+  // Tolerância de movimento (em px) para distinguir clique de arraste/drag
+  const DRAG_THRESHOLD = 8
 
   // Verifica se pode rolar para esquerda e direita
   const checkScrollability = useCallback(() => {
@@ -57,32 +64,87 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
 
   // Suporte a Drag com mouse no desktop
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Apenas botão principal (esquerdo) inicia drag
+    if (e.button !== 0) return
     const el = scrollContainerRef.current
     if (!el) return
     setIsDragging(true)
+    isDraggingRef.current = true
+    dragDistanceRef.current = 0
+    isClickPreventedRef.current = false
     setStartX(e.pageX - el.offsetLeft)
     setScrollLeftState(el.scrollLeft)
-    setHasMovedSignificantly(false)
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return
+    if (!isDraggingRef.current) return
     const el = scrollContainerRef.current
     if (!el) return
-    e.preventDefault()
     const x = e.pageX - el.offsetLeft
     const walk = (x - startX) * 1.3 // Multiplicador para sensação fluida
-    if (Math.abs(walk) > 5) {
-      setHasMovedSignificantly(true)
+    dragDistanceRef.current = Math.abs(x - startX)
+    if (dragDistanceRef.current > DRAG_THRESHOLD) {
+      isClickPreventedRef.current = true
+      // Previne seleção indesejada apenas quando é arrasto real
+      e.preventDefault()
     }
     el.scrollLeft = scrollLeftState - walk
   }
 
   const handleMouseUpOrLeave = () => {
-    setIsDragging(false)
+    if (isDraggingRef.current) {
+      setIsDragging(false)
+      isDraggingRef.current = false
+      // Se moveu mais do que a tolerância, previne cliques subsequentes por uma janela curta
+      if (dragDistanceRef.current > DRAG_THRESHOLD) {
+        isClickPreventedRef.current = true
+        setTimeout(() => {
+          isClickPreventedRef.current = false
+          dragDistanceRef.current = 0
+        }, 120)
+      } else {
+        isClickPreventedRef.current = false
+        dragDistanceRef.current = 0
+      }
+    }
+  }
+
+  // Suporte a detecção de touch para mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchDistanceRef.current = 0
+    if (e.touches.length > 0) {
+      setTouchStartX(e.touches[0].clientX)
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX !== null && e.touches.length > 0) {
+      const currentX = e.touches[0].clientX
+      touchDistanceRef.current = Math.abs(currentX - touchStartX)
+    }
+  }
+
+  const handleTouchEnd = () => {
+    setTouchStartX(null)
+    // Mantém touchDistanceRef por uma fração de tempo para o onClick checar se foi swipe
     setTimeout(() => {
-      setHasMovedSignificantly(false)
-    }, 50)
+      touchDistanceRef.current = 0
+    }, 100)
+  }
+
+  // Handler seguro de clique para card ou botão
+  const handleEpisodeClick = (ep: EpisodioRecord, e: React.MouseEvent) => {
+    // Se o usuário estava arrastando o carrossel, ignora o clique
+    if (
+      isClickPreventedRef.current ||
+      dragDistanceRef.current > DRAG_THRESHOLD ||
+      touchDistanceRef.current > DRAG_THRESHOLD
+    ) {
+      e.preventDefault()
+      e.stopPropagation()
+      return
+    }
+    onSelectEpisode(ep)
   }
 
   if (!episodios || episodios.length === 0) {
@@ -141,6 +203,9 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         className={`flex gap-3.5 sm:gap-5 overflow-x-auto pb-4 pt-1 px-1 no-scrollbar select-none cursor-grab active:cursor-grabbing snap-x snap-mandatory scroll-smooth touch-pan-x overscroll-x-contain`}
         style={{
           scrollbarWidth: 'none',
@@ -151,13 +216,23 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
         {episodios.map((ep) => (
           <div
             key={ep.id}
-            className="flex-shrink-0 w-[240px] xs:w-[260px] sm:w-[290px] md:w-[320px] snap-start bg-gradient-to-b from-vinho-dark via-vinho to-vinho-dark border border-dourado/35 hover:border-dourado rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden"
+            role="button"
+            tabIndex={0}
+            onClick={(e) => handleEpisodeClick(ep, e)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onSelectEpisode(ep)
+              }
+            }}
+            aria-label={`Episódio #${ep.numero}: ${ep.titulo}. Clique para assistir no YouTube.`}
+            className="flex-shrink-0 w-[240px] xs:w-[260px] sm:w-[290px] md:w-[320px] snap-start bg-gradient-to-b from-vinho-dark via-vinho to-vinho-dark border border-dourado/35 hover:border-dourado rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado"
           >
             {/* Brilho decorativo no canto superior do card */}
             <div className="absolute -top-10 -right-10 w-24 h-24 bg-dourado/10 rounded-full blur-xl group-hover:bg-dourado/20 transition-all pointer-events-none" />
 
             {/* Cabeçalho do Card: Número do episódio e Canal */}
-            <div className="space-y-2.5 sm:space-y-3 relative z-10">
+            <div className="space-y-2.5 sm:space-y-3 relative z-10 pointer-events-none">
               <div className="flex items-center justify-between">
                 <span className="bg-dourado/20 text-dourado text-[10px] sm:text-xs font-bold px-2.5 py-0.5 sm:py-1 rounded-full border border-dourado/40 inline-flex items-center gap-1.5 shadow-sm">
                   <span className="w-1.5 h-1.5 rounded-full bg-dourado" />
@@ -185,11 +260,9 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  if (!hasMovedSignificantly) {
-                    onSelectEpisode(ep)
-                  }
+                  handleEpisodeClick(ep, e)
                 }}
-                className="w-full bg-dourado hover:bg-dourado-dark text-vinho font-bold py-2.5 sm:py-2.5 min-h-[44px] text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full bg-dourado hover:bg-dourado-dark text-vinho font-bold py-2.5 sm:py-2.5 min-h-[44px] text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5 fill-vinho shrink-0" />
                 Clique aqui para assistir
