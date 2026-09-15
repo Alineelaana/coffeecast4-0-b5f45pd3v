@@ -248,7 +248,7 @@ export const Footer: React.FC<FooterProps> = ({
               </h3>
             </div>
 
-            <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap pt-1">
+            <div className="flex items-center justify-center gap-3.5 sm:gap-4 flex-wrap pt-1">
               {socialItems.map((social) => {
                 const IconComponent = social.icon
                 return (
@@ -259,7 +259,7 @@ export const Footer: React.FC<FooterProps> = ({
                     rel="noopener noreferrer"
                     aria-label={`Visitar nosso perfil no ${social.name}`}
                     title={social.name}
-                    className="w-11 h-11 rounded-full bg-vinho/70 border border-dourado/40 text-marfim/90 hover:text-dourado hover:border-dourado hover:bg-vinho hover:scale-110 active:scale-95 shadow-md hover:shadow-dourado/20 transition-all duration-200 flex items-center justify-center group focus:outline-none focus:ring-2 focus:ring-dourado/60"
+                    className="w-12 h-12 sm:w-11 sm:h-11 rounded-full bg-vinho/70 border border-dourado/40 text-marfim/90 hover:text-dourado hover:border-dourado hover:bg-vinho hover:scale-110 active:scale-95 shadow-md hover:shadow-dourado/20 transition-all duration-200 flex items-center justify-center group focus:outline-none focus:ring-2 focus:ring-dourado/60 min-w-[48px] min-h-[48px]"
                   >
                     <IconComponent className="w-5 h-5 transition-transform duration-200 group-hover:scale-105" />
                   </a>

@@ -99,6 +99,16 @@
     color: hsl(var(--foreground));
     background-color: hsl(var(--background));
     overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Previne zoom automático indesejado no iOS Safari ao focar inputs em telas pequenas */
+  @media (max-width: 768px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 
   h1,

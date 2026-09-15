@@ -185,25 +185,24 @@ export default function AdminFinanceiroScreen() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header com Ação */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-5 sm:space-y-6">
+      {/* Cabeçalho */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-vinho">Gestão Financeira</h2>
+          <h2 className="font-serif text-xl sm:text-2xl font-bold text-vinho">Painel Financeiro</h2>
           <p className="text-xs text-vinho/70">
-            Controle de despesas, custos de estúdio, edição e cronograma de pagamentos.
+            Controle de custos de produção, edição, estúdio e saldo atual
           </p>
         </div>
 
         <Button
-          onClick={handleOpenCreate}
-          className="bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-full px-5 flex items-center gap-2 shadow-sm"
+          onClick={handleOpenNew}
+          className="w-full sm:w-auto bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-4 py-2.5 sm:py-2 min-h-[44px] sm:min-h-0 rounded-xl flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
         >
-          <Plus className="w-4 h-4 text-dourado" />
-          Cadastrar Despesa
+          <Plus className="w-4 h-4 text-dourado shrink-0" />
+          Novo Lançamento
         </Button>
       </div>
-
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="bg-white border border-vinho/10 rounded-2xl p-5 shadow-sm flex items-center justify-between">
@@ -253,17 +252,17 @@ export default function AdminFinanceiroScreen() {
       </div>
 
       {/* Barra de Filtros */}
-      <div className="bg-white p-4 rounded-2xl border border-vinho/10 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-vinho/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-dourado-dark" />
+          <Filter className="w-4 h-4 text-dourado-dark shrink-0" />
           <span className="text-xs font-bold text-vinho">Filtrar Lançamentos:</span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-vinho/70">Situação:</span>
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2 text-xs flex-1 sm:flex-none">
+            <span className="text-vinho/70 shrink-0">Situação:</span>
             <Select value={filtroSituacao} onValueChange={setFiltroSituacao}>
-              <SelectTrigger className="h-8 w-32 text-xs bg-marfim border-vinho/15">
+              <SelectTrigger className="h-9 sm:h-8 w-full sm:w-32 text-xs bg-marfim border-vinho/15">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -274,10 +273,10 @@ export default function AdminFinanceiroScreen() {
             </Select>
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-vinho/70">Categoria:</span>
+          <div className="flex items-center gap-2 text-xs flex-1 sm:flex-none">
+            <span className="text-vinho/70 shrink-0">Categoria:</span>
             <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-              <SelectTrigger className="h-8 w-44 text-xs bg-marfim border-vinho/15">
+              <SelectTrigger className="h-9 sm:h-8 w-full sm:w-44 text-xs bg-marfim border-vinho/15">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

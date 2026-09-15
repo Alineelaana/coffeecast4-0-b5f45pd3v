@@ -122,7 +122,7 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
                 : 'bg-vinho-dark/10 border-vinho/10 text-vinho/25 cursor-not-allowed opacity-40'
             }`}
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <button
             type="button"
@@ -135,19 +135,19 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
                 : 'bg-vinho-dark/10 border-vinho/10 text-vinho/25 cursor-not-allowed opacity-40'
             }`}
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>
 
-      {/* Faixa carrossel horizontal de cards de depoimentos */}
+      {/* Faixa carrossel horizontal de cards de depoimentos com suporte a swipe fluido touch-pan-x */}
       <div
         ref={scrollContainerRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className={`flex gap-4 sm:gap-5 overflow-x-auto pb-4 pt-1 px-1 no-scrollbar select-none cursor-grab active:cursor-grabbing snap-x snap-mandatory scroll-smooth ${
+        className={`flex gap-3.5 sm:gap-5 overflow-x-auto pb-4 pt-1 px-1 no-scrollbar select-none cursor-grab active:cursor-grabbing snap-x snap-mandatory scroll-smooth touch-pan-x overscroll-x-contain ${
           !isScrollable ? 'md:justify-center' : ''
         }`}
         style={{
@@ -168,30 +168,31 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
           return (
             <div
               key={dep.id || index}
-              className={`flex-shrink-0 w-[290px] sm:w-[340px] md:w-[370px] snap-start rounded-2xl p-6 flex flex-col justify-between space-y-5 shadow-sm hover:shadow-xl transition-all duration-300 relative group hover:-translate-y-1.5 ${
+              className={`flex-shrink-0 w-[270px] xs:w-[290px] sm:w-[340px] md:w-[370px] snap-start rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-4 sm:space-y-5 shadow-sm hover:shadow-xl transition-all duration-300 relative group hover:-translate-y-1.5 ${
                 isHighlight
                   ? 'bg-rose-brand/35 border-2 border-dourado'
                   : 'bg-marfim border border-vinho/15 hover:border-dourado/60'
               }`}
             >
               {/* Cabeçalho do Convidado: Foto enaltecida (maior), nome em destaque e @ do Instagram */}
-              <div className="flex items-center gap-3.5 pb-4 border-b border-vinho/10">
+              <div className="flex items-center gap-3 sm:gap-3.5 pb-3.5 sm:pb-4 border-b border-vinho/10">
                 <div className="relative shrink-0 group-hover:scale-105 transition-transform duration-300">
-                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full p-0.5 bg-gradient-to-tr from-dourado via-dourado-light to-dourado-dark shadow-md ring-2 ring-dourado/40">
+                  <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-full p-0.5 bg-gradient-to-tr from-dourado via-dourado-light to-dourado-dark shadow-md ring-2 ring-dourado/40">
                     <img
                       src={photoUrl}
                       alt={dep.nome}
                       className="w-full h-full rounded-full object-cover border-2 border-white shadow-inner bg-vinho/5"
+                      loading="lazy"
                     />
                   </div>
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-serif font-bold text-base sm:text-lg text-vinho leading-tight group-hover:text-dourado-dark transition-colors">
+                  <h4 className="font-serif font-bold text-sm sm:text-lg text-vinho leading-tight group-hover:text-dourado-dark transition-colors">
                     {dep.nome}
                   </h4>
 
-                  <span className="text-[11px] text-vinho/65 font-medium block mt-0.5">
+                  <span className="text-[10px] sm:text-[11px] text-vinho/65 font-medium block mt-0.5">
                     {isHighlight ? 'Convidada Homenageada' : 'Convidada do Podcast'}
                   </span>
 
@@ -203,10 +204,12 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
                         rel="noopener noreferrer"
                         title={`Instagram de ${dep.nome}: ${parsedInsta.username}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-dourado-dark hover:text-vinho bg-white/80 hover:bg-white px-2 py-0.5 rounded-full border border-dourado/30 transition-all shadow-2xs group/insta"
+                        className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-dourado-dark hover:text-vinho bg-white/80 hover:bg-white px-2 py-0.5 rounded-full border border-dourado/30 transition-all shadow-2xs group/insta min-h-[28px]"
                       >
                         <Instagram className="w-3 h-3 text-dourado group-hover/insta:text-dourado-dark shrink-0" />
-                        <span className="truncate max-w-[150px]">{parsedInsta.username}</span>
+                        <span className="truncate max-w-[140px] sm:max-w-[150px]">
+                          {parsedInsta.username}
+                        </span>
                       </a>
                     </div>
                   )}
@@ -220,9 +223,9 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
                 </p>
 
                 <div className="flex items-center justify-between pt-2">
-                  <Quote className="w-6 h-6 text-dourado opacity-80 group-hover:scale-110 transition-transform" />
+                  <Quote className="w-5 h-5 sm:w-6 sm:h-6 text-dourado opacity-80 group-hover:scale-110 transition-transform" />
                   {isHighlight && (
-                    <Badge className="bg-vinho text-dourado text-[10px] font-bold tracking-wide shadow-sm">
+                    <Badge className="bg-vinho text-dourado text-[9px] sm:text-[10px] font-bold tracking-wide shadow-sm">
                       Visão da Equipe CoffeeCast
                     </Badge>
                   )}

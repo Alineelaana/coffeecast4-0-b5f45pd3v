@@ -282,12 +282,14 @@ export default function DashboardScreen() {
       {/* Duas Colunas: Próximas Gravações & Últimos Contatos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Próximas Gravações */}
-        <div className="bg-white border border-vinho/10 rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="bg-white border border-vinho/10 rounded-2xl p-4 sm:p-6 shadow-sm space-y-3 sm:space-y-4">
           <div className="flex items-center justify-between border-b border-vinho/10 pb-3">
-            <h3 className="font-serif text-lg font-bold text-vinho">Próximas Gravações</h3>
+            <h3 className="font-serif text-base sm:text-lg font-bold text-vinho">
+              Próximas Gravações
+            </h3>
             <Link
               to="/admin/agenda"
-              className="text-xs text-dourado-dark hover:underline flex items-center gap-1 font-semibold"
+              className="text-xs text-dourado-dark hover:underline flex items-center gap-1 font-semibold min-h-[32px]"
             >
               Ver todas <ArrowRight className="w-3 h-3" />
             </Link>
@@ -322,12 +324,14 @@ export default function DashboardScreen() {
         </div>
 
         {/* Últimos Contatos Recebidos */}
-        <div className="bg-white border border-vinho/10 rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="bg-white border border-vinho/10 rounded-2xl p-4 sm:p-6 shadow-sm space-y-3 sm:space-y-4">
           <div className="flex items-center justify-between border-b border-vinho/10 pb-3">
-            <h3 className="font-serif text-lg font-bold text-vinho">Últimas Propostas Recebidas</h3>
+            <h3 className="font-serif text-base sm:text-lg font-bold text-vinho">
+              Últimas Propostas Recebidas
+            </h3>
             <Link
               to="/admin/contatos"
-              className="text-xs text-dourado-dark hover:underline flex items-center gap-1 font-semibold"
+              className="text-xs text-dourado-dark hover:underline flex items-center gap-1 font-semibold min-h-[32px]"
             >
               Ver todas <ArrowRight className="w-3 h-3" />
             </Link>

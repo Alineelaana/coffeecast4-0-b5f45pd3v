@@ -131,27 +131,32 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
           <div className="flex lg:hidden items-center gap-2">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg transition-colors text-marfim hover:bg-vinho/60"
+              className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-colors text-marfim hover:bg-vinho/60 active:scale-95"
               aria-label="Abrir menu de navegação"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6 text-dourado" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer estilo App de celular */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-vinho-dark border-b-2 border-dourado/60 text-marfim px-6 py-6 shadow-2xl animate-fade-in-down">
-          <div className="flex flex-col space-y-4">
+        <div className="lg:hidden bg-vinho-dark border-b-2 border-dourado/60 text-marfim px-5 py-5 shadow-2xl animate-fade-in-down max-h-[calc(100vh-5rem)] overflow-y-auto">
+          <div className="flex flex-col space-y-1">
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={location.pathname === '/' ? link.href : `/${link.href}`}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className="text-base font-medium py-1.5 border-b border-vinho-light/40 hover:text-dourado transition-colors"
+                className="text-base font-medium py-3 px-3 rounded-xl border-b border-vinho-light/30 hover:text-dourado hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between min-h-[44px]"
               >
-                {link.label}
+                <span>{link.label}</span>
+                <span className="text-dourado/60 text-xs">›</span>
               </a>
             ))}
 
@@ -160,7 +165,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
                 <Link
                   to="/membros"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-2.5 px-4 rounded-lg bg-vinho-light/60 border border-dourado/30 text-dourado-light text-sm font-semibold flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 rounded-xl bg-vinho-light/60 border border-dourado/40 text-dourado-light text-sm font-semibold flex items-center justify-center gap-2 min-h-[44px] active:scale-[0.99] transition-transform"
                 >
                   <Sparkles className="w-4 h-4 text-dourado" />
                   Área de Membros
@@ -171,7 +176,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
                     setMobileMenuOpen(false)
                     onOpenMembersModal?.()
                   }}
-                  className="w-full py-2.5 px-4 rounded-lg bg-vinho-light/60 border border-white/20 text-marfim text-sm font-semibold flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 rounded-xl bg-vinho-light/60 border border-white/20 text-marfim text-sm font-semibold flex items-center justify-center gap-2 min-h-[44px] active:scale-[0.99] transition-transform"
                 >
                   <Lock className="w-4 h-4 text-dourado" />
                   Área de Membros
@@ -183,7 +188,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full"
               >
-                <Button className="w-full bg-dourado hover:bg-dourado-dark text-vinho font-bold text-sm rounded-lg">
+                <Button className="w-full bg-dourado hover:bg-dourado-dark text-vinho font-bold text-sm rounded-xl py-3 min-h-[44px] active:scale-[0.99] transition-transform">
                   <ShieldCheck className="w-4 h-4 mr-1.5" />
                   {isAdmin
                     ? 'Acessar Painel Admin'

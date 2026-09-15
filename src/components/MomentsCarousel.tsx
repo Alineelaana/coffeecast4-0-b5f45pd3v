@@ -32,6 +32,8 @@ const fallbackImages = [
 
 export const MomentsCarousel: React.FC<MomentsCarouselProps> = ({ momentos }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [touchStartX, setTouchStartX] = useState<number | null>(null)
+  const [touchEndX, setTouchEndX] = useState<number | null>(null)
 
   // Lista normalizada
   const slides =
@@ -60,10 +62,41 @@ export const MomentsCarousel: React.FC<MomentsCarouselProps> = ({ momentos }) =>
     setCurrentIndex((prev) => (prev + 1) % slides.length)
   }
 
+  // Suporte a swipe nativo por toque no celular
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (touchStartX === null || touchEndX === null) return
+    const diff = touchStartX - touchEndX
+    const threshold = 40 // Mínimo de pixels para registrar swipe
+
+    if (diff > threshold) {
+      // Arraste para a esquerda -> Próximo slide
+      nextSlide()
+    } else if (diff < -threshold) {
+      // Arraste para a direita -> Slide anterior
+      prevSlide()
+    }
+
+    setTouchStartX(null)
+    setTouchEndX(null)
+  }
+
   return (
-    <div className="relative w-full max-w-5xl mx-auto overflow-hidden rounded-3xl border border-dourado/50 shadow-[0_12px_40px_rgba(212,175,55,0.15)] bg-gradient-to-b from-[#3d1733] via-[#36142d] to-[#2a0e23] group">
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="relative w-full max-w-5xl mx-auto overflow-hidden rounded-3xl border border-dourado/50 shadow-[0_12px_40px_rgba(212,175,55,0.15)] bg-gradient-to-b from-[#3d1733] via-[#36142d] to-[#2a0e23] group touch-pan-y"
+    >
       {/* Container de visualização com altura/proporção otimizada para fotos inteiras */}
-      <div className="relative w-full h-[360px] sm:h-[460px] md:h-[540px] lg:h-[580px] overflow-hidden flex items-center justify-center">
+      <div className="relative w-full h-[320px] xs:h-[350px] sm:h-[460px] md:h-[540px] lg:h-[580px] overflow-hidden flex items-center justify-center">
         {slides.map((slide, index) => {
           const isActive = index === currentIndex
           return (

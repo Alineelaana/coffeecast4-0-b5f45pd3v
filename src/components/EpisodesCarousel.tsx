@@ -116,7 +116,7 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
                 : 'bg-vinho-dark/40 border-white/10 text-marfim/30 cursor-not-allowed opacity-40'
             }`}
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <button
             type="button"
@@ -129,19 +129,19 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
                 : 'bg-vinho-dark/40 border-white/10 text-marfim/30 cursor-not-allowed opacity-40'
             }`}
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>
 
-      {/* Faixa carrossel horizontal de cards compactos */}
+      {/* Faixa carrossel horizontal de cards compactos com suporte a swipe nativo e fluido */}
       <div
         ref={scrollContainerRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className={`flex gap-4 sm:gap-5 overflow-x-auto pb-4 pt-1 px-1 no-scrollbar select-none cursor-grab active:cursor-grabbing snap-x snap-mandatory scroll-smooth`}
+        className={`flex gap-3.5 sm:gap-5 overflow-x-auto pb-4 pt-1 px-1 no-scrollbar select-none cursor-grab active:cursor-grabbing snap-x snap-mandatory scroll-smooth touch-pan-x overscroll-x-contain`}
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
@@ -151,20 +151,20 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
         {episodios.map((ep) => (
           <div
             key={ep.id}
-            className="flex-shrink-0 w-[260px] sm:w-[290px] md:w-[320px] snap-start bg-gradient-to-b from-vinho-dark via-vinho to-vinho-dark border border-dourado/35 hover:border-dourado rounded-2xl p-5 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden"
+            className="flex-shrink-0 w-[240px] xs:w-[260px] sm:w-[290px] md:w-[320px] snap-start bg-gradient-to-b from-vinho-dark via-vinho to-vinho-dark border border-dourado/35 hover:border-dourado rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden"
           >
             {/* Brilho decorativo no canto superior do card */}
             <div className="absolute -top-10 -right-10 w-24 h-24 bg-dourado/10 rounded-full blur-xl group-hover:bg-dourado/20 transition-all pointer-events-none" />
 
             {/* Cabeçalho do Card: Número do episódio e Canal */}
-            <div className="space-y-3 relative z-10">
+            <div className="space-y-2.5 sm:space-y-3 relative z-10">
               <div className="flex items-center justify-between">
-                <span className="bg-dourado/20 text-dourado text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-full border border-dourado/40 inline-flex items-center gap-1.5 shadow-sm">
+                <span className="bg-dourado/20 text-dourado text-[10px] sm:text-xs font-bold px-2.5 py-0.5 sm:py-1 rounded-full border border-dourado/40 inline-flex items-center gap-1.5 shadow-sm">
                   <span className="w-1.5 h-1.5 rounded-full bg-dourado" />
                   Episódio #{ep.numero}
                 </span>
 
-                <span className="inline-flex items-center gap-1 text-[11px] text-marfim/60 font-medium">
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] text-marfim/60 font-medium">
                   <Youtube className="w-3.5 h-3.5 text-red-500 fill-red-500" />
                   YouTube
                 </span>
@@ -172,15 +172,15 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
 
               {/* Título com limite equilibrado para manter altura compacta e harmoniosa */}
               <h3
-                className="font-serif text-base sm:text-lg font-bold text-white group-hover:text-dourado-light transition-colors leading-snug line-clamp-3 min-h-[4.2rem]"
+                className="font-serif text-sm sm:text-lg font-bold text-white group-hover:text-dourado-light transition-colors leading-snug line-clamp-3 min-h-[3.6rem] sm:min-h-[4.2rem]"
                 title={ep.titulo}
               >
                 {ep.titulo}
               </h3>
             </div>
 
-            {/* Rodapé do Card: Botão de ação oficial */}
-            <div className="pt-4 border-t border-white/10 mt-3 relative z-10">
+            {/* Rodapé do Card: Botão de ação oficial com área de toque mínima confortável */}
+            <div className="pt-3 sm:pt-4 border-t border-white/10 mt-3 relative z-10">
               <Button
                 type="button"
                 onClick={(e) => {
@@ -189,9 +189,9 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
                     onSelectEpisode(ep)
                   }
                 }}
-                className="w-full bg-dourado hover:bg-dourado-dark text-vinho font-bold py-2 sm:py-2.5 text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full bg-dourado hover:bg-dourado-dark text-vinho font-bold py-2.5 sm:py-2.5 min-h-[44px] text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                <Play className="w-3.5 h-3.5 fill-vinho" />
+                <Play className="w-3.5 h-3.5 fill-vinho shrink-0" />
                 Clique aqui para assistir
               </Button>
             </div>

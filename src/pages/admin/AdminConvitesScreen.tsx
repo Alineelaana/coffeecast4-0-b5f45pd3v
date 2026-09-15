@@ -638,11 +638,11 @@ export default function AdminConvitesScreen() {
 
       {/* Modal de Preview e Exportações (PDF & JPEG) */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-2xl bg-marfim border-2 border-dourado text-vinho p-0 overflow-hidden max-h-[92vh] flex flex-col">
+        <DialogContent className="w-[94vw] max-w-2xl bg-marfim border-2 border-dourado text-vinho p-0 overflow-hidden max-h-[92vh] flex flex-col mx-auto rounded-2xl">
           {previewConvite && (
             <div className="flex flex-col h-full overflow-hidden">
               {/* Barra Superior de Ações com Baixar JPEG, Imprimir PDF e Editar */}
-              <div className="print-hide p-4 bg-white border-b border-vinho/10 flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <div className="print-hide p-3 sm:p-4 bg-white border-b border-vinho/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 shrink-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-vinho">
                     Visualização do Convite Gráfico
@@ -662,7 +662,7 @@ export default function AdminConvitesScreen() {
                       setPreviewOpen(false)
                       handleOpenEdit(previewConvite)
                     }}
-                    className="border-vinho/20 text-vinho hover:bg-vinho/5 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5"
+                    className="border-vinho/20 text-vinho hover:bg-vinho/5 text-xs font-semibold px-3 py-2 min-h-[36px] rounded-full flex items-center gap-1.5 active:scale-95"
                   >
                     <Edit className="w-3.5 h-3.5 text-dourado-dark" />
                     Editar Dados
@@ -672,20 +672,20 @@ export default function AdminConvitesScreen() {
                   <Button
                     onClick={() => handleDownloadJpeg(previewConvite)}
                     disabled={exportingJpegId === previewConvite.id}
-                    className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs px-4 py-1.5 rounded-full flex items-center gap-1.5 shadow-xs transition-colors"
+                    className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs px-3.5 py-2 min-h-[36px] rounded-full flex items-center gap-1.5 shadow-xs transition-colors active:scale-95"
                   >
                     {exportingJpegId === previewConvite.id ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-vinho" />
                     ) : (
                       <Download className="w-3.5 h-3.5 text-vinho" />
                     )}
-                    Baixar como JPEG
+                    Baixar JPEG
                   </Button>
 
                   {/* Botão Imprimir / Salvar PDF */}
                   <Button
                     onClick={handlePrint}
-                    className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 shadow-xs"
+                    className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-3.5 py-2 min-h-[36px] rounded-full flex items-center gap-1.5 shadow-xs active:scale-95"
                   >
                     <Printer className="w-3.5 h-3.5 text-dourado" />
                     Imprimir / PDF
@@ -694,10 +694,10 @@ export default function AdminConvitesScreen() {
               </div>
 
               {/* CONTEÚDO DO CONVITE NA TELA (DESIGN OFICIAL VINHO & DOURADO) */}
-              <div className="overflow-y-auto flex-1 p-4 sm:p-6 bg-marfim/50">
+              <div className="overflow-y-auto flex-1 p-3 sm:p-6 bg-marfim/50">
                 <div
                   ref={invitePrintRef}
-                  className="max-w-xl mx-auto p-6 sm:p-10 bg-gradient-to-b from-[#4B1E3F] via-[#36142D] to-[#4B1E3F] text-marfim space-y-6 sm:space-y-8 relative overflow-hidden rounded-2xl shadow-2xl border-2 border-dourado/40"
+                  className="max-w-xl mx-auto p-4 sm:p-10 bg-gradient-to-b from-[#4B1E3F] via-[#36142D] to-[#4B1E3F] text-marfim space-y-4 sm:space-y-8 relative overflow-hidden rounded-2xl shadow-2xl border-2 border-dourado/40"
                 >
                   {/* Borda decorativa dourada dupla */}
                   <div className="absolute inset-3 border-2 border-dourado/50 rounded-2xl pointer-events-none" />

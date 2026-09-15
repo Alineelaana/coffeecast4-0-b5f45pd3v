@@ -128,9 +128,11 @@ export default function AdminDepoimentosScreen() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-vinho">Feedbacks & Depoimentos</h2>
+          <h2 className="font-serif text-xl sm:text-2xl font-bold text-vinho">
+            Feedbacks & Depoimentos
+          </h2>
           <p className="text-xs text-vinho/70">
             Gerencie depoimentos de convidados ou relatos da equipe sobre a experiência da
             entrevista.
@@ -139,9 +141,9 @@ export default function AdminDepoimentosScreen() {
 
         <Button
           onClick={handleOpenCreate}
-          className="bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-full px-5 flex items-center gap-2 shadow-sm"
+          className="w-full sm:w-auto bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-xl sm:rounded-full px-5 py-2.5 sm:py-2 min-h-[44px] sm:min-h-0 flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
         >
-          <Plus className="w-4 h-4 text-dourado" />
+          <Plus className="w-4 h-4 text-dourado shrink-0" />
           Novo Depoimento
         </Button>
       </div>

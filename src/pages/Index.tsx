@@ -147,14 +147,14 @@ export default function Index() {
       {/* SEÇÃO 2: AS QUATRO INTEGRANTES DO COFFEECAST 4.0 */}
       <section
         id="integrantes"
-        className="py-20 px-4 sm:px-6 lg:px-8 bg-[#FAF8F5] relative overflow-hidden"
+        className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 bg-[#FAF8F5] relative overflow-hidden"
       >
-        <div className="max-w-6xl mx-auto space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
+        <div className="max-w-6xl mx-auto space-y-8 sm:space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-2 sm:space-y-3">
             <span className="text-xs uppercase font-bold tracking-widest text-vinho bg-vinho/10 px-3.5 py-1 rounded-full border border-vinho/20">
               Equipe Principal
             </span>
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-vinho">
+            <h2 className="font-serif text-2xl sm:text-4xl font-bold text-vinho">
               Quem Faz o CoffeeCast 4.0
             </h2>
             <p className="text-xs sm:text-sm text-vinho/75">
@@ -162,7 +162,7 @@ export default function Index() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
             {integrantes.map((member, index) => {
               const photoUrl = member.foto
                 ? getFileUrl(member, member.foto)
@@ -173,25 +173,26 @@ export default function Index() {
                   key={member.id || index}
                   className="bg-white rounded-2xl border border-vinho/10 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group hover:-translate-y-1"
                 >
-                  <div className="p-6 flex-1 flex flex-col items-center text-center justify-between space-y-4">
+                  <div className="p-5 sm:p-6 flex-1 flex flex-col items-center text-center justify-between space-y-3 sm:space-y-4">
                     <div className="flex flex-col items-center w-full">
-                      {/* Avatar circular elegante, menor e proporcional */}
-                      <div className="relative mb-4 group-hover:scale-105 transition-transform duration-300">
-                        <div className="w-36 h-36 sm:w-40 sm:h-40 rounded-full p-1 bg-gradient-to-tr from-dourado/80 via-dourado/30 to-dourado/70 shadow-md ring-1 ring-dourado/40">
+                      {/* Avatar circular elegante, menor e proporcional tanto no mobile quanto no desktop */}
+                      <div className="relative mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-300">
+                        <div className="w-28 h-28 xs:w-32 xs:h-32 sm:w-40 sm:h-40 rounded-full p-1 bg-gradient-to-tr from-dourado/80 via-dourado/30 to-dourado/70 shadow-md ring-1 ring-dourado/40">
                           <div className="w-full h-full rounded-full overflow-hidden bg-vinho/5 border-2 border-white shadow-inner">
                             <img
                               src={photoUrl}
                               alt={member.nome}
                               className="w-full h-full object-cover object-top"
+                              loading="lazy"
                             />
                           </div>
                         </div>
                       </div>
 
-                      <h3 className="font-serif text-xl font-bold text-vinho group-hover:text-dourado-dark transition-colors mt-2">
+                      <h3 className="font-serif text-lg sm:text-xl font-bold text-vinho group-hover:text-dourado-dark transition-colors mt-1 sm:mt-2">
                         {member.nome}
                       </h3>
-                      <p className="text-xs text-vinho/75 leading-relaxed mt-2.5 line-clamp-4 font-light">
+                      <p className="text-xs text-vinho/75 leading-relaxed mt-2 line-clamp-4 font-light">
                         {member.biografia}
                       </p>
 
@@ -199,15 +200,15 @@ export default function Index() {
                         const insta = parseInstagramHandle(member.instagram)
                         if (!insta) return null
                         return (
-                          <div className="mt-3.5 pt-2.5 border-t border-vinho/10 w-full flex justify-center">
+                          <div className="mt-3 pt-2.5 border-t border-vinho/10 w-full flex justify-center">
                             <a
                               href={insta.url}
                               target="_blank"
                               rel="noopener noreferrer"
                               title={`Perfil no Instagram: ${insta.username}`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-vinho bg-marfim/80 border border-vinho/15 hover:border-dourado hover:text-dourado-dark hover:bg-white shadow-2xs transition-all duration-200 no-underline group/insta"
+                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold text-vinho bg-marfim/80 border border-vinho/15 hover:border-dourado hover:text-dourado-dark hover:bg-white active:scale-95 shadow-2xs transition-all duration-200 no-underline group/insta min-h-[38px]"
                             >
-                              <Instagram className="w-3.5 h-3.5 text-dourado group-hover/insta:text-dourado-dark transition-colors shrink-0" />
+                              <Instagram className="w-4 h-4 text-dourado group-hover/insta:text-dourado-dark transition-colors shrink-0" />
                               <span>{insta.username}</span>
                             </a>
                           </div>
@@ -373,32 +374,38 @@ export default function Index() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8">
             {/* Missão */}
-            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-4 group">
-              <div className="w-12 h-12 rounded-xl bg-vinho/10 text-vinho flex items-center justify-center group-hover:bg-vinho group-hover:text-dourado transition-colors">
-                <Compass className="w-6 h-6" />
+            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-5 sm:p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-3 sm:space-y-4 group">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-vinho/10 text-vinho flex items-center justify-center group-hover:bg-vinho group-hover:text-dourado transition-colors">
+                <Compass className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h3 className="font-serif text-xl font-bold text-vinho">Nossa Missão</h3>
-              <p className="text-sm text-vinho/80 leading-relaxed font-light">"{missaoText}"</p>
+              <h3 className="font-serif text-lg sm:text-xl font-bold text-vinho">Nossa Missão</h3>
+              <p className="text-xs sm:text-sm text-vinho/80 leading-relaxed font-light">
+                "{missaoText}"
+              </p>
             </div>
 
             {/* Visão */}
-            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-4 group">
-              <div className="w-12 h-12 rounded-xl bg-dourado/15 text-dourado-dark flex items-center justify-center group-hover:bg-dourado group-hover:text-vinho transition-colors">
-                <Eye className="w-6 h-6" />
+            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-5 sm:p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-3 sm:space-y-4 group">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-dourado/15 text-dourado-dark flex items-center justify-center group-hover:bg-dourado group-hover:text-vinho transition-colors">
+                <Eye className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h3 className="font-serif text-xl font-bold text-vinho">Nossa Visão</h3>
-              <p className="text-sm text-vinho/80 leading-relaxed font-light">"{visaoText}"</p>
+              <h3 className="font-serif text-lg sm:text-xl font-bold text-vinho">Nossa Visão</h3>
+              <p className="text-xs sm:text-sm text-vinho/80 leading-relaxed font-light">
+                "{visaoText}"
+              </p>
             </div>
 
             {/* Valores */}
-            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-4 group">
-              <div className="w-12 h-12 rounded-xl bg-rose-brand/30 text-vinho flex items-center justify-center group-hover:bg-vinho group-hover:text-dourado transition-colors">
-                <Award className="w-6 h-6" />
+            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-5 sm:p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-3 sm:space-y-4 group">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-rose-brand/30 text-vinho flex items-center justify-center group-hover:bg-vinho group-hover:text-dourado transition-colors">
+                <Award className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h3 className="font-serif text-xl font-bold text-vinho">Nossos Valores</h3>
-              <p className="text-sm text-vinho/80 leading-relaxed font-light">{valoresText}</p>
+              <h3 className="font-serif text-lg sm:text-xl font-bold text-vinho">Nossos Valores</h3>
+              <p className="text-xs sm:text-sm text-vinho/80 leading-relaxed font-light">
+                {valoresText}
+              </p>
             </div>
           </div>
         </div>

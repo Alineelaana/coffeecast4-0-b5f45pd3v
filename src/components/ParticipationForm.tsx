@@ -131,19 +131,19 @@ export const ParticipationForm: React.FC<ParticipationFormProps> = ({
   }
 
   return (
-    <div className="bg-marfim border-2 border-dourado/40 rounded-3xl p-6 sm:p-10 md:p-12 shadow-2xl max-w-3xl mx-auto relative overflow-hidden">
+    <div className="bg-marfim border-2 border-dourado/40 rounded-3xl p-5 sm:p-10 md:p-12 shadow-2xl max-w-3xl mx-auto relative overflow-hidden">
       {/* Detalhes de iluminação sutil */}
       <div className="absolute top-0 right-0 w-48 h-48 bg-dourado/10 rounded-full blur-2xl pointer-events-none" />
 
-      <div className="text-center mb-8 relative z-10">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-vinho/10 border border-vinho/20 text-vinho text-xs font-semibold mb-3">
+      <div className="text-center mb-6 sm:mb-8 relative z-10">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-vinho/10 border border-vinho/20 text-vinho text-xs font-semibold mb-2.5 sm:mb-3">
           <Coffee className="w-3.5 h-3.5 text-dourado-dark" />
           <span>Participe da Nossa Mesa de Café</span>
         </div>
-        <h3 className="font-serif text-2xl sm:text-3xl font-bold text-vinho leading-tight">
+        <h3 className="font-serif text-xl sm:text-3xl font-bold text-vinho leading-tight">
           {titulo}
         </h3>
-        <p className="text-xs sm:text-sm text-vinho/75 mt-2 max-w-lg mx-auto">
+        <p className="text-xs sm:text-sm text-vinho/75 mt-1.5 sm:mt-2 max-w-lg mx-auto">
           Queremos conhecer você, suas lutas, conquistas e visão de mundo. Preencha os campos abaixo
           com carinho.
         </p>
@@ -156,8 +156,8 @@ export const ParticipationForm: React.FC<ParticipationFormProps> = ({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-5">
           {/* Nome Completo */}
           <div className="sm:col-span-2 space-y-1.5">
             <Label htmlFor="nome_completo" className="text-xs font-semibold text-vinho">
@@ -170,7 +170,7 @@ export const ParticipationForm: React.FC<ParticipationFormProps> = ({
               placeholder="Ex.: Carolina Mendes"
               value={formData.nome_completo}
               onChange={handleChange}
-              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm rounded-xl py-2.5"
+              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm sm:text-sm rounded-xl py-2.5 min-h-[44px]"
             />
           </div>
 
@@ -189,7 +189,7 @@ export const ParticipationForm: React.FC<ParticipationFormProps> = ({
               placeholder="Ex.: 32"
               value={formData.idade}
               onChange={handleChange}
-              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm rounded-xl py-2.5"
+              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm sm:text-sm rounded-xl py-2.5 min-h-[44px]"
             />
           </div>
 
@@ -205,7 +205,7 @@ export const ParticipationForm: React.FC<ParticipationFormProps> = ({
               placeholder="Ex.: Empreendedora & Psicóloga"
               value={formData.profissao}
               onChange={handleChange}
-              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm rounded-xl py-2.5"
+              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm sm:text-sm rounded-xl py-2.5 min-h-[44px]"
             />
           </div>
 
@@ -221,7 +221,7 @@ export const ParticipationForm: React.FC<ParticipationFormProps> = ({
               placeholder="@seuperfil"
               value={formData.instagram}
               onChange={handleChange}
-              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm rounded-xl py-2.5"
+              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm sm:text-sm rounded-xl py-2.5 min-h-[44px]"
             />
           </div>
 
@@ -238,7 +238,7 @@ export const ParticipationForm: React.FC<ParticipationFormProps> = ({
               placeholder="seuemail@exemplo.com"
               value={formData.email}
               onChange={handleChange}
-              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm rounded-xl py-2.5"
+              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm sm:text-sm rounded-xl py-2.5 min-h-[44px]"
             />
           </div>
 
@@ -254,7 +254,7 @@ export const ParticipationForm: React.FC<ParticipationFormProps> = ({
               placeholder="(00) 0000-0000"
               value={formData.telefone}
               onChange={handleChange}
-              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm rounded-xl py-2.5"
+              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm sm:text-sm rounded-xl py-2.5 min-h-[44px]"
             />
           </div>
 
@@ -270,7 +270,7 @@ export const ParticipationForm: React.FC<ParticipationFormProps> = ({
               placeholder="(00) 90000-0000"
               value={formData.whatsapp}
               onChange={handleChange}
-              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm rounded-xl py-2.5"
+              className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm sm:text-sm rounded-xl py-2.5 min-h-[44px]"
             />
           </div>
 
@@ -278,7 +278,7 @@ export const ParticipationForm: React.FC<ParticipationFormProps> = ({
           <div className="sm:col-span-2 space-y-1.5">
             <Label className="text-xs font-semibold text-vinho">Como nos conheceu? *</Label>
             <Select value={formData.como_nos_conheceu} onValueChange={handleSelectChange}>
-              <SelectTrigger className="bg-white border-vinho/20 focus:ring-dourado text-sm rounded-xl py-2.5">
+              <SelectTrigger className="bg-white border-vinho/20 focus:ring-dourado text-sm rounded-xl py-2.5 min-h-[44px]">
                 <SelectValue placeholder="Selecione uma opção" />
               </SelectTrigger>
               <SelectContent className="bg-white border-vinho/20">
@@ -313,15 +313,15 @@ export const ParticipationForm: React.FC<ParticipationFormProps> = ({
         <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-vinho hover:bg-vinho-light text-white font-bold py-3.5 text-base rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-4"
+          className="w-full bg-vinho hover:bg-vinho-light active:scale-[0.99] text-white font-bold py-3.5 min-h-[48px] text-sm sm:text-base rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-4"
         >
           {loading ? (
             <span>Enviando sua história...</span>
           ) : (
             <>
-              <Send className="w-4 h-4 text-dourado" />
-              Enviar Proposta de Participação
-              <Sparkles className="w-4 h-4 text-dourado" />
+              <Send className="w-4 h-4 text-dourado shrink-0" />
+              <span>Enviar Proposta de Participação</span>
+              <Sparkles className="w-4 h-4 text-dourado shrink-0" />
             </>
           )}
         </Button>

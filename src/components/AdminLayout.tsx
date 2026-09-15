@@ -270,8 +270,8 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* CABEÇALHO MOBILE */}
-      <header className="md:hidden bg-vinho text-white border-b-2 border-dourado px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-md">
+      {/* CABEÇALHO MOBILE ESTILO APP */}
+      <header className="md:hidden bg-vinho text-white border-b-2 border-dourado px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-md min-h-[56px]">
         <div className="flex items-center gap-2">
           <CoffeeCastLogo className="w-8 h-8" variant="gold" />
           <span className="font-serif font-black text-base text-white">
@@ -281,17 +281,21 @@ export default function AdminLayout() {
 
         <button
           onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-          className="p-2 rounded-lg bg-vinho-light text-marfim hover:bg-vinho-light/80"
+          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-vinho-light text-marfim hover:bg-vinho-light/80 active:scale-95 transition-all"
           aria-label="Menu administrativo"
         >
-          {mobileSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {mobileSidebarOpen ? (
+            <X className="w-5 h-5 text-dourado" />
+          ) : (
+            <Menu className="w-5 h-5 text-dourado" />
+          )}
         </button>
       </header>
 
-      {/* DRAWER MOBILE DA SIDEBAR */}
+      {/* DRAWER MOBILE DA SIDEBAR ESTILO APP */}
       {mobileSidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex">
-          <div className="w-72 bg-vinho text-marfim h-full flex flex-col p-4 shadow-2xl overflow-y-auto">
+          <div className="w-72 max-w-[85vw] bg-vinho text-marfim h-full flex flex-col p-4 shadow-2xl overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-vinho-light/40">
               <div className="flex items-center gap-2">
                 <CoffeeCastLogo className="w-8 h-8" variant="gold" />
@@ -299,13 +303,14 @@ export default function AdminLayout() {
               </div>
               <button
                 onClick={() => setMobileSidebarOpen(false)}
-                className="p-1 rounded text-marfim/70 hover:text-white"
+                className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-marfim/70 hover:text-white hover:bg-white/10 active:scale-95 transition-all"
+                aria-label="Fechar menu"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-dourado" />
               </button>
             </div>
 
-            <nav className="flex-1 py-4 space-y-1">
+            <nav className="flex-1 py-3 space-y-1">
               {menuItems.map((item) => {
                 const isActive = item.exact
                   ? location.pathname === item.path
@@ -317,14 +322,14 @@ export default function AdminLayout() {
                     key={item.path}
                     to={item.path}
                     onClick={() => setMobileSidebarOpen(false)}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
+                    className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold min-h-[44px] transition-all active:scale-[0.98] ${
                       isActive
-                        ? 'bg-vinho-light text-white border-l-4 border-dourado'
-                        : 'text-marfim/80 hover:bg-vinho-light/40'
+                        ? 'bg-vinho-light text-white border-l-4 border-dourado shadow-sm font-bold'
+                        : 'text-marfim/85 hover:bg-vinho-light/40'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className="w-4 h-4 text-dourado" />
+                      <Icon className="w-4 h-4 text-dourado shrink-0" />
                       <span>{item.label}</span>
                     </div>
                   </NavLink>
@@ -333,12 +338,14 @@ export default function AdminLayout() {
             </nav>
 
             <div className="pt-4 border-t border-vinho-light/40 flex items-center justify-between">
-              <span className="text-xs text-dourado-light">{user?.name}</span>
+              <span className="text-xs text-dourado-light truncate max-w-[130px] font-medium">
+                {user?.name}
+              </span>
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={handleLogout}
-                className="text-xs h-7"
+                className="text-xs h-9 min-h-[36px] px-3.5 rounded-lg active:scale-95"
               >
                 Sair
               </Button>

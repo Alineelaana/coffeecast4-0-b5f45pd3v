@@ -39,7 +39,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({ onWatchEpisodes }) =
           <img
             src={bannerImg}
             alt="CoffeeCast 4.0 - Mais que conversas, histórias que transformam. Pessoas reais, ideias que inspiram, conversas que deixam marcas."
-            className="w-full h-full object-cover sm:object-contain object-center block"
+            className="w-full h-full object-contain object-center block"
             loading="eager"
             fetchPriority="high"
           />
