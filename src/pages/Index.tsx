@@ -34,6 +34,7 @@ import {
   Play,
   ExternalLink,
 } from 'lucide-react'
+import bannerComercialImg from '@/assets/captura-de-tela-2026-09-14-as-23.36.33-a9967.png'
 
 function MemberBio({ biografia }: { biografia?: string }) {
   const [expanded, setExpanded] = useState(false)
@@ -493,62 +494,46 @@ export default function Index() {
       {/* SEÇÃO 7: CONTATO COMERCIAL DESTACADO */}
       <section
         id="contato"
-        className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 bg-marfim border-t border-vinho/10 relative overflow-hidden"
+        className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-marfim border-t border-vinho/10 relative overflow-hidden"
       >
-        <div className="max-w-4xl mx-auto relative group">
-          {/* Brilho dourado de fundo ambiente */}
+        <div className="max-w-5xl mx-auto relative group">
+          {/* Brilho dourado sutil de fundo ambiente */}
           <div
             aria-hidden="true"
-            className="absolute -inset-1 rounded-3xl bg-linear-to-r from-dourado/40 via-dourado/20 to-dourado/40 blur-xl opacity-60 pointer-events-none group-hover:opacity-85 transition-opacity duration-500"
+            className="absolute -inset-1 rounded-2xl sm:rounded-3xl bg-linear-to-r from-dourado/30 via-dourado/15 to-dourado/30 blur-xl opacity-60 pointer-events-none group-hover:opacity-85 transition-opacity duration-500"
           />
 
-          {/* Banner Principal com fundo marfim/champanhe elegante, borda fina dourada e textos em vinho */}
-          <div className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-10 lg:p-12 overflow-hidden border border-dourado/70 bg-gradient-to-br from-[#FFFBF2] via-[#FFF8EE] to-[#F7EDE2] text-[#4B1E3F] shadow-[0_12px_36px_rgba(212,175,55,0.18),0_4px_20px_rgba(75,30,63,0.08)]">
-            {/* Elementos decorativos sutis de luz rosé e dourada no fundo do banner */}
-            <div
-              aria-hidden="true"
-              className="absolute -top-16 -right-16 w-64 h-64 bg-radial from-dourado/20 via-dourado/5 to-transparent rounded-full blur-2xl pointer-events-none"
-            />
-            <div
-              aria-hidden="true"
-              className="absolute -bottom-16 -left-16 w-56 h-56 bg-radial from-[#E8C5C8]/30 via-transparent to-transparent rounded-full blur-2xl pointer-events-none"
-            />
+          {/* Banner Comercial Oficial clicável com moldura elegante (borda dourada fina, cantos arredondados, sombra/brilho suave) */}
+          <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-dourado/60 bg-[#FAF4ED] shadow-[0_12px_36px_rgba(212,175,55,0.18),0_4px_20px_rgba(75,30,63,0.08)] transition-all duration-300 hover:shadow-[0_16px_44px_rgba(212,175,55,0.28),0_6px_24px_rgba(75,30,63,0.12)] hover:border-dourado">
+            <a
+              href="https://api.whatsapp.com/send/?phone=5531991297619&text&type=phone_number&app_absent=0"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Fale com a nossa equipe no WhatsApp: Quer patrocinar ou sugerir uma pauta comercial no CoffeeCast 4.0? Contato Aline Lana (31) 99129-7619"
+              className="block w-full focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado focus-visible:ring-offset-2 focus-visible:ring-offset-marfim cursor-pointer"
+            >
+              <img
+                src={bannerComercialImg}
+                alt="Banner Comercial CoffeeCast 4.0: Quer patrocinar ou sugerir uma pauta comercial? Fale com nossa equipe e descubra como a sua marca pode fazer parte de conversas que inspiram, conectam e geram resultados. Mais visibilidade, conexão com pessoas reais, posicionamento estratégico e associação a conteúdo de valor. Fale com a gente no WhatsApp."
+                className="w-full h-auto object-cover block transition-transform duration-500 group-hover:scale-[1.008]"
+                loading="lazy"
+              />
+            </a>
+          </div>
 
-            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 sm:gap-10">
-              {/* Informações textuais em tons de vinho */}
-              <div className="space-y-3 sm:space-y-4 text-center lg:text-left flex-1 max-w-2xl">
-                {/* Tag de categoria: chip com borda dourada, estrela dourada e texto vinho */}
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 border border-dourado/50 text-[#4B1E3F] text-[11px] sm:text-xs font-semibold tracking-wider uppercase shadow-xs backdrop-blur-xs">
-                  <Sparkles className="w-3.5 h-3.5 text-dourado shrink-0 animate-pulse-slow" />
-                  <span>Atendimento & Patrocínios</span>
-                </div>
-
-                {/* Título de alto impacto com tipografia Playfair Display em VINHO */}
-                <h3 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] font-bold leading-tight sm:leading-snug text-[#4B1E3F] drop-shadow-xs">
-                  Quer patrocinar ou sugerir uma pauta comercial?
-                </h3>
-
-                {/* Subtítulo / Frase de apoio em vinho e serifada */}
-                <p className="pt-1 font-serif text-sm sm:text-base text-[#4B1E3F]/90 leading-relaxed font-medium">
-                  Fale com nossa equipe e venha fazer parte deste projeto fantástico.
-                </p>
-              </div>
-
-              {/* Botão de ação (CTA) dourado com degradê e texto vinho escuro, abrindo WhatsApp em nova aba */}
-              <div className="w-full sm:w-auto shrink-0 flex justify-center relative z-20">
-                <a
-                  href="https://wa.me/5531991297619"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Abrir conversa no WhatsApp com nossa equipe: (31) 99129-7619"
-                  className="w-full sm:w-auto min-h-[50px] sm:min-h-[52px] px-7 sm:px-9 py-3 sm:py-3.5 gold-gradient hover:opacity-95 text-[#2A0F23] font-bold text-sm sm:text-base rounded-full shadow-[0_6px_20px_rgba(212,175,55,0.4)] hover:shadow-[0_8px_26px_rgba(212,175,55,0.6)] flex items-center justify-center gap-2.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] border border-[#FFF2B2] cursor-pointer no-underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado focus-visible:ring-offset-2 focus-visible:ring-offset-[#FFFBF2]"
-                >
-                  <MessageCircle className="w-5 h-5 text-[#2A0F23] shrink-0 fill-[#2A0F23]/20" />
-                  <span>Fale com a gente no WhatsApp</span>
-                  <ExternalLink className="w-4 h-4 text-[#2A0F23]/70 shrink-0 ml-0.5" />
-                </a>
-              </div>
-            </div>
+          {/* Botão de toque para mobile/acessibilidade reforçando a ação direta */}
+          <div className="mt-4 sm:hidden flex justify-center">
+            <a
+              href="https://api.whatsapp.com/send/?phone=5531991297619&text&type=phone_number&app_absent=0"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Fale com a gente no WhatsApp"
+              className="w-full xs:w-auto min-h-[46px] px-6 py-2.5 gold-gradient hover:opacity-95 text-[#2A0F23] font-bold text-sm rounded-full shadow-[0_4px_16px_rgba(212,175,55,0.35)] flex items-center justify-center gap-2 border border-[#FFF2B2] cursor-pointer no-underline active:scale-95 transition-all"
+            >
+              <MessageCircle className="w-4 h-4 text-[#2A0F23] shrink-0 fill-[#2A0F23]/20" />
+              <span>Falar no WhatsApp</span>
+              <ExternalLink className="w-3.5 h-3.5 text-[#2A0F23]/70 shrink-0 ml-0.5" />
+            </a>
           </div>
         </div>
       </section>
