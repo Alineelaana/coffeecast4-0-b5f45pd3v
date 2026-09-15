@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, X, Lock, ShieldCheck, Sparkles } from 'lucide-react'
-import { CoffeeCastBrand } from './CoffeeCastLogo'
+import headerLogoSvg from '@/assets/coffeecast-logo-header.svg'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
 
@@ -54,18 +54,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-[#FAF8F5]/95 text-vinho shadow-md backdrop-blur-md border-b-2 border-dourado/60 py-2.5'
-          : 'bg-gradient-to-b from-[#200918]/80 via-[#200918]/40 to-transparent text-white py-3'
+          ? 'bg-vinho-dark/95 text-marfim shadow-lg backdrop-blur-md border-b border-dourado/40 py-2.5'
+          : 'bg-gradient-to-b from-[#36142d]/85 via-[#36142d]/45 to-transparent text-white py-3.5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4">
-          {/* Logo Brand */}
-          <Link to="/" className="group flex items-center gap-3">
-            <CoffeeCastBrand
-              variant={scrolled ? 'dark' : 'gold'}
-              iconSize="w-9 h-9 md:w-10 md:h-10"
-              showTagline={false}
+          {/* Logo Brand recolorida do cabeçalho público (SVG: xícara dourada + escrito 'CoffeeCast' em branco + '4.0' em dourado) */}
+          <Link
+            to="/"
+            className="group flex items-center transition-transform hover:opacity-95 focus:outline-none"
+            aria-label="CoffeeCast 4.0 - Página Inicial"
+          >
+            <img
+              src={headerLogoSvg}
+              alt="CoffeeCast 4.0"
+              className="h-9 sm:h-10 md:h-11 w-auto object-contain transition-all duration-200 group-hover:scale-[1.02]"
             />
           </Link>
 
@@ -76,11 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
                 key={link.label}
                 href={location.pathname === '/' ? link.href : `/${link.href}`}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className={`text-sm font-medium transition-colors hover:text-dourado relative py-1 ${
-                  scrolled
-                    ? 'text-vinho/90 hover:text-dourado-dark'
-                    : 'text-marfim/90 hover:text-dourado-light'
-                }`}
+                className="text-sm font-medium transition-colors text-marfim/90 hover:text-dourado relative py-1"
               >
                 {link.label}
               </a>
@@ -91,11 +91,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
           <div className="hidden sm:flex items-center gap-2.5">
             <button
               onClick={onOpenMembersModal}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border ${
-                scrolled
-                  ? 'border-vinho/20 text-vinho hover:bg-vinho/5'
-                  : 'border-white/20 text-white hover:bg-white/10'
-              }`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/40 text-marfim hover:bg-vinho/60 hover:border-dourado"
             >
               <Lock className="w-3.5 h-3.5 text-dourado" />
               Área de Membros
@@ -115,12 +111,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
               <Link to="/login">
                 <Button
                   size="sm"
-                  variant={scrolled ? 'default' : 'outline'}
-                  className={`text-xs rounded-full px-3.5 font-medium transition-all ${
-                    scrolled
-                      ? 'bg-vinho hover:bg-vinho-light text-white'
-                      : 'border-dourado/60 text-dourado hover:bg-dourado/10'
-                  }`}
+                  variant="outline"
+                  className="text-xs rounded-full px-3.5 font-medium transition-all border-dourado/60 text-dourado hover:bg-dourado/15 bg-transparent"
                 >
                   <Sparkles className="w-3.5 h-3.5 mr-1 text-dourado" />
                   Administração
@@ -133,9 +125,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
           <div className="flex lg:hidden items-center gap-2">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`p-2 rounded-lg transition-colors ${
-                scrolled ? 'text-vinho hover:bg-vinho/10' : 'text-white hover:bg-white/10'
-              }`}
+              className="p-2 rounded-lg transition-colors text-marfim hover:bg-vinho/60"
               aria-label="Abrir menu de navegação"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -146,7 +136,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-vinho border-b-2 border-dourado text-white px-6 py-6 shadow-2xl animate-fade-in-down">
+        <div className="lg:hidden bg-vinho-dark border-b-2 border-dourado/60 text-marfim px-6 py-6 shadow-2xl animate-fade-in-down">
           <div className="flex flex-col space-y-4">
             {navLinks.map((link) => (
               <a
