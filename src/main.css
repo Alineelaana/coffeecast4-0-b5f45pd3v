@@ -1,0 +1,212 @@
+/* Global styles - Theme, font, utilities, animations and global components */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Inter:ital,wght@0,300..800;1,300..800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Identidade CoffeeCast 4.0: Vinho, Dourado, Rosé, Marfim */
+    --background: 40 33% 98%; /* Marfim #FAF8F5 */
+    --foreground: 312 43% 18%; /* Vinho profundo #431b38 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 312 43% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 312 43% 18%;
+
+    /* Vinho oficial #4B1E3F */
+    --primary: 316 43% 18%;
+    --primary-foreground: 43 55% 96%;
+
+    /* Rosé suave #E8C5C8 / Dourado #D4AF37 */
+    --secondary: 40 30% 93%;
+    --secondary-foreground: 316 43% 18%;
+
+    --muted: 40 25% 94%;
+    --muted-foreground: 316 20% 45%;
+
+    --accent: 43 65% 55%; /* Dourado */
+    --accent-foreground: 316 45% 15%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 20% 88%;
+    --input: 40 20% 88%;
+    --ring: 43 65% 55%;
+
+    --radius: 0.75rem;
+
+    /* Admin Sidebar - Vinho Nobre */
+    --sidebar-background: 316 45% 15%; /* #3F1735 */
+    --sidebar-foreground: 43 45% 95%;
+    --sidebar-primary: 43 65% 55%; /* Dourado */
+    --sidebar-primary-foreground: 316 45% 15%;
+    --sidebar-accent: 316 38% 22%;
+    --sidebar-accent-foreground: 43 65% 90%;
+    --sidebar-border: 316 30% 25%;
+    --sidebar-ring: 43 65% 55%;
+
+    --chart-1: 316 43% 25%;
+    --chart-2: 43 65% 52%;
+    --chart-3: 350 45% 65%;
+    --chart-4: 142 55% 40%;
+    --chart-5: 25 80% 55%;
+  }
+
+  .dark {
+    --background: 316 45% 12%;
+    --foreground: 43 45% 96%;
+
+    --card: 316 40% 16%;
+    --card-foreground: 43 45% 96%;
+
+    --popover: 316 40% 16%;
+    --popover-foreground: 43 45% 96%;
+
+    --primary: 43 65% 55%;
+    --primary-foreground: 316 45% 12%;
+
+    --secondary: 316 35% 22%;
+    --secondary-foreground: 43 45% 96%;
+
+    --muted: 316 30% 22%;
+    --muted-foreground: 40 20% 70%;
+
+    --accent: 43 65% 55%;
+    --accent-foreground: 316 45% 12%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 316 30% 25%;
+    --input: 316 30% 25%;
+    --ring: 43 65% 55%;
+  }
+
+  /* Font styling defaults */
+  body {
+    font-family:
+      'Plus Jakarta Sans',
+      'Inter',
+      -apple-system,
+      BlinkMacSystemFont,
+      sans-serif;
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--background));
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-serif {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  /* NEVER REMOVE THIS */
+  section[aria-label='Notifications alt+T'] {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
+
+@layer utilities {
+  .bg-vinho {
+    background-color: #4b1e3f;
+  }
+  .bg-vinho-dark {
+    background-color: #36142d;
+  }
+  .bg-vinho-light {
+    background-color: #5f2650;
+  }
+  .text-vinho {
+    color: #4b1e3f;
+  }
+  .border-vinho {
+    border-color: #4b1e3f;
+  }
+
+  .text-dourado {
+    color: #d4af37;
+  }
+  .bg-dourado {
+    background-color: #d4af37;
+  }
+  .border-dourado {
+    border-color: #d4af37;
+  }
+
+  .text-rose-brand {
+    color: #c88e9b;
+  }
+  .bg-rose-brand {
+    background-color: #f8edef;
+  }
+  .border-rose-brand {
+    border-color: #e8c5c8;
+  }
+
+  .bg-marfim {
+    background-color: #faf8f5;
+  }
+  .text-marfim {
+    color: #faf8f5;
+  }
+
+  .gold-gradient {
+    background: linear-gradient(135deg, #f3e5ab 0%, #d4af37 50%, #aa7c11 100%);
+  }
+
+  .gold-text-gradient {
+    background: linear-gradient(135deg, #ffe89e 0%, #d4af37 50%, #b8860b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .vinho-gradient {
+    background: linear-gradient(135deg, #4b1e3f 0%, #2a0f23 100%);
+  }
+
+  .hero-gradient {
+    background:
+      radial-gradient(circle at top right, rgba(212, 175, 55, 0.15), transparent 40%),
+      radial-gradient(circle at bottom left, rgba(200, 142, 155, 0.12), transparent 45%),
+      linear-gradient(180deg, #38142e 0%, #4b1e3f 50%, #290d22 100%);
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes pulseSlow {
+    0%,
+    100% {
+      opacity: 0.9;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.03);
+    }
+  }
+
+  .animate-float {
+    animation: float 5s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulseSlow 4s ease-in-out infinite;
+  }
+}

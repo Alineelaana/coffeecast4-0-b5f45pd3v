@@ -1,0 +1,673 @@
+{
+  "generatedAt": "2026-09-15T01:49:27.581Z",
+  "collections": [
+    {
+      "name": "users",
+      "type": "auth",
+      "apiRules": {
+        "list": "@request.auth.id != \"\" && (id = @request.auth.id || @request.auth.role = \"master\")",
+        "view": "@request.auth.id != \"\" && (id = @request.auth.id || @request.auth.role = \"master\")",
+        "create": "@request.auth.role = \"master\"",
+        "update": "@request.auth.id != \"\" && (id = @request.auth.id || @request.auth.role = \"master\")",
+        "delete": "@request.auth.role = \"master\" && email != \"alineelaana@gmail.com\""
+      },
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "avatar",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "role",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["master", "ouro", "prata"]
+        },
+        {
+          "name": "ativo",
+          "type": "bool",
+          "required": false,
+          "system": false
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX `idx_tokenKey__pb_users_auth_` ON `users` (`tokenKey`)",
+        "CREATE UNIQUE INDEX `idx_email__pb_users_auth_` ON `users` (`email`) WHERE `email` != ''"
+      ]
+    },
+    {
+      "name": "episodios",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+      },
+      "fields": [
+        {
+          "name": "numero",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "titulo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "youtube_url",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX idx_episodios_numero_unique ON episodios (numero)",
+        "CREATE INDEX idx_episodios_numero ON episodios (numero)"
+      ]
+    },
+    {
+      "name": "integrantes",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+      },
+      "fields": [
+        {
+          "name": "foto",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "biografia",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "ordem",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE INDEX idx_integrantes_ordem ON integrantes (ordem)"]
+    },
+    {
+      "name": "depoimentos",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+      },
+      "fields": [
+        {
+          "name": "foto",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "texto",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "de_nossa_autoridade",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ordem",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE INDEX idx_depoimentos_ordem ON depoimentos (ordem)"]
+    },
+    {
+      "name": "momentos",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+      },
+      "fields": [
+        {
+          "name": "imagem",
+          "type": "file",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "legenda",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ordem",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE INDEX idx_momentos_ordem ON momentos (ordem)"]
+    },
+    {
+      "name": "contatos",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "create": "",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+      },
+      "fields": [
+        {
+          "name": "nome_completo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "idade",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "profissao",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "instagram",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "email",
+          "type": "email",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "telefone",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "whatsapp",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "motivo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "como_nos_conheceu",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["novo", "visualizado", "contatado"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_contatos_created ON contatos (created DESC)",
+        "CREATE INDEX idx_contatos_status ON contatos (status)"
+      ]
+    },
+    {
+      "name": "transacoes",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+      },
+      "fields": [
+        {
+          "name": "descricao",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "tipo",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["gravacao", "edicao", "equipamento", "marketing", "outros"]
+        },
+        {
+          "name": "valor",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "data_vencimento",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "situacao",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["quitado", "em_aberto"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_transacoes_vencimento ON transacoes (data_vencimento)",
+        "CREATE INDEX idx_transacoes_situacao ON transacoes (situacao)",
+        "CREATE INDEX idx_transacoes_tipo ON transacoes (tipo)"
+      ]
+    },
+    {
+      "name": "agenda",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+      },
+      "fields": [
+        {
+          "name": "data_agendamento",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "titulo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "roteiro",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_gravacao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_postagem",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tem_convidado",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "nome_convidado",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "biografia_convidado",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "empresa",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "patrocinado",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "patrocinadores",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "imagens",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE INDEX idx_agenda_gravacao ON agenda (data_gravacao)"]
+    },
+    {
+      "name": "convites",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+      },
+      "fields": [
+        {
+          "name": "foto_convidado",
+          "type": "file",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "logomarca_empresa",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "data_gravacao",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "horario",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "apresentacao",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE INDEX idx_convites_gravacao ON convites (data_gravacao)"]
+    },
+    {
+      "name": "conteudo_site",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+      },
+      "fields": [
+        {
+          "name": "chave",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "valor",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE UNIQUE INDEX idx_conteudo_chave_unique ON conteudo_site (chave)"]
+    },
+    {
+      "name": "politicas",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+      },
+      "fields": [
+        {
+          "name": "slug",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["privacidade", "cookies", "termos"]
+        },
+        {
+          "name": "titulo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "conteudo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE UNIQUE INDEX idx_politicas_slug_unique ON politicas (slug)"]
+    }
+  ]
+}
