@@ -7,7 +7,10 @@
  * navegamos na própria janela / frame atual (window.location.href), garantindo que o vídeo ou
  * link sempre abra para o usuário.
  */
-export function openExternalUrl(url: string, e?: React.MouseEvent | Event): void {
+export function openExternalUrl(
+  url: string,
+  e?: React.SyntheticEvent | Event | React.MouseEvent | React.KeyboardEvent,
+): void {
   if (e && 'preventDefault' in e) {
     e.preventDefault()
   }

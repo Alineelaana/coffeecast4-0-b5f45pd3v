@@ -225,6 +225,16 @@ export default function Index() {
   }, [episodios])
 
   const handleWatchEpisode = (ep: EpisodioRecord) => {
+    // Se o episódio tem link do YouTube, direciona direto contornando bloqueios de iframe/pop-up
+    const rawUrl = ep.youtube_url?.trim()
+    if (rawUrl) {
+      const normalizedUrl =
+        rawUrl.startsWith('http://') || rawUrl.startsWith('https://') ? rawUrl : `https://${rawUrl}`
+      openExternalUrl(normalizedUrl)
+      return
+    }
+
+    // Fallback: se por algum motivo não houver URL cadastrada, abre o modal de informação
     setSelectedEpisode(ep)
     setEpisodeModalOpen(true)
   }
@@ -441,7 +451,7 @@ export default function Index() {
           />
 
           {/* Carrossel lateral compacto com botões de navegação e suporte a arraste */}
-          <EpisodesCarousel episodios={episodios} onSelectEpisode={handleWatchEpisode} />
+          <EpisodesCarousel episodios={episodios} />
         </div>
       </section>
 

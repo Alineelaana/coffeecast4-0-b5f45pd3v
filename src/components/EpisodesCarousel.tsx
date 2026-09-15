@@ -1,11 +1,12 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, Play, Youtube, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { openExternalUrl } from '@/lib/openUrl'
 import type { EpisodioRecord } from '@/types/database'
 
 interface EpisodesCarouselProps {
   episodios: EpisodioRecord[]
-  onSelectEpisode: (ep: EpisodioRecord) => void
+  onSelectEpisode?: (ep: EpisodioRecord) => void
 }
 
 export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
@@ -142,6 +143,26 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
     }, 120)
   }
 
+  // Abre o link do YouTube diretamente contornando bloqueios de iframe/pop-up
+  const openEpisodeDirectly = (ep: EpisodioRecord, e?: React.MouseEvent | React.KeyboardEvent) => {
+    const rawUrl = ep.youtube_url?.trim()
+    if (!rawUrl) {
+      // Caso não tenha URL cadastrada, ainda permite callback alternativo se fornecido
+      if (onSelectEpisode) {
+        onSelectEpisode(ep)
+      }
+      return
+    }
+
+    const normalizedUrl =
+      rawUrl.startsWith('http://') || rawUrl.startsWith('https://') ? rawUrl : `https://${rawUrl}`
+
+    openExternalUrl(normalizedUrl, e?.nativeEvent || e)
+    if (onSelectEpisode) {
+      onSelectEpisode(ep)
+    }
+  }
+
   // Handler seguro de clique para card ou botão
   const handleEpisodeClick = (ep: EpisodioRecord, e: React.MouseEvent) => {
     // Se o usuário estava arrastando o carrossel, ignora o clique
@@ -154,7 +175,7 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
       e.stopPropagation()
       return
     }
-    onSelectEpisode(ep)
+    openEpisodeDirectly(ep, e)
   }
 
   if (!episodios || episodios.length === 0) {
@@ -228,14 +249,16 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
             key={ep.id}
             role="button"
             tabIndex={0}
-            onClick={(e) => handleEpisodeClick(ep, e)}
+            onClick={(e) => {
+              handleEpisodeClick(ep, e)
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                onSelectEpisode(ep)
+                openEpisodeDirectly(ep, e)
               }
             }}
-            aria-label={`Episódio #${ep.numero}: ${ep.titulo}. Clique para assistir no YouTube.`}
+            aria-label={`Episódio #${ep.numero}: ${ep.titulo}. Clique para assistir diretamente no YouTube.`}
             className="flex-shrink-0 w-[240px] xs:w-[260px] sm:w-[290px] md:w-[320px] snap-start bg-gradient-to-b from-vinho-dark via-vinho to-vinho-dark border border-dourado/35 hover:border-dourado rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado"
           >
             {/* Brilho decorativo no canto superior do card */}
@@ -269,6 +292,7 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
               <Button
                 type="button"
                 onClick={(e) => {
+                  // Previne bolha para evitar clique duplo com o container do card
                   e.stopPropagation()
                   handleEpisodeClick(ep, e)
                 }}
