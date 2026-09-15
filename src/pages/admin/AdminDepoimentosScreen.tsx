@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Edit2, Trash2, Video, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function AdminDepoimentosScreen() {
@@ -32,6 +32,7 @@ export default function AdminDepoimentosScreen() {
   const [deNossaAutoridade, setDeNossaAutoridade] = useState(false)
   const [ordem, setOrdem] = useState('1')
   const [instagram, setInstagram] = useState('')
+  const [linkEpisodio, setLinkEpisodio] = useState('')
   const [fotoFile, setFotoFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -61,6 +62,7 @@ export default function AdminDepoimentosScreen() {
     setDeNossaAutoridade(false)
     setOrdem(String(depoimentos.length + 1))
     setInstagram('')
+    setLinkEpisodio('')
     setFotoFile(null)
     setModalOpen(true)
   }
@@ -72,6 +74,7 @@ export default function AdminDepoimentosScreen() {
     setDeNossaAutoridade(Boolean(item.de_nossa_autoridade))
     setOrdem(String(item.ordem || 1))
     setInstagram(item.instagram || '')
+    setLinkEpisodio(item.link_episodio || '')
     setFotoFile(null)
     setModalOpen(true)
   }
@@ -91,6 +94,7 @@ export default function AdminDepoimentosScreen() {
       formData.append('de_nossa_autoridade', String(deNossaAutoridade))
       formData.append('ordem', ordem)
       formData.append('instagram', cleanedInsta)
+      formData.append('link_episodio', linkEpisodio.trim())
       if (fotoFile) {
         formData.append('foto', fotoFile)
       }
@@ -194,6 +198,12 @@ export default function AdminDepoimentosScreen() {
                           {item.instagram.startsWith('@') ? item.instagram : `@${item.instagram}`}
                         </p>
                       )}
+                      {item.link_episodio && (
+                        <p className="text-[11px] text-vinho/70 flex items-center gap-1 mt-0.5">
+                          <Video className="w-3 h-3 text-red-600 shrink-0" />
+                          <span>Episódio vinculado</span>
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -257,6 +267,7 @@ export default function AdminDepoimentosScreen() {
                 <TableHead className="w-20 font-bold text-vinho text-xs">Foto</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Nome</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Instagram (@)</TableHead>
+                <TableHead className="font-bold text-vinho text-xs">Episódio (YouTube)</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Tipo de Depoimento</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Depoimento</TableHead>
                 <TableHead className="w-28 text-right font-bold text-vinho text-xs">
@@ -293,6 +304,23 @@ export default function AdminDepoimentosScreen() {
                         </span>
                       ) : (
                         <span className="text-vinho/40 italic">Não informado</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs text-vinho/80">
+                      {item.link_episodio ? (
+                        <a
+                          href={item.link_episodio}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-medium text-vinho hover:text-dourado-dark hover:underline bg-vinho/5 px-2 py-0.5 rounded border border-vinho/10"
+                          title={item.link_episodio}
+                        >
+                          <Video className="w-3 h-3 text-red-600 shrink-0" />
+                          <span>Assistir</span>
+                          <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                        </a>
+                      ) : (
+                        <span className="text-vinho/40 italic">Não vinculado</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -387,6 +415,25 @@ export default function AdminDepoimentosScreen() {
               <p className="text-[10px] text-vinho/60">
                 Aceita @usuario, usuario ou URL completa. Será exibido no card do convidado se
                 informado.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="dep-link-episodio" className="text-xs font-semibold text-vinho">
+                Link do episódio (YouTube){' '}
+                <span className="text-vinho/60 font-normal">(opcional)</span>
+              </Label>
+              <Input
+                id="dep-link-episodio"
+                type="url"
+                placeholder="Ex.: https://youtu.be/... ou https://www.youtube.com/watch?v=..."
+                value={linkEpisodio}
+                onChange={(e) => setLinkEpisodio(e.target.value)}
+                className="bg-white border-vinho/20 text-sm"
+              />
+              <p className="text-[10px] text-vinho/60">
+                Opcional. Se informado, exibirá o botão "Clique e assista ao episódio completo" no
+                card do depoimento na página inicial.
               </p>
             </div>
 

@@ -40,6 +40,7 @@ export interface DepoimentoRecord {
   ordem?: number
   foto?: string
   instagram?: string
+  link_episodio?: string
   created: string
   updated: string
 }
