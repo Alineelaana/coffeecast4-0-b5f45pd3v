@@ -5,13 +5,15 @@ import { useAuth } from '@/context/AuthContext'
 interface ProtectedRouteProps {
   children: React.ReactNode
   requireMaster?: boolean
+  requireMembersOnly?: boolean
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireMaster = false,
+  requireMembersOnly = false,
 }) => {
-  const { user, isLoading, isAdmin, isMaster } = useAuth()
+  const { user, isLoading, isAdmin, isMaster, role } = useAuth()
   const location = useLocation()
 
   if (isLoading) {
@@ -23,10 +25,38 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     )
   }
 
-  if (!user || !isAdmin) {
+  // Usuário não autenticado
+  if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
+  // Se a rota for a Área de Membros (/membros), qualquer usuário autenticado (master, gerencial, ouro, prata) pode acessar
+  if (requireMembersOnly) {
+    return <>{children}</>
+  }
+
+  // Se o usuário tentar acessar o painel admin (/admin), apenas Master e Gerencial podem.
+  // Usuários Ouro e Prata só têm permissão para a Área de Membros.
+  if (role === 'ouro' || role === 'prata') {
+    return (
+      <Navigate
+        to="/membros"
+        state={{
+          blockedAdmin: true,
+          message:
+            'Atenção: Os usuários das categorias Ouro e Prata possuem acesso exclusivo à Área de Membros.',
+        }}
+        replace
+      />
+    )
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  // Se a rota exige Master (ex.: Editar Site / Conteúdo, Integrantes, Depoimentos, Nossos Momentos, Políticas e Usuários):
+  // O usuário Gerencial é redirecionado para a Visão Geral (/admin) ou outra área permitida com aviso
   if (requireMaster && !isMaster) {
     return <Navigate to="/admin" replace />
   }

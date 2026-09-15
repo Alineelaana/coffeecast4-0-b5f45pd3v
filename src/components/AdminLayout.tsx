@@ -19,6 +19,7 @@ import {
   X,
   ExternalLink,
   Shield,
+  ShieldCheck,
   UserCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -35,73 +36,102 @@ export default function AdminLayout() {
     navigate('/login')
   }
 
+  // Itens do menu com controle estrito de permissão:
+  // - Master: Acesso total (vê e acessa todos os itens)
+  // - Gerencial: Acesso a tudo EXCETO: Editar Site (/admin/conteudo), Integrantes (/admin/integrantes),
+  //   Depoimentos (/admin/depoimentos), Nossos Momentos (/admin/momentos), Políticas do Site (/admin/politicas)
+  //   e Usuários & Permissões (/admin/usuarios).
   const menuItems = [
     {
       label: 'Visão Geral',
       path: '/admin',
       icon: LayoutDashboard,
       exact: true,
+      masterOnly: false,
     },
-    {
-      label: 'Editar Site',
-      path: '/admin/conteudo',
-      icon: FileText,
-      badge: 'Geral',
-    },
+    ...(isMaster
+      ? [
+          {
+            label: 'Editar Site',
+            path: '/admin/conteudo',
+            icon: FileText,
+            badge: 'Master',
+            masterOnly: true,
+          },
+        ]
+      : []),
     {
       label: 'Episódios',
       path: '/admin/episodios',
       icon: Tv,
+      masterOnly: false,
     },
-    {
-      label: 'Integrantes',
-      path: '/admin/integrantes',
-      icon: Users2,
-    },
-    {
-      label: 'Depoimentos',
-      path: '/admin/depoimentos',
-      icon: MessageSquareQuote,
-    },
-    {
-      label: 'Nossos Momentos',
-      path: '/admin/momentos',
-      icon: Camera,
-    },
+    ...(isMaster
+      ? [
+          {
+            label: 'Integrantes',
+            path: '/admin/integrantes',
+            icon: Users2,
+            badge: 'Master',
+            masterOnly: true,
+          },
+          {
+            label: 'Depoimentos',
+            path: '/admin/depoimentos',
+            icon: MessageSquareQuote,
+            badge: 'Master',
+            masterOnly: true,
+          },
+          {
+            label: 'Nossos Momentos',
+            path: '/admin/momentos',
+            icon: Camera,
+            badge: 'Master',
+            masterOnly: true,
+          },
+        ]
+      : []),
     {
       label: 'Contatos & Leads',
       path: '/admin/contatos',
       icon: Inbox,
+      masterOnly: false,
     },
     {
       label: 'Financeiro',
       path: '/admin/financeiro',
       icon: DollarSign,
       highlight: true,
+      masterOnly: false,
     },
     {
       label: 'Agenda de Gravação',
       path: '/admin/agenda',
       icon: CalendarDays,
+      masterOnly: false,
     },
     {
       label: 'Gerador de Convites',
       path: '/admin/convites',
       icon: FileCheck2,
       badge: 'PDF',
-    },
-    {
-      label: 'Políticas do Site',
-      path: '/admin/politicas',
-      icon: ShieldAlert,
+      masterOnly: false,
     },
     ...(isMaster
       ? [
+          {
+            label: 'Políticas do Site',
+            path: '/admin/politicas',
+            icon: ShieldAlert,
+            badge: 'Master',
+            masterOnly: true,
+          },
           {
             label: 'Usuários & Permissões',
             path: '/admin/usuarios',
             icon: UserCheck,
             badge: 'Master',
+            masterOnly: true,
           },
         ]
       : []),
@@ -116,10 +146,12 @@ export default function AdminLayout() {
 
   const roleLabel =
     role === 'master'
-      ? 'Master / Superadministrador'
-      : role === 'ouro'
-        ? 'Nível Ouro'
-        : 'Nível Prata'
+      ? 'Master (Superadministrador)'
+      : role === 'gerencial'
+        ? 'Categoria Gerencial'
+        : role === 'ouro'
+          ? 'Categoria Ouro'
+          : 'Categoria Prata'
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] flex flex-col md:flex-row font-sans">
@@ -197,25 +229,36 @@ export default function AdminLayout() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
-            <a
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] text-marfim/70 hover:text-dourado flex items-center gap-1 transition-colors"
+          {/* Link para Área de Membros + Site Público */}
+          <div className="space-y-1.5 pt-2 border-t border-white/10">
+            <NavLink
+              to="/membros"
+              className="text-[11px] text-dourado-light hover:text-white flex items-center gap-1.5 transition-colors font-medium py-1"
             >
-              <ExternalLink className="w-3 h-3" />
-              Ver Site Público
-            </a>
+              <ShieldCheck className="w-3.5 h-3.5 text-dourado" />
+              Acessar Área de Membros
+            </NavLink>
 
-            <button
-              onClick={handleLogout}
-              className="text-[11px] text-red-300 hover:text-red-200 flex items-center gap-1 transition-colors font-medium p-1 rounded"
-              title="Encerrar sessão"
-            >
-              <LogOut className="w-3 h-3" />
-              Sair
-            </button>
+            <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/5">
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-marfim/70 hover:text-dourado flex items-center gap-1 transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Site Público
+              </a>
+
+              <button
+                onClick={handleLogout}
+                className="text-[11px] text-red-300 hover:text-red-200 flex items-center gap-1 transition-colors font-medium p-1 rounded"
+                title="Encerrar sessão"
+              >
+                <LogOut className="w-3 h-3" />
+                Sair
+              </button>
+            </div>
           </div>
         </div>
       </aside>
@@ -309,7 +352,15 @@ export default function AdminLayout() {
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <NavLink
+              to="/membros"
+              className="text-xs text-vinho hover:text-dourado-dark flex items-center gap-1.5 transition-colors font-semibold bg-dourado/15 border border-dourado/30 px-3 py-1.5 rounded-full"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-dourado-dark" />
+              Área de Membros
+            </NavLink>
+
             <a
               href="/"
               target="_blank"

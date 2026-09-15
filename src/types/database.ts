@@ -1,9 +1,11 @@
+export type UserRole = 'master' | 'gerencial' | 'ouro' | 'prata'
+
 export interface UserRecord {
   id: string
   email: string
   name?: string
   avatar?: string
-  role: 'master' | 'ouro' | 'prata'
+  role: UserRole
   ativo: boolean
   created: string
   updated: string

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import pb from '@/lib/pocketbase/client'
 import { useAuth } from '@/context/AuthContext'
-import type { UserRecord } from '@/types/database'
+import type { UserRecord, UserRole } from '@/types/database'
 import {
   Table,
   TableBody,
@@ -34,7 +34,7 @@ export default function AdminUsuariosScreen() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState<'master' | 'ouro' | 'prata'>('prata')
+  const [role, setRole] = useState<UserRole>('prata')
   const [saving, setSaving] = useState(false)
 
   const loadUsers = async () => {
@@ -95,7 +95,7 @@ export default function AdminUsuariosScreen() {
     }
   }
 
-  const handleUpdateRole = async (userId: string, newRole: 'master' | 'ouro' | 'prata') => {
+  const handleUpdateRole = async (userId: string, newRole: UserRole) => {
     try {
       await pb.collection('users').update(userId, { role: newRole })
       toast.success(`Nível de permissão atualizado para ${newRole.toUpperCase()}!`)
@@ -130,8 +130,8 @@ export default function AdminUsuariosScreen() {
         <div>
           <h2 className="font-serif text-2xl font-bold text-vinho">Usuários & Permissões</h2>
           <p className="text-xs text-vinho/70">
-            Aline Lana (Superadministrador Master) pode criar e liberar acessos nos níveis Prata e
-            Ouro.
+            Aline Lana (Superadministrador Master) gerencia os acessos para as categorias Gerencial,
+            Ouro, Prata e Master.
           </p>
         </div>
 
@@ -185,14 +185,13 @@ export default function AdminUsuariosScreen() {
                       ) : (
                         <Select
                           value={u.role}
-                          onValueChange={(val: 'master' | 'ouro' | 'prata') =>
-                            handleUpdateRole(u.id, val)
-                          }
+                          onValueChange={(val: UserRole) => handleUpdateRole(u.id, val)}
                         >
-                          <SelectTrigger className="h-7 w-28 text-[11px] font-semibold border-vinho/15">
+                          <SelectTrigger className="h-7 w-32 text-[11px] font-semibold border-vinho/15">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="gerencial">Gerencial</SelectItem>
                             <SelectItem value="ouro">Ouro</SelectItem>
                             <SelectItem value="prata">Prata</SelectItem>
                             <SelectItem value="master">Master</SelectItem>
@@ -284,19 +283,27 @@ export default function AdminUsuariosScreen() {
               <Label className="text-xs font-semibold text-vinho">
                 Nível de Permissão Inicial *
               </Label>
-              <Select
-                value={role}
-                onValueChange={(val: 'master' | 'ouro' | 'prata') => setRole(val)}
-              >
+              <Select value={role} onValueChange={(val: UserRole) => setRole(val)}>
                 <SelectTrigger className="bg-white border-vinho/20 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="prata">Nível Prata (Operacional)</SelectItem>
-                  <SelectItem value="ouro">Nível Ouro (Gestão)</SelectItem>
-                  <SelectItem value="master">Nível Master (Superadministrador)</SelectItem>
+                  <SelectItem value="gerencial">
+                    Categoria Gerencial (Membros + Contatos, Financeiro, Agenda e Convites)
+                  </SelectItem>
+                  <SelectItem value="ouro">Categoria Ouro (Apenas Área de Membros)</SelectItem>
+                  <SelectItem value="prata">Categoria Prata (Apenas Área de Membros)</SelectItem>
+                  <SelectItem value="master">
+                    Categoria Master (Superadministrador - Acesso Total)
+                  </SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-[10px] text-vinho/65">
+                • <strong>Master:</strong> Acesso total ao site, administração e membros.
+                <br />• <strong>Gerencial:</strong> Acesso a membros e admin (exceto Editar Site e
+                Usuários).
+                <br />• <strong>Ouro & Prata:</strong> Acesso restrito à Área de Membros.
+              </p>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">

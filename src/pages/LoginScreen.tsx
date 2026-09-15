@@ -1,11 +1,12 @@
-import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { CoffeeCastLogo } from '@/components/CoffeeCastLogo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Eye, EyeOff, Lock, ArrowLeft, ShieldCheck, Sparkles } from 'lucide-react'
+import { Eye, EyeOff, Lock, ArrowLeft, ShieldCheck, Sparkles, AlertTriangle } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
@@ -13,9 +14,17 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [infoMessage, setInfoMessage] = useState<string | null>(null)
 
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.state && typeof location.state === 'object' && 'message' in location.state) {
+      setInfoMessage(String((location.state as { message: string }).message))
+    }
+  }, [location.state])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,7 +35,17 @@ export default function LoginScreen() {
     setLoading(false)
 
     if (res.success) {
-      navigate('/admin')
+      const userRole = res.role
+      // Redirecionamento condicional de acordo com a categoria:
+      // - Ouro e Prata: redirecionados diretamente para a Área de Membros
+      // - Master e Gerencial: redirecionados para o Painel Admin
+      if (userRole === 'ouro' || userRole === 'prata') {
+        toast.info('Login efetuado com sucesso! Redirecionando para a Área de Membros...')
+        navigate('/membros')
+      } else {
+        toast.success('Bem-vindo(a) ao Painel Administrativo!')
+        navigate('/admin')
+      }
     } else {
       setError(res.error || 'Credenciais inválidas. Verifique os dados informados.')
     }
@@ -67,6 +86,13 @@ export default function LoginScreen() {
             Acesso restrito para anfitriãs, administradoras e equipe técnica.
           </p>
         </div>
+
+        {infoMessage && (
+          <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+            <span>{infoMessage}</span>
+          </div>
+        )}
 
         {error && (
           <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs text-center font-medium">

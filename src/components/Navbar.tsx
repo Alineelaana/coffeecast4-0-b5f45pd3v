@@ -85,13 +85,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
 
           {/* Action Buttons */}
           <div className="hidden sm:flex items-center gap-2.5">
-            <button
-              onClick={onOpenMembersModal}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/40 text-marfim hover:bg-vinho/60 hover:border-dourado"
-            >
-              <Lock className="w-3.5 h-3.5 text-dourado" />
-              Área de Membros
-            </button>
+            {user ? (
+              <Link
+                to="/membros"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/50 text-dourado-light bg-vinho/80 hover:bg-vinho hover:border-dourado"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-dourado" />
+                Área de Membros
+              </Link>
+            ) : (
+              <button
+                onClick={onOpenMembersModal}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/40 text-marfim hover:bg-vinho/60 hover:border-dourado"
+              >
+                <Lock className="w-3.5 h-3.5 text-dourado" />
+                Área de Membros
+              </button>
+            )}
 
             {isAdmin ? (
               <Link to="/admin">
@@ -146,25 +156,40 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
             ))}
 
             <div className="pt-4 flex flex-col gap-2.5">
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false)
-                  onOpenMembersModal?.()
-                }}
-                className="w-full py-2.5 px-4 rounded-lg bg-vinho-light/60 border border-white/20 text-marfim text-sm font-semibold flex items-center justify-center gap-2"
-              >
-                <Lock className="w-4 h-4 text-dourado" />
-                Área de Membros
-              </button>
+              {user ? (
+                <Link
+                  to="/membros"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full py-2.5 px-4 rounded-lg bg-vinho-light/60 border border-dourado/30 text-dourado-light text-sm font-semibold flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4 text-dourado" />
+                  Área de Membros
+                </Link>
+              ) : (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    onOpenMembersModal?.()
+                  }}
+                  className="w-full py-2.5 px-4 rounded-lg bg-vinho-light/60 border border-white/20 text-marfim text-sm font-semibold flex items-center justify-center gap-2"
+                >
+                  <Lock className="w-4 h-4 text-dourado" />
+                  Área de Membros
+                </button>
+              )}
 
               <Link
-                to={user ? '/admin' : '/login'}
+                to={isAdmin ? '/admin' : user ? '/membros' : '/login'}
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full"
               >
                 <Button className="w-full bg-dourado hover:bg-dourado-dark text-vinho font-bold text-sm rounded-lg">
                   <ShieldCheck className="w-4 h-4 mr-1.5" />
-                  {user ? 'Acessar Painel Admin' : 'Acesso Administrativo'}
+                  {isAdmin
+                    ? 'Acessar Painel Admin'
+                    : user
+                      ? 'Área de Membros'
+                      : 'Acesso Administrativo'}
                 </Button>
               </Link>
             </div>

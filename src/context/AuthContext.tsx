@@ -1,14 +1,19 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import pb from '@/lib/pocketbase/client'
-import type { UserRecord } from '@/types/database'
+import type { UserRecord, UserRole } from '@/types/database'
 
 interface AuthContextType {
   user: UserRecord | null
   isLoading: boolean
   isAdmin: boolean
   isMaster: boolean
-  role: 'master' | 'ouro' | 'prata' | null
-  login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>
+  isGerencial: boolean
+  isMembro: boolean
+  role: UserRole | null
+  login: (
+    email: string,
+    pass: string,
+  ) => Promise<{ success: boolean; role?: UserRole; error?: string }>
   logout: () => void
   refreshUser: () => Promise<void>
 }
@@ -27,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: rec.email || '',
       name: (rec as unknown as { name?: string }).name || 'Administrador',
       avatar: (rec as unknown as { avatar?: string }).avatar,
-      role: ((rec as unknown as { role?: string }).role as 'master' | 'ouro' | 'prata') || 'prata',
+      role: ((rec as unknown as { role?: string }).role as UserRole) || 'prata',
       ativo: Boolean((rec as unknown as { ativo?: boolean }).ativo ?? true),
       created: rec.created,
       updated: rec.updated,
@@ -66,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await pb.collection('users').authWithPassword(email.trim(), pass)
       const currentUser = mapAuthRecord()
       setUser(currentUser)
-      return { success: true }
+      return { success: true, role: currentUser?.role }
     } catch (err: unknown) {
       const errorMessage =
         err && typeof err === 'object' && 'message' in err
@@ -82,10 +87,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const role = user?.role || null
-  const isAdmin = Boolean(
-    user && user.ativo && (role === 'master' || role === 'ouro' || role === 'prata'),
-  )
+
+  // Regras de acesso por categoria:
+  // - Master: Superadministrador com acesso total (admin + membros)
+  // - Gerencial: Acesso a membros e painel admin (com restrições a Editar Site e Usuários)
+  // - Ouro e Prata: Apenas Área de Membros (não podem acessar o painel admin)
   const isMaster = Boolean(user && user.ativo && role === 'master')
+  const isGerencial = Boolean(user && user.ativo && role === 'gerencial')
+  const isMembro = Boolean(
+    user &&
+    user.ativo &&
+    (role === 'ouro' || role === 'prata' || role === 'gerencial' || role === 'master'),
+  )
+  const isAdmin = Boolean(user && user.ativo && (role === 'master' || role === 'gerencial'))
 
   return (
     <AuthContext.Provider
@@ -94,6 +108,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         isAdmin,
         isMaster,
+        isGerencial,
+        isMembro,
         role,
         login,
         logout,

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T03:44:54.470Z",
+  "generatedAt": "2026-09-15T04:03:01.613Z",
   "collections": [
     {
       "name": "users",
@@ -43,7 +43,7 @@
           "type": "select",
           "required": true,
           "system": false,
-          "selectValues": ["master", "ouro", "prata"]
+          "selectValues": ["master", "gerencial", "ouro", "prata"]
         },
         {
           "name": "ativo",
@@ -63,9 +63,9 @@
       "apiRules": {
         "list": "",
         "view": "",
-        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+        "create": "@request.auth.role = \"master\"",
+        "update": "@request.auth.role = \"master\"",
+        "delete": "@request.auth.role = \"master\""
       },
       "fields": [
         {
@@ -112,9 +112,9 @@
       "apiRules": {
         "list": "",
         "view": "",
-        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+        "create": "@request.auth.role = \"master\"",
+        "update": "@request.auth.role = \"master\"",
+        "delete": "@request.auth.role = \"master\""
       },
       "fields": [
         {
@@ -170,9 +170,9 @@
       "apiRules": {
         "list": "",
         "view": "",
-        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+        "create": "@request.auth.role = \"master\"",
+        "update": "@request.auth.role = \"master\"",
+        "delete": "@request.auth.role = \"master\""
       },
       "fields": [
         {
@@ -228,9 +228,9 @@
       "apiRules": {
         "list": "",
         "view": "",
-        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+        "create": "@request.auth.role = \"master\"",
+        "update": "@request.auth.role = \"master\"",
+        "delete": "@request.auth.role = \"master\""
       },
       "fields": [
         {
@@ -272,11 +272,11 @@
       "name": "contatos",
       "type": "base",
       "apiRules": {
-        "list": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "view": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
         "create": "",
-        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\""
       },
       "fields": [
         {
@@ -364,11 +364,11 @@
       "name": "transacoes",
       "type": "base",
       "apiRules": {
-        "list": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "view": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\""
       },
       "fields": [
         {
@@ -428,11 +428,11 @@
       "name": "agenda",
       "type": "base",
       "apiRules": {
-        "list": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "view": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\""
       },
       "fields": [
         {
@@ -528,11 +528,11 @@
       "name": "convites",
       "type": "base",
       "apiRules": {
-        "list": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "view": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\""
       },
       "fields": [
         {
@@ -601,9 +601,9 @@
       "apiRules": {
         "list": "",
         "view": "",
-        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+        "create": "@request.auth.role = \"master\"",
+        "update": "@request.auth.role = \"master\"",
+        "delete": "@request.auth.role = \"master\""
       },
       "fields": [
         {
@@ -641,9 +641,9 @@
       "apiRules": {
         "list": "",
         "view": "",
-        "create": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "update": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\"",
-        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\""
+        "create": "@request.auth.role = \"master\"",
+        "update": "@request.auth.role = \"master\"",
+        "delete": "@request.auth.role = \"master\""
       },
       "fields": [
         {
