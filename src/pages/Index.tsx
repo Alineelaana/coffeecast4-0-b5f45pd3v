@@ -163,6 +163,13 @@ export default function Index() {
     conteudo.rodape_creditos ||
     'Site criado e gerenciado por SAF TECNOLOGIA E GESTAO LTDA — CNPJ 65.768.215/0001-00'
 
+  const socialLinksData = {
+    tiktok: conteudo.social_tiktok,
+    facebook: conteudo.social_facebook,
+    instagram: conteudo.social_instagram,
+    linkedin: conteudo.social_linkedin,
+  }
+
   return (
     <div className="min-h-screen bg-marfim text-vinho flex flex-col font-sans selection:bg-dourado/30">
       {/* Navbar com âncoras e controle da Área de Membros */}
@@ -432,7 +439,11 @@ export default function Index() {
       </section>
 
       {/* Rodapé com as Políticas, CNPJ e Direitos Reservados */}
-      <Footer contatoComercial={contatoComercialText} rodapeCreditos={rodapeCreditosText} />
+      <Footer
+        contatoComercial={contatoComercialText}
+        rodapeCreditos={rodapeCreditosText}
+        socialLinks={socialLinksData}
+      />
 
       {/* Modais auxiliares */}
       <EpisodeModal

@@ -49,3 +49,58 @@ export function extractYouTubeId(url: string): string | null {
   const match = url.match(regExp)
   return match && match[2].length === 11 ? match[2] : null
 }
+
+/**
+ * Normaliza links de redes sociais colados pelo usuário.
+ * Aceita URL completa (com http/https), sem protocolo, arroba ou caminhos adicionais.
+ * Retorna uma URL completa segura com https:// ou string vazia se inválido.
+ */
+export function normalizeSocialUrl(
+  network: 'tiktok' | 'facebook' | 'instagram' | 'linkedin',
+  input?: string,
+): string {
+  if (!input) return ''
+  let val = input.trim()
+  if (!val) return ''
+
+  // Se já começar com http:// ou https://, garante https://
+  if (/^https?:\/\//i.test(val)) {
+    return val.replace(/^http:\/\//i, 'https://')
+  }
+
+  // Remove arrobas iniciais comuns (ex.: @coffeecast4.0)
+  val = val.replace(/^@+/, '').trim()
+  if (!val) return ''
+
+  // Se o usuário colou o domínio direto (ex.: instagram.com/coffeecast ou www.tiktok.com/@cafe)
+  if (
+    val.startsWith('instagram.com') ||
+    val.startsWith('www.instagram.com') ||
+    val.startsWith('tiktok.com') ||
+    val.startsWith('www.tiktok.com') ||
+    val.startsWith('facebook.com') ||
+    val.startsWith('www.facebook.com') ||
+    val.startsWith('linkedin.com') ||
+    val.startsWith('www.linkedin.com')
+  ) {
+    return `https://${val}`
+  }
+
+  // Se for apenas o handle/nome de usuário
+  switch (network) {
+    case 'tiktok':
+      return `https://www.tiktok.com/@${val.replace(/^@/, '')}`
+    case 'facebook':
+      return `https://www.facebook.com/${val}`
+    case 'instagram':
+      return `https://www.instagram.com/${val}`
+    case 'linkedin':
+      // Se não contiver /company/ ou /in/, padrão company ou perfil direto
+      if (val.startsWith('company/') || val.startsWith('in/')) {
+        return `https://www.linkedin.com/${val}`
+      }
+      return `https://www.linkedin.com/company/${val}`
+    default:
+      return `https://${val}`
+  }
+}

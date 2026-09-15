@@ -1,18 +1,96 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { CoffeeCastBrand } from './CoffeeCastLogo'
-import { MessageCircle, Heart, Shield, Lock, ExternalLink } from 'lucide-react'
+import { MessageCircle, Heart, Shield, Lock, ExternalLink, Instagram, Linkedin } from 'lucide-react'
+import pb from '@/lib/pocketbase/client'
+import { normalizeSocialUrl } from '@/lib/formatters'
+import type { ConteudoSiteRecord, SocialLinks } from '@/types/database'
 
 interface FooterProps {
   contatoComercial?: string
   rodapeCreditos?: string
+  socialLinks?: SocialLinks
 }
+
+// Ícones SVG elegantes inline para TikTok e Facebook (sem instalar dependências pesadas)
+const TikTokIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.86 4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-2.04-.52 4.93 4.93 0 0 1-1.04-.79 4.83 4.83 0 0 1-.96-3.21z" />
+  </svg>
+)
+
+const FacebookIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+  </svg>
+)
 
 export const Footer: React.FC<FooterProps> = ({
   contatoComercial = 'Aline Lana / WhatsApp: (31) 99129-7619',
   rodapeCreditos = 'Site criado e gerenciado por SAF TECNOLOGIA E GESTAO LTDA — CNPJ 65.768.215/0001-00',
+  socialLinks: initialSocialLinks,
 }) => {
   const currentYear = new Date().getFullYear()
+  const [fetchedLinks, setFetchedLinks] = useState<SocialLinks | null>(null)
+
+  // Se não foi passado via props (ex: página de Políticas), busca do PocketBase
+  useEffect(() => {
+    if (initialSocialLinks) return
+
+    let isMounted = true
+    async function loadSocials() {
+      try {
+        const records = await pb.collection('conteudo_site').getFullList<ConteudoSiteRecord>({
+          filter: "chave ~ 'social_'",
+        })
+        if (!isMounted) return
+        const links: SocialLinks = {}
+        records.forEach((r) => {
+          if (r.chave === 'social_tiktok') links.tiktok = r.valor
+          if (r.chave === 'social_facebook') links.facebook = r.valor
+          if (r.chave === 'social_instagram') links.instagram = r.valor
+          if (r.chave === 'social_linkedin') links.linkedin = r.valor
+        })
+        setFetchedLinks(links)
+      } catch (err) {
+        console.error('Erro ao buscar redes sociais para o rodapé:', err)
+      }
+    }
+
+    loadSocials()
+    return () => {
+      isMounted = false
+    }
+  }, [initialSocialLinks])
+
+  const links = initialSocialLinks || fetchedLinks || {}
+
+  const socialItems = [
+    {
+      key: 'tiktok',
+      name: 'TikTok',
+      url: normalizeSocialUrl('tiktok', links.tiktok),
+      icon: TikTokIcon,
+    },
+    {
+      key: 'facebook',
+      name: 'Facebook',
+      url: normalizeSocialUrl('facebook', links.facebook),
+      icon: FacebookIcon,
+    },
+    {
+      key: 'instagram',
+      name: 'Instagram',
+      url: normalizeSocialUrl('instagram', links.instagram),
+      icon: Instagram,
+    },
+    {
+      key: 'linkedin',
+      name: 'LinkedIn',
+      url: normalizeSocialUrl('linkedin', links.linkedin),
+      icon: Linkedin,
+    },
+  ].filter((item) => Boolean(item.url))
 
   return (
     <footer className="bg-vinho-dark border-t-2 border-dourado/40 text-marfim relative overflow-hidden">
@@ -158,8 +236,41 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
         </div>
 
+        {/* Seção Redes Sociais com frase em destaque e linha de ícones sutis */}
+        {socialItems.length > 0 && (
+          <div className="mt-12 pt-10 border-t border-vinho-light/40 flex flex-col items-center justify-center text-center space-y-4">
+            <div className="space-y-1">
+              <span className="text-[11px] uppercase tracking-widest text-dourado-light/80 font-medium block">
+                Comunidade & Conexão
+              </span>
+              <h3 className="font-serif text-xl sm:text-2xl font-bold text-dourado tracking-wide">
+                Siga a gente nas redes sociais
+              </h3>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap pt-1">
+              {socialItems.map((social) => {
+                const IconComponent = social.icon
+                return (
+                  <a
+                    key={social.key}
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Visitar nosso perfil no ${social.name}`}
+                    title={social.name}
+                    className="w-11 h-11 rounded-full bg-vinho/70 border border-dourado/40 text-marfim/90 hover:text-dourado hover:border-dourado hover:bg-vinho hover:scale-110 active:scale-95 shadow-md hover:shadow-dourado/20 transition-all duration-200 flex items-center justify-center group focus:outline-none focus:ring-2 focus:ring-dourado/60"
+                  >
+                    <IconComponent className="w-5 h-5 transition-transform duration-200 group-hover:scale-105" />
+                  </a>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Linha Divisória */}
-        <div className="border-t border-vinho-light/50 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-marfim/70 text-center md:text-left">
+        <div className="border-t border-vinho-light/50 mt-10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-marfim/70 text-center md:text-left">
           <p>© {currentYear} CoffeeCast 4.0 — Todos os direitos reservados.</p>
 
           <p className="font-medium text-marfim/85 bg-vinho/40 px-3 py-1.5 rounded-md border border-white/10">

@@ -114,6 +114,13 @@ export interface ConteudoSiteRecord {
   updated: string
 }
 
+export interface SocialLinks {
+  tiktok?: string
+  facebook?: string
+  instagram?: string
+  linkedin?: string
+}
+
 export interface PoliticaRecord {
   id: string
   slug: 'privacidade' | 'cookies' | 'termos'
