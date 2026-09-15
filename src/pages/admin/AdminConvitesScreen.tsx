@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import pb from '@/lib/pocketbase/client'
 import { formatDateBR, getFileUrl } from '@/lib/formatters'
 import type { ConviteRecord } from '@/types/database'
@@ -692,10 +693,9 @@ export default function AdminConvitesScreen() {
                 </div>
               </div>
 
-              {/* CONTEÚDO DO CONVITE (DESIGN OFICIAL VINHO & DOURADO) */}
+              {/* CONTEÚDO DO CONVITE NA TELA (DESIGN OFICIAL VINHO & DOURADO) */}
               <div className="overflow-y-auto flex-1 p-4 sm:p-6 bg-marfim/50">
                 <div
-                  id="printable-invite"
                   ref={invitePrintRef}
                   className="max-w-xl mx-auto p-6 sm:p-10 bg-gradient-to-b from-[#4B1E3F] via-[#36142D] to-[#4B1E3F] text-marfim space-y-6 sm:space-y-8 relative overflow-hidden rounded-2xl shadow-2xl border-2 border-dourado/40"
                 >
@@ -801,6 +801,346 @@ export default function AdminConvitesScreen() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* PORTAL EXCLUSIVO DE IMPRESSÃO EM FORMATO A5 PERFEITO (148mm x 210mm)
+          Injetado diretamente no document.body para ficar completamente fora
+          de qualquer transform, translate, scale ou overflow do Dialog */}
+      {previewConvite &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            id="printable-invite-portal"
+            style={{
+              width: '148mm',
+              height: '210mm',
+              maxWidth: '148mm',
+              maxHeight: '210mm',
+              boxSizing: 'border-box',
+              position: 'relative',
+              overflow: 'hidden',
+              backgroundColor: '#4B1E3F',
+              background:
+                'linear-gradient(180deg, #4B1E3F 0%, #36142D 35%, #2A0F23 70%, #4B1E3F 100%)',
+              color: '#FAF8F5',
+              padding: '8mm',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+            }}
+          >
+            {/* Bordas decorativas douradas */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '4mm',
+                left: '4mm',
+                right: '4mm',
+                bottom: '4mm',
+                border: '1.5px solid rgba(212, 175, 55, 0.65)',
+                borderRadius: '8mm',
+                pointerEvents: 'none',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                top: '6mm',
+                left: '6mm',
+                right: '6mm',
+                bottom: '6mm',
+                border: '0.8px solid rgba(212, 175, 55, 0.3)',
+                borderRadius: '6mm',
+                pointerEvents: 'none',
+              }}
+            />
+
+            {/* Cabeçalho do Convite */}
+            <div
+              style={{ textAlign: 'center', position: 'relative', zIndex: 10, marginTop: '2mm' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2mm' }}>
+                <CoffeeCastLogo className="w-14 h-14" variant="gold" />
+              </div>
+              <h1
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontWeight: 900,
+                  fontSize: '22pt',
+                  lineHeight: 1.1,
+                  margin: 0,
+                  color: '#FFFFFF',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                CoffeeCast <span style={{ color: '#D4AF37' }}>4.0</span>
+              </h1>
+              <p
+                style={{
+                  fontSize: '8pt',
+                  textTransform: 'uppercase',
+                  letterSpacing: '3px',
+                  color: '#F3E5AB',
+                  fontWeight: 700,
+                  margin: '3mm 0 0 0',
+                }}
+              >
+                Convite Oficial de Participação
+              </p>
+            </div>
+
+            {/* Card Central com Foto, Logo da Empresa e Apresentação */}
+            <div
+              style={{
+                backgroundColor: 'rgba(42, 15, 35, 0.88)',
+                border: '1px solid rgba(212, 175, 55, 0.5)',
+                borderRadius: '6mm',
+                padding: '5mm',
+                position: 'relative',
+                zIndex: 10,
+                textAlign: 'center',
+                margin: '2mm 0',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+              }}
+            >
+              {/* Logomarca da empresa no topo direito */}
+              {previewConvite.logomarca_empresa && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '4mm',
+                    right: '4mm',
+                    zIndex: 20,
+                  }}
+                >
+                  <img
+                    src={getFileUrl(previewConvite, previewConvite.logomarca_empresa)}
+                    alt="Empresa Convidada"
+                    style={{
+                      height: '9mm',
+                      maxWidth: '28mm',
+                      objectFit: 'contain',
+                      borderRadius: '2mm',
+                      backgroundColor: '#FFFFFF',
+                      padding: '1mm',
+                      border: '0.8px solid rgba(212, 175, 55, 0.5)',
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Foto da convidada com moldura dourada */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3mm' }}>
+                <div style={{ position: 'relative' }}>
+                  <img
+                    src={
+                      previewConvite.foto_convidado
+                        ? getFileUrl(previewConvite, previewConvite.foto_convidado)
+                        : 'https://img.usecurling.com/ppl/256?gender=female'
+                    }
+                    alt={previewConvite.nome}
+                    style={{
+                      width: '26mm',
+                      height: '26mm',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '2.5px solid #D4AF37',
+                      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.4)',
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '-1mm',
+                      right: '-1mm',
+                      backgroundColor: '#4B1E3F',
+                      padding: '1.2mm',
+                      borderRadius: '50%',
+                      border: '1px solid #D4AF37',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Sparkles style={{ width: '3.5mm', height: '3.5mm', color: '#D4AF37' }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Rótulo de Convidado/Convidada */}
+              <div style={{ marginBottom: '2mm' }}>
+                <span
+                  style={{
+                    fontSize: '8pt',
+                    color: '#F3E5AB',
+                    textTransform: 'uppercase',
+                    fontWeight: 700,
+                    letterSpacing: '2px',
+                    display: 'block',
+                  }}
+                >
+                  {previewConvite.tipo_convidado === 'convidado'
+                    ? 'Convidado de Honra'
+                    : previewConvite.tipo_convidado === 'convidada'
+                      ? 'Convidada de Honra'
+                      : 'Convidado(a) de Honra'}
+                </span>
+                <h2
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: '18pt',
+                    fontWeight: 700,
+                    color: '#FFFFFF',
+                    margin: '1.5mm 0 0 0',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {previewConvite.nome}
+                </h2>
+              </div>
+
+              {/* Linha separadora dourada */}
+              <div
+                style={{
+                  width: '30mm',
+                  height: '1px',
+                  backgroundColor: '#D4AF37',
+                  margin: '2.5mm auto',
+                  opacity: 0.7,
+                }}
+              />
+
+              {/* Texto de apresentação */}
+              <p
+                style={{
+                  fontSize: '9.5pt',
+                  color: 'rgba(250, 248, 245, 0.95)',
+                  lineHeight: 1.45,
+                  fontWeight: 300,
+                  fontStyle: 'italic',
+                  margin: '3mm auto 4mm auto',
+                  maxWidth: '110mm',
+                }}
+              >
+                "{previewConvite.apresentacao}"
+              </p>
+
+              {/* Informações de Gravação */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '3mm',
+                  paddingTop: '3mm',
+                  borderTop: '0.8px solid rgba(212, 175, 55, 0.35)',
+                }}
+              >
+                <div
+                  style={{
+                    backgroundColor: 'rgba(75, 30, 63, 0.8)',
+                    padding: '2.5mm 3mm',
+                    borderRadius: '3mm',
+                    border: '0.8px solid rgba(212, 175, 55, 0.3)',
+                    textAlign: 'center',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '7pt',
+                      color: '#D4AF37',
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                      letterSpacing: '1px',
+                      display: 'block',
+                      marginBottom: '1mm',
+                    }}
+                  >
+                    Data da Gravação
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontSize: '10.5pt',
+                      fontWeight: 700,
+                      color: '#FFFFFF',
+                    }}
+                  >
+                    {formatDateBR(previewConvite.data_gravacao)}
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    backgroundColor: 'rgba(75, 30, 63, 0.8)',
+                    padding: '2.5mm 3mm',
+                    borderRadius: '3mm',
+                    border: '0.8px solid rgba(212, 175, 55, 0.3)',
+                    textAlign: 'center',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '7pt',
+                      color: '#D4AF37',
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                      letterSpacing: '1px',
+                      display: 'block',
+                      marginBottom: '1mm',
+                    }}
+                  >
+                    Horário Marcado
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontSize: '10.5pt',
+                      fontWeight: 700,
+                      color: '#FFFFFF',
+                    }}
+                  >
+                    {previewConvite.horario}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Rodapé do Convite */}
+            <div
+              style={{
+                textAlign: 'center',
+                position: 'relative',
+                zIndex: 10,
+                marginBottom: '2mm',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: '9pt',
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontStyle: 'italic',
+                  color: '#F3E5AB',
+                  margin: '0 0 1.5mm 0',
+                }}
+              >
+                "Aqui o café pode até esfriar, mas o papo nunca! ☕️"
+              </p>
+              <p
+                style={{
+                  fontSize: '7.5pt',
+                  color: 'rgba(250, 248, 245, 0.65)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
+                Equipe CoffeeCast 4.0 • Aline Lana
+              </p>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
