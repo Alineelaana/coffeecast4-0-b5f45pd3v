@@ -126,9 +126,11 @@ export default function AdminUsuariosScreen() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-vinho">Usuários & Permissões</h2>
+          <h2 className="font-serif text-xl sm:text-2xl font-bold text-vinho">
+            Usuários & Permissões
+          </h2>
           <p className="text-xs text-vinho/70">
             Aline Lana (Superadministrador Master) gerencia os acessos para as categorias Gerencial,
             Ouro, Prata e Master.
@@ -137,14 +139,85 @@ export default function AdminUsuariosScreen() {
 
         <Button
           onClick={handleOpenCreate}
-          className="bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-full px-5 flex items-center gap-2 shadow-sm"
+          className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-xl sm:rounded-full px-5 flex items-center justify-center gap-2 shadow-sm"
         >
           <UserPlus className="w-4 h-4 text-dourado" />
           Novo Usuário
         </Button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-hidden">
+      {/* Mobile Cards View */}
+      <div className="block md:hidden space-y-3">
+        {loading ? (
+          <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center text-xs text-vinho/60">
+            Carregando usuários...
+          </div>
+        ) : (
+          users.map((u) => {
+            const isSuperAdmin = u.email === 'alineelaana@gmail.com'
+            return (
+              <div
+                key={u.id}
+                className="bg-white rounded-2xl border border-vinho/10 p-4 shadow-sm space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-vinho">{u.name || 'Usuário'}</span>
+                      {isSuperAdmin && (
+                        <Badge className="bg-dourado text-vinho text-[9px] font-bold">MASTER</Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-vinho/60 font-mono">{u.email}</p>
+                  </div>
+                  {!isSuperAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(u.id, u.email)}
+                      className="h-9 w-9 p-0 text-red-500 hover:text-red-700 min-h-[36px]"
+                      title="Remover acesso"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-vinho/5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-vinho/70 font-medium">Permissão:</span>
+                    {isSuperAdmin ? (
+                      <span className="text-xs font-bold text-dourado-dark flex items-center gap-1">
+                        <Shield className="w-3.5 h-3.5" />
+                        Superadmin
+                      </span>
+                    ) : (
+                      <Select
+                        value={u.role}
+                        onValueChange={(val: UserRole) => handleUpdateRole(u.id, val)}
+                      >
+                        <SelectTrigger className="h-8 min-h-[36px] w-32 text-xs font-semibold border-vinho/20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="gerencial">Gerencial</SelectItem>
+                          <SelectItem value="ouro">Ouro</SelectItem>
+                          <SelectItem value="prata">Prata</SelectItem>
+                          <SelectItem value="master">Master</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                  <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">Ativo</Badge>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-x-auto">
         {loading ? (
           <div className="py-16 text-center text-xs text-vinho/60">Carregando usuários...</div>
         ) : (
@@ -227,7 +300,7 @@ export default function AdminUsuariosScreen() {
 
       {/* Modal de Criação de Usuário */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md bg-marfim border-2 border-dourado/50 text-vinho">
+        <DialogContent className="w-[94vw] max-w-md max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho">
               Criar Novo Acesso Administrativo
@@ -306,19 +379,19 @@ export default function AdminUsuariosScreen() {
               </p>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setModalOpen(false)}
-                className="text-xs"
+                className="w-full sm:w-auto min-h-[44px] text-xs"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
+                className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
               >
                 {saving ? 'Criando...' : 'Liberar Acesso'}
               </Button>

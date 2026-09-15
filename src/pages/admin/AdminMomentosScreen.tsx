@@ -211,7 +211,7 @@ export default function AdminMomentosScreen() {
       )}
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md bg-marfim border-2 border-dourado/50 text-vinho">
+        <DialogContent className="w-[94vw] max-w-md max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho">
               Adicionar Foto aos Momentos
@@ -258,19 +258,19 @@ export default function AdminMomentosScreen() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setModalOpen(false)}
-                className="text-xs"
+                className="w-full sm:w-auto min-h-[44px] text-xs"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
+                className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
               >
                 {saving ? 'Enviando...' : 'Salvar no Carrossel'}
               </Button>

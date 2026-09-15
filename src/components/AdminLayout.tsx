@@ -338,15 +338,19 @@ export default function AdminLayout() {
             </nav>
 
             <div className="pt-4 border-t border-vinho-light/40 flex items-center justify-between">
-              <span className="text-xs text-dourado-light truncate max-w-[130px] font-medium">
-                {user?.name}
-              </span>
+              <div className="flex flex-col truncate max-w-[140px]">
+                <span className="text-xs font-bold text-white truncate">
+                  {user?.name || 'Aline Lana'}
+                </span>
+                <span className="text-[10px] text-dourado-light truncate">{roleLabel}</span>
+              </div>
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={handleLogout}
-                className="text-xs h-9 min-h-[36px] px-3.5 rounded-lg active:scale-95"
+                className="text-xs h-10 min-h-[44px] px-4 rounded-xl active:scale-95 flex items-center gap-1.5"
               >
+                <LogOut className="w-3.5 h-3.5" />
                 Sair
               </Button>
             </div>
@@ -402,7 +406,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Conteúdo Dinâmico Renderizado pelas Rotas Admin */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <main className="flex-1 p-3 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden w-full max-w-full">
           <Outlet />
         </main>
       </div>

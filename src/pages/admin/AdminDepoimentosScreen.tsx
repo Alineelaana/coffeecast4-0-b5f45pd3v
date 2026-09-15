@@ -148,7 +148,98 @@ export default function AdminDepoimentosScreen() {
         </Button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-hidden">
+      {/* Mobile Cards View */}
+      <div className="block md:hidden space-y-3">
+        {loading ? (
+          <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center text-xs text-vinho/60">
+            Carregando depoimentos...
+          </div>
+        ) : depoimentos.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center space-y-3">
+            <p className="text-sm text-vinho/70 font-medium">Nenhum depoimento cadastrado.</p>
+            <Button onClick={handleOpenCreate} variant="outline" size="sm" className="min-h-[44px]">
+              Adicionar primeiro depoimento
+            </Button>
+          </div>
+        ) : (
+          depoimentos.map((item) => {
+            const photoUrl = item.foto ? getFileUrl(item, item.foto, '100x100') : ''
+            return (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl border border-vinho/10 p-4 shadow-sm space-y-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    {photoUrl ? (
+                      <img
+                        src={photoUrl}
+                        alt={item.nome}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-dourado shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-vinho/10 text-vinho font-bold flex items-center justify-center text-sm shrink-0">
+                        {item.nome.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold bg-dourado/20 text-vinho px-1.5 py-0.5 rounded">
+                          #{item.ordem || '-'}
+                        </span>
+                        <h3 className="text-sm font-bold text-vinho">{item.nome}</h3>
+                      </div>
+                      {item.instagram && (
+                        <p className="text-xs text-dourado-dark font-medium mt-0.5">
+                          {item.instagram.startsWith('@') ? item.instagram : `@${item.instagram}`}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleOpenEdit(item)}
+                      className="h-9 w-9 p-0 text-vinho/70 hover:text-vinho min-h-[36px]"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(item.id, item.nome)}
+                      className="h-9 w-9 p-0 text-red-500 hover:text-red-700 min-h-[36px]"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {item.de_nossa_autoridade ? (
+                    <Badge className="bg-vinho text-dourado text-[10px] font-semibold">
+                      Visão da Produção
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] text-vinho border-vinho/20">
+                      Depoimento do Convidado
+                    </Badge>
+                  )}
+                </div>
+
+                <p className="text-xs text-vinho/75 italic bg-marfim/60 p-3 rounded-xl border border-vinho/10 leading-relaxed">
+                  "{item.texto}"
+                </p>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-x-auto">
         {loading ? (
           <div className="py-16 text-center text-xs text-vinho/60">Carregando depoimentos...</div>
         ) : depoimentos.length === 0 ? (
@@ -245,7 +336,7 @@ export default function AdminDepoimentosScreen() {
       </div>
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md bg-marfim border-2 border-dourado/50 text-vinho">
+        <DialogContent className="w-[94vw] max-w-md max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho">
               {editingItem ? 'Editar Depoimento' : 'Novo Depoimento'}
@@ -336,19 +427,19 @@ export default function AdminDepoimentosScreen() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setModalOpen(false)}
-                className="text-xs"
+                className="w-full sm:w-auto min-h-[44px] text-xs"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
+                className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
               >
                 {saving ? 'Salvando...' : 'Salvar Depoimento'}
               </Button>

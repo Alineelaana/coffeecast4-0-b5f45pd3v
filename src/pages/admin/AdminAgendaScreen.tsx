@@ -206,23 +206,25 @@ export default function AdminAgendaScreen() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-vinho">Agenda & Planejamento</h2>
+          <h2 className="font-serif text-xl sm:text-2xl font-bold text-vinho">
+            Agenda & Planejamento
+          </h2>
           <p className="text-xs text-vinho/70">
             Cronograma de gravações, roteiros, convidados, patrocinadores e sincronização com o
             banco de horas.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
           {saldoDisponivel !== null && (
             <Link
               to="/admin/horas"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-vinho/15 hover:border-dourado text-vinho shadow-2xs transition-all"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-xl sm:rounded-full text-xs font-semibold bg-white border border-vinho/15 hover:border-dourado text-vinho shadow-2xs transition-all w-full sm:w-auto"
               title="Ver detalhes no Controle de Horas"
             >
-              <Clock className="w-3.5 h-3.5 text-dourado-dark" />
+              <Clock className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
               <span>
                 Banco de Horas: <strong className="text-dourado-dark">{saldoDisponivel}h</strong>{' '}
                 disponíveis
@@ -232,15 +234,102 @@ export default function AdminAgendaScreen() {
 
           <Button
             onClick={handleOpenCreate}
-            className="bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-full px-5 flex items-center gap-2 shadow-sm"
+            className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-xl sm:rounded-full px-5 flex items-center justify-center gap-2 shadow-sm"
           >
-            <Plus className="w-4 h-4 text-dourado" />
+            <Plus className="w-4 h-4 text-dourado shrink-0" />
             Novo Agendamento
           </Button>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-hidden">
+      {/* Mobile Cards View */}
+      <div className="block md:hidden space-y-3">
+        {loading ? (
+          <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center text-xs text-vinho/60">
+            Carregando agenda...
+          </div>
+        ) : agendamentos.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center space-y-3">
+            <p className="text-sm text-vinho/70 font-medium">Nenhum agendamento marcado.</p>
+            <Button onClick={handleOpenCreate} variant="outline" size="sm" className="min-h-[44px]">
+              Agendar primeira gravação
+            </Button>
+          </div>
+        ) : (
+          agendamentos.map((item) => (
+            <div
+              key={item.id}
+              className="bg-white rounded-2xl border border-vinho/10 p-4 shadow-sm space-y-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold text-vinho">{item.titulo}</h3>
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-dourado-dark">
+                    <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+                    <span>Gravação: {formatDateBR(item.data_gravacao)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenEdit(item)}
+                    className="h-9 w-9 p-0 text-vinho/70 hover:text-vinho min-h-[36px]"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(item.id, item.titulo)}
+                    className="h-9 w-9 p-0 text-red-500 hover:text-red-700 min-h-[36px]"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-vinho/5">
+                <div>
+                  <span className="text-[10px] text-vinho/60 block">Débito no Banco</span>
+                  {item.horas_utilizadas ? (
+                    <span className="font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 inline-flex items-center gap-1 text-[11px] mt-0.5">
+                      <Clock className="w-3 h-3" />
+                      {item.horas_utilizadas}h
+                    </span>
+                  ) : (
+                    <span className="text-vinho/40 italic text-[11px]">0h (isento)</span>
+                  )}
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-vinho/60 block">Convidado(a)</span>
+                  <span className="font-medium text-vinho truncate block">
+                    {item.tem_convidado ? item.nome_convidado || 'A definir' : 'Sem convidado'}
+                  </span>
+                </div>
+              </div>
+
+              {item.roteiro && (
+                <p className="text-xs text-vinho/70 bg-marfim/60 p-2.5 rounded-xl border border-vinho/10 line-clamp-2">
+                  <strong className="text-vinho">Roteiro:</strong> {item.roteiro}
+                </p>
+              )}
+
+              {item.patrocinado && (
+                <div className="pt-1">
+                  <Badge className="bg-vinho text-dourado text-[10px] font-semibold">
+                    Patrocínio: {item.patrocinadores || 'Confirmado'}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-x-auto">
         {loading ? (
           <div className="py-16 text-center text-xs text-vinho/60">Carregando agenda...</div>
         ) : agendamentos.length === 0 ? (
@@ -343,7 +432,7 @@ export default function AdminAgendaScreen() {
 
       {/* Modal de Agendamento Completo */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-2xl bg-marfim border-2 border-dourado/50 text-vinho max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[94vw] max-w-2xl bg-marfim border-2 border-dourado/50 text-vinho max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho">
               {editingItem ? 'Editar Agendamento' : 'Novo Agendamento de Episódio'}
@@ -549,19 +638,19 @@ export default function AdminAgendaScreen() {
               </p>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setModalOpen(false)}
-                className="text-xs"
+                className="w-full sm:w-auto min-h-[44px] text-xs"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
+                className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
               >
                 {saving ? 'Gravando...' : 'Salvar Agendamento'}
               </Button>

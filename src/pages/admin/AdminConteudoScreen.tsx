@@ -342,7 +342,7 @@ export default function AdminConteudoScreen() {
             <Button
               type="submit"
               disabled={savingSocials}
-              className="bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-full px-6 flex items-center gap-2 shadow-sm"
+              className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-full px-6 flex items-center justify-center gap-2 shadow-sm"
             >
               <Save className="w-4 h-4 text-dourado" />
               {savingSocials ? 'Salvando Redes...' : 'Salvar Redes Sociais'}
@@ -353,9 +353,9 @@ export default function AdminConteudoScreen() {
 
       {/* SEÇÃO: DEMAIS CONTEÚDOS TEXTUAIS DO SITE */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div>
-            <h2 className="font-serif text-2xl font-bold text-vinho">
+            <h2 className="font-serif text-xl sm:text-2xl font-bold text-vinho">
               Textos Institucionais & Mensagens
             </h2>
             <p className="text-xs text-vinho/70">
@@ -366,14 +366,67 @@ export default function AdminConteudoScreen() {
 
           <Button
             onClick={handleOpenCreate}
-            className="bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-full px-5 flex items-center gap-2 shadow-sm"
+            className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-full px-5 flex items-center justify-center gap-2 shadow-sm"
           >
             <Plus className="w-4 h-4 text-dourado" />
             Nova Chave de Conteúdo
           </Button>
         </div>
 
-        <div className="bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-hidden">
+        {/* Visualização Mobile: Cards empilhados */}
+        <div className="block md:hidden space-y-3">
+          {loading ? (
+            <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center text-xs text-vinho/60">
+              Carregando conteúdos...
+            </div>
+          ) : conteudos.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center text-xs text-vinho/60">
+              Nenhum conteúdo textual cadastrado.
+            </div>
+          ) : (
+            conteudos.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl border border-vinho/10 p-4 shadow-sm space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-1">
+                    <code className="bg-vinho/5 px-2 py-0.5 rounded text-vinho font-mono text-xs font-bold inline-block">
+                      {item.chave}
+                    </code>
+                    <p className="text-[11px] text-vinho/65 font-medium">
+                      {keyDescriptions[item.chave] || 'Texto personalizado'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleOpenEdit(item)}
+                      className="h-9 w-9 p-0 text-vinho/80 hover:text-vinho hover:bg-vinho/10 min-h-[36px]"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(item.id, item.chave)}
+                      className="h-9 w-9 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 min-h-[36px]"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="text-xs text-vinho/85 bg-marfim/60 p-3 rounded-xl border border-vinho/10 leading-relaxed whitespace-pre-wrap break-words">
+                  {item.valor}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Visualização Desktop: Tabela clássica */}
+        <div className="hidden md:block bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-x-auto">
           {loading ? (
             <div className="py-16 text-center text-xs text-vinho/60">Carregando conteúdos...</div>
           ) : conteudos.length === 0 ? (
@@ -433,7 +486,7 @@ export default function AdminConteudoScreen() {
       </div>
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md bg-marfim border-2 border-dourado/50 text-vinho">
+        <DialogContent className="w-[94vw] max-w-md max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho">
               {editingItem ? 'Editar Texto' : 'Nova Chave de Texto'}
@@ -471,19 +524,19 @@ export default function AdminConteudoScreen() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setModalOpen(false)}
-                className="text-xs"
+                className="w-full sm:w-auto min-h-[44px] text-xs"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
+                className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
               >
                 {saving ? 'Salvando...' : 'Salvar Texto'}
               </Button>

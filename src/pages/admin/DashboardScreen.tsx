@@ -121,13 +121,13 @@ export default function DashboardScreen() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Mensagem de Boas-vindas */}
-      <div className="bg-gradient-to-r from-vinho via-vinho-dark to-vinho text-marfim p-6 sm:p-8 rounded-3xl border-2 border-dourado/50 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div className="bg-gradient-to-r from-vinho via-vinho-dark to-vinho text-marfim p-5 sm:p-8 rounded-2xl sm:rounded-3xl border-2 border-dourado/50 shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-5 sm:gap-6">
         <div className="space-y-2 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dourado/20 text-dourado text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
             <span>CoffeeCast 4.0 em Produção</span>
           </div>
-          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+          <h2 className="font-serif text-xl sm:text-3xl font-bold text-white">
             Painel Geral de Gestão
           </h2>
           <p className="text-xs sm:text-sm text-marfim/80 max-w-xl">
@@ -136,17 +136,17 @@ export default function DashboardScreen() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <Link to="/admin/horas">
-            <button className="bg-white/15 hover:bg-white/25 text-marfim border border-dourado/40 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-full shadow-md transition-all flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto">
+          <Link to="/admin/horas" className="w-full sm:w-auto">
+            <button className="w-full sm:w-auto justify-center bg-white/15 hover:bg-white/25 text-marfim border border-dourado/40 font-semibold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-full shadow-md transition-all flex items-center gap-2">
               <Clock className="w-4 h-4 text-dourado" />
               <span>
                 Banco de Horas: <strong>{stats.saldoHoras}h</strong>
               </span>
             </button>
           </Link>
-          <Link to="/admin/agenda">
-            <button className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs sm:text-sm px-5 py-2.5 rounded-full shadow-lg transition-all flex items-center gap-2">
+          <Link to="/admin/agenda" className="w-full sm:w-auto">
+            <button className="w-full sm:w-auto justify-center bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs sm:text-sm px-5 py-2.5 min-h-[44px] rounded-full shadow-lg transition-all flex items-center gap-2">
               <CalendarDays className="w-4 h-4" />
               Ver Agenda Completa
             </button>

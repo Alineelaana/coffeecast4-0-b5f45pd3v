@@ -196,12 +196,72 @@ export default function AdminFinanceiroScreen() {
         </div>
 
         <Button
-          onClick={handleOpenNew}
+          onClick={handleOpenCreate}
           className="w-full sm:w-auto bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-4 py-2.5 sm:py-2 min-h-[44px] sm:min-h-0 rounded-xl flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
         >
           <Plus className="w-4 h-4 text-dourado shrink-0" />
           Novo Lançamento
         </Button>
+      </div>
+
+      {/* Gráfico Visual de Gastos por Categoria (Barras Responsivas sem cortar legendas) */}
+      <div className="bg-white border border-vinho/10 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-vinho/10 pb-3">
+          <div>
+            <h3 className="font-serif text-base sm:text-lg font-bold text-vinho">
+              Distribuição Financeira por Categoria
+            </h3>
+            <p className="text-xs text-vinho/65">Visualização de custos acumulados do projeto</p>
+          </div>
+          <span className="text-xs font-bold text-vinho">
+            Total: {formatCurrencyBRL(totalQuitado + totalAberto)}
+          </span>
+        </div>
+
+        <div className="space-y-3 pt-1">
+          {Object.entries(tipoLabels).map(([key, label]) => {
+            const val = transacoes
+              .filter((t) => t.tipo === key)
+              .reduce((acc, curr) => acc + (curr.valor || 0), 0)
+            const totalGeral = totalQuitado + totalAberto
+            const pct = totalGeral > 0 ? (val / totalGeral) * 100 : 0
+            const colorsMap: Record<string, string> = {
+              gravacao: '#4B1E3F',
+              edicao: '#D4AF37',
+              equipamento: '#5F2650',
+              marketing: '#C88E9B',
+              outros: '#853C73',
+            }
+            const barColor = colorsMap[key] || '#4B1E3F'
+
+            return (
+              <div key={key} className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-medium text-vinho gap-2">
+                  <span className="flex items-center gap-2 truncate">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: barColor }}
+                    />
+                    <span className="truncate">{label}</span>
+                  </span>
+                  <span className="font-bold shrink-0">
+                    {formatCurrencyBRL(val)}{' '}
+                    <span className="text-vinho/60 font-normal">({pct.toFixed(0)}%)</span>
+                  </span>
+                </div>
+                <div className="w-full bg-vinho/5 h-2.5 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: barColor,
+                    }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -292,8 +352,93 @@ export default function AdminFinanceiroScreen() {
         </div>
       </div>
 
-      {/* Tabela de Lançamentos */}
-      <div className="bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-hidden">
+      {/* Mobile Cards View */}
+      <div className="block md:hidden space-y-3">
+        {loading ? (
+          <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center text-xs text-vinho/60">
+            Carregando finanças...
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center text-xs text-vinho/60">
+            Nenhum lançamento financeiro encontrado.
+          </div>
+        ) : (
+          filtered.map((item) => (
+            <div
+              key={item.id}
+              className="bg-white rounded-2xl border border-vinho/10 p-4 shadow-sm space-y-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-1">
+                  <h4 className="text-xs font-bold text-vinho leading-tight">{item.descricao}</h4>
+                  <Badge variant="outline" className="text-[10px] border-vinho/20 text-vinho">
+                    {tipoLabels[item.tipo] || item.tipo}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenEdit(item)}
+                    className="h-9 w-9 p-0 text-vinho/70 hover:text-vinho min-h-[36px]"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(item.id, item.descricao)}
+                    className="h-9 w-9 p-0 text-red-500 hover:text-red-700 min-h-[36px]"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-vinho/5">
+                <div>
+                  <span className="text-[10px] text-vinho/60 block">Valor</span>
+                  <span className="font-serif font-black text-sm text-vinho">
+                    {formatCurrencyBRL(item.valor)}
+                  </span>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-[10px] text-vinho/60 block">Vencimento</span>
+                  <span className="text-xs text-vinho font-medium">
+                    {formatDateBR(item.data_vencimento)}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => handleToggleSituacao(item)}
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold min-h-[36px] transition-all ${
+                    item.situacao === 'quitado'
+                      ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                      : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                  }`}
+                  title="Clique para alternar situação"
+                >
+                  {item.situacao === 'quitado' ? (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Quitado
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="w-3.5 h-3.5" />
+                      Em Aberto
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-x-auto">
         {loading ? (
           <div className="py-16 text-center text-xs text-vinho/60">Carregando finanças...</div>
         ) : filtered.length === 0 ? (
@@ -381,7 +526,7 @@ export default function AdminFinanceiroScreen() {
 
       {/* Modal de Criação / Edição de Transação */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md bg-marfim border-2 border-dourado/50 text-vinho">
+        <DialogContent className="w-[94vw] max-w-md max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho">
               {editingItem ? 'Editar Despesa' : 'Cadastrar Nova Despesa'}
@@ -440,7 +585,7 @@ export default function AdminFinanceiroScreen() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="t-venc" className="text-xs font-semibold text-vinho">
                   Data de Vencimento *
@@ -472,19 +617,19 @@ export default function AdminFinanceiroScreen() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setModalOpen(false)}
-                className="text-xs"
+                className="w-full sm:w-auto min-h-[44px] text-xs"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
+                className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
               >
                 {saving ? 'Salvando...' : 'Salvar Despesa'}
               </Button>

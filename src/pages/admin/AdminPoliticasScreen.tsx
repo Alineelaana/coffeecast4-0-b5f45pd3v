@@ -95,9 +95,11 @@ export default function AdminPoliticasScreen() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-vinho">Políticas & Termos do Site</h2>
+          <h2 className="font-serif text-xl sm:text-2xl font-bold text-vinho">
+            Políticas & Termos do Site
+          </h2>
           <p className="text-xs text-vinho/70">
             Edite o texto formal da Política de Privacidade, Política de Cookies e Termos de Uso.
           </p>
@@ -106,33 +108,33 @@ export default function AdminPoliticasScreen() {
         <Link
           to={`/politica/${activeTab}`}
           target="_blank"
-          className="inline-flex items-center gap-1.5 text-xs text-dourado-dark hover:underline font-semibold bg-white px-3.5 py-1.5 rounded-full border border-vinho/15 shadow-xs"
+          className="inline-flex items-center justify-center gap-1.5 text-xs text-dourado-dark hover:underline font-semibold bg-white px-4 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-xl sm:rounded-full border border-vinho/15 shadow-xs"
         >
           Visualizar página pública
           <ExternalLink className="w-3.5 h-3.5" />
         </Link>
       </div>
 
-      <div className="bg-white rounded-2xl border border-vinho/10 shadow-sm p-6 sm:p-8 space-y-6">
+      <div className="bg-white rounded-2xl border border-vinho/10 shadow-sm p-4 sm:p-8 space-y-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="bg-marfim border border-vinho/15 p-1 rounded-xl">
+          <TabsList className="bg-marfim border border-vinho/15 p-1 rounded-xl w-full grid grid-cols-3 sm:inline-flex sm:w-auto">
             <TabsTrigger
               value="privacidade"
-              className="text-xs font-semibold data-[state=active]:bg-vinho data-[state=active]:text-white rounded-lg px-4"
+              className="text-xs font-semibold data-[state=active]:bg-vinho data-[state=active]:text-white rounded-lg px-2 sm:px-4 min-h-[40px]"
             >
               Privacidade
             </TabsTrigger>
             <TabsTrigger
               value="cookies"
-              className="text-xs font-semibold data-[state=active]:bg-vinho data-[state=active]:text-white rounded-lg px-4"
+              className="text-xs font-semibold data-[state=active]:bg-vinho data-[state=active]:text-white rounded-lg px-2 sm:px-4 min-h-[40px]"
             >
               Cookies
             </TabsTrigger>
             <TabsTrigger
               value="termos"
-              className="text-xs font-semibold data-[state=active]:bg-vinho data-[state=active]:text-white rounded-lg px-4"
+              className="text-xs font-semibold data-[state=active]:bg-vinho data-[state=active]:text-white rounded-lg px-2 sm:px-4 min-h-[40px]"
             >
-              Termos de Uso
+              Termos
             </TabsTrigger>
           </TabsList>
 
@@ -164,16 +166,16 @@ export default function AdminPoliticasScreen() {
               />
             </div>
 
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
               <div className="flex items-center gap-2 text-xs text-vinho/60">
-                <ShieldCheck className="w-4 h-4 text-dourado-dark" />
+                <ShieldCheck className="w-4 h-4 text-dourado-dark shrink-0" />
                 <span>Salvo e protegido na infraestrutura Skip Cloud</span>
               </div>
 
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-6 py-2 rounded-full shadow-md flex items-center gap-2"
+                className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-6 py-2 rounded-full shadow-md flex items-center justify-center gap-2"
               >
                 <Save className="w-3.5 h-3.5 text-dourado" />
                 {saving ? 'Gravando...' : 'Salvar Política'}

@@ -259,9 +259,11 @@ export default function AdminConvitesScreen() {
   return (
     <div className="space-y-6">
       {/* Título e Ações Principais */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-vinho">Gerador de Convites Premium</h2>
+          <h2 className="font-serif text-xl sm:text-2xl font-bold text-vinho">
+            Gerador de Convites Premium
+          </h2>
           <p className="text-xs text-vinho/70">
             Crie, edite e baixe convites sofisticados em PDF ou imagem JPEG na identidade oficial do
             CoffeeCast 4.0.
@@ -270,9 +272,9 @@ export default function AdminConvitesScreen() {
 
         <Button
           onClick={handleOpenCreate}
-          className="bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-full px-5 flex items-center gap-2 shadow-sm"
+          className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-xl sm:rounded-full px-5 flex items-center justify-center gap-2 shadow-sm"
         >
-          <Plus className="w-4 h-4 text-dourado" />
+          <Plus className="w-4 h-4 text-dourado shrink-0" />
           Gerar Novo Convite
         </Button>
       </div>
@@ -415,10 +417,10 @@ export default function AdminConvitesScreen() {
 
       {/* Modal de Criação / Edição de Convite */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md bg-marfim border-2 border-dourado/50 text-vinho max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[94vw] max-w-md bg-marfim border-2 border-dourado/50 text-vinho max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-dourado" />
+              <Sparkles className="w-5 h-5 text-dourado shrink-0" />
               {editingConvite ? 'Editar Convite Oficial' : 'Gerar Novo Convite Oficial'}
             </DialogTitle>
           </DialogHeader>
@@ -606,19 +608,19 @@ export default function AdminConvitesScreen() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-vinho/10">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-3 border-t border-vinho/10">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setModalOpen(false)}
-                className="text-xs"
+                className="w-full sm:w-auto min-h-[44px] text-xs"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5 flex items-center gap-2"
+                className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5 flex items-center justify-center gap-2"
               >
                 {saving ? (
                   <>
@@ -643,17 +645,16 @@ export default function AdminConvitesScreen() {
             <div className="flex flex-col h-full overflow-hidden">
               {/* Barra Superior de Ações com Baixar JPEG, Imprimir PDF e Editar */}
               <div className="print-hide p-3 sm:p-4 bg-white border-b border-vinho/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 shrink-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-vinho">
-                    Visualização do Convite Gráfico
+                <div className="flex items-center justify-between sm:justify-start gap-2">
+                  <span className="text-xs font-bold text-vinho truncate">
+                    Convite Gráfico Oficial
                   </span>
-                  <span className="text-[10px] bg-dourado/20 text-vinho font-bold px-2 py-0.5 rounded-full border border-dourado/40">
-                    A5 Oficial •{' '}
-                    {previewConvite.tipo_convidado === 'convidado' ? 'Convidado' : 'Convidada'}
+                  <span className="text-[10px] bg-dourado/20 text-vinho font-bold px-2 py-0.5 rounded-full border border-dourado/40 shrink-0">
+                    A5 • {previewConvite.tipo_convidado === 'convidado' ? 'Convidado' : 'Convidada'}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="grid grid-cols-3 sm:flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
                   {/* Botão Editar direto do Preview */}
                   <Button
                     variant="outline"
@@ -662,33 +663,33 @@ export default function AdminConvitesScreen() {
                       setPreviewOpen(false)
                       handleOpenEdit(previewConvite)
                     }}
-                    className="border-vinho/20 text-vinho hover:bg-vinho/5 text-xs font-semibold px-3 py-2 min-h-[36px] rounded-full flex items-center gap-1.5 active:scale-95"
+                    className="border-vinho/20 text-vinho hover:bg-vinho/5 text-[11px] sm:text-xs font-semibold px-2 sm:px-3 py-2 min-h-[44px] sm:min-h-[36px] rounded-xl sm:rounded-full flex items-center justify-center gap-1 active:scale-95"
                   >
-                    <Edit className="w-3.5 h-3.5 text-dourado-dark" />
-                    Editar Dados
+                    <Edit className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
+                    <span>Editar</span>
                   </Button>
 
                   {/* Botão Baixar JPEG */}
                   <Button
                     onClick={() => handleDownloadJpeg(previewConvite)}
                     disabled={exportingJpegId === previewConvite.id}
-                    className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs px-3.5 py-2 min-h-[36px] rounded-full flex items-center gap-1.5 shadow-xs transition-colors active:scale-95"
+                    className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-[11px] sm:text-xs px-2 sm:px-3.5 py-2 min-h-[44px] sm:min-h-[36px] rounded-xl sm:rounded-full flex items-center justify-center gap-1 shadow-xs transition-colors active:scale-95"
                   >
                     {exportingJpegId === previewConvite.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-vinho" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-vinho shrink-0" />
                     ) : (
-                      <Download className="w-3.5 h-3.5 text-vinho" />
+                      <Download className="w-3.5 h-3.5 text-vinho shrink-0" />
                     )}
-                    Baixar JPEG
+                    <span>JPEG</span>
                   </Button>
 
                   {/* Botão Imprimir / Salvar PDF */}
                   <Button
                     onClick={handlePrint}
-                    className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-3.5 py-2 min-h-[36px] rounded-full flex items-center gap-1.5 shadow-xs active:scale-95"
+                    className="bg-vinho hover:bg-vinho-light text-white text-[11px] sm:text-xs font-bold px-2 sm:px-3.5 py-2 min-h-[44px] sm:min-h-[36px] rounded-xl sm:rounded-full flex items-center justify-center gap-1 shadow-xs active:scale-95"
                   >
-                    <Printer className="w-3.5 h-3.5 text-dourado" />
-                    Imprimir / PDF
+                    <Printer className="w-3.5 h-3.5 text-dourado shrink-0" />
+                    <span>PDF</span>
                   </Button>
                 </div>
               </div>

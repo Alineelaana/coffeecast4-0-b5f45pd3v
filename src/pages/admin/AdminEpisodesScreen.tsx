@@ -135,7 +135,75 @@ export default function AdminEpisodesScreen() {
         </Button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-hidden">
+      {/* Mobile Cards View */}
+      <div className="block md:hidden space-y-3">
+        {loading ? (
+          <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center text-xs text-vinho/60">
+            Carregando episódios...
+          </div>
+        ) : episodios.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center space-y-3">
+            <p className="text-sm text-vinho/70 font-medium">Nenhum episódio cadastrado.</p>
+            <Button onClick={handleOpenCreate} variant="outline" size="sm" className="min-h-[44px]">
+              Criar primeiro episódio
+            </Button>
+          </div>
+        ) : (
+          episodios.map((ep) => (
+            <div
+              key={ep.id}
+              className="bg-white rounded-2xl border border-vinho/10 p-4 shadow-sm space-y-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full bg-vinho/10 text-vinho font-bold text-xs inline-flex items-center justify-center shrink-0">
+                    #{ep.numero}
+                  </span>
+                  <h3 className="text-xs font-bold text-vinho leading-tight">{ep.titulo}</h3>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenEdit(ep)}
+                    className="h-9 w-9 p-0 text-vinho/70 hover:text-vinho min-h-[36px]"
+                    title="Editar episódio"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(ep.id, ep.titulo)}
+                    className="h-9 w-9 p-0 text-red-500 hover:text-red-700 min-h-[36px]"
+                    title="Excluir episódio"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {ep.youtube_url && (
+                <div className="pt-2 border-t border-vinho/5">
+                  <a
+                    href={ep.youtube_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-dourado-dark hover:underline truncate max-w-full font-medium"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-dourado text-dourado shrink-0" />
+                    <span className="truncate">{ep.youtube_url}</span>
+                    <ExternalLink className="w-3 h-3 shrink-0" />
+                  </a>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-x-auto">
         {loading ? (
           <div className="py-16 text-center text-xs text-vinho/60">Carregando episódios...</div>
         ) : episodios.length === 0 ? (
@@ -159,7 +227,6 @@ export default function AdminEpisodesScreen() {
             </TableHeader>
             <TableBody className="divide-y divide-vinho/5">
               {episodios.map((ep) => {
-                const vid = extractYouTubeId(ep.youtube_url)
                 return (
                   <TableRow key={ep.id} className="hover:bg-vinho/5">
                     <TableCell className="font-bold text-vinho text-xs">
@@ -216,7 +283,7 @@ export default function AdminEpisodesScreen() {
 
       {/* Modal de Criação / Edição */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md bg-marfim border-2 border-dourado/50 text-vinho">
+        <DialogContent className="w-[94vw] max-w-md max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho">
               {editingEp ? 'Editar Episódio' : 'Novo Episódio'}
@@ -266,19 +333,19 @@ export default function AdminEpisodesScreen() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setModalOpen(false)}
-                className="text-xs"
+                className="w-full sm:w-auto min-h-[44px] text-xs"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
+                className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
               >
                 {saving ? 'Salvando...' : 'Salvar Episódio'}
               </Button>
