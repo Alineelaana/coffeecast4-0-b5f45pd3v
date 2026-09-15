@@ -140,6 +140,15 @@ export interface SocialLinks {
   linkedin?: string
 }
 
+export interface SiteDomainConfig {
+  dominioPersonalizado: string
+  status: 'pendente_dns' | 'aguardando_propagacao' | 'ativo'
+  redirecionarWww: boolean
+  aliases: string
+  ativadoSuporte: boolean
+  dataSolicitacao?: string
+}
+
 export interface PoliticaRecord {
   id: string
   slug: 'privacidade' | 'cookies' | 'termos'

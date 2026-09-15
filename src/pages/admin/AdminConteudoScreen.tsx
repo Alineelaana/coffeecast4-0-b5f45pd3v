@@ -216,6 +216,12 @@ export default function AdminConteudoScreen() {
     social_facebook: 'Link ou perfil do Facebook para o rodapé',
     social_instagram: 'Link ou perfil do Instagram para o rodapé',
     social_linkedin: 'Link ou perfil do LinkedIn para o rodapé',
+    dominio_personalizado: 'Domínio personalizado configurado para o site',
+    dominio_status: 'Status do domínio (pendente_dns, aguardando_propagacao, ativo)',
+    dominio_redirecionar_www: 'Redirecionamento automático www habilitado',
+    dominio_aliases: 'Domínios adicionais ou aliases configurados',
+    dominio_ativado_suporte: 'Sinalizador se a ativação foi confirmada pelo suporte',
+    dominio_data_solicitacao: 'Data em que o domínio foi cadastrado ou solicitado',
   }
 
   return (

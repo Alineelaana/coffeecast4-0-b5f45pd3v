@@ -24,6 +24,7 @@ import AdminAgendaScreen from '@/pages/admin/AdminAgendaScreen'
 import AdminControleHorasScreen from '@/pages/admin/AdminControleHorasScreen'
 import AdminConvitesScreen from '@/pages/admin/AdminConvitesScreen'
 import AdminConteudoScreen from '@/pages/admin/AdminConteudoScreen'
+import AdminDominioScreen from '@/pages/admin/AdminDominioScreen'
 import AdminPoliticasScreen from '@/pages/admin/AdminPoliticasScreen'
 import AdminUsuariosScreen from '@/pages/admin/AdminUsuariosScreen'
 
@@ -68,6 +69,7 @@ export default function App() {
 
             {/* Rotas Restritas Exclusivamente ao Superadministrador Master:
                 - Editar Site (conteudo)
+                - Domínio do Site (dominio)
                 - Episódios (episodios)
                 - Integrantes
                 - Depoimentos
@@ -80,6 +82,14 @@ export default function App() {
               element={
                 <ProtectedRoute requireMaster>
                   <AdminConteudoScreen />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="dominio"
+              element={
+                <ProtectedRoute requireMaster>
+                  <AdminDominioScreen />
                 </ProtectedRoute>
               }
             />
