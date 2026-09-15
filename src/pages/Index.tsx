@@ -4,6 +4,7 @@ import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
 import { HeaderBanner } from '@/components/HeaderBanner'
 import { EpisodeModal } from '@/components/EpisodeModal'
+import { EpisodeHighlight } from '@/components/EpisodeHighlight'
 import { EpisodesCarousel } from '@/components/EpisodesCarousel'
 import { MomentsCarousel } from '@/components/MomentsCarousel'
 import { TestimonialsCarousel } from '@/components/TestimonialsCarousel'
@@ -116,6 +117,18 @@ export default function Index() {
   const [episodeModalOpen, setEpisodeModalOpen] = useState(false)
   const [membersModalOpen, setMembersModalOpen] = useState(false)
 
+  // Atualização dos episódios em tempo real (ou recarregamento)
+  const fetchEpisodios = async () => {
+    try {
+      const epList = await pb
+        .collection('episodios')
+        .getFullList<EpisodioRecord>({ sort: 'numero' })
+      setEpisodios(epList)
+    } catch (err) {
+      console.error('Erro ao recarregar episódios:', err)
+    }
+  }
+
   // Carregar dados dinâmicos do PocketBase
   useEffect(() => {
     async function fetchData() {
@@ -161,6 +174,54 @@ export default function Index() {
     fetchData()
   }, [])
 
+  // Inscrição em tempo real para episódios e conteúdos do site
+  useEffect(() => {
+    let unsubEp: (() => void) | undefined
+    let unsubCont: (() => void) | undefined
+
+    pb.collection('episodios')
+      .subscribe('*', () => {
+        fetchEpisodios()
+      })
+      .then((unsub) => {
+        unsubEp = unsub
+      })
+      .catch(() => {})
+
+    pb.collection('conteudo_site')
+      .subscribe<ConteudoSiteRecord>('*', (e) => {
+        if (e.record && e.record.chave) {
+          const chave = e.record.chave
+          const valor = e.record.valor
+          setConteudo((prev) => ({
+            ...prev,
+            [chave]: valor,
+          }))
+        }
+      })
+      .then((unsub) => {
+        unsubCont = unsub
+      })
+      .catch(() => {})
+
+    return () => {
+      if (unsubEp) unsubEp()
+      if (unsubCont) unsubCont()
+    }
+  }, [])
+
+  // Episódio mais recente: maior número, e em empate mais recente por created
+  const latestEpisode: EpisodioRecord | null = React.useMemo(() => {
+    if (!episodios || episodios.length === 0) return null
+    const sorted = [...episodios].sort((a, b) => {
+      if (b.numero !== a.numero) {
+        return b.numero - a.numero
+      }
+      return new Date(b.created).getTime() - new Date(a.created).getTime()
+    })
+    return sorted[0] || null
+  }, [episodios])
+
   const handleWatchEpisode = (ep: EpisodioRecord) => {
     setSelectedEpisode(ep)
     setEpisodeModalOpen(true)
@@ -197,6 +258,10 @@ export default function Index() {
   const rodapeCreditosText =
     conteudo.rodape_creditos ||
     'Site criado e gerenciado por SAF TECNOLOGIA E GESTAO LTDA — CNPJ 65.768.215/0001-00'
+
+  const periodicidadeEpisodiosText =
+    conteudo.periodicidade_episodios ||
+    'Todo sábado às 10h sai um episódio novo no canal do YouTube!'
 
   const socialLinksData = {
     tiktok: conteudo.social_tiktok,
@@ -358,6 +423,14 @@ export default function Index() {
               Navegue lateralmente para escolher o seu episódio favorito.
             </p>
           </div>
+
+          {/* ÁREA DE DESTAQUE DE EPISÓDIOS: Contador no ar + Periodicidade editável + Botão do último episódio */}
+          <EpisodeHighlight
+            totalCount={episodios.length}
+            periodicidadeTexto={periodicidadeEpisodiosText}
+            latestEpisode={latestEpisode}
+            onWatchEpisode={handleWatchEpisode}
+          />
 
           {/* Carrossel lateral compacto com botões de navegação e suporte a arraste */}
           <EpisodesCarousel episodios={episodios} onSelectEpisode={handleWatchEpisode} />

@@ -45,6 +45,10 @@ export default function AdminConteudoScreen() {
   const [linkedin, setLinkedin] = useState('')
   const [savingSocials, setSavingSocials] = useState(false)
 
+  // Estado dedicado à periodicidade de novos episódios
+  const [periodicidade, setPeriodicidade] = useState('')
+  const [savingPeriodicidade, setSavingPeriodicidade] = useState(false)
+
   const loadConteudos = async () => {
     try {
       setLoading(true)
@@ -53,7 +57,7 @@ export default function AdminConteudoScreen() {
       })
       setConteudos(list)
 
-      // Preenche os campos de redes sociais a partir dos registros existentes
+      // Preenche os campos dedicados a partir dos registros existentes
       const map: Record<string, string> = {}
       list.forEach((item) => {
         map[item.chave] = item.valor
@@ -62,6 +66,10 @@ export default function AdminConteudoScreen() {
       setFacebook(map['social_facebook'] || '')
       setInstagram(map['social_instagram'] || '')
       setLinkedin(map['social_linkedin'] || '')
+      setPeriodicidade(
+        map['periodicidade_episodios'] ||
+          'Todo sábado às 10h sai um episódio novo no canal do YouTube!',
+      )
     } catch (err) {
       console.error(err)
       toast.error('Erro ao carregar textos do site.')
@@ -168,7 +176,34 @@ export default function AdminConteudoScreen() {
     }
   }
 
+  const handleSavePeriodicidade = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSavingPeriodicidade(true)
+
+    try {
+      const trimmed = periodicidade.trim()
+      const existing = conteudos.find((c) => c.chave === 'periodicidade_episodios')
+
+      if (existing) {
+        await pb.collection('conteudo_site').update(existing.id, { valor: trimmed })
+      } else {
+        await pb
+          .collection('conteudo_site')
+          .create({ chave: 'periodicidade_episodios', valor: trimmed })
+      }
+
+      toast.success('Frequência de novos episódios salva com sucesso!')
+      await loadConteudos()
+    } catch (err) {
+      console.error(err)
+      toast.error('Erro ao salvar frequência de episódios.')
+    } finally {
+      setSavingPeriodicidade(false)
+    }
+  }
+
   const keyDescriptions: Record<string, string> = {
+    periodicidade_episodios: 'Frequência de novos episódios exibida no destaque da home',
     missao: 'Texto da Missão exibido na página inicial',
     visao: 'Texto da Visão exibido na página inicial',
     valores: 'Texto dos Valores exibido na página inicial',
@@ -185,6 +220,64 @@ export default function AdminConteudoScreen() {
 
   return (
     <div className="space-y-8">
+      {/* SEÇÃO DEDICADA: FREQUÊNCIA DE NOVOS EPISÓDIOS */}
+      <div className="bg-white rounded-2xl border border-vinho/10 p-6 sm:p-7 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-vinho/10 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-vinho/10 text-vinho flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-dourado-dark" />
+            </div>
+            <div>
+              <h2 className="font-serif text-xl font-bold text-vinho">
+                Frequência de Novos Episódios
+              </h2>
+              <p className="text-xs text-vinho/70">
+                Texto de aviso exibido no card de destaque da Home (ao lado da contagem total e
+                botão do último episódio).
+              </p>
+            </div>
+          </div>
+          <span className="text-[11px] font-medium bg-dourado/15 text-vinho border border-dourado/30 px-3 py-1 rounded-full">
+            Destaque na Home
+          </span>
+        </div>
+
+        <form onSubmit={handleSavePeriodicidade} className="space-y-4">
+          <div className="space-y-2 p-4 rounded-xl bg-marfim/60 border border-vinho/10">
+            <Label
+              htmlFor="s-periodicidade"
+              className="text-xs font-bold text-vinho flex items-center gap-2"
+            >
+              <span className="w-2 h-2 rounded-full bg-vinho" />
+              Texto da Periodicidade / Frequência de novos episódios
+            </Label>
+            <Input
+              id="s-periodicidade"
+              required
+              placeholder="Ex.: Todo sábado às 10h sai um episódio novo no canal do YouTube!"
+              value={periodicidade}
+              onChange={(e) => setPeriodicidade(e.target.value)}
+              className="bg-white border-vinho/20 text-xs sm:text-sm"
+            />
+            <p className="text-[11px] text-vinho/65">
+              Valor padrão: <em>Todo sábado às 10h sai um episódio novo no canal do YouTube!</em> —
+              altere quando os dias ou horários de gravação/postagem mudarem.
+            </p>
+          </div>
+
+          <div className="flex justify-end pt-1">
+            <Button
+              type="submit"
+              disabled={savingPeriodicidade}
+              className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-full px-6 flex items-center justify-center gap-2 shadow-sm"
+            >
+              <Save className="w-4 h-4 text-dourado" />
+              {savingPeriodicidade ? 'Salvando...' : 'Salvar Frequência'}
+            </Button>
+          </div>
+        </form>
+      </div>
+
       {/* SEÇÃO DEDICADA: REDES SOCIAIS DO RODAPÉ */}
       <div className="bg-white rounded-2xl border border-vinho/10 p-6 sm:p-7 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-vinho/10 pb-4">
