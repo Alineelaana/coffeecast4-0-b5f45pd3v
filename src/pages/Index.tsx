@@ -493,33 +493,76 @@ export default function Index() {
       {/* SEÇÃO 7: CONTATO COMERCIAL DESTACADO */}
       <section
         id="contato"
-        className="py-12 px-4 sm:px-6 lg:px-8 bg-white border-t border-vinho/10"
+        className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 bg-marfim border-t border-vinho/10 relative overflow-hidden"
       >
-        <div className="max-w-4xl mx-auto bg-marfim border border-vinho/15 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
-          <div className="space-y-1 text-center sm:text-left">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-dourado-dark">
-              Atendimento & Patrocínios
-            </span>
-            <h3 className="font-serif text-xl sm:text-2xl font-bold text-vinho">
-              Quer patrocinar ou sugerir uma pauta comercial?
-            </h3>
-            <p className="text-xs sm:text-sm text-vinho/75">
-              Fale diretamente com nossa gestora de parcerias:{' '}
-              <strong>{contatoComercialText}</strong>
-            </p>
-          </div>
+        <div className="max-w-4xl mx-auto relative group">
+          {/* Brilho dourado de fundo ambiente */}
+          <div
+            aria-hidden="true"
+            className="absolute -inset-1 rounded-3xl bg-linear-to-r from-dourado/40 via-dourado/20 to-dourado/40 blur-xl opacity-60 pointer-events-none group-hover:opacity-85 transition-opacity duration-500"
+          />
 
-          <a
-            href="https://wa.me/5531991297619"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0"
-          >
-            <Button className="bg-vinho hover:bg-vinho-light text-white font-semibold rounded-full px-6 py-2.5 text-xs sm:text-sm shadow-md flex items-center gap-2">
-              <MessageCircle className="w-4 h-4 text-dourado" />
-              Chamar no WhatsApp
-            </Button>
-          </a>
+          {/* Banner Principal com degradê vinho profundo e borda dourada com sombra elegante */}
+          <div className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-10 lg:p-12 overflow-hidden border border-dourado/75 bg-linear-to-br from-[#4B1E3F] via-[#3A1430] to-[#240B1E] text-marfim shadow-[0_12px_36px_rgba(75,30,63,0.35),0_0_24px_rgba(212,175,55,0.22)]">
+            {/* Elementos decorativos de luz e sutileza no interior do banner */}
+            <div
+              aria-hidden="true"
+              className="absolute -top-16 -right-16 w-64 h-64 bg-radial from-dourado/25 via-dourado/5 to-transparent rounded-full blur-2xl pointer-events-none"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute -bottom-16 -left-16 w-56 h-56 bg-radial from-rose-brand/20 via-transparent to-transparent rounded-full blur-2xl pointer-events-none"
+            />
+
+            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 sm:gap-10">
+              {/* Informações textuais */}
+              <div className="space-y-3 sm:space-y-4 text-center lg:text-left flex-1 max-w-2xl">
+                {/* Tag de categoria com ícone de brilho e café */}
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-dourado/15 border border-dourado/50 text-dourado-light text-[11px] sm:text-xs font-semibold tracking-wider uppercase shadow-xs">
+                  <Sparkles className="w-3.5 h-3.5 text-dourado shrink-0 animate-pulse-slow" />
+                  <span>Atendimento & Patrocínios</span>
+                </div>
+
+                {/* Título de alto impacto com tipografia Playfair Display e gradiente dourado brilhante */}
+                <h3 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] font-bold leading-tight sm:leading-snug gold-text-gradient drop-shadow-sm">
+                  Quer patrocinar ou sugerir uma pauta comercial?
+                </h3>
+
+                {/* Subtítulo / Dados de contato da Aline Lana com WhatsApp legível em tom marfim/branco */}
+                <div className="pt-1 text-xs sm:text-sm text-marfim/90 leading-relaxed font-light">
+                  <span>Fale diretamente com nossa gestora de parcerias:</span>
+                  <div className="mt-1.5 inline-flex flex-wrap items-center justify-center lg:justify-start gap-2 font-medium text-white">
+                    <span className="text-dourado-light font-serif font-bold text-sm sm:text-base tracking-wide">
+                      Aline Lana
+                    </span>
+                    <span className="text-dourado/60 hidden sm:inline">•</span>
+                    <span className="bg-white/10 px-2.5 py-1 rounded-md text-xs sm:text-sm text-marfim tracking-wider font-sans border border-white/15">
+                      (31) 99129-7619
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botão de ação (CTA) de alto contraste com degradê dourado vibrante e abertura para o WhatsApp */}
+              <div className="w-full sm:w-auto shrink-0 flex justify-center">
+                <a
+                  href="https://wa.me/5531991297619"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto block focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado focus-visible:ring-offset-2 focus-visible:ring-offset-[#3A1430] rounded-full no-underline"
+                >
+                  <Button
+                    type="button"
+                    className="w-full sm:w-auto min-h-[50px] sm:min-h-[52px] px-7 sm:px-9 py-3 sm:py-3.5 gold-gradient hover:opacity-95 text-[#2A0F23] font-bold text-sm sm:text-base rounded-full shadow-[0_6px_20px_rgba(212,175,55,0.45)] hover:shadow-[0_8px_26px_rgba(212,175,55,0.65)] flex items-center justify-center gap-2.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] border border-[#FFF2B2] cursor-pointer"
+                  >
+                    <MessageCircle className="w-5 h-5 text-[#2A0F23] shrink-0 fill-[#2A0F23]/20" />
+                    <span>Fale com a gente no WhatsApp</span>
+                    <ExternalLink className="w-4 h-4 text-[#2A0F23]/70 shrink-0 ml-0.5" />
+                  </Button>
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
