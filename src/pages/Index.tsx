@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import pb from '@/lib/pocketbase/client'
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
-import { CoffeeCastLogo } from '@/components/CoffeeCastLogo'
+import { HeaderBanner } from '@/components/HeaderBanner'
 import { EpisodeModal } from '@/components/EpisodeModal'
 import { MomentsCarousel } from '@/components/MomentsCarousel'
 import { ParticipationForm } from '@/components/ParticipationForm'
@@ -17,18 +17,7 @@ import type {
   MomentoRecord,
   ConteudoSiteRecord,
 } from '@/types/database'
-import {
-  Play,
-  Heart,
-  Compass,
-  Eye,
-  Award,
-  Sparkles,
-  Quote,
-  MessageCircle,
-  ChevronDown,
-  Users,
-} from 'lucide-react'
+import { Play, Heart, Compass, Eye, Award, Sparkles, Quote, MessageCircle } from 'lucide-react'
 
 // Fotos padrão de alta qualidade para as integrantes caso ainda não tenham foto no PocketBase
 const fallbackIntegrantesPhotos = [
@@ -143,90 +132,8 @@ export default function Index() {
       {/* Navbar com âncoras e controle da Área de Membros */}
       <Navbar onOpenMembersModal={() => setMembersModalOpen(true)} />
 
-      {/* SEÇÃO 1: HERO OFICIAL COM BANNER DA XÍCARA DOURADA & VAPOR DE CORAÇÃO */}
-      <section
-        id="inicio"
-        className="relative min-h-[92vh] flex items-center justify-center hero-gradient text-white pt-24 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
-      >
-        {/* Elementos visuais decorativos de fundo */}
-        <div className="absolute top-1/4 left-10 w-72 h-72 bg-dourado/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-rose-brand/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:28px_28px] opacity-10 pointer-events-none" />
-
-        <div className="max-w-6xl mx-auto w-full relative z-10 flex flex-col lg:flex-row items-center gap-12 lg:gap-16 py-8">
-          {/* Coluna de Texto e Chamadas */}
-          <div className="flex-1 text-center lg:text-left space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-vinho-dark/80 border border-dourado/40 shadow-inner">
-              <Sparkles className="w-3.5 h-3.5 text-dourado animate-pulse" />
-              <span className="text-xs uppercase font-bold tracking-widest text-dourado-light">
-                Podcast Brasileiro por Mulheres
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
-                CoffeeCast <span className="gold-text-gradient">4.0</span>
-              </h1>
-              <p className="font-serif italic text-xl sm:text-2xl text-marfim/90 font-light">
-                "Mais que conversas, histórias que transformam."
-              </p>
-            </div>
-
-            <p className="text-sm sm:text-base text-marfim/80 max-w-xl leading-relaxed mx-auto lg:mx-0 font-light">
-              Um ambiente acolhedor, inspirador e autêntico onde vidas, negócios, superações e
-              sonhos ganham voz. Sente-se conosco, pegue sua xícara e sinta a força de boas
-              conversas.
-            </p>
-
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5">
-              <a href="#episodios" className="w-full sm:w-auto">
-                <Button className="w-full sm:w-auto bg-dourado hover:bg-dourado-dark text-vinho font-bold px-7 py-3 text-sm rounded-full shadow-xl transition-all transform hover:-translate-y-0.5">
-                  <Play className="w-4 h-4 fill-vinho mr-2" />
-                  Assistir aos Episódios
-                </Button>
-              </a>
-
-              <a href="#participar" className="w-full sm:w-auto">
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-auto border-dourado/60 text-marfim hover:bg-white/10 font-medium px-6 py-3 text-sm rounded-full"
-                >
-                  Quero Participar
-                </Button>
-              </a>
-            </div>
-
-            {/* Micro selo de contato comercial rápido */}
-            <div className="pt-4 flex items-center justify-center lg:justify-start gap-2 text-xs text-marfim/70">
-              <span className="w-2 h-2 rounded-full bg-dourado" />
-              <span>Contato comercial: {contatoComercialText}</span>
-            </div>
-          </div>
-
-          {/* Coluna da Logomarca Hero / Banner Oficial */}
-          <div className="flex-1 flex justify-center items-center relative">
-            <div className="relative w-64 sm:w-80 md:w-96 aspect-square rounded-full flex items-center justify-center p-6 bg-gradient-to-tr from-vinho-dark/80 via-vinho/70 to-vinho-light/40 border-2 border-dourado/50 shadow-2xl backdrop-blur-sm animate-float">
-              {/* Círculo com borda brilhante e anéis concêntricos */}
-              <div className="absolute inset-2 rounded-full border border-dourado/30 border-dashed animate-spin-slow" />
-              <CoffeeCastLogo
-                className="w-48 sm:w-64 md:w-72 h-48 sm:h-64 md:h-72 drop-shadow-2xl"
-                variant="gold"
-              />
-
-              <div className="absolute -bottom-4 bg-marfim text-vinho font-serif font-bold text-xs uppercase px-5 py-1.5 rounded-full border border-dourado shadow-lg tracking-wider">
-                Temporada 2026
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center text-marfim/60 hover:text-dourado transition-colors">
-          <a href="#missao" aria-label="Rolar para Missão, Visão e Valores">
-            <ChevronDown className="w-6 h-6 animate-bounce" />
-          </a>
-        </div>
-      </section>
+      {/* SEÇÃO 1: BANNER OFICIAL INTEGRAL E FLUIDO (SEM NADA ESCRITO POR CIMA) */}
+      <HeaderBanner />
 
       {/* SEÇÃO 2: MISSÃO, VISÃO & VALORES */}
       <section id="missao" className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-b border-vinho/10">

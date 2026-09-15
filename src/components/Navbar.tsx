@@ -54,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
           ? 'bg-[#FAF8F5]/95 text-vinho shadow-md backdrop-blur-md border-b-2 border-dourado/60 py-2.5'
-          : 'bg-gradient-to-b from-vinho-dark/90 via-vinho/60 to-transparent text-white py-4'
+          : 'bg-gradient-to-b from-[#200918]/80 via-[#200918]/40 to-transparent text-white py-3'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -62,9 +62,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
           {/* Logo Brand */}
           <Link to="/" className="group flex items-center gap-3">
             <CoffeeCastBrand
-              variant={scrolled ? 'dark' : 'light'}
-              iconSize="w-10 h-10 md:w-11 md:h-11"
-              showTagline={!scrolled}
+              variant={scrolled ? 'dark' : 'gold'}
+              iconSize="w-9 h-9 md:w-10 md:h-10"
+              showTagline={false}
             />
           </Link>
 
