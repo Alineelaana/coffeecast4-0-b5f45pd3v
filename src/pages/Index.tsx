@@ -6,6 +6,7 @@ import { HeaderBanner } from '@/components/HeaderBanner'
 import { EpisodeModal } from '@/components/EpisodeModal'
 import { EpisodesCarousel } from '@/components/EpisodesCarousel'
 import { MomentsCarousel } from '@/components/MomentsCarousel'
+import { TestimonialsCarousel } from '@/components/TestimonialsCarousel'
 import { ParticipationForm } from '@/components/ParticipationForm'
 import { MembersAreaModal } from '@/components/MembersAreaModal'
 import { Button } from '@/components/ui/button'
@@ -231,12 +232,12 @@ export default function Index() {
         </div>
       </section>
 
-      {/* SEÇÃO 5: FEEDBACKS / DEPOIMENTOS DOS CONVIDADOS */}
+      {/* SEÇÃO 5: FEEDBACKS / DEPOIMENTOS DOS CONVIDADOS (CARROSSEL HORIZONTAL) */}
       <section
         id="depoimentos"
-        className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-b border-vinho/10"
+        className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-white border-b border-vinho/10"
       >
-        <div className="max-w-6xl mx-auto space-y-12">
+        <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <span className="text-xs uppercase font-bold tracking-widest text-dourado-dark bg-dourado/10 px-3.5 py-1 rounded-full border border-dourado/30">
               Vozes que Marcaram
@@ -246,57 +247,15 @@ export default function Index() {
             </h2>
             <p className="text-xs sm:text-sm text-vinho/75">
               O que dizem os convidados que já passaram pela nossa mesa ou como foi para nós
-              entrevistá-los.
+              entrevistá-los. Navegue lateralmente para ler as histórias.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {depoimentos.map((dep, index) => {
-              const photoUrl = dep.foto
-                ? getFileUrl(dep, dep.foto)
-                : fallbackDepoimentosPhotos[index % fallbackDepoimentosPhotos.length]
-
-              return (
-                <div
-                  key={dep.id || index}
-                  className={`rounded-2xl p-6 flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md transition-all ${
-                    dep.de_nossa_autoridade
-                      ? 'bg-rose-brand/30 border-2 border-dourado'
-                      : 'bg-marfim border border-vinho/15'
-                  }`}
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Quote className="w-8 h-8 text-dourado opacity-80" />
-                      {dep.de_nossa_autoridade && (
-                        <Badge className="bg-vinho text-dourado text-[10px] font-bold tracking-wide">
-                          Visão da Equipe CoffeeCast
-                        </Badge>
-                      )}
-                    </div>
-
-                    <p className="text-xs sm:text-sm text-vinho/85 italic leading-relaxed">
-                      "{dep.texto}"
-                    </p>
-                  </div>
-
-                  <div className="pt-4 border-t border-vinho/10 flex items-center gap-3">
-                    <img
-                      src={photoUrl}
-                      alt={dep.nome}
-                      className="w-11 h-11 rounded-full object-cover border-2 border-dourado shadow-sm"
-                    />
-                    <div>
-                      <h4 className="font-serif font-bold text-sm text-vinho">{dep.nome}</h4>
-                      <span className="text-[11px] text-vinho/60 block">
-                        {dep.de_nossa_autoridade ? 'Convidada Homenageada' : 'Convidada do Podcast'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          {/* Carrossel lateral de depoimentos */}
+          <TestimonialsCarousel
+            depoimentos={depoimentos}
+            fallbackPhotos={fallbackDepoimentosPhotos}
+          />
         </div>
       </section>
 
