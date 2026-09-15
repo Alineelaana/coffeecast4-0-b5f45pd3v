@@ -141,9 +141,10 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className={`flex gap-4 sm:gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-dourado/30 scrollbar-track-transparent select-none cursor-grab active:cursor-grabbing snap-x snap-mandatory scroll-smooth`}
+        className={`flex gap-4 sm:gap-5 overflow-x-auto pb-4 pt-1 px-1 no-scrollbar select-none cursor-grab active:cursor-grabbing snap-x snap-mandatory scroll-smooth`}
         style={{
-          scrollbarWidth: 'thin',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
         }}
       >

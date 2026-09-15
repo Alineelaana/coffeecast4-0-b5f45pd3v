@@ -209,4 +209,13 @@
   .animate-pulse-slow {
     animation: pulseSlow 4s ease-in-out infinite;
   }
+
+  /* Utilitário para ocultar barras de rolagem mantendo a rolagem ativa */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
