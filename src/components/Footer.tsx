@@ -72,6 +72,11 @@ export const Footer: React.FC<FooterProps> = ({
                   Quero Participar do Podcast
                 </a>
               </li>
+              <li>
+                <a href="#missao" className="hover:text-dourado transition-colors">
+                  Missão, Visão & Valores
+                </a>
+              </li>
             </ul>
           </div>
 

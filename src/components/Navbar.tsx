@@ -35,6 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
     { label: 'Participar', href: '#participar' },
     { label: 'Nossos Momentos', href: '#momentos' },
     { label: 'Contato', href: '#contato' },
+    { label: 'Missão & Valores', href: '#missao' },
   ]
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {

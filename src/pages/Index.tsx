@@ -135,53 +135,7 @@ export default function Index() {
       {/* SEÇÃO 1: BANNER OFICIAL INTEGRAL E FLUIDO (SEM NADA ESCRITO POR CIMA) */}
       <HeaderBanner />
 
-      {/* SEÇÃO 2: MISSÃO, VISÃO & VALORES */}
-      <section id="missao" className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-b border-vinho/10">
-        <div className="max-w-6xl mx-auto space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs uppercase font-bold tracking-widest text-dourado-dark bg-dourado/10 px-3.5 py-1 rounded-full border border-dourado/30">
-              Nossa Essência
-            </span>
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-vinho">
-              Missão, Visão & Valores
-            </h2>
-            <p className="text-xs sm:text-sm text-vinho/70">
-              O que nos move a cada gravação e guia cada palavra dita em nossa mesa.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Missão */}
-            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-4 group">
-              <div className="w-12 h-12 rounded-xl bg-vinho/10 text-vinho flex items-center justify-center group-hover:bg-vinho group-hover:text-dourado transition-colors">
-                <Compass className="w-6 h-6" />
-              </div>
-              <h3 className="font-serif text-xl font-bold text-vinho">Nossa Missão</h3>
-              <p className="text-sm text-vinho/80 leading-relaxed font-light">"{missaoText}"</p>
-            </div>
-
-            {/* Visão */}
-            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-4 group">
-              <div className="w-12 h-12 rounded-xl bg-dourado/15 text-dourado-dark flex items-center justify-center group-hover:bg-dourado group-hover:text-vinho transition-colors">
-                <Eye className="w-6 h-6" />
-              </div>
-              <h3 className="font-serif text-xl font-bold text-vinho">Nossa Visão</h3>
-              <p className="text-sm text-vinho/80 leading-relaxed font-light">"{visaoText}"</p>
-            </div>
-
-            {/* Valores */}
-            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-4 group">
-              <div className="w-12 h-12 rounded-xl bg-rose-brand/30 text-vinho flex items-center justify-center group-hover:bg-vinho group-hover:text-dourado transition-colors">
-                <Award className="w-6 h-6" />
-              </div>
-              <h3 className="font-serif text-xl font-bold text-vinho">Nossos Valores</h3>
-              <p className="text-sm text-vinho/80 leading-relaxed font-light">{valoresText}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SEÇÃO 3: AS QUATRO INTEGRANTES DO COFFEECAST 4.0 */}
+      {/* SEÇÃO 2: AS QUATRO INTEGRANTES DO COFFEECAST 4.0 */}
       <section
         id="integrantes"
         className="py-20 px-4 sm:px-6 lg:px-8 bg-[#FAF8F5] relative overflow-hidden"
@@ -421,7 +375,10 @@ export default function Index() {
       </section>
 
       {/* SEÇÃO 8: CONTATO COMERCIAL DESTACADO */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white border-t border-vinho/10">
+      <section
+        id="contato"
+        className="py-12 px-4 sm:px-6 lg:px-8 bg-white border-t border-vinho/10"
+      >
         <div className="max-w-4xl mx-auto bg-marfim border border-vinho/15 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
           <div className="space-y-1 text-center sm:text-left">
             <span className="text-[11px] font-bold uppercase tracking-wider text-dourado-dark">
@@ -447,6 +404,52 @@ export default function Index() {
               Chamar no WhatsApp
             </Button>
           </a>
+        </div>
+      </section>
+
+      {/* SEÇÃO 9: MISSÃO, VISÃO & VALORES (ÚLTIMA SEÇÃO DE CONTEÚDO, LOGO ACIMA DO RODAPÉ) */}
+      <section id="missao" className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-t border-vinho/10">
+        <div className="max-w-6xl mx-auto space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <span className="text-xs uppercase font-bold tracking-widest text-dourado-dark bg-dourado/10 px-3.5 py-1 rounded-full border border-dourado/30">
+              Nossa Essência
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-vinho">
+              Missão, Visão & Valores
+            </h2>
+            <p className="text-xs sm:text-sm text-vinho/70">
+              O que nos move a cada gravação e guia cada palavra dita em nossa mesa.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Missão */}
+            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-4 group">
+              <div className="w-12 h-12 rounded-xl bg-vinho/10 text-vinho flex items-center justify-center group-hover:bg-vinho group-hover:text-dourado transition-colors">
+                <Compass className="w-6 h-6" />
+              </div>
+              <h3 className="font-serif text-xl font-bold text-vinho">Nossa Missão</h3>
+              <p className="text-sm text-vinho/80 leading-relaxed font-light">"{missaoText}"</p>
+            </div>
+
+            {/* Visão */}
+            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-4 group">
+              <div className="w-12 h-12 rounded-xl bg-dourado/15 text-dourado-dark flex items-center justify-center group-hover:bg-dourado group-hover:text-vinho transition-colors">
+                <Eye className="w-6 h-6" />
+              </div>
+              <h3 className="font-serif text-xl font-bold text-vinho">Nossa Visão</h3>
+              <p className="text-sm text-vinho/80 leading-relaxed font-light">"{visaoText}"</p>
+            </div>
+
+            {/* Valores */}
+            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-4 group">
+              <div className="w-12 h-12 rounded-xl bg-rose-brand/30 text-vinho flex items-center justify-center group-hover:bg-vinho group-hover:text-dourado transition-colors">
+                <Award className="w-6 h-6" />
+              </div>
+              <h3 className="font-serif text-xl font-bold text-vinho">Nossos Valores</h3>
+              <p className="text-sm text-vinho/80 leading-relaxed font-light">{valoresText}</p>
+            </div>
+          </div>
         </div>
       </section>
 
