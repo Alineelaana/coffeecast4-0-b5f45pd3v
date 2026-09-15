@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, X, Lock, ShieldCheck, Sparkles } from 'lucide-react'
-import headerLogoSvg from '@/assets/coffeecast-logo-header.svg'
+import { HeaderNavbarLogo } from '@/components/HeaderNavbarLogo'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
 
@@ -60,17 +60,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4">
-          {/* Logo Brand recolorida do cabeçalho público (SVG: xícara dourada + escrito 'CoffeeCast' em branco + '4.0' em dourado) */}
+          {/* Logo Brand recolorida do cabeçalho público (SVG inline: xícara dourada + 'CoffeeCast' em branco + '4.0' em dourado) */}
           <Link
             to="/"
             className="group flex items-center transition-transform hover:opacity-95 focus:outline-none"
             aria-label="CoffeeCast 4.0 - Página Inicial"
           >
-            <img
-              src={headerLogoSvg}
-              alt="CoffeeCast 4.0"
-              className="h-9 sm:h-10 md:h-11 w-auto object-contain transition-all duration-200 group-hover:scale-[1.02]"
-            />
+            <HeaderNavbarLogo className="h-9 sm:h-10 md:h-11 w-auto transition-transform duration-200 group-hover:scale-[1.02]" />
           </Link>
 
           {/* Desktop Navigation Links */}
