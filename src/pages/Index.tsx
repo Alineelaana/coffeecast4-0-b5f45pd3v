@@ -35,6 +35,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import bannerComercialImg from '@/assets/chatgpt-image-15-de-set.de-2026-135749-7d01c.png'
+import { openExternalUrl } from '@/lib/openUrl'
 
 function MemberBio({ biografia }: { biografia?: string }) {
   const [expanded, setExpanded] = useState(false)
@@ -347,6 +348,9 @@ export default function Index() {
                             target="_blank"
                             rel="noopener noreferrer"
                             title={`Assistir entrevista de ${member.nome} no YouTube`}
+                            onClick={(e) => {
+                              openExternalUrl(member.link_episodio!, e)
+                            }}
                             className="block group/photo cursor-pointer rounded-full focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado"
                           >
                             {photoElement}
@@ -387,7 +391,10 @@ export default function Index() {
                             target="_blank"
                             rel="noopener noreferrer"
                             title={`Assistir entrevista de ${member.nome} no YouTube`}
-                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-semibold text-vinho bg-linear-to-r from-dourado/20 via-dourado/30 to-dourado/20 hover:from-dourado/35 hover:to-dourado/45 border border-dourado/50 hover:border-dourado text-vinho hover:text-vinho-dark active:scale-95 shadow-xs transition-all duration-200 no-underline min-h-[44px] group/interview"
+                            onClick={(e) => {
+                              openExternalUrl(member.link_episodio!, e)
+                            }}
+                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-semibold text-vinho bg-linear-to-r from-dourado/20 via-dourado/30 to-dourado/20 hover:from-dourado/35 hover:to-dourado/45 border border-dourado/50 hover:border-dourado text-vinho hover:text-vinho-dark active:scale-95 shadow-xs transition-all duration-200 no-underline min-h-[44px] group/interview cursor-pointer"
                           >
                             <Play className="w-3.5 h-3.5 text-vinho fill-vinho/80 group-hover/interview:scale-110 transition-transform shrink-0" />
                             <span>Clique para conhecer mais sobre ela ✨</span>
