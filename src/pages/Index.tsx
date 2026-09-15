@@ -502,58 +502,58 @@ export default function Index() {
             className="absolute -inset-1 rounded-3xl bg-linear-to-r from-dourado/40 via-dourado/20 to-dourado/40 blur-xl opacity-60 pointer-events-none group-hover:opacity-85 transition-opacity duration-500"
           />
 
-          {/* Banner Principal com degradê vinho profundo e borda dourada com sombra elegante */}
-          <div className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-10 lg:p-12 overflow-hidden border border-dourado/75 bg-linear-to-br from-[#4B1E3F] via-[#3A1430] to-[#240B1E] text-marfim shadow-[0_12px_36px_rgba(75,30,63,0.35),0_0_24px_rgba(212,175,55,0.22)]">
-            {/* Elementos decorativos de luz e sutileza no interior do banner */}
+          {/* Banner Principal com fundo marfim/champanhe elegante, borda fina dourada e textos em vinho */}
+          <div className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-10 lg:p-12 overflow-hidden border border-dourado/70 bg-gradient-to-br from-[#FFFBF2] via-[#FFF8EE] to-[#F7EDE2] text-[#4B1E3F] shadow-[0_12px_36px_rgba(212,175,55,0.18),0_4px_20px_rgba(75,30,63,0.08)]">
+            {/* Elementos decorativos sutis de luz rosé e dourada no fundo do banner */}
             <div
               aria-hidden="true"
-              className="absolute -top-16 -right-16 w-64 h-64 bg-radial from-dourado/25 via-dourado/5 to-transparent rounded-full blur-2xl pointer-events-none"
+              className="absolute -top-16 -right-16 w-64 h-64 bg-radial from-dourado/20 via-dourado/5 to-transparent rounded-full blur-2xl pointer-events-none"
             />
             <div
               aria-hidden="true"
-              className="absolute -bottom-16 -left-16 w-56 h-56 bg-radial from-rose-brand/20 via-transparent to-transparent rounded-full blur-2xl pointer-events-none"
+              className="absolute -bottom-16 -left-16 w-56 h-56 bg-radial from-[#E8C5C8]/30 via-transparent to-transparent rounded-full blur-2xl pointer-events-none"
             />
 
             <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 sm:gap-10">
-              {/* Informações textuais */}
+              {/* Informações textuais em tons de vinho */}
               <div className="space-y-3 sm:space-y-4 text-center lg:text-left flex-1 max-w-2xl">
-                {/* Tag de categoria com ícone de brilho e café */}
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-dourado/15 border border-dourado/50 text-dourado-light text-[11px] sm:text-xs font-semibold tracking-wider uppercase shadow-xs">
+                {/* Tag de categoria: chip com borda dourada, estrela dourada e texto vinho */}
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 border border-dourado/50 text-[#4B1E3F] text-[11px] sm:text-xs font-semibold tracking-wider uppercase shadow-xs backdrop-blur-xs">
                   <Sparkles className="w-3.5 h-3.5 text-dourado shrink-0 animate-pulse-slow" />
                   <span>Atendimento & Patrocínios</span>
                 </div>
 
-                {/* Título de alto impacto com tipografia Playfair Display e gradiente dourado brilhante */}
-                <h3 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] font-bold leading-tight sm:leading-snug gold-text-gradient drop-shadow-sm">
+                {/* Título de alto impacto com tipografia Playfair Display em VINHO */}
+                <h3 className="font-serif text-2xl sm:text-3xl lg:text-[2.1rem] font-bold leading-tight sm:leading-snug text-[#4B1E3F] drop-shadow-xs">
                   Quer patrocinar ou sugerir uma pauta comercial?
                 </h3>
 
-                {/* Subtítulo / Dados de contato da Aline Lana com WhatsApp legível em tom marfim/branco */}
-                <div className="pt-1 text-xs sm:text-sm text-marfim/90 leading-relaxed font-light">
+                {/* Subtítulo / Dados de contato da Aline Lana com WhatsApp legível em vinho */}
+                <div className="pt-1 text-xs sm:text-sm text-[#4B1E3F]/85 leading-relaxed font-normal">
                   <span>Fale diretamente com nossa gestora de parcerias:</span>
-                  <div className="mt-1.5 inline-flex flex-wrap items-center justify-center lg:justify-start gap-2 font-medium text-white">
-                    <span className="text-dourado-light font-serif font-bold text-sm sm:text-base tracking-wide">
+                  <div className="mt-1.5 inline-flex flex-wrap items-center justify-center lg:justify-start gap-2 font-medium text-[#4B1E3F]">
+                    <span className="font-serif font-bold text-sm sm:text-base text-[#4B1E3F] tracking-wide">
                       Aline Lana
                     </span>
-                    <span className="text-dourado/60 hidden sm:inline">•</span>
-                    <span className="bg-white/10 px-2.5 py-1 rounded-md text-xs sm:text-sm text-marfim tracking-wider font-sans border border-white/15">
+                    <span className="text-dourado/80 hidden sm:inline">•</span>
+                    <span className="bg-white/80 px-2.5 py-1 rounded-md text-xs sm:text-sm text-[#4B1E3F] font-semibold tracking-wider font-sans border border-dourado/30 shadow-xs">
                       (31) 99129-7619
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Botão de ação (CTA) de alto contraste com degradê dourado vibrante e abertura para o WhatsApp */}
+              {/* Botão de ação (CTA) dourado com degradê e texto vinho escuro, abrindo WhatsApp em nova aba */}
               <div className="w-full sm:w-auto shrink-0 flex justify-center">
                 <a
                   href="https://wa.me/5531991297619"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto block focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado focus-visible:ring-offset-2 focus-visible:ring-offset-[#3A1430] rounded-full no-underline"
+                  className="w-full sm:w-auto block focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado focus-visible:ring-offset-2 focus-visible:ring-offset-[#FFFBF2] rounded-full no-underline"
                 >
                   <Button
                     type="button"
-                    className="w-full sm:w-auto min-h-[50px] sm:min-h-[52px] px-7 sm:px-9 py-3 sm:py-3.5 gold-gradient hover:opacity-95 text-[#2A0F23] font-bold text-sm sm:text-base rounded-full shadow-[0_6px_20px_rgba(212,175,55,0.45)] hover:shadow-[0_8px_26px_rgba(212,175,55,0.65)] flex items-center justify-center gap-2.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] border border-[#FFF2B2] cursor-pointer"
+                    className="w-full sm:w-auto min-h-[50px] sm:min-h-[52px] px-7 sm:px-9 py-3 sm:py-3.5 gold-gradient hover:opacity-95 text-[#2A0F23] font-bold text-sm sm:text-base rounded-full shadow-[0_6px_20px_rgba(212,175,55,0.4)] hover:shadow-[0_8px_26px_rgba(212,175,55,0.6)] flex items-center justify-center gap-2.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] border border-[#FFF2B2] cursor-pointer"
                   >
                     <MessageCircle className="w-5 h-5 text-[#2A0F23] shrink-0 fill-[#2A0F23]/20" />
                     <span>Fale com a gente no WhatsApp</span>
