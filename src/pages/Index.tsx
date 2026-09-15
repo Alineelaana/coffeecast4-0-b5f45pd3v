@@ -34,7 +34,7 @@ import {
   Play,
   ExternalLink,
 } from 'lucide-react'
-import bannerComercialImg from '@/assets/chatgpt-image-15-de-set.de-2026-132511-1bd29.png'
+import bannerComercialImg from '@/assets/chatgpt-image-15-de-set.de-2026-132511-5f23e.png'
 
 function MemberBio({ biografia }: { biografia?: string }) {
   const [expanded, setExpanded] = useState(false)
@@ -494,41 +494,39 @@ export default function Index() {
       {/* SEÇÃO 7: ATENDIMENTO & PATROCÍNIOS / CONTATO COMERCIAL */}
       <section
         id="contato"
-        className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-marfim border-t border-vinho/10 relative overflow-hidden"
+        className="w-full bg-[#1e0a1b] border-t border-vinho/10 relative overflow-hidden"
       >
-        <div className="max-w-5xl mx-auto">
-          {/* Banner Oficial Atendimento & Patrocínios clicável com moldura elegante (borda dourada fina, cantos arredondados, sombra suave) */}
-          <div className="rounded-2xl sm:rounded-3xl overflow-hidden border border-dourado/60 bg-[#FAF4ED] shadow-[0_12px_36px_rgba(212,175,55,0.18),0_4px_20px_rgba(75,30,63,0.08)] transition-all duration-300 hover:shadow-[0_16px_44px_rgba(212,175,55,0.28),0_6px_24px_rgba(75,30,63,0.12)] hover:border-dourado">
-            <a
-              href="https://api.whatsapp.com/send/?phone=5531991297619&text&type=phone_number&app_absent=0"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Falar com a nossa equipe no WhatsApp sobre patrocínio ou pauta comercial do CoffeeCast 4.0: Aline Lana (31) 99129-7619"
-              className="block w-full focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado focus-visible:ring-offset-2 focus-visible:ring-offset-marfim cursor-pointer"
-            >
-              <img
-                src={bannerComercialImg}
-                alt="CoffeeCast 4.0 - Atendimento & Patrocínios: Quer patrocinar ou sugerir uma pauta comercial? Fale com nossa equipe e descubra como a sua marca pode fazer parte de conversas que inspiram, conectam e geram resultados. Mais visibilidade, conexão com pessoas reais, posicionamento estratégico, associação a conteúdo de valor. Fale com a gente no WhatsApp."
-                className="w-full h-auto object-contain block transition-transform duration-300 hover:opacity-95"
-                loading="eager"
-              />
-            </a>
-          </div>
+        {/* Banner full-bleed (de borda a borda, sem limites de largura / 100% da viewport) */}
+        <div className="w-full relative">
+          <a
+            href="https://api.whatsapp.com/send/?phone=5531991297619&text&type=phone_number&app_absent=0"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Falar com a nossa equipe no WhatsApp sobre patrocínio ou pauta comercial do CoffeeCast 4.0: Aline Lana (31) 99129-7619"
+            className="block w-full focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado focus-visible:ring-offset-2 focus-visible:ring-offset-vinho cursor-pointer"
+          >
+            <img
+              src={bannerComercialImg}
+              alt="CoffeeCast 4.0 - Atendimento & Patrocínios: Quer patrocinar ou sugerir uma pauta comercial? Fale com nossa equipe e descubra como a sua marca pode fazer parte de conversas que inspiram, conectam e geram resultados. Mais visibilidade, conexão com pessoas reais, posicionamento estratégico, associação a conteúdo de valor. Fale com a gente no WhatsApp."
+              className="w-full h-auto block transition-opacity duration-300 hover:opacity-95"
+              loading="eager"
+            />
+          </a>
+        </div>
 
-          {/* Botão de toque para mobile reforçando o link direto do WhatsApp (altura ≥ 50px) */}
-          <div className="mt-4 sm:hidden flex justify-center">
-            <a
-              href="https://api.whatsapp.com/send/?phone=5531991297619&text&type=phone_number&app_absent=0"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Falar no WhatsApp com o CoffeeCast 4.0"
-              className="w-full min-h-[50px] px-6 py-3 gold-gradient hover:opacity-95 text-[#2A0F23] font-bold text-base rounded-full shadow-[0_4px_16px_rgba(212,175,55,0.35)] flex items-center justify-center gap-2 border border-[#FFF2B2] cursor-pointer no-underline active:scale-95 transition-all"
-            >
-              <MessageCircle className="w-5 h-5 text-[#2A0F23] shrink-0 fill-[#2A0F23]/20" />
-              <span>Falar no WhatsApp</span>
-              <ExternalLink className="w-4 h-4 text-[#2A0F23]/70 shrink-0 ml-0.5" />
-            </a>
-          </div>
+        {/* Botão de toque para mobile reforçando o link direto do WhatsApp (altura ≥ 50px) */}
+        <div className="px-4 py-4 sm:hidden flex justify-center bg-[#1e0a1b]">
+          <a
+            href="https://api.whatsapp.com/send/?phone=5531991297619&text&type=phone_number&app_absent=0"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Falar no WhatsApp com o CoffeeCast 4.0"
+            className="w-full min-h-[50px] px-6 py-3 gold-gradient hover:opacity-95 text-[#2A0F23] font-bold text-base rounded-full shadow-[0_4px_16px_rgba(212,175,55,0.35)] flex items-center justify-center gap-2 border border-[#FFF2B2] cursor-pointer no-underline active:scale-95 transition-all"
+          >
+            <MessageCircle className="w-5 h-5 text-[#2A0F23] shrink-0 fill-[#2A0F23]/20" />
+            <span>Falar no WhatsApp</span>
+            <ExternalLink className="w-4 h-4 text-[#2A0F23]/70 shrink-0 ml-0.5" />
+          </a>
         </div>
       </section>
 
