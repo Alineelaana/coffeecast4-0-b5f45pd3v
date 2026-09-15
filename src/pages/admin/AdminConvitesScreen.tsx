@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import pb from '@/lib/pocketbase/client'
-import { formatDateBR, getFileUrl } from '@/lib/formatters'
+import { formatDateBR, getFileUrl, toInputDate } from '@/lib/formatters'
 import type { ConviteRecord } from '@/types/database'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -87,10 +87,10 @@ export default function AdminConvitesScreen() {
     setEditingConvite(null)
     setNome('')
     setTipoConvidado('convidada')
-    setDataGravacao(new Date().toISOString().split('T')[0])
+    setDataGravacao(toInputDate(new Date().toISOString()))
     setHorario('14:00')
     setApresentacao(
-      'É com grande alegria e honra que convidamos você para compartilhar sua trajetória inspiradora no CoffeeCast 4.0. Preparamos uma mesa com afeto, respeito e cafés especiais para dar voz à sua história que transforma.',
+      'É com grande alegria e honra que convidamos você para compartilhar sua trajetória inspiradora no CoffeeCast 4.0. Preparamos uma mesa com afeto, respeito e cafés especiais para dar voz à sua história que transforma vidas.',
     )
     setFotoFile(null)
     setLogoFile(null)
@@ -103,14 +103,11 @@ export default function AdminConvitesScreen() {
     setEditingConvite(convite)
     setNome(convite.nome || '')
     setTipoConvidado(convite.tipo_convidado === 'convidado' ? 'convidado' : 'convidada')
-    // data_gravacao pode vir no formato "2026-09-15 00:00:00.000Z" ou "2026-09-15"
-    const rawDate = convite.data_gravacao ? convite.data_gravacao.split('T')[0].split(' ')[0] : ''
-    setDataGravacao(rawDate || new Date().toISOString().split('T')[0])
+    setDataGravacao(toInputDate(convite.data_gravacao) || toInputDate(new Date().toISOString()))
     setHorario(convite.horario || '14:00')
     setApresentacao(convite.apresentacao || '')
     setFotoFile(null)
     setLogoFile(null)
-
     if (convite.foto_convidado) {
       setFotoPreviewUrl(getFileUrl(convite, convite.foto_convidado))
     } else {
@@ -152,7 +149,7 @@ export default function AdminConvitesScreen() {
       const formData = new FormData()
       formData.append('nome', nome.trim())
       formData.append('tipo_convidado', tipoConvidado)
-      formData.append('data_gravacao', dataGravacao)
+      formData.append('data_gravacao', toInputDate(dataGravacao))
       formData.append('horario', horario.trim())
       formData.append('apresentacao', apresentacao.trim())
 

@@ -25,12 +25,54 @@ export function formatCurrencyBRL(value: number): string {
 /**
  * Formata datas ISO para padrão brasileiro DD/MM/AAAA
  */
+/**
+ * Converte qualquer representação de data (ISO com T ou espaço, timestamp PocketBase, YYYY-MM-DD, etc.)
+ * para o formato estrito YYYY-MM-DD exigido por inputs HTML `<input type="date" />`.
+ */
+export function toInputDate(val?: string | null): string {
+  if (!val) return ''
+  const trimmed = String(val).trim()
+  if (!trimmed) return ''
+
+  // 1. Tenta extrair diretamente YYYY-MM-DD caso comece com padrão de 4 dígitos
+  // Exemplos suportados: "2025-01-15 00:00:00.000Z", "2025-01-15T14:30:00Z", "2025-01-15"
+  const directMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (directMatch) {
+    return `${directMatch[1]}-${directMatch[2]}-${directMatch[3]}`
+  }
+
+  // 2. Se for formato brasileiro DD/MM/AAAA ou DD-MM-AAAA
+  const brMatch = trimmed.match(/^(\d{2})[/-](\d{2})[/-](\d{4})/)
+  if (brMatch) {
+    return `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}`
+  }
+
+  // 3. Fallback via parse do Date object
+  try {
+    const d = new Date(trimmed)
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+  } catch {
+    // ignora erro e retorna vazio
+  }
+
+  return ''
+}
+
+/**
+ * Formata datas ISO para padrão brasileiro DD/MM/AAAA
+ */
 export function formatDateBR(dateString?: string): string {
   if (!dateString) return '-'
   try {
-    const parts = dateString.split('T')[0].split(' ')[0].split('-')
-    if (parts.length === 3) {
-      return `${parts[2]}/${parts[1]}/${parts[0]}`
+    const inputDate = toInputDate(dateString)
+    if (inputDate) {
+      const [y, m, d] = inputDate.split('-')
+      return `${d}/${m}/${y}`
     }
     const d = new Date(dateString)
     if (isNaN(d.getTime())) return dateString

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import pb from '@/lib/pocketbase/client'
-import { formatDateBR } from '@/lib/formatters'
+import { formatDateBR, getFileUrl, toInputDate } from '@/lib/formatters'
 import type { AgendaRecord, HorasCompradasRecord } from '@/types/database'
 import {
   Table,
@@ -17,18 +17,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import {
-  Plus,
-  Edit2,
-  Trash2,
-  CalendarDays,
-  User,
-  Building,
-  Award,
-  Upload,
-  Clock,
-  AlertCircle,
-} from 'lucide-react'
+import { Plus, Edit2, Trash2, CalendarDays, Clock, ImageIcon, X, ExternalLink } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -56,6 +45,8 @@ export default function AdminAgendaScreen() {
   const [patrocinadores, setPatrocinadores] = useState('')
   const [horasUtilizadas, setHorasUtilizadas] = useState('1')
   const [imageFiles, setImageFiles] = useState<FileList | null>(null)
+  const [existingImages, setExistingImages] = useState<string[]>([])
+  const [imagesToDelete, setImagesToDelete] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
   const loadAgenda = async () => {
@@ -96,7 +87,7 @@ export default function AdminAgendaScreen() {
 
   const handleOpenCreate = () => {
     setEditingItem(null)
-    const today = new Date().toISOString().split('T')[0]
+    const today = toInputDate(new Date().toISOString())
     setTitulo('')
     setRoteiro('')
     setDataAgendamento(today)
@@ -110,16 +101,18 @@ export default function AdminAgendaScreen() {
     setPatrocinadores('')
     setHorasUtilizadas('1')
     setImageFiles(null)
+    setExistingImages([])
+    setImagesToDelete([])
     setModalOpen(true)
   }
 
   const handleOpenEdit = (item: AgendaRecord) => {
     setEditingItem(item)
-    setTitulo(item.titulo)
+    setTitulo(item.titulo || '')
     setRoteiro(item.roteiro || '')
-    setDataAgendamento(item.data_agendamento ? item.data_agendamento.split('T')[0] : '')
-    setDataGravacao(item.data_gravacao ? item.data_gravacao.split('T')[0] : '')
-    setDataPostagem(item.data_postagem ? item.data_postagem.split('T')[0] : '')
+    setDataAgendamento(toInputDate(item.data_agendamento))
+    setDataGravacao(toInputDate(item.data_gravacao))
+    setDataPostagem(toInputDate(item.data_postagem))
     setTemConvidado(Boolean(item.tem_convidado))
     setNomeConvidado(item.nome_convidado || '')
     setBiografiaConvidado(item.biografia_convidado || '')
@@ -129,10 +122,18 @@ export default function AdminAgendaScreen() {
     setHorasUtilizadas(
       item.horas_utilizadas !== undefined && item.horas_utilizadas !== null
         ? String(item.horas_utilizadas)
-        : '1',
+        : '0',
     )
+    const imgs = Array.isArray(item.imagens) ? item.imagens : item.imagens ? [item.imagens] : []
+    setExistingImages(imgs)
+    setImagesToDelete([])
     setImageFiles(null)
     setModalOpen(true)
+  }
+
+  const handleRemoveExistingImage = (fileName: string) => {
+    setExistingImages((prev) => prev.filter((img) => img !== fileName))
+    setImagesToDelete((prev) => (prev.includes(fileName) ? prev : [...prev, fileName]))
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -145,24 +146,40 @@ export default function AdminAgendaScreen() {
       const formData = new FormData()
       formData.append('titulo', titulo.trim())
       formData.append('roteiro', roteiro.trim())
-      formData.append('data_agendamento', dataAgendamento)
-      formData.append('data_gravacao', dataGravacao)
-      if (dataPostagem) formData.append('data_postagem', dataPostagem)
+
+      // Formata as datas no padrão ISO YYYY-MM-DD exigido pelo PocketBase
+      const formattedDataAgendamento = toInputDate(dataAgendamento)
+      const formattedDataGravacao = toInputDate(dataGravacao)
+      const formattedDataPostagem = toInputDate(dataPostagem)
+
+      formData.append('data_agendamento', formattedDataAgendamento)
+      formData.append('data_gravacao', formattedDataGravacao)
+      if (formattedDataPostagem) {
+        formData.append('data_postagem', formattedDataPostagem)
+      } else if (editingItem) {
+        // Permite limpar data_postagem se o usuário apagou
+        formData.append('data_postagem', '')
+      }
+
       formData.append('tem_convidado', String(temConvidado))
-      if (temConvidado) {
-        formData.append('nome_convidado', nomeConvidado.trim())
-        formData.append('biografia_convidado', biografiaConvidado.trim())
-        formData.append('empresa', empresa.trim())
-      }
+      formData.append('nome_convidado', temConvidado ? nomeConvidado.trim() : '')
+      formData.append('biografia_convidado', temConvidado ? biografiaConvidado.trim() : '')
+      formData.append('empresa', temConvidado ? empresa.trim() : '')
+
       formData.append('patrocinado', String(patrocinado))
-      if (patrocinado) {
-        formData.append('patrocinadores', patrocinadores.trim())
-      }
+      formData.append('patrocinadores', patrocinado ? patrocinadores.trim() : '')
+
       formData.append('horas_utilizadas', String(parsedHoras))
 
-      if (imageFiles) {
-        // Enviar até 6 imagens conforme o briefing
-        const count = Math.min(imageFiles.length, 6)
+      // Informa remoção de imagens existentes caso o usuário tenha excluído alguma
+      for (const imgName of imagesToDelete) {
+        formData.append('imagens-', imgName)
+      }
+
+      // Adiciona novos arquivos de imagem (respeitando limite de 6 totais)
+      if (imageFiles && imageFiles.length > 0) {
+        const remainingSlots = Math.max(0, 6 - existingImages.length)
+        const count = Math.min(imageFiles.length, remainingSlots)
         for (let i = 0; i < count; i++) {
           formData.append('imagens', imageFiles[i])
         }
@@ -177,7 +194,7 @@ export default function AdminAgendaScreen() {
       }
 
       setModalOpen(false)
-      loadAgenda()
+      await loadAgenda()
     } catch (err) {
       console.error(err)
       toast.error('Erro ao salvar agendamento na agenda.')
@@ -621,21 +638,83 @@ export default function AdminAgendaScreen() {
               )}
             </div>
 
-            {/* Upload de até 6 imagens */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-vinho">
-                Imagens do Agendamento (Fotos do convidado, logo da empresa, marcas)
-              </Label>
-              <Input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={(e) => setImageFiles(e.target.files)}
-                className="bg-white border-vinho/20 text-xs"
-              />
-              <p className="text-[10px] text-vinho/60">
-                Você pode anexar até 6 imagens ao mesmo agendamento.
-              </p>
+            {/* Imagens do Agendamento: galeria existente + upload */}
+            <div className="space-y-2 p-3 bg-white rounded-xl border border-vinho/15">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-vinho flex items-center gap-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-dourado-dark" />
+                  <span>Imagens do Agendamento</span>
+                </Label>
+                <span className="text-[10px] text-vinho/60">
+                  {existingImages.length} salva(s) / até 6 no total
+                </span>
+              </div>
+
+              {/* Exibição das imagens já salvas no registro */}
+              {editingItem && existingImages.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-vinho/60 block">
+                    Fotos já anexadas ao agendamento:
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {existingImages.map((fileName) => {
+                      const imgUrl = getFileUrl(editingItem, fileName, '200x200')
+                      const fullUrl = getFileUrl(editingItem, fileName)
+                      return (
+                        <div
+                          key={fileName}
+                          className="relative group rounded-lg overflow-hidden border border-vinho/15 bg-marfim aspect-video flex items-center justify-center"
+                        >
+                          <img
+                            src={imgUrl}
+                            alt="Anexo do agendamento"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-vinho/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-1">
+                            <a
+                              href={fullUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 rounded-full bg-white/90 text-vinho hover:bg-white text-xs shadow-xs"
+                              title="Abrir imagem original"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExistingImage(fileName)}
+                              className="p-1 rounded-full bg-red-600 text-white hover:bg-red-700 text-xs shadow-xs"
+                              title="Remover imagem"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload de novas imagens */}
+              <div className="space-y-1 pt-1">
+                <Label htmlFor="ag-upload-imgs" className="text-[11px] font-medium text-vinho/80">
+                  {existingImages.length > 0
+                    ? 'Adicionar novas fotos (Fotos do convidado, logo da empresa, marcas):'
+                    : 'Fotos do convidado, logo da empresa, marcas e materiais:'}
+                </Label>
+                <Input
+                  id="ag-upload-imgs"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => setImageFiles(e.target.files)}
+                  className="bg-marfim border-vinho/20 text-xs"
+                />
+                <p className="text-[10px] text-vinho/60">
+                  Você pode anexar até 6 imagens por episódio (fotos de palco, patrocinadores, etc).
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">

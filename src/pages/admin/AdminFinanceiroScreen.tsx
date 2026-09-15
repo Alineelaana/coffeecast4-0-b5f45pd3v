@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import pb from '@/lib/pocketbase/client'
-import { formatCurrencyBRL, formatDateBR } from '@/lib/formatters'
+import { formatCurrencyBRL, formatDateBR, toInputDate } from '@/lib/formatters'
 import type { TransacaoRecord } from '@/types/database'
 import {
   Table,
@@ -78,7 +78,7 @@ export default function AdminFinanceiroScreen() {
     setDescricao('')
     setTipo('gravacao')
     setValor('')
-    setDataVencimento(new Date().toISOString().split('T')[0])
+    setDataVencimento(toInputDate(new Date().toISOString()))
     setSituacao('em_aberto')
     setModalOpen(true)
   }
@@ -88,7 +88,7 @@ export default function AdminFinanceiroScreen() {
     setDescricao(t.descricao)
     setTipo(t.tipo)
     setValor(String(t.valor))
-    setDataVencimento(t.data_vencimento ? t.data_vencimento.split('T')[0] : '')
+    setDataVencimento(toInputDate(t.data_vencimento))
     setSituacao(t.situacao)
     setModalOpen(true)
   }
@@ -109,7 +109,7 @@ export default function AdminFinanceiroScreen() {
         descricao: descricao.trim(),
         tipo,
         valor: valNum,
-        data_vencimento: dataVencimento,
+        data_vencimento: toInputDate(dataVencimento),
         situacao,
       }
 

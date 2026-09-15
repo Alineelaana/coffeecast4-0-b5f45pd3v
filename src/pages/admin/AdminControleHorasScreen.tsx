@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import pb from '@/lib/pocketbase/client'
-import { formatCurrencyBRL, formatDateBR } from '@/lib/formatters'
+import { formatCurrencyBRL, formatDateBR, toInputDate } from '@/lib/formatters'
 import type { HorasCompradasRecord, AgendaRecord } from '@/types/database'
 import {
   Table,
@@ -117,7 +117,7 @@ export default function AdminControleHorasScreen() {
   // Abrir Modal de Criação
   const handleOpenCreate = () => {
     setEditingItem(null)
-    setDataCompra(new Date().toISOString().split('T')[0])
+    setDataCompra(toInputDate(new Date().toISOString()))
     setQuantidadeHoras('')
     setDescricao('')
     setSituacao('paga')
@@ -129,7 +129,7 @@ export default function AdminControleHorasScreen() {
   // Abrir Modal de Edição
   const handleOpenEdit = (item: HorasCompradasRecord) => {
     setEditingItem(item)
-    setDataCompra(item.data ? item.data.split('T')[0] : '')
+    setDataCompra(toInputDate(item.data))
     setQuantidadeHoras(String(item.quantidade_horas))
     setDescricao(item.descricao)
     setSituacao(item.situacao)
@@ -156,8 +156,10 @@ export default function AdminControleHorasScreen() {
         valNum = parseFloat(valor.replace(',', '.'))
       }
 
+      const formattedDataCompra = toInputDate(dataCompra)
+
       const payload: Partial<HorasCompradasRecord> = {
-        data: dataCompra,
+        data: formattedDataCompra,
         quantidade_horas: qtd,
         descricao: descricao.trim(),
         situacao,
