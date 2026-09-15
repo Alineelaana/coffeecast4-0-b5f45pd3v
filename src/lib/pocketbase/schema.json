@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T04:03:01.613Z",
+  "generatedAt": "2026-09-15T04:30:44.131Z",
   "collections": [
     {
       "name": "users",
@@ -218,6 +218,12 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "instagram",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": ["CREATE INDEX idx_depoimentos_ordem ON depoimentos (ordem)"]
@@ -520,6 +526,12 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "horas_utilizadas",
+          "type": "number",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": ["CREATE INDEX idx_agenda_gravacao ON agenda (data_gravacao)"]
@@ -681,6 +693,74 @@
         }
       ],
       "indexes": ["CREATE UNIQUE INDEX idx_politicas_slug_unique ON politicas (slug)"]
+    },
+    {
+      "name": "horas_compradas",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\""
+      },
+      "fields": [
+        {
+          "name": "data",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "quantidade_horas",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "descricao",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "situacao",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["paga", "em_aberto"]
+        },
+        {
+          "name": "valor",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "observacoes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_horas_compradas_data ON horas_compradas (data)",
+        "CREATE INDEX idx_horas_compradas_situacao ON horas_compradas (situacao)"
+      ]
     }
   ]
 }

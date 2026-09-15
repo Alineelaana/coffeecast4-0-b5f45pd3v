@@ -41,6 +41,43 @@ export function formatDateBR(dateString?: string): string {
 }
 
 /**
+ * Extrai e normaliza username e link de perfil do Instagram a partir de @usuario, usuario ou URL completa.
+ */
+export function parseInstagramHandle(raw?: string): { username: string; url: string } | null {
+  if (!raw) return null
+  let val = raw.trim()
+  if (!val) return null
+
+  // Tratar caso o usuário cole uma URL completa como https://instagram.com/usuario ou instagram.com/usuario
+  try {
+    if (val.startsWith('http://') || val.startsWith('https://')) {
+      const parsed = new URL(val)
+      const pathParts = parsed.pathname.split('/').filter(Boolean)
+      if (pathParts.length > 0) {
+        val = pathParts[0]
+      }
+    } else if (val.includes('instagram.com/')) {
+      const after = val.split('instagram.com/')[1] || ''
+      const pathParts = after.split(/[/?#]/).filter(Boolean)
+      if (pathParts.length > 0) {
+        val = pathParts[0]
+      }
+    }
+  } catch {
+    // ignora falhas de parse de URL
+  }
+
+  // Remove arrobas, barras, espaços e caracteres indesejados
+  const cleanUsername = val.replace(/^@+/, '').replace(/\/.*$/, '').trim()
+  if (!cleanUsername) return null
+
+  return {
+    username: `@${cleanUsername}`,
+    url: `https://instagram.com/${cleanUsername}`,
+  }
+}
+
+/**
  * Extrai o ID do YouTube de URLs comuns (watch?v=, youtu.be, shorts, embed)
  */
 export function extractYouTubeId(url: string): string | null {

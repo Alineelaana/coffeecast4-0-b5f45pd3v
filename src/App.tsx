@@ -21,6 +21,7 @@ import AdminMomentosScreen from '@/pages/admin/AdminMomentosScreen'
 import AdminContatosScreen from '@/pages/admin/AdminContatosScreen'
 import AdminFinanceiroScreen from '@/pages/admin/AdminFinanceiroScreen'
 import AdminAgendaScreen from '@/pages/admin/AdminAgendaScreen'
+import AdminControleHorasScreen from '@/pages/admin/AdminControleHorasScreen'
 import AdminConvitesScreen from '@/pages/admin/AdminConvitesScreen'
 import AdminConteudoScreen from '@/pages/admin/AdminConteudoScreen'
 import AdminPoliticasScreen from '@/pages/admin/AdminPoliticasScreen'
@@ -64,6 +65,7 @@ export default function App() {
             {/* Gestão Operacional permitida para Master e Gerencial */}
             <Route path="contatos" element={<AdminContatosScreen />} />
             <Route path="financeiro" element={<AdminFinanceiroScreen />} />
+            <Route path="horas" element={<AdminControleHorasScreen />} />
             <Route path="agenda" element={<AdminAgendaScreen />} />
             <Route path="convites" element={<AdminConvitesScreen />} />
 

@@ -38,6 +38,7 @@ export interface DepoimentoRecord {
   de_nossa_autoridade?: boolean
   ordem?: number
   foto?: string
+  instagram?: string
   created: string
   updated: string
 }
@@ -92,6 +93,19 @@ export interface AgendaRecord {
   patrocinado?: boolean
   patrocinadores?: string
   imagens?: string | string[]
+  horas_utilizadas?: number
+  created: string
+  updated: string
+}
+
+export interface HorasCompradasRecord {
+  id: string
+  data: string
+  quantidade_horas: number
+  descricao: string
+  situacao: 'paga' | 'em_aberto'
+  valor?: number
+  observacoes?: string
   created: string
   updated: string
 }

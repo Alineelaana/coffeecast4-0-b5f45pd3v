@@ -10,6 +10,7 @@ import {
   Camera,
   Inbox,
   DollarSign,
+  Clock,
   CalendarDays,
   FileCheck2,
   FileText,
@@ -102,6 +103,12 @@ export default function AdminLayout() {
       path: '/admin/financeiro',
       icon: DollarSign,
       highlight: true,
+      masterOnly: false,
+    },
+    {
+      label: 'Controle de Horas',
+      path: '/admin/horas',
+      icon: Clock,
       masterOnly: false,
     },
     {

@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Quote, Sparkles } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Quote, Sparkles, Instagram } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { getFileUrl } from '@/lib/formatters'
+import { getFileUrl, parseInstagramHandle } from '@/lib/formatters'
 import type { DepoimentoRecord } from '@/types/database'
 
 interface TestimonialsCarouselProps {
@@ -163,41 +163,69 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
 
           const isHighlight = Boolean(dep.de_nossa_autoridade)
 
+          const parsedInsta = dep.instagram ? parseInstagramHandle(dep.instagram) : null
+
           return (
             <div
               key={dep.id || index}
-              className={`flex-shrink-0 w-[280px] sm:w-[320px] md:w-[350px] snap-start rounded-2xl p-6 flex flex-col justify-between space-y-4 shadow-sm hover:shadow-lg transition-all duration-300 relative group hover:-translate-y-1 ${
+              className={`flex-shrink-0 w-[290px] sm:w-[340px] md:w-[370px] snap-start rounded-2xl p-6 flex flex-col justify-between space-y-5 shadow-sm hover:shadow-xl transition-all duration-300 relative group hover:-translate-y-1.5 ${
                 isHighlight
                   ? 'bg-rose-brand/35 border-2 border-dourado'
                   : 'bg-marfim border border-vinho/15 hover:border-dourado/60'
               }`}
             >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Quote className="w-7 h-7 text-dourado opacity-85 group-hover:scale-110 transition-transform" />
+              {/* Cabeçalho do Convidado: Foto enaltecida (maior), nome em destaque e @ do Instagram */}
+              <div className="flex items-center gap-3.5 pb-4 border-b border-vinho/10">
+                <div className="relative shrink-0 group-hover:scale-105 transition-transform duration-300">
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full p-0.5 bg-gradient-to-tr from-dourado via-dourado-light to-dourado-dark shadow-md ring-2 ring-dourado/40">
+                    <img
+                      src={photoUrl}
+                      alt={dep.nome}
+                      className="w-full h-full rounded-full object-cover border-2 border-white shadow-inner bg-vinho/5"
+                    />
+                  </div>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-serif font-bold text-base sm:text-lg text-vinho leading-tight group-hover:text-dourado-dark transition-colors">
+                    {dep.nome}
+                  </h4>
+
+                  <span className="text-[11px] text-vinho/65 font-medium block mt-0.5">
+                    {isHighlight ? 'Convidada Homenageada' : 'Convidada do Podcast'}
+                  </span>
+
+                  {parsedInsta && (
+                    <div className="mt-1.5">
+                      <a
+                        href={parsedInsta.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`Instagram de ${dep.nome}: ${parsedInsta.username}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-dourado-dark hover:text-vinho bg-white/80 hover:bg-white px-2 py-0.5 rounded-full border border-dourado/30 transition-all shadow-2xs group/insta"
+                      >
+                        <Instagram className="w-3 h-3 text-dourado group-hover/insta:text-dourado-dark shrink-0" />
+                        <span className="truncate max-w-[150px]">{parsedInsta.username}</span>
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Conteúdo do depoimento */}
+              <div className="space-y-3 flex-1 flex flex-col justify-between">
+                <p className="text-xs sm:text-sm text-vinho/85 italic leading-relaxed line-clamp-6">
+                  "{dep.texto}"
+                </p>
+
+                <div className="flex items-center justify-between pt-2">
+                  <Quote className="w-6 h-6 text-dourado opacity-80 group-hover:scale-110 transition-transform" />
                   {isHighlight && (
                     <Badge className="bg-vinho text-dourado text-[10px] font-bold tracking-wide shadow-sm">
                       Visão da Equipe CoffeeCast
                     </Badge>
                   )}
-                </div>
-
-                <p className="text-xs sm:text-sm text-vinho/85 italic leading-relaxed line-clamp-6">
-                  "{dep.texto}"
-                </p>
-              </div>
-
-              <div className="pt-4 border-t border-vinho/10 flex items-center gap-3">
-                <img
-                  src={photoUrl}
-                  alt={dep.nome}
-                  className="w-11 h-11 rounded-full object-cover border-2 border-dourado shadow-sm flex-shrink-0"
-                />
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-serif font-bold text-sm text-vinho truncate">{dep.nome}</h4>
-                  <span className="text-[11px] text-vinho/60 block truncate">
-                    {isHighlight ? 'Convidada Homenageada' : 'Convidada do Podcast'}
-                  </span>
                 </div>
               </div>
             </div>

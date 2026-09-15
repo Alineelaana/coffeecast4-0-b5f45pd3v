@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import pb from '@/lib/pocketbase/client'
-import { getFileUrl } from '@/lib/formatters'
+import { getFileUrl, parseInstagramHandle } from '@/lib/formatters'
 import type { DepoimentoRecord } from '@/types/database'
 import {
   Table,
@@ -31,6 +31,7 @@ export default function AdminDepoimentosScreen() {
   const [texto, setTexto] = useState('')
   const [deNossaAutoridade, setDeNossaAutoridade] = useState(false)
   const [ordem, setOrdem] = useState('1')
+  const [instagram, setInstagram] = useState('')
   const [fotoFile, setFotoFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -59,6 +60,7 @@ export default function AdminDepoimentosScreen() {
     setTexto('')
     setDeNossaAutoridade(false)
     setOrdem(String(depoimentos.length + 1))
+    setInstagram('')
     setFotoFile(null)
     setModalOpen(true)
   }
@@ -69,6 +71,7 @@ export default function AdminDepoimentosScreen() {
     setTexto(item.texto)
     setDeNossaAutoridade(Boolean(item.de_nossa_autoridade))
     setOrdem(String(item.ordem || 1))
+    setInstagram(item.instagram || '')
     setFotoFile(null)
     setModalOpen(true)
   }
@@ -78,11 +81,16 @@ export default function AdminDepoimentosScreen() {
     setSaving(true)
 
     try {
+      // Trata instagram com parseInstagramHandle se preenchido
+      const parsedInsta = parseInstagramHandle(instagram)
+      const cleanedInsta = parsedInsta ? parsedInsta.username : instagram.trim()
+
       const formData = new FormData()
       formData.append('nome', nome.trim())
       formData.append('texto', texto.trim())
       formData.append('de_nossa_autoridade', String(deNossaAutoridade))
       formData.append('ordem', ordem)
+      formData.append('instagram', cleanedInsta)
       if (fotoFile) {
         formData.append('foto', fotoFile)
       }
@@ -155,6 +163,7 @@ export default function AdminDepoimentosScreen() {
                 <TableHead className="w-16 font-bold text-vinho text-xs">Ordem</TableHead>
                 <TableHead className="w-20 font-bold text-vinho text-xs">Foto</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Nome</TableHead>
+                <TableHead className="font-bold text-vinho text-xs">Instagram (@)</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Tipo de Depoimento</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Depoimento</TableHead>
                 <TableHead className="w-28 text-right font-bold text-vinho text-xs">
@@ -184,6 +193,15 @@ export default function AdminDepoimentosScreen() {
                       )}
                     </TableCell>
                     <TableCell className="text-xs font-bold text-vinho">{item.nome}</TableCell>
+                    <TableCell className="text-xs text-vinho/80">
+                      {item.instagram ? (
+                        <span className="font-medium text-vinho bg-vinho/5 px-2 py-0.5 rounded border border-vinho/10">
+                          {item.instagram.startsWith('@') ? item.instagram : `@${item.instagram}`}
+                        </span>
+                      ) : (
+                        <span className="text-vinho/40 italic">Não informado</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {item.de_nossa_autoridade ? (
                         <Badge className="bg-vinho text-dourado text-[10px] font-semibold">
@@ -260,6 +278,23 @@ export default function AdminDepoimentosScreen() {
                 onChange={(e) => setOrdem(e.target.value)}
                 className="bg-white border-vinho/20 text-sm"
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="dep-instagram" className="text-xs font-semibold text-vinho">
+                Instagram (@) <span className="text-vinho/60 font-normal">(opcional)</span>
+              </Label>
+              <Input
+                id="dep-instagram"
+                placeholder="Ex.: @convidado ou instagram.com/convidado"
+                value={instagram}
+                onChange={(e) => setInstagram(e.target.value)}
+                className="bg-white border-vinho/20 text-sm"
+              />
+              <p className="text-[10px] text-vinho/60">
+                Aceita @usuario, usuario ou URL completa. Será exibido no card do convidado se
+                informado.
+              </p>
             </div>
 
             <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-vinho/15">

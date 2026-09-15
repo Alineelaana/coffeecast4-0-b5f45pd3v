@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import pb from '@/lib/pocketbase/client'
 import { formatCurrencyBRL, formatDateBR } from '@/lib/formatters'
-import type { EpisodioRecord, ContatoRecord, TransacaoRecord, AgendaRecord } from '@/types/database'
+import type {
+  EpisodioRecord,
+  ContatoRecord,
+  TransacaoRecord,
+  AgendaRecord,
+  HorasCompradasRecord,
+} from '@/types/database'
 import {
   Tv,
   Inbox,
@@ -11,6 +17,7 @@ import {
   ArrowRight,
   TrendingUp,
   Sparkles,
+  Clock,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
@@ -20,6 +27,7 @@ export default function DashboardScreen() {
     contatosNovos: 0,
     transacoesAbertas: 0,
     agendaProxima: 0,
+    saldoHoras: 0,
   })
 
   const [proximasGravacoes, setProximasGravacoes] = useState<AgendaRecord[]>([])
@@ -31,21 +39,36 @@ export default function DashboardScreen() {
     async function fetchDashboardData() {
       setLoading(true)
       try {
-        const [epList, contatosList, transacoesList, agendaList] = await Promise.all([
+        const [epList, contatosList, transacoesList, agendaList, horasList] = await Promise.all([
           pb.collection('episodios').getFullList<EpisodioRecord>(),
           pb.collection('contatos').getFullList<ContatoRecord>({ sort: '-created' }),
           pb.collection('transacoes').getFullList<TransacaoRecord>(),
           pb.collection('agenda').getFullList<AgendaRecord>({ sort: 'data_gravacao' }),
+          pb
+            .collection('horas_compradas')
+            .getFullList<HorasCompradasRecord>()
+            .catch(() => [] as HorasCompradasRecord[]),
         ])
 
         const contNovos = contatosList.filter((c) => c.status === 'novo').length
         const transAbertas = transacoesList.filter((t) => t.situacao === 'em_aberto').length
+
+        const totalHorasCompradas = (horasList as HorasCompradasRecord[]).reduce(
+          (acc: number, c: HorasCompradasRecord) => acc + (Number(c.quantidade_horas) || 0),
+          0,
+        )
+        const totalHorasGastas = agendaList.reduce(
+          (acc: number, a: AgendaRecord) => acc + (Number(a.horas_utilizadas) || 0),
+          0,
+        )
+        const saldoCalculado = totalHorasCompradas - totalHorasGastas
 
         setStats({
           totalEpisodios: epList.length,
           contatosNovos: contNovos,
           transacoesAbertas: transAbertas,
           agendaProxima: agendaList.length,
+          saldoHoras: saldoCalculado,
         })
 
         setProximasGravacoes(agendaList.slice(0, 5))
@@ -113,12 +136,22 @@ export default function DashboardScreen() {
           </p>
         </div>
 
-        <Link to="/admin/agenda" className="shrink-0">
-          <button className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs sm:text-sm px-5 py-2.5 rounded-full shadow-lg transition-all flex items-center gap-2">
-            <CalendarDays className="w-4 h-4" />
-            Ver Agenda Completa
-          </button>
-        </Link>
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <Link to="/admin/horas">
+            <button className="bg-white/15 hover:bg-white/25 text-marfim border border-dourado/40 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-full shadow-md transition-all flex items-center gap-2">
+              <Clock className="w-4 h-4 text-dourado" />
+              <span>
+                Banco de Horas: <strong>{stats.saldoHoras}h</strong>
+              </span>
+            </button>
+          </Link>
+          <Link to="/admin/agenda">
+            <button className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs sm:text-sm px-5 py-2.5 rounded-full shadow-lg transition-all flex items-center gap-2">
+              <CalendarDays className="w-4 h-4" />
+              Ver Agenda Completa
+            </button>
+          </Link>
+        </div>
       </div>
 
       {/* 4 Cards de Métricas Principais */}
