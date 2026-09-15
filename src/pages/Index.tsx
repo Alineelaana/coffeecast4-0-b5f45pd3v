@@ -528,37 +528,24 @@ export default function Index() {
                   Quer patrocinar ou sugerir uma pauta comercial?
                 </h3>
 
-                {/* Subtítulo / Dados de contato da Aline Lana com WhatsApp legível em vinho */}
-                <div className="pt-1 text-xs sm:text-sm text-[#4B1E3F]/85 leading-relaxed font-normal">
-                  <span>Fale diretamente com nossa gestora de parcerias:</span>
-                  <div className="mt-1.5 inline-flex flex-wrap items-center justify-center lg:justify-start gap-2 font-medium text-[#4B1E3F]">
-                    <span className="font-serif font-bold text-sm sm:text-base text-[#4B1E3F] tracking-wide">
-                      Aline Lana
-                    </span>
-                    <span className="text-dourado/80 hidden sm:inline">•</span>
-                    <span className="bg-white/80 px-2.5 py-1 rounded-md text-xs sm:text-sm text-[#4B1E3F] font-semibold tracking-wider font-sans border border-dourado/30 shadow-xs">
-                      (31) 99129-7619
-                    </span>
-                  </div>
-                </div>
+                {/* Subtítulo / Frase de apoio em vinho e serifada */}
+                <p className="pt-1 font-serif text-sm sm:text-base text-[#4B1E3F]/90 leading-relaxed font-medium">
+                  Fale com nossa equipe e venha fazer parte deste projeto fantástico.
+                </p>
               </div>
 
               {/* Botão de ação (CTA) dourado com degradê e texto vinho escuro, abrindo WhatsApp em nova aba */}
-              <div className="w-full sm:w-auto shrink-0 flex justify-center">
+              <div className="w-full sm:w-auto shrink-0 flex justify-center relative z-20">
                 <a
                   href="https://wa.me/5531991297619"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto block focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado focus-visible:ring-offset-2 focus-visible:ring-offset-[#FFFBF2] rounded-full no-underline"
+                  aria-label="Abrir conversa no WhatsApp com nossa equipe: (31) 99129-7619"
+                  className="w-full sm:w-auto min-h-[50px] sm:min-h-[52px] px-7 sm:px-9 py-3 sm:py-3.5 gold-gradient hover:opacity-95 text-[#2A0F23] font-bold text-sm sm:text-base rounded-full shadow-[0_6px_20px_rgba(212,175,55,0.4)] hover:shadow-[0_8px_26px_rgba(212,175,55,0.6)] flex items-center justify-center gap-2.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] border border-[#FFF2B2] cursor-pointer no-underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado focus-visible:ring-offset-2 focus-visible:ring-offset-[#FFFBF2]"
                 >
-                  <Button
-                    type="button"
-                    className="w-full sm:w-auto min-h-[50px] sm:min-h-[52px] px-7 sm:px-9 py-3 sm:py-3.5 gold-gradient hover:opacity-95 text-[#2A0F23] font-bold text-sm sm:text-base rounded-full shadow-[0_6px_20px_rgba(212,175,55,0.4)] hover:shadow-[0_8px_26px_rgba(212,175,55,0.6)] flex items-center justify-center gap-2.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] border border-[#FFF2B2] cursor-pointer"
-                  >
-                    <MessageCircle className="w-5 h-5 text-[#2A0F23] shrink-0 fill-[#2A0F23]/20" />
-                    <span>Fale com a gente no WhatsApp</span>
-                    <ExternalLink className="w-4 h-4 text-[#2A0F23]/70 shrink-0 ml-0.5" />
-                  </Button>
+                  <MessageCircle className="w-5 h-5 text-[#2A0F23] shrink-0 fill-[#2A0F23]/20" />
+                  <span>Fale com a gente no WhatsApp</span>
+                  <ExternalLink className="w-4 h-4 text-[#2A0F23]/70 shrink-0 ml-0.5" />
                 </a>
               </div>
             </div>
