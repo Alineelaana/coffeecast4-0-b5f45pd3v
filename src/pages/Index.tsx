@@ -19,7 +19,41 @@ import type {
   MomentoRecord,
   ConteudoSiteRecord,
 } from '@/types/database'
-import { Heart, Compass, Eye, Award, Sparkles, Quote, MessageCircle } from 'lucide-react'
+import { Heart, Compass, Eye, Award, Sparkles, Quote, MessageCircle, Instagram } from 'lucide-react'
+
+function parseInstagramHandle(raw?: string): { username: string; url: string } | null {
+  if (!raw) return null
+  let val = raw.trim()
+  if (!val) return null
+
+  // Tratar caso o usuário cole uma URL completa como https://instagram.com/usuario ou instagram.com/usuario
+  try {
+    if (val.startsWith('http://') || val.startsWith('https://')) {
+      const parsed = new URL(val)
+      const pathParts = parsed.pathname.split('/').filter(Boolean)
+      if (pathParts.length > 0) {
+        val = pathParts[0]
+      }
+    } else if (val.includes('instagram.com/')) {
+      const after = val.split('instagram.com/')[1] || ''
+      const pathParts = after.split(/[/?#]/).filter(Boolean)
+      if (pathParts.length > 0) {
+        val = pathParts[0]
+      }
+    }
+  } catch {
+    // ignora falhas de parse de URL
+  }
+
+  // Remove arrobas, barras, espaços e caracteres indesejados
+  const cleanUsername = val.replace(/^@+/, '').replace(/\/.*$/, '').trim()
+  if (!cleanUsername) return null
+
+  return {
+    username: `@${cleanUsername}`,
+    url: `https://instagram.com/${cleanUsername}`,
+  }
+}
 
 // Fotos padrão de alta qualidade para as integrantes caso ainda não tenham foto no PocketBase
 const fallbackIntegrantesPhotos = [
@@ -187,6 +221,25 @@ export default function Index() {
                       <p className="text-xs text-vinho/75 leading-relaxed mt-2.5 line-clamp-4 font-light">
                         {member.biografia}
                       </p>
+
+                      {(() => {
+                        const insta = parseInstagramHandle(member.instagram)
+                        if (!insta) return null
+                        return (
+                          <div className="mt-3.5 pt-2.5 border-t border-vinho/10 w-full flex justify-center">
+                            <a
+                              href={insta.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`Perfil no Instagram: ${insta.username}`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-vinho bg-marfim/80 border border-vinho/15 hover:border-dourado hover:text-dourado-dark hover:bg-white shadow-2xs transition-all duration-200 no-underline group/insta"
+                            >
+                              <Instagram className="w-3.5 h-3.5 text-dourado group-hover/insta:text-dourado-dark transition-colors shrink-0" />
+                              <span>{insta.username}</span>
+                            </a>
+                          </div>
+                        )
+                      })()}
                     </div>
                   </div>
                 </div>

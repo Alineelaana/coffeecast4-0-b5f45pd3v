@@ -28,6 +28,7 @@ export default function AdminIntegrantesScreen() {
   const [nome, setNome] = useState('')
   const [biografia, setBiografia] = useState('')
   const [ordem, setOrdem] = useState('1')
+  const [instagram, setInstagram] = useState('')
   const [fotoFile, setFotoFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -55,6 +56,7 @@ export default function AdminIntegrantesScreen() {
     setNome('')
     setBiografia('')
     setOrdem(String(integrantes.length + 1))
+    setInstagram('')
     setFotoFile(null)
     setModalOpen(true)
   }
@@ -64,6 +66,7 @@ export default function AdminIntegrantesScreen() {
     setNome(item.nome)
     setBiografia(item.biografia)
     setOrdem(String(item.ordem || 1))
+    setInstagram(item.instagram || '')
     setFotoFile(null)
     setModalOpen(true)
   }
@@ -77,6 +80,7 @@ export default function AdminIntegrantesScreen() {
       formData.append('nome', nome.trim())
       formData.append('biografia', biografia.trim())
       formData.append('ordem', ordem)
+      formData.append('instagram', instagram.trim())
       if (fotoFile) {
         formData.append('foto', fotoFile)
       }
@@ -148,10 +152,11 @@ export default function AdminIntegrantesScreen() {
                 <TableHead className="w-16 font-bold text-vinho text-xs">Ordem</TableHead>
                 <TableHead className="w-20 font-bold text-vinho text-xs">Foto</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Nome</TableHead>
+                <TableHead className="font-bold text-vinho text-xs">Instagram (@)</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Biografia</TableHead>
                 <TableHead className="w-28 text-right font-bold text-vinho text-xs">
                   Ações
-                </TableHead>
+                </TableHead>{' '}
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-vinho/5">
@@ -176,9 +181,18 @@ export default function AdminIntegrantesScreen() {
                       )}
                     </TableCell>
                     <TableCell className="text-xs font-bold text-vinho">{item.nome}</TableCell>
+                    <TableCell className="text-xs text-vinho/80">
+                      {item.instagram ? (
+                        <span className="font-medium text-vinho bg-vinho/5 px-2 py-0.5 rounded border border-vinho/10">
+                          {item.instagram.startsWith('@') ? item.instagram : `@${item.instagram}`}
+                        </span>
+                      ) : (
+                        <span className="text-vinho/40 italic">Não informado</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs text-vinho/75 max-w-md line-clamp-2">
                       {item.biografia}
-                    </TableCell>
+                    </TableCell>{' '}
                     <TableCell className="text-right space-x-1">
                       <Button
                         variant="ghost"
@@ -244,6 +258,22 @@ export default function AdminIntegrantesScreen() {
             </div>
 
             <div className="space-y-1.5">
+              <Label htmlFor="int-instagram" className="text-xs font-semibold text-vinho">
+                Instagram (@)
+              </Label>
+              <Input
+                id="int-instagram"
+                placeholder="Ex.: @coffeecast4.0 ou coffeecast4.0"
+                value={instagram}
+                onChange={(e) => setInstagram(e.target.value)}
+                className="bg-white border-vinho/20 text-sm"
+              />
+              <p className="text-[10px] text-vinho/60">
+                Digite o @ do Instagram ou usuário. Ele aparecerá clicável no card do site público.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
               <Label htmlFor="int-bio" className="text-xs font-semibold text-vinho">
                 Biografia e Apresentação *
               </Label>
@@ -257,7 +287,6 @@ export default function AdminIntegrantesScreen() {
                 className="bg-white border-vinho/20 text-sm"
               />
             </div>
-
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-vinho">Foto Oficial</Label>
               <div className="flex items-center gap-2">

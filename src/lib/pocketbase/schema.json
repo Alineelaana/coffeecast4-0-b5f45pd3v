@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T02:52:08.874Z",
+  "generatedAt": "2026-09-15T03:02:23.625Z",
   "collections": [
     {
       "name": "users",
@@ -154,6 +154,12 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "instagram",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": ["CREATE INDEX idx_integrantes_ordem ON integrantes (ordem)"]

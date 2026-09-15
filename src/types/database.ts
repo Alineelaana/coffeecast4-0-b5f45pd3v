@@ -24,6 +24,7 @@ export interface IntegranteRecord {
   biografia: string
   ordem?: number
   foto?: string
+  instagram?: string
   created: string
   updated: string
 }
