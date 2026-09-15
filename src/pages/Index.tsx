@@ -169,7 +169,7 @@ export default function Index() {
                   <div className="p-6 flex-1 flex flex-col items-center text-center justify-between space-y-4">
                     <div className="flex flex-col items-center w-full">
                       {/* Avatar circular elegante, menor e proporcional */}
-                      <div className="relative mb-5 group-hover:scale-105 transition-transform duration-300">
+                      <div className="relative mb-4 group-hover:scale-105 transition-transform duration-300">
                         <div className="w-36 h-36 sm:w-40 sm:h-40 rounded-full p-1 bg-gradient-to-tr from-dourado/80 via-dourado/30 to-dourado/70 shadow-md ring-1 ring-dourado/40">
                           <div className="w-full h-full rounded-full overflow-hidden bg-vinho/5 border-2 border-white shadow-inner">
                             <img
@@ -179,10 +179,6 @@ export default function Index() {
                             />
                           </div>
                         </div>
-
-                        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider text-dourado bg-vinho px-2.5 py-0.5 rounded-full border border-dourado/40 shadow-sm whitespace-nowrap">
-                          Integrante #{member.ordem || index + 1}
-                        </span>
                       </div>
 
                       <h3 className="font-serif text-xl font-bold text-vinho group-hover:text-dourado-dark transition-colors mt-2">
@@ -191,11 +187,6 @@ export default function Index() {
                       <p className="text-xs text-vinho/75 leading-relaxed mt-2.5 line-clamp-4 font-light">
                         {member.biografia}
                       </p>
-                    </div>
-
-                    <div className="w-full pt-3 border-t border-vinho/10 flex items-center justify-between text-[11px] text-vinho/60">
-                      <span className="italic">CoffeeCast 4.0</span>
-                      <Heart className="w-3.5 h-3.5 text-dourado fill-dourado/20" />
                     </div>
                   </div>
                 </div>
