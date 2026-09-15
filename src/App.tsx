@@ -59,9 +59,6 @@ export default function App() {
             {/* Visão Geral (Disponível para Master e Gerencial) */}
             <Route index element={<DashboardScreen />} />
 
-            {/* Episódios (Disponível para Master e Gerencial) */}
-            <Route path="episodios" element={<AdminEpisodesScreen />} />
-
             {/* Gestão Operacional permitida para Master e Gerencial */}
             <Route path="contatos" element={<AdminContatosScreen />} />
             <Route path="financeiro" element={<AdminFinanceiroScreen />} />
@@ -71,6 +68,7 @@ export default function App() {
 
             {/* Rotas Restritas Exclusivamente ao Superadministrador Master:
                 - Editar Site (conteudo)
+                - Episódios (episodios)
                 - Integrantes
                 - Depoimentos
                 - Nossos Momentos
@@ -82,6 +80,14 @@ export default function App() {
               element={
                 <ProtectedRoute requireMaster>
                   <AdminConteudoScreen />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="episodios"
+              element={
+                <ProtectedRoute requireMaster>
+                  <AdminEpisodesScreen />
                 </ProtectedRoute>
               }
             />

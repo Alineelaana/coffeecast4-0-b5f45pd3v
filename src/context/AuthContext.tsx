@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Regras de acesso por categoria:
   // - Master: Superadministrador com acesso total (admin + membros)
-  // - Gerencial: Acesso a membros e painel admin (com restrições a Editar Site e Usuários)
+  // - Gerencial: Acesso a membros e painel admin (com restrições a Conteúdo, Episódios, Integrantes, etc.)
   // - Ouro e Prata: Apenas Área de Membros (não podem acessar o painel admin)
   const isMaster = Boolean(user && user.ativo && role === 'master')
   const isGerencial = Boolean(user && user.ativo && role === 'gerencial')

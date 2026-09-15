@@ -39,9 +39,9 @@ export default function AdminLayout() {
 
   // Itens do menu com controle estrito de permissão:
   // - Master: Acesso total (vê e acessa todos os itens)
-  // - Gerencial: Acesso a tudo EXCETO: Editar Site (/admin/conteudo), Integrantes (/admin/integrantes),
-  //   Depoimentos (/admin/depoimentos), Nossos Momentos (/admin/momentos), Políticas do Site (/admin/politicas)
-  //   e Usuários & Permissões (/admin/usuarios).
+  // - Gerencial: Acesso a tudo EXCETO: Editar Site (/admin/conteudo), Episódios (/admin/episodios),
+  //   Integrantes (/admin/integrantes), Depoimentos (/admin/depoimentos), Nossos Momentos (/admin/momentos),
+  //   Políticas do Site (/admin/politicas) e Usuários & Permissões (/admin/usuarios).
   const menuItems = [
     {
       label: 'Visão Geral',
@@ -59,16 +59,13 @@ export default function AdminLayout() {
             badge: 'Master',
             masterOnly: true,
           },
-        ]
-      : []),
-    {
-      label: 'Episódios',
-      path: '/admin/episodios',
-      icon: Tv,
-      masterOnly: false,
-    },
-    ...(isMaster
-      ? [
+          {
+            label: 'Episódios',
+            path: '/admin/episodios',
+            icon: Tv,
+            badge: 'Master',
+            masterOnly: true,
+          },
           {
             label: 'Integrantes',
             path: '/admin/integrantes',

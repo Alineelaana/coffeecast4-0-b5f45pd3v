@@ -21,7 +21,11 @@ import {
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
+import { useLocation } from 'react-router-dom'
+import { toast } from 'sonner'
+
 export default function DashboardScreen() {
+  const location = useLocation()
   const [stats, setStats] = useState({
     totalEpisodios: 0,
     contatosNovos: 0,
@@ -34,6 +38,15 @@ export default function DashboardScreen() {
   const [ultimosContatos, setUltimosContatos] = useState<ContatoRecord[]>([])
   const [transacoesPorTipo, setTransacoesPorTipo] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const state = location.state as { blockedMaster?: boolean; message?: string } | null
+    if (state?.blockedMaster && state?.message) {
+      toast.error(state.message)
+      // limpa state do history para não repetir o toast em re-renders
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state])
 
   useEffect(() => {
     async function fetchDashboardData() {

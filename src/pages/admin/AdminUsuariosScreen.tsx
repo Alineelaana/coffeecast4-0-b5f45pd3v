@@ -373,10 +373,10 @@ export default function AdminUsuariosScreen() {
               </Select>
               <p className="text-[10px] text-vinho/65">
                 • <strong>Master:</strong> Acesso total ao site, administração e membros.
-                <br />• <strong>Gerencial:</strong> Acesso a membros e admin (exceto Editar Site e
-                Usuários).
+                <br />• <strong>Gerencial:</strong> Acesso a membros e admin operacional (Visão
+                Geral, Contatos, Financeiro, Banco de Horas, Agenda e Convites).
                 <br />• <strong>Ouro & Prata:</strong> Acesso restrito à Área de Membros.
-              </p>
+              </p>{' '}
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">

@@ -55,10 +55,19 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  // Se a rota exige Master (ex.: Editar Site / Conteúdo, Integrantes, Depoimentos, Nossos Momentos, Políticas e Usuários):
+  // Se a rota exige Master (ex.: Editar Site / Conteúdo, Episódios, Integrantes, Depoimentos, Nossos Momentos, Políticas e Usuários):
   // O usuário Gerencial é redirecionado para a Visão Geral (/admin) ou outra área permitida com aviso
   if (requireMaster && !isMaster) {
-    return <Navigate to="/admin" replace />
+    return (
+      <Navigate
+        to="/admin"
+        state={{
+          blockedMaster: true,
+          message: 'Acesso restrito: esta tela é permitida exclusivamente para a categoria Master.',
+        }}
+        replace
+      />
+    )
   }
 
   return <>{children}</>

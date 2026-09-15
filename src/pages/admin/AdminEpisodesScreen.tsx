@@ -13,11 +13,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, Edit2, Trash2, ExternalLink, Play } from 'lucide-react'
+import { Plus, Edit2, Trash2, ExternalLink, Play, ShieldAlert, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/context/AuthContext'
+import { Link } from 'react-router-dom'
 import { extractYouTubeId } from '@/lib/formatters'
 
 export default function AdminEpisodesScreen() {
+  const { isMaster } = useAuth()
   const [episodios, setEpisodios] = useState<EpisodioRecord[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -112,6 +115,30 @@ export default function AdminEpisodesScreen() {
       console.error(err)
       toast.error('Erro ao excluir episódio.')
     }
+  }
+
+  if (!isMaster) {
+    return (
+      <div className="max-w-xl mx-auto my-12 bg-white rounded-2xl border border-vinho/10 p-8 text-center space-y-4 shadow-sm">
+        <div className="w-14 h-14 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center mx-auto">
+          <ShieldAlert className="w-7 h-7" />
+        </div>
+        <h2 className="font-serif text-2xl font-bold text-vinho">Acesso Restrito ao Master</h2>
+        <p className="text-sm text-vinho/70 leading-relaxed">
+          A área de gestão de episódios é permitida exclusivamente para o perfil Superadministrador
+          Master. Sua categoria atual não possui permissão para visualizar ou gerenciar os
+          episódios.
+        </p>
+        <div className="pt-2">
+          <Link to="/admin">
+            <Button className="bg-vinho hover:bg-vinho-light text-white text-xs font-semibold rounded-full px-6 min-h-[44px] inline-flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Voltar ao Painel Geral
+            </Button>
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (
