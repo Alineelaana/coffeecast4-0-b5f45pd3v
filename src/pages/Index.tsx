@@ -34,7 +34,7 @@ import {
   Play,
   ExternalLink,
 } from 'lucide-react'
-import bannerComercialImg from '@/assets/chatgpt-image-15-de-set.de-2026-132511-5f23e.png'
+import bannerComercialImg from '@/assets/chatgpt-image-15-de-set.de-2026-135749-7d01c.png'
 
 function MemberBio({ biografia }: { biografia?: string }) {
   const [expanded, setExpanded] = useState(false)
