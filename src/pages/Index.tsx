@@ -30,6 +30,8 @@ import {
   Instagram,
   ChevronDown,
   ChevronUp,
+  Play,
+  ExternalLink,
 } from 'lucide-react'
 
 function MemberBio({ biografia }: { biografia?: string }) {
@@ -234,6 +236,35 @@ export default function Index() {
               const photoUrl = member.foto
                 ? getFileUrl(member, member.foto)
                 : fallbackIntegrantesPhotos[index % fallbackIntegrantesPhotos.length]
+              const hasInterviewLink = Boolean(member.link_episodio && member.link_episodio.trim())
+
+              const photoElement = (
+                <div
+                  className={`w-28 h-28 xs:w-32 xs:h-32 sm:w-40 sm:h-40 rounded-full p-1 bg-gradient-to-tr from-dourado/80 via-dourado/30 to-dourado/70 shadow-md ring-1 ring-dourado/40 transition-all duration-300 ${
+                    hasInterviewLink
+                      ? 'group-hover/photo:ring-2 group-hover/photo:ring-dourado group-hover/photo:shadow-lg group-hover/photo:from-dourado group-hover/photo:to-dourado-dark'
+                      : ''
+                  }`}
+                >
+                  <div className="relative w-full h-full rounded-full overflow-hidden bg-vinho/5 border-2 border-white shadow-inner">
+                    <img
+                      src={photoUrl}
+                      alt={member.nome}
+                      className={`w-full h-full object-cover object-top transition-transform duration-500 ${
+                        hasInterviewLink ? 'group-hover/photo:scale-108' : ''
+                      }`}
+                      loading="lazy"
+                    />
+                    {hasInterviewLink && (
+                      <div className="absolute inset-0 bg-vinho/30 opacity-0 group-hover/photo:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-vinho/90 text-dourado flex items-center justify-center shadow-md transform scale-90 group-hover/photo:scale-100 transition-transform duration-300">
+                          <Play className="w-4 h-4 fill-dourado ml-0.5" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
 
               return (
                 <div
@@ -242,18 +273,21 @@ export default function Index() {
                 >
                   <div className="p-5 sm:p-6 flex-1 flex flex-col items-center text-center justify-between space-y-3 sm:space-y-4">
                     <div className="flex flex-col items-center w-full">
-                      {/* Avatar circular elegante, menor e proporcional tanto no mobile quanto no desktop */}
+                      {/* Avatar circular elegante */}
                       <div className="relative mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-300">
-                        <div className="w-28 h-28 xs:w-32 xs:h-32 sm:w-40 sm:h-40 rounded-full p-1 bg-gradient-to-tr from-dourado/80 via-dourado/30 to-dourado/70 shadow-md ring-1 ring-dourado/40">
-                          <div className="w-full h-full rounded-full overflow-hidden bg-vinho/5 border-2 border-white shadow-inner">
-                            <img
-                              src={photoUrl}
-                              alt={member.nome}
-                              className="w-full h-full object-cover object-top"
-                              loading="lazy"
-                            />
-                          </div>
-                        </div>
+                        {hasInterviewLink ? (
+                          <a
+                            href={member.link_episodio}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Assistir entrevista de ${member.nome} no YouTube`}
+                            className="block group/photo cursor-pointer rounded-full focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado"
+                          >
+                            {photoElement}
+                          </a>
+                        ) : (
+                          photoElement
+                        )}
                       </div>
 
                       <h3 className="font-serif text-lg sm:text-xl font-bold text-vinho group-hover:text-dourado-dark transition-colors mt-1 sm:mt-2">
@@ -279,6 +313,21 @@ export default function Index() {
                           </div>
                         )
                       })()}
+
+                      {hasInterviewLink && (
+                        <div className="mt-2.5 w-full flex justify-center">
+                          <a
+                            href={member.link_episodio}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Assistir entrevista de ${member.nome} no YouTube`}
+                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-semibold text-vinho bg-linear-to-r from-dourado/20 via-dourado/30 to-dourado/20 hover:from-dourado/35 hover:to-dourado/45 border border-dourado/50 hover:border-dourado text-vinho hover:text-vinho-dark active:scale-95 shadow-xs transition-all duration-200 no-underline min-h-[44px] group/interview"
+                          >
+                            <Play className="w-3.5 h-3.5 text-vinho fill-vinho/80 group-hover/interview:scale-110 transition-transform shrink-0" />
+                            <span>Clique para conhecer mais sobre ela ✨</span>
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

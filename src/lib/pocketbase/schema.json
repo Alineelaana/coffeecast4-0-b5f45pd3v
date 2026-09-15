@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T15:06:49.045Z",
+  "generatedAt": "2026-09-15T15:28:04.623Z",
   "collections": [
     {
       "name": "users",
@@ -157,6 +157,12 @@
         },
         {
           "name": "instagram",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "link_episodio",
           "type": "text",
           "required": false,
           "system": false

@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus, Edit2, Trash2, Upload } from 'lucide-react'
+import { Plus, Edit2, Trash2, Upload, ExternalLink, Video } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function AdminIntegrantesScreen() {
@@ -29,6 +29,7 @@ export default function AdminIntegrantesScreen() {
   const [biografia, setBiografia] = useState('')
   const [ordem, setOrdem] = useState('1')
   const [instagram, setInstagram] = useState('')
+  const [linkEpisodio, setLinkEpisodio] = useState('')
   const [fotoFile, setFotoFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -57,6 +58,7 @@ export default function AdminIntegrantesScreen() {
     setBiografia('')
     setOrdem(String(integrantes.length + 1))
     setInstagram('')
+    setLinkEpisodio('')
     setFotoFile(null)
     setModalOpen(true)
   }
@@ -67,6 +69,7 @@ export default function AdminIntegrantesScreen() {
     setBiografia(item.biografia)
     setOrdem(String(item.ordem || 1))
     setInstagram(item.instagram || '')
+    setLinkEpisodio(item.link_episodio || '')
     setFotoFile(null)
     setModalOpen(true)
   }
@@ -81,6 +84,7 @@ export default function AdminIntegrantesScreen() {
       formData.append('biografia', biografia.trim())
       formData.append('ordem', ordem)
       formData.append('instagram', instagram.trim())
+      formData.append('link_episodio', linkEpisodio.trim())
       if (fotoFile) {
         formData.append('foto', fotoFile)
       }
@@ -180,6 +184,12 @@ export default function AdminIntegrantesScreen() {
                           {item.instagram.startsWith('@') ? item.instagram : `@${item.instagram}`}
                         </p>
                       )}
+                      {item.link_episodio && (
+                        <p className="text-[11px] text-vinho/70 flex items-center gap-1 mt-0.5">
+                          <Video className="w-3 h-3 text-red-600 shrink-0" />
+                          <span>Entrevista vinculada</span>
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -231,6 +241,7 @@ export default function AdminIntegrantesScreen() {
                 <TableHead className="w-20 font-bold text-vinho text-xs">Foto</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Nome</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Instagram (@)</TableHead>
+                <TableHead className="font-bold text-vinho text-xs">Episódio Entrevista</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Biografia</TableHead>
                 <TableHead className="w-28 text-right font-bold text-vinho text-xs">
                   Ações
@@ -266,6 +277,23 @@ export default function AdminIntegrantesScreen() {
                         </span>
                       ) : (
                         <span className="text-vinho/40 italic">Não informado</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs text-vinho/80">
+                      {item.link_episodio ? (
+                        <a
+                          href={item.link_episodio}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-medium text-vinho hover:text-dourado-dark hover:underline bg-vinho/5 px-2 py-0.5 rounded border border-vinho/10"
+                          title={item.link_episodio}
+                        >
+                          <Video className="w-3 h-3 text-red-600 shrink-0" />
+                          <span>Assistir</span>
+                          <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                        </a>
+                      ) : (
+                        <span className="text-vinho/40 italic">Não vinculado</span>
                       )}
                     </TableCell>
                     <TableCell className="text-xs text-vinho/75 max-w-md line-clamp-2">
@@ -348,6 +376,24 @@ export default function AdminIntegrantesScreen() {
               />
               <p className="text-[10px] text-vinho/60">
                 Digite o @ do Instagram ou usuário. Ele aparecerá clicável no card do site público.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="int-link-episodio" className="text-xs font-semibold text-vinho">
+                Link do episódio de entrevista (YouTube)
+              </Label>
+              <Input
+                id="int-link-episodio"
+                type="url"
+                placeholder="Ex.: https://youtu.be/... ou https://www.youtube.com/watch?v=..."
+                value={linkEpisodio}
+                onChange={(e) => setLinkEpisodio(e.target.value)}
+                className="bg-white border-vinho/20 text-sm"
+              />
+              <p className="text-[10px] text-vinho/60">
+                Opcional. Se preenchido, a foto no site público se tornará clicável e exibirá um
+                botão para conhecer mais sobre a integrante.
               </p>
             </div>
 

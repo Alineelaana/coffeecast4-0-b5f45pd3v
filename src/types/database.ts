@@ -27,6 +27,7 @@ export interface IntegranteRecord {
   ordem?: number
   foto?: string
   instagram?: string
+  link_episodio?: string
   created: string
   updated: string
 }
