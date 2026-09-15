@@ -17,9 +17,112 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Edit2, Trash2, CalendarDays, Clock, ImageIcon, X, ExternalLink } from 'lucide-react'
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  CalendarDays,
+  Clock,
+  ImageIcon,
+  X,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
+
+function RoteiroExpandivel({
+  roteiro,
+  variant = 'card',
+}: {
+  roteiro?: string
+  variant?: 'card' | 'table'
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const [canClamp, setCanClamp] = useState(false)
+  const textRef = React.useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    const el = textRef.current
+    if (!el) return
+
+    const checkOverflow = () => {
+      if (!expanded) {
+        // Tolerância de 1px para subpixel rendering
+        const isOverflowing = el.scrollHeight > el.clientHeight + 1
+        setCanClamp(isOverflowing)
+      }
+    }
+
+    const rafId = requestAnimationFrame(checkOverflow)
+    window.addEventListener('resize', checkOverflow)
+    return () => {
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', checkOverflow)
+    }
+  }, [roteiro, expanded])
+
+  if (!roteiro || !roteiro.trim()) return null
+
+  if (variant === 'table') {
+    return (
+      <div className="mt-1">
+        <p
+          ref={textRef}
+          className={`text-[11px] font-normal text-vinho/75 leading-relaxed break-words whitespace-pre-wrap ${
+            expanded ? '' : 'line-clamp-3'
+          }`}
+        >
+          <strong className="text-vinho font-semibold">Roteiro:</strong> {roteiro}
+        </p>
+        {(canClamp || expanded) && (
+          <button
+            type="button"
+            onClick={() => setExpanded((prev) => !prev)}
+            aria-expanded={expanded}
+            className="mt-1 inline-flex items-center gap-1 font-serif text-[11px] font-semibold text-vinho hover:text-dourado-dark transition-colors duration-200 cursor-pointer focus:outline-hidden focus-visible:ring-1 focus-visible:ring-dourado rounded-sm py-0.5 group/btn"
+          >
+            <span>{expanded ? 'Ler menos' : 'Ler mais'}</span>
+            {expanded ? (
+              <ChevronUp className="w-3 h-3 text-dourado group-hover/btn:text-dourado-dark transition-transform" />
+            ) : (
+              <ChevronDown className="w-3 h-3 text-dourado group-hover/btn:text-dourado-dark transition-transform" />
+            )}
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-marfim/60 p-2.5 rounded-xl border border-vinho/10">
+      <p
+        ref={textRef}
+        className={`text-xs text-vinho/75 leading-relaxed break-words whitespace-pre-wrap ${
+          expanded ? '' : 'line-clamp-3'
+        }`}
+      >
+        <strong className="text-vinho font-semibold">Roteiro:</strong> {roteiro}
+      </p>
+      {(canClamp || expanded) && (
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          aria-expanded={expanded}
+          className="mt-1.5 inline-flex items-center gap-1 font-serif text-xs font-semibold text-vinho hover:text-dourado-dark transition-colors duration-200 cursor-pointer focus:outline-hidden focus-visible:ring-1 focus-visible:ring-dourado rounded-sm py-0.5 group/btn"
+        >
+          <span>{expanded ? 'Ler menos' : 'Ler mais'}</span>
+          {expanded ? (
+            <ChevronUp className="w-3.5 h-3.5 text-dourado group-hover/btn:text-dourado-dark transition-transform" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5 text-dourado group-hover/btn:text-dourado-dark transition-transform" />
+          )}
+        </button>
+      )}
+    </div>
+  )
+}
 
 export default function AdminAgendaScreen() {
   const [agendamentos, setAgendamentos] = useState<AgendaRecord[]>([])
@@ -327,11 +430,7 @@ export default function AdminAgendaScreen() {
                 </div>
               </div>
 
-              {item.roteiro && (
-                <p className="text-xs text-vinho/70 bg-marfim/60 p-2.5 rounded-xl border border-vinho/10 line-clamp-2">
-                  <strong className="text-vinho">Roteiro:</strong> {item.roteiro}
-                </p>
-              )}
+              <RoteiroExpandivel roteiro={item.roteiro} variant="card" />
 
               {item.patrocinado && (
                 <div className="pt-1">
@@ -374,13 +473,9 @@ export default function AdminAgendaScreen() {
             <TableBody className="divide-y divide-vinho/5">
               {agendamentos.map((item) => (
                 <TableRow key={item.id} className="hover:bg-vinho/5">
-                  <TableCell className="text-xs font-bold text-vinho max-w-xs">
-                    {item.titulo}
-                    {item.roteiro && (
-                      <span className="block text-[11px] font-normal text-vinho/65 line-clamp-1 mt-0.5">
-                        Roteiro: {item.roteiro}
-                      </span>
-                    )}
+                  <TableCell className="text-xs font-bold text-vinho max-w-xs align-top">
+                    <div>{item.titulo}</div>
+                    <RoteiroExpandivel roteiro={item.roteiro} variant="table" />
                   </TableCell>
                   <TableCell className="text-xs font-semibold text-dourado-dark">
                     <div className="flex items-center gap-1.5">
