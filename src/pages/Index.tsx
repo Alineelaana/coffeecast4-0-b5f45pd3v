@@ -19,7 +19,74 @@ import type {
   MomentoRecord,
   ConteudoSiteRecord,
 } from '@/types/database'
-import { Heart, Compass, Eye, Award, Sparkles, Quote, MessageCircle, Instagram } from 'lucide-react'
+import {
+  Heart,
+  Compass,
+  Eye,
+  Award,
+  Sparkles,
+  Quote,
+  MessageCircle,
+  Instagram,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react'
+
+function MemberBio({ biografia }: { biografia?: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const [canClamp, setCanClamp] = useState(false)
+  const textRef = React.useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    const el = textRef.current
+    if (!el) return
+
+    const checkOverflow = () => {
+      if (!expanded) {
+        const isOverflowing = el.scrollHeight > el.clientHeight + 1
+        setCanClamp(isOverflowing)
+      }
+    }
+
+    // Usar requestAnimationFrame para garantir renderização das fontes e layout
+    const rafId = requestAnimationFrame(checkOverflow)
+    window.addEventListener('resize', checkOverflow)
+    return () => {
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', checkOverflow)
+    }
+  }, [biografia, expanded])
+
+  if (!biografia) return null
+
+  return (
+    <div className="w-full flex flex-col items-center mt-2">
+      <p
+        ref={textRef}
+        className={`text-xs text-vinho/75 leading-relaxed font-light text-center transition-all duration-300 ${
+          expanded ? '' : 'line-clamp-4'
+        }`}
+      >
+        {biografia}
+      </p>
+      {(canClamp || expanded) && (
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          aria-expanded={expanded}
+          className="mt-2 inline-flex items-center gap-1 font-serif text-xs font-semibold text-vinho hover:text-dourado-dark transition-colors duration-200 cursor-pointer focus:outline-hidden focus-visible:ring-1 focus-visible:ring-dourado rounded-sm px-1 py-0.5 group/btn"
+        >
+          <span>{expanded ? 'Ler menos' : 'Ler mais'}</span>
+          {expanded ? (
+            <ChevronUp className="w-3.5 h-3.5 text-dourado group-hover/btn:text-dourado-dark transition-transform" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5 text-dourado group-hover/btn:text-dourado-dark transition-transform" />
+          )}
+        </button>
+      )}
+    </div>
+  )
+}
 
 // Fotos padrão de alta qualidade para as integrantes caso ainda não tenham foto no PocketBase
 const fallbackIntegrantesPhotos = [
@@ -192,9 +259,7 @@ export default function Index() {
                       <h3 className="font-serif text-lg sm:text-xl font-bold text-vinho group-hover:text-dourado-dark transition-colors mt-1 sm:mt-2">
                         {member.nome}
                       </h3>
-                      <p className="text-xs text-vinho/75 leading-relaxed mt-2 line-clamp-4 font-light">
-                        {member.biografia}
-                      </p>
+                      <MemberBio biografia={member.biografia} />
 
                       {(() => {
                         const insta = parseInstagramHandle(member.instagram)
