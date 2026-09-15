@@ -310,30 +310,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* SEÇÃO 6: NOSSOS MOMENTOS (CARROSSEL AUTOMÁTICO A CADA 3 SEGUNDOS) */}
-      <section
-        id="momentos"
-        className="py-20 px-4 sm:px-6 lg:px-8 bg-vinho-dark text-marfim relative overflow-hidden"
-      >
-        <div className="max-w-6xl mx-auto space-y-8">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs uppercase font-bold tracking-widest text-dourado bg-dourado/20 px-3.5 py-1 rounded-full border border-dourado/40">
-              Galeria de Histórias
-            </span>
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white">
-              Nossos Momentos
-            </h2>
-            <p className="text-xs sm:text-sm text-marfim/80">
-              Registros inesquecíveis das nossas gravações, bastidores e cumplicidade.
-            </p>
-          </div>
-
-          {/* Carrossel avançando a cada 3 segundos */}
-          <MomentsCarousel momentos={momentos} />
-        </div>
-      </section>
-
-      {/* SEÇÃO 7: PROPÓSITO DO COFFEECAST 4.0 & FORMULÁRIO DE PARTICIPAÇÃO */}
+      {/* SEÇÃO 6: PROPÓSITO DO COFFEECAST 4.0 & FORMULÁRIO DE PARTICIPAÇÃO */}
       <section
         id="participar"
         className="py-20 px-4 sm:px-6 lg:px-8 bg-[#FAF8F5] relative overflow-hidden"
@@ -359,7 +336,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* SEÇÃO 8: CONTATO COMERCIAL DESTACADO */}
+      {/* SEÇÃO 7: CONTATO COMERCIAL DESTACADO */}
       <section
         id="contato"
         className="py-12 px-4 sm:px-6 lg:px-8 bg-white border-t border-vinho/10"
@@ -389,6 +366,29 @@ export default function Index() {
               Chamar no WhatsApp
             </Button>
           </a>
+        </div>
+      </section>
+
+      {/* SEÇÃO 8: NOSSOS MOMENTOS (CARROSSEL AUTOMÁTICO A CADA 3 SEGUNDOS) */}
+      <section
+        id="momentos"
+        className="py-20 px-4 sm:px-6 lg:px-8 bg-vinho-dark text-marfim relative overflow-hidden"
+      >
+        <div className="max-w-6xl mx-auto space-y-8">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <span className="text-xs uppercase font-bold tracking-widest text-dourado bg-dourado/20 px-3.5 py-1 rounded-full border border-dourado/40">
+              Galeria de Histórias
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white">
+              Nossos Momentos
+            </h2>
+            <p className="text-xs sm:text-sm text-marfim/80">
+              Registros inesquecíveis das nossas gravações, bastidores e cumplicidade.
+            </p>
+          </div>
+
+          {/* Carrossel avançando a cada 3 segundos */}
+          <MomentsCarousel momentos={momentos} />
         </div>
       </section>
 

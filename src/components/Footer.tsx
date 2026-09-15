@@ -141,13 +141,13 @@ export const Footer: React.FC<FooterProps> = ({
                 </a>
               </li>
               <li>
-                <a href="#momentos" className="hover:text-dourado transition-colors">
-                  Nossos Momentos
+                <a href="#participar" className="hover:text-dourado transition-colors">
+                  Quero Participar do Podcast
                 </a>
               </li>
               <li>
-                <a href="#participar" className="hover:text-dourado transition-colors">
-                  Quero Participar do Podcast
+                <a href="#momentos" className="hover:text-dourado transition-colors">
+                  Nossos Momentos
                 </a>
               </li>
               <li>
