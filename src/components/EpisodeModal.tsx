@@ -1,7 +1,13 @@
 import React from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { extractYouTubeId } from '@/lib/formatters'
-import { ExternalLink } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { ExternalLink, Youtube, Sparkles, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface EpisodeModalProps {
   open: boolean
@@ -16,61 +22,85 @@ interface EpisodeModalProps {
 export const EpisodeModal: React.FC<EpisodeModalProps> = ({ open, onOpenChange, episode }) => {
   if (!episode) return null
 
-  const videoId = extractYouTubeId(episode.youtube_url)
+  const handleOpenYouTube = () => {
+    if (episode.youtube_url) {
+      window.open(episode.youtube_url, '_blank', 'noopener,noreferrer')
+      onOpenChange(false)
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl bg-vinho-dark border-2 border-dourado/60 text-marfim p-4 sm:p-6 rounded-2xl shadow-2xl">
-        <DialogHeader className="mb-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-dourado uppercase tracking-wider mb-1">
-            <span className="w-2 h-2 rounded-full bg-dourado animate-ping" />
-            Episódio #{episode.numero}
-          </div>
-          <DialogTitle className="font-serif text-xl sm:text-2xl text-white font-bold leading-snug">
-            {episode.titulo}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-lg bg-vinho-dark border-2 border-dourado/60 text-marfim p-6 sm:p-8 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden relative">
+        {/* Elementos sutis decorativos de fundo na paleta */}
+        <div className="absolute -top-16 -right-16 w-44 h-44 bg-dourado/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-44 h-44 bg-rose-brand/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black/80 border border-white/10 shadow-inner">
-          {videoId ? (
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`}
-              title={episode.titulo}
-              className="absolute inset-0 w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-3">
-              <p className="text-sm text-marfim/70">
-                O link do vídeo cadastrado está disponível no YouTube:
-              </p>
-              <a
-                href={episode.youtube_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-dourado hover:bg-dourado-dark text-vinho font-bold px-4 py-2 rounded-full text-sm transition-all"
-              >
-                Abrir no YouTube
-                <ExternalLink className="w-4 h-4" />
-              </a>
+        <div className="relative z-10 space-y-6">
+          <DialogHeader className="space-y-3 text-center sm:text-left">
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center gap-2 text-xs font-semibold text-dourado uppercase tracking-wider bg-dourado/15 border border-dourado/30 px-3 py-1 rounded-full">
+                <Sparkles className="w-3.5 h-3.5" />
+                Episódio #{episode.numero}
+              </div>
+              <span className="text-[11px] text-marfim/60 font-medium">CoffeeCast 4.0</span>
             </div>
-          )}
-        </div>
 
-        <div className="mt-4 flex items-center justify-between text-xs text-marfim/60">
-          <span>CoffeeCast 4.0 — Histórias que transformam</span>
-          {episode.youtube_url && (
-            <a
-              href={episode.youtube_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-dourado flex items-center gap-1 transition-colors"
+            <DialogTitle className="font-serif text-xl sm:text-2xl text-white font-bold leading-snug">
+              {episode.titulo}
+            </DialogTitle>
+
+            <DialogDescription className="text-marfim/70 text-xs sm:text-sm sr-only">
+              Informações sobre onde assistir ao episódio no YouTube
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Card explicativo com identidade vinho, dourado e marfim */}
+          <div className="bg-vinho/70 border border-dourado/30 rounded-2xl p-5 sm:p-6 text-center space-y-4 shadow-inner">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-dourado/30 via-dourado/10 to-transparent border border-dourado/40 flex items-center justify-center text-dourado shadow-md">
+              <Youtube className="w-8 h-8 text-[#FF0000]" />
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-serif text-lg font-bold text-white flex items-center justify-center gap-2">
+                <span>Este episódio é assistido no YouTube</span>
+                <span className="text-lg">🎬</span>
+              </h4>
+              <p className="text-xs sm:text-sm text-marfim/85 leading-relaxed font-light max-w-sm mx-auto">
+                Para proporcionar a melhor experiência audiovisual e permitir que você comente e
+                interaja, nossos episódios completos são transmitidos em nosso canal oficial no
+                YouTube.
+              </p>
+            </div>
+          </div>
+
+          {/* Ações: Confirmar para abrir no YouTube ou fechar */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
+            <Button
+              type="button"
+              onClick={handleOpenYouTube}
+              disabled={!episode.youtube_url}
+              className="w-full sm:flex-1 bg-dourado hover:bg-dourado-dark text-vinho font-bold py-3 text-sm rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
             >
-              Assistir direto no YouTube
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          )}
+              <Youtube className="w-4 h-4 fill-[#FF0000] text-transparent" />
+              <span>Assistir no YouTube</span>
+              <ExternalLink className="w-4 h-4" />
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="w-full sm:w-auto border-dourado/30 hover:border-dourado bg-white/5 hover:bg-white/10 text-marfim text-xs sm:text-sm font-medium py-3 px-5 rounded-xl transition-all"
+            >
+              <X className="w-4 h-4 mr-1.5" />
+              Fechar
+            </Button>
+          </div>
+
+          <p className="text-center text-[11px] text-marfim/50 italic">
+            O vídeo será aberto em uma nova aba com total segurança.
+          </p>
         </div>
       </DialogContent>
     </Dialog>

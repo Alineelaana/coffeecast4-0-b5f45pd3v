@@ -4,6 +4,7 @@ import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
 import { HeaderBanner } from '@/components/HeaderBanner'
 import { EpisodeModal } from '@/components/EpisodeModal'
+import { EpisodesCarousel } from '@/components/EpisodesCarousel'
 import { MomentsCarousel } from '@/components/MomentsCarousel'
 import { ParticipationForm } from '@/components/ParticipationForm'
 import { MembersAreaModal } from '@/components/MembersAreaModal'
@@ -17,7 +18,7 @@ import type {
   MomentoRecord,
   ConteudoSiteRecord,
 } from '@/types/database'
-import { Play, Heart, Compass, Eye, Award, Sparkles, Quote, MessageCircle } from 'lucide-react'
+import { Heart, Compass, Eye, Award, Sparkles, Quote, MessageCircle } from 'lucide-react'
 
 // Fotos padrão de alta qualidade para as integrantes caso ainda não tenham foto no PocketBase
 const fallbackIntegrantesPhotos = [
@@ -203,15 +204,15 @@ export default function Index() {
         </div>
       </section>
 
-      {/* SEÇÃO 4: EPISÓDIOS & BOTÃO "CLIQUE AQUI PARA ASSISTIR" */}
+      {/* SEÇÃO 4: EPISÓDIOS & BOTÃO "CLIQUE AQUI PARA ASSISTIR" (CARROSSEL HORIZONTAL COMPACTO) */}
       <section
         id="episodios"
-        className="py-20 px-4 sm:px-6 lg:px-8 bg-vinho text-marfim relative overflow-hidden"
+        className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-vinho text-marfim relative overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-80 h-80 bg-dourado/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-rose-brand/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-6xl mx-auto space-y-12 relative z-10">
+        <div className="max-w-6xl mx-auto space-y-8 relative z-10">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <span className="text-xs uppercase font-bold tracking-widest text-dourado bg-dourado/20 px-3.5 py-1 rounded-full border border-dourado/40">
               Assista no YouTube
@@ -221,40 +222,12 @@ export default function Index() {
             </h2>
             <p className="text-xs sm:text-sm text-marfim/80">
               Assista na íntegra aos bate-papos gravados com carinho, reflexões e cafés especiais.
+              Navegue lateralmente para escolher o seu episódio favorito.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {episodios.map((ep) => (
-              <div
-                key={ep.id}
-                className="bg-vinho-dark border border-dourado/30 rounded-2xl p-6 shadow-lg hover:border-dourado flex flex-col justify-between space-y-5 transition-all duration-300 hover:-translate-y-1"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="bg-dourado/20 text-dourado text-xs font-bold px-3 py-1 rounded-full border border-dourado/40">
-                      Episódio #{ep.numero}
-                    </span>
-                    <span className="text-[11px] text-marfim/60">Canal Oficial</span>
-                  </div>
-
-                  <h3 className="font-serif text-lg sm:text-xl font-bold text-white leading-snug">
-                    {ep.titulo}
-                  </h3>
-                </div>
-
-                <div className="pt-2">
-                  <Button
-                    onClick={() => handleWatchEpisode(ep)}
-                    className="w-full bg-dourado hover:bg-dourado-dark text-vinho font-bold py-2.5 text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all"
-                  >
-                    <Play className="w-4 h-4 fill-vinho" />
-                    Clique aqui para assistir
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Carrossel lateral compacto com botões de navegação e suporte a arraste */}
+          <EpisodesCarousel episodios={episodios} onSelectEpisode={handleWatchEpisode} />
         </div>
       </section>
 
