@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T03:35:03.112Z",
+  "generatedAt": "2026-09-15T03:40:54.883Z",
   "collections": [
     {
       "name": "users",
@@ -584,6 +584,13 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "tipo_convidado",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["convidado", "convidada"]
         }
       ],
       "indexes": ["CREATE INDEX idx_convites_gravacao ON convites (data_gravacao)"]

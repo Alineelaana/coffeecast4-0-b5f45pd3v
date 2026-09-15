@@ -39,6 +39,7 @@ export default function AdminConvitesScreen() {
 
   // Estados dos campos do formulário
   const [nome, setNome] = useState('')
+  const [tipoConvidado, setTipoConvidado] = useState<'convidado' | 'convidada'>('convidada')
   const [dataGravacao, setDataGravacao] = useState('')
   const [horario, setHorario] = useState('14:00')
   const [apresentacao, setApresentacao] = useState('')
@@ -84,6 +85,7 @@ export default function AdminConvitesScreen() {
   const handleOpenCreate = () => {
     setEditingConvite(null)
     setNome('')
+    setTipoConvidado('convidada')
     setDataGravacao(new Date().toISOString().split('T')[0])
     setHorario('14:00')
     setApresentacao(
@@ -99,6 +101,7 @@ export default function AdminConvitesScreen() {
   const handleOpenEdit = (convite: ConviteRecord) => {
     setEditingConvite(convite)
     setNome(convite.nome || '')
+    setTipoConvidado(convite.tipo_convidado === 'convidado' ? 'convidado' : 'convidada')
     // data_gravacao pode vir no formato "2026-09-15 00:00:00.000Z" ou "2026-09-15"
     const rawDate = convite.data_gravacao ? convite.data_gravacao.split('T')[0].split(' ')[0] : ''
     setDataGravacao(rawDate || new Date().toISOString().split('T')[0])
@@ -147,6 +150,7 @@ export default function AdminConvitesScreen() {
     try {
       const formData = new FormData()
       formData.append('nome', nome.trim())
+      formData.append('tipo_convidado', tipoConvidado)
       formData.append('data_gravacao', dataGravacao)
       formData.append('horario', horario.trim())
       formData.append('apresentacao', apresentacao.trim())
@@ -227,6 +231,7 @@ export default function AdminConvitesScreen() {
 
       const canvas = await renderInviteToCanvas({
         nome: convite.nome,
+        tipoConvidado: convite.tipo_convidado,
         dataGravacao: formatDateBR(convite.data_gravacao),
         horario: convite.horario,
         apresentacao: convite.apresentacao,
@@ -315,7 +320,11 @@ export default function AdminConvitesScreen() {
                       />
                       <div>
                         <h4 className="font-serif font-bold text-base text-vinho">{item.nome}</h4>
-                        <span className="text-[11px] text-vinho/60">Convidado(a) Especial</span>
+                        <span className="text-[11px] font-medium text-vinho/70">
+                          {item.tipo_convidado === 'convidado'
+                            ? 'Convidado de Honra'
+                            : 'Convidada de Honra'}
+                        </span>
                       </div>
                     </div>
 
@@ -416,7 +425,7 @@ export default function AdminConvitesScreen() {
           <form onSubmit={handleSave} className="space-y-4 pt-2">
             <div className="space-y-1.5">
               <Label htmlFor="conv-nome" className="text-xs font-semibold text-vinho">
-                Nome do Convidado(a) *
+                Nome da Pessoa Convidada *
               </Label>
               <Input
                 id="conv-nome"
@@ -426,6 +435,52 @@ export default function AdminConvitesScreen() {
                 onChange={(e) => setNome(e.target.value)}
                 className="bg-white border-vinho/20 text-sm"
               />
+            </div>
+
+            {/* Opção de gênero: Convidado ou Convidada */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-vinho">
+                Tratamento no Convite Oficial *
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTipoConvidado('convidada')}
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                    tipoConvidado === 'convidada'
+                      ? 'bg-vinho text-white border-vinho shadow-xs'
+                      : 'bg-white text-vinho/80 border-vinho/20 hover:border-dourado'
+                  }`}
+                >
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full ${
+                      tipoConvidado === 'convidada' ? 'bg-dourado' : 'border border-vinho/40'
+                    }`}
+                  />
+                  <span>Convidada (de Honra)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTipoConvidado('convidado')}
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                    tipoConvidado === 'convidado'
+                      ? 'bg-vinho text-white border-vinho shadow-xs'
+                      : 'bg-white text-vinho/80 border-vinho/20 hover:border-dourado'
+                  }`}
+                >
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full ${
+                      tipoConvidado === 'convidado' ? 'bg-dourado' : 'border border-vinho/40'
+                    }`}
+                  />
+                  <span>Convidado (de Honra)</span>
+                </button>
+              </div>
+              <p className="text-[10px] text-vinho/60">
+                Define se o convite exibirá "Convidada de Honra" ou "Convidado de Honra" no PDF,
+                JPEG e tela.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -586,13 +641,14 @@ export default function AdminConvitesScreen() {
           {previewConvite && (
             <div className="flex flex-col h-full overflow-hidden">
               {/* Barra Superior de Ações com Baixar JPEG, Imprimir PDF e Editar */}
-              <div className="p-4 bg-white border-b border-vinho/10 flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <div className="print-hide p-4 bg-white border-b border-vinho/10 flex flex-wrap items-center justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-vinho">
                     Visualização do Convite Gráfico
                   </span>
                   <span className="text-[10px] bg-dourado/20 text-vinho font-bold px-2 py-0.5 rounded-full border border-dourado/40">
-                    A5 Oficial
+                    A5 Oficial •{' '}
+                    {previewConvite.tipo_convidado === 'convidado' ? 'Convidado' : 'Convidada'}
                   </span>
                 </div>
 
@@ -693,7 +749,11 @@ export default function AdminConvitesScreen() {
 
                     <div className="space-y-1">
                       <span className="text-xs text-dourado-light uppercase font-semibold tracking-wider">
-                        Convidado(a) de Honra
+                        {previewConvite.tipo_convidado === 'convidado'
+                          ? 'Convidado de Honra'
+                          : previewConvite.tipo_convidado === 'convidada'
+                            ? 'Convidada de Honra'
+                            : 'Convidado(a) de Honra'}
                       </span>
                       <h4 className="font-serif text-2xl sm:text-3xl font-bold text-white">
                         {previewConvite.nome}

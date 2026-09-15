@@ -6,6 +6,7 @@
 
 interface RenderInviteOptions {
   nome: string
+  tipoConvidado?: 'convidado' | 'convidada'
   dataGravacao: string // YYYY-MM-DD ou formatada
   horario: string
   apresentacao: string
@@ -112,20 +113,21 @@ function drawVectorLogo(ctx: CanvasRenderingContext2D, cx: number, cy: number, s
   const scale = size / 100
   ctx.scale(scale, scale)
 
-  // Gradiente Dourado
+  // Gradiente Dourado vibrante e nítido
   const goldGrad = ctx.createLinearGradient(0, 0, 100, 100)
-  goldGrad.addColorStop(0, '#F3E5AB')
-  goldGrad.addColorStop(0.5, '#D4AF37')
-  goldGrad.addColorStop(1, '#9C7311')
+  goldGrad.addColorStop(0, '#FFF2B2')
+  goldGrad.addColorStop(0.35, '#F5D061')
+  goldGrad.addColorStop(0.7, '#D4AF37')
+  goldGrad.addColorStop(1, '#B38612')
 
   // Círculo pontilhado
   ctx.save()
   ctx.beginPath()
   ctx.arc(50, 50, 46, 0, Math.PI * 2)
   ctx.strokeStyle = goldGrad
-  ctx.lineWidth = 1.5
+  ctx.lineWidth = 2
   ctx.setLineDash([3, 3])
-  ctx.globalAlpha = 0.6
+  ctx.globalAlpha = 0.85
   ctx.stroke()
   ctx.restore()
 
@@ -138,17 +140,19 @@ function drawVectorLogo(ctx: CanvasRenderingContext2D, cx: number, cy: number, s
   ctx.fill()
   ctx.restore()
 
-  // Estrela brilhante superior
+  // Estrela brilhante superior com brilho
   ctx.save()
+  ctx.shadowColor = '#D4AF37'
+  ctx.shadowBlur = 4
   ctx.beginPath()
-  ctx.moveTo(50, 12)
-  ctx.lineTo(52, 18)
-  ctx.lineTo(58, 20)
-  ctx.lineTo(52, 22)
-  ctx.lineTo(50, 28)
-  ctx.lineTo(48, 22)
-  ctx.lineTo(42, 20)
-  ctx.lineTo(48, 18)
+  ctx.moveTo(50, 11)
+  ctx.lineTo(52.2, 17.5)
+  ctx.lineTo(59, 20)
+  ctx.lineTo(52.2, 22.5)
+  ctx.lineTo(50, 29)
+  ctx.lineTo(47.8, 22.5)
+  ctx.lineTo(41, 20)
+  ctx.lineTo(47.8, 17.5)
   ctx.closePath()
   ctx.fillStyle = goldGrad
   ctx.fill()
@@ -157,22 +161,24 @@ function drawVectorLogo(ctx: CanvasRenderingContext2D, cx: number, cy: number, s
   // Estrela pequena direita
   ctx.save()
   ctx.beginPath()
-  ctx.moveTo(68, 24)
-  ctx.lineTo(69.2, 27)
-  ctx.lineTo(72.5, 28)
-  ctx.lineTo(69.2, 29)
-  ctx.lineTo(68, 32)
-  ctx.lineTo(66.8, 29)
-  ctx.lineTo(63.5, 28)
-  ctx.lineTo(66.8, 27)
+  ctx.moveTo(68, 23)
+  ctx.lineTo(69.4, 26.5)
+  ctx.lineTo(73, 28)
+  ctx.lineTo(69.4, 29.5)
+  ctx.lineTo(68, 33)
+  ctx.lineTo(66.6, 29.5)
+  ctx.lineTo(63, 28)
+  ctx.lineTo(66.6, 26.5)
   ctx.closePath()
-  ctx.fillStyle = '#D4AF37'
-  ctx.globalAlpha = 0.8
+  ctx.fillStyle = goldGrad
+  ctx.globalAlpha = 0.95
   ctx.fill()
   ctx.restore()
 
-  // Vapor em forma de coração
+  // Vapor em forma de coração - dourado vibrante com espessura adequada
   ctx.save()
+  ctx.shadowColor = '#D4AF37'
+  ctx.shadowBlur = 3
   ctx.beginPath()
   ctx.moveTo(44, 32)
   ctx.bezierCurveTo(41, 28, 35, 29, 35, 34)
@@ -182,67 +188,97 @@ function drawVectorLogo(ctx: CanvasRenderingContext2D, cx: number, cy: number, s
   ctx.bezierCurveTo(54, 34, 51, 36, 50, 37)
   ctx.bezierCurveTo(49, 36, 46, 34, 44, 32)
   ctx.strokeStyle = goldGrad
-  ctx.lineWidth = 2
+  ctx.lineWidth = 2.8
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
   ctx.stroke()
   ctx.restore()
 
-  // Pires da xícara
+  // Pires da xícara - traço forte e reluzente
   ctx.save()
   ctx.beginPath()
-  ctx.moveTo(24, 76)
-  ctx.bezierCurveTo(24, 76, 32, 80, 50, 80)
-  ctx.bezierCurveTo(68, 80, 76, 76, 76, 76)
+  ctx.moveTo(23, 76)
+  ctx.bezierCurveTo(23, 76, 32, 81, 50, 81)
+  ctx.bezierCurveTo(68, 81, 77, 76, 77, 76)
   ctx.strokeStyle = goldGrad
-  ctx.lineWidth = 3
+  ctx.lineWidth = 3.6
   ctx.lineCap = 'round'
   ctx.stroke()
   ctx.restore()
 
-  // Xícara elegante
+  // Realce superior no pires
   ctx.save()
   ctx.beginPath()
-  ctx.moveTo(28, 50)
-  ctx.bezierCurveTo(28, 66, 36, 74, 50, 74)
-  ctx.bezierCurveTo(64, 74, 72, 66, 72, 50)
+  ctx.moveTo(32, 78)
+  ctx.bezierCurveTo(36, 80, 44, 80.8, 50, 80.8)
+  ctx.bezierCurveTo(56, 80.8, 64, 80, 68, 78)
+  ctx.strokeStyle = '#FFF2B2'
+  ctx.lineWidth = 1.4
+  ctx.lineCap = 'round'
+  ctx.stroke()
+  ctx.restore()
+
+  // Xícara elegante - bojo vinho profundo com contorno dourado espesso
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(27, 49)
+  ctx.bezierCurveTo(27, 66, 35, 75, 50, 75)
+  ctx.bezierCurveTo(65, 75, 73, 66, 73, 49)
   ctx.closePath()
-  ctx.fillStyle = '#3F1735'
+  const cupFillGrad = ctx.createLinearGradient(27, 49, 73, 75)
+  cupFillGrad.addColorStop(0, '#5A1A3B')
+  cupFillGrad.addColorStop(0.5, '#3F122B')
+  cupFillGrad.addColorStop(1, '#250B1B')
+  ctx.fillStyle = cupFillGrad
   ctx.fill()
   ctx.strokeStyle = goldGrad
-  ctx.lineWidth = 2.5
+  ctx.lineWidth = 3
   ctx.stroke()
   ctx.restore()
 
-  // Friso superior da xícara
+  // Friso dourado na borda superior da xícara
   ctx.save()
   ctx.beginPath()
-  ctx.ellipse(50, 50, 22, 3.5, 0, 0, Math.PI * 2)
+  ctx.ellipse(50, 49, 23, 4, 0, 0, Math.PI * 2)
   ctx.strokeStyle = goldGrad
-  ctx.lineWidth = 2
+  ctx.lineWidth = 2.6
+  ctx.stroke()
+
+  ctx.beginPath()
+  ctx.ellipse(50, 49, 21.5, 2.8, 0, 0, Math.PI * 2)
+  ctx.strokeStyle = '#FFF2B2'
+  ctx.lineWidth = 1.2
   ctx.stroke()
   ctx.restore()
 
-  // Asa da xícara
+  // Asa da xícara - traço forte e nítido
   ctx.save()
   ctx.beginPath()
-  ctx.moveTo(71, 53)
-  ctx.bezierCurveTo(78, 53, 82, 58, 80, 64)
-  ctx.bezierCurveTo(78, 69, 73, 70, 68, 67)
+  ctx.moveTo(72, 52)
+  ctx.bezierCurveTo(80, 52, 84, 57, 82, 64)
+  ctx.bezierCurveTo(80, 69.5, 74, 71, 69, 68)
   ctx.strokeStyle = goldGrad
-  ctx.lineWidth = 2.5
+  ctx.lineWidth = 3.2
+  ctx.lineCap = 'round'
+  ctx.stroke()
+
+  ctx.beginPath()
+  ctx.moveTo(73, 54)
+  ctx.bezierCurveTo(78, 54, 80.5, 57.5, 79.5, 62)
+  ctx.strokeStyle = '#FFF2B2'
+  ctx.lineWidth = 1.2
   ctx.lineCap = 'round'
   ctx.stroke()
   ctx.restore()
 
-  // Friso interno sutil
+  // Friso interno decorativo
   ctx.save()
   ctx.beginPath()
-  ctx.moveTo(38, 58)
-  ctx.bezierCurveTo(42, 62, 58, 62, 62, 58)
-  ctx.strokeStyle = '#F3E5AB'
-  ctx.lineWidth = 1
-  ctx.globalAlpha = 0.7
+  ctx.moveTo(37, 57)
+  ctx.bezierCurveTo(41, 62, 59, 62, 63, 57)
+  ctx.strokeStyle = goldGrad
+  ctx.lineWidth = 2
+  ctx.lineCap = 'round'
   ctx.stroke()
   ctx.restore()
 
@@ -523,13 +559,20 @@ export async function renderInviteToCanvas(
   ctx.fill()
   ctx.restore()
 
-  // Texto: Convidada de Honra
+  // Rótulo de Convidado(a) de Honra ajustado por gênero
+  const honorLabel =
+    options.tipoConvidado === 'convidada'
+      ? 'CONVIDADA DE HONRA'
+      : options.tipoConvidado === 'convidado'
+        ? 'CONVIDADO DE HONRA'
+        : 'CONVIDADO(A) DE HONRA'
+
   ctx.save()
   ctx.font = '700 22px "Plus Jakarta Sans", sans-serif'
   ctx.letterSpacing = '4px'
   ctx.fillStyle = '#D4AF37'
   ctx.textAlign = 'center'
-  ctx.fillText('CONVIDADO(A) DE HONRA', width / 2, photoCy + photoSize / 2 + 70)
+  ctx.fillText(honorLabel, width / 2, photoCy + photoSize / 2 + 70)
   ctx.restore()
 
   // Nome do Convidado

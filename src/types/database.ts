@@ -99,6 +99,7 @@ export interface ConviteRecord {
   foto_convidado?: string
   logomarca_empresa?: string
   nome: string
+  tipo_convidado?: 'convidado' | 'convidada'
   data_gravacao: string
   horario: string
   apresentacao: string
