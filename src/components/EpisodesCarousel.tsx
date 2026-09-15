@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, Play, Youtube, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { openExternalUrl } from '@/lib/openUrl'
+import { openExternalUrl, formatExternalUrl } from '@/lib/openUrl'
 import type { EpisodioRecord } from '@/types/database'
 
 interface EpisodesCarouselProps {
@@ -147,16 +147,13 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
   const openEpisodeDirectly = (ep: EpisodioRecord, e?: React.MouseEvent | React.KeyboardEvent) => {
     const rawUrl = ep.youtube_url?.trim()
     if (!rawUrl) {
-      // Caso não tenha URL cadastrada, ainda permite callback alternativo se fornecido
       if (onSelectEpisode) {
         onSelectEpisode(ep)
       }
       return
     }
 
-    const normalizedUrl =
-      rawUrl.startsWith('http://') || rawUrl.startsWith('https://') ? rawUrl : `https://${rawUrl}`
-
+    const normalizedUrl = formatExternalUrl(rawUrl)
     openExternalUrl(normalizedUrl, e?.nativeEvent || e)
     if (onSelectEpisode) {
       onSelectEpisode(ep)
@@ -165,7 +162,7 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
 
   // Handler seguro de clique para card ou botão
   const handleEpisodeClick = (ep: EpisodioRecord, e: React.MouseEvent) => {
-    // Se o usuário estava arrastando o carrossel, ignora o clique
+    // Se o usuário estava arrastando o carrossel, cancela a ação de clique/navegação
     if (
       isClickPreventedRef.current ||
       dragDistanceRef.current > DRAG_THRESHOLD ||
@@ -175,7 +172,22 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
       e.stopPropagation()
       return
     }
-    openEpisodeDirectly(ep, e)
+
+    // Se o evento veio de um <a> com href válido nativo, não precisamos chamar preventDefault
+    // a menos que não tenha URL ou tenhamos um callback personalizado
+    const rawUrl = ep.youtube_url?.trim()
+    if (!rawUrl) {
+      e.preventDefault()
+      if (onSelectEpisode) {
+        onSelectEpisode(ep)
+      }
+      return
+    }
+
+    // Chamamos o callback opcional sem cancelar o comportamento padrão do <a> se for clique nativo
+    if (onSelectEpisode) {
+      onSelectEpisode(ep)
+    }
   }
 
   if (!episodios || episodios.length === 0) {
@@ -244,66 +256,66 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        {episodios.map((ep) => (
-          <div
-            key={ep.id}
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-              handleEpisodeClick(ep, e)
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                openEpisodeDirectly(ep, e)
-              }
-            }}
-            aria-label={`Episódio #${ep.numero}: ${ep.titulo}. Clique para assistir diretamente no YouTube.`}
-            className="flex-shrink-0 w-[240px] xs:w-[260px] sm:w-[290px] md:w-[320px] snap-start bg-gradient-to-b from-vinho-dark via-vinho to-vinho-dark border border-dourado/35 hover:border-dourado rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado"
-          >
-            {/* Brilho decorativo no canto superior do card */}
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-dourado/10 rounded-full blur-xl group-hover:bg-dourado/20 transition-all pointer-events-none" />
+        {episodios.map((ep) => {
+          const rawUrl = ep.youtube_url?.trim()
+          const episodeUrl = rawUrl ? formatExternalUrl(rawUrl) : undefined
 
-            {/* Cabeçalho do Card: Número do episódio e Canal */}
-            <div className="space-y-2.5 sm:space-y-3 relative z-10 pointer-events-none">
-              <div className="flex items-center justify-between">
-                <span className="bg-dourado/20 text-dourado text-[10px] sm:text-xs font-bold px-2.5 py-0.5 sm:py-1 rounded-full border border-dourado/40 inline-flex items-center gap-1.5 shadow-sm">
-                  <span className="w-1.5 h-1.5 rounded-full bg-dourado" />
-                  Episódio #{ep.numero}
-                </span>
+          return (
+            <a
+              key={ep.id}
+              href={episodeUrl || '#'}
+              target={episodeUrl ? '_blank' : undefined}
+              rel={episodeUrl ? 'noopener noreferrer' : undefined}
+              onClick={(e) => {
+                handleEpisodeClick(ep, e)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  if (!episodeUrl) {
+                    e.preventDefault()
+                    openEpisodeDirectly(ep, e)
+                  }
+                }
+              }}
+              aria-label={`Episódio #${ep.numero}: ${ep.titulo}. Abrir e assistir em nova guia no YouTube.`}
+              className="flex-shrink-0 w-[240px] xs:w-[260px] sm:w-[290px] md:w-[320px] snap-start bg-gradient-to-b from-vinho-dark via-vinho to-vinho-dark border border-dourado/35 hover:border-dourado rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado no-underline select-none"
+            >
+              {/* Brilho decorativo no canto superior do card */}
+              <div className="absolute -top-10 -right-10 w-24 h-24 bg-dourado/10 rounded-full blur-xl group-hover:bg-dourado/20 transition-all pointer-events-none" />
 
-                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] text-marfim/60 font-medium">
-                  <Youtube className="w-3.5 h-3.5 text-red-500 fill-red-500" />
-                  YouTube
-                </span>
+              {/* Cabeçalho do Card: Número do episódio e Canal */}
+              <div className="space-y-2.5 sm:space-y-3 relative z-10 pointer-events-none">
+                <div className="flex items-center justify-between">
+                  <span className="bg-dourado/20 text-dourado text-[10px] sm:text-xs font-bold px-2.5 py-0.5 sm:py-1 rounded-full border border-dourado/40 inline-flex items-center gap-1.5 shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-dourado" />
+                    Episódio #{ep.numero}
+                  </span>
+
+                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] text-marfim/60 font-medium">
+                    <Youtube className="w-3.5 h-3.5 text-red-500 fill-red-500" />
+                    YouTube
+                  </span>
+                </div>
+
+                {/* Título com limite equilibrado para manter altura compacta e harmoniosa */}
+                <h3
+                  className="font-serif text-sm sm:text-lg font-bold text-white group-hover:text-dourado-light transition-colors leading-snug line-clamp-3 min-h-[3.6rem] sm:min-h-[4.2rem]"
+                  title={ep.titulo}
+                >
+                  {ep.titulo}
+                </h3>
               </div>
 
-              {/* Título com limite equilibrado para manter altura compacta e harmoniosa */}
-              <h3
-                className="font-serif text-sm sm:text-lg font-bold text-white group-hover:text-dourado-light transition-colors leading-snug line-clamp-3 min-h-[3.6rem] sm:min-h-[4.2rem]"
-                title={ep.titulo}
-              >
-                {ep.titulo}
-              </h3>
-            </div>
-
-            {/* Rodapé do Card: Botão de ação oficial com área de toque mínima confortável */}
-            <div className="pt-3 sm:pt-4 border-t border-white/10 mt-3 relative z-10">
-              <Button
-                type="button"
-                onClick={(e) => {
-                  // Previne bolha para evitar clique duplo com o container do card
-                  e.stopPropagation()
-                  handleEpisodeClick(ep, e)
-                }}
-                className="w-full bg-dourado hover:bg-dourado-dark text-vinho font-bold py-2.5 sm:py-2.5 min-h-[44px] text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 fill-vinho shrink-0" />
-                Clique aqui para assistir
-              </Button>
-            </div>
-          </div>
-        ))}
+              {/* Rodapé do Card: Botão de ação visual com área de toque mínima confortável */}
+              <div className="pt-3 sm:pt-4 border-t border-white/10 mt-3 relative z-10 pointer-events-none">
+                <div className="w-full bg-dourado group-hover:bg-dourado-dark text-vinho font-bold py-2.5 sm:py-2.5 min-h-[44px] text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all group-hover:scale-[1.02] active:scale-[0.98]">
+                  <Play className="w-3.5 h-3.5 fill-vinho shrink-0" />
+                  <span>Clique aqui para assistir</span>
+                </div>
+              </div>
+            </a>
+          )
+        })}
       </div>
     </div>
   )

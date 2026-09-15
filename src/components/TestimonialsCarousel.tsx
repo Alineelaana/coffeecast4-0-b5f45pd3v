@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, Quote, Sparkles, Instagram, Play } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { getFileUrl, parseInstagramHandle } from '@/lib/formatters'
-import { openExternalUrl } from '@/lib/openUrl'
+import { formatExternalUrl } from '@/lib/openUrl'
 import type { DepoimentoRecord } from '@/types/database'
 
 interface TestimonialsCarouselProps {
@@ -236,13 +236,12 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
                   {dep.link_episodio && dep.link_episodio.trim() && (
                     <div className="pt-1 w-full">
                       <a
-                        href={dep.link_episodio.trim()}
+                        href={formatExternalUrl(dep.link_episodio)}
                         target="_blank"
                         rel="noopener noreferrer"
                         title={`Assistir episódio completo de ${dep.nome} no YouTube`}
                         onClick={(e) => {
                           e.stopPropagation()
-                          openExternalUrl(dep.link_episodio!.trim(), e)
                         }}
                         className="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 rounded-full text-xs font-semibold text-vinho bg-linear-to-r from-dourado/20 via-dourado/30 to-dourado/20 hover:from-dourado/35 hover:to-dourado/45 border border-dourado/50 hover:border-dourado text-vinho hover:text-vinho-dark active:scale-95 shadow-xs transition-all duration-200 no-underline min-h-[44px] group/episode cursor-pointer"
                       >

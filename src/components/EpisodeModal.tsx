@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog'
 import { ExternalLink, Youtube, Sparkles, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { openExternalUrl } from '@/lib/openUrl'
+import { formatExternalUrl } from '@/lib/openUrl'
 
 interface EpisodeModalProps {
   open: boolean
@@ -23,12 +23,7 @@ interface EpisodeModalProps {
 export const EpisodeModal: React.FC<EpisodeModalProps> = ({ open, onOpenChange, episode }) => {
   if (!episode) return null
 
-  const validUrl = episode.youtube_url?.trim()
-    ? episode.youtube_url.trim().startsWith('http://') ||
-      episode.youtube_url.trim().startsWith('https://')
-      ? episode.youtube_url.trim()
-      : `https://${episode.youtube_url.trim()}`
-    : ''
+  const validUrl = episode.youtube_url?.trim() ? formatExternalUrl(episode.youtube_url) : ''
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -75,16 +70,13 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ open, onOpenChange, 
             </div>
           </div>
 
-          {/* Ações: Link inteligente com abertura em nova aba e fallback na janela atual se pop-up for bloqueado (sandbox iframe) */}
+          {/* Ações: Link inteligente nativo com abertura garantida em nova aba */}
           <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 pt-1 relative z-20">
             {validUrl ? (
               <a
                 href={validUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(e) => {
-                  openExternalUrl(validUrl, e)
-                }}
                 className="w-full sm:flex-1 bg-dourado hover:bg-dourado-dark text-vinho font-bold py-3 min-h-[46px] text-sm rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] no-underline cursor-pointer"
               >
                 <Youtube className="w-4 h-4 fill-[#FF0000] text-transparent shrink-0" />
