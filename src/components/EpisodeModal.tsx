@@ -22,12 +22,12 @@ interface EpisodeModalProps {
 export const EpisodeModal: React.FC<EpisodeModalProps> = ({ open, onOpenChange, episode }) => {
   if (!episode) return null
 
-  const handleOpenYouTube = () => {
-    if (episode.youtube_url) {
-      window.open(episode.youtube_url, '_blank', 'noopener,noreferrer')
-      onOpenChange(false)
-    }
-  }
+  const validUrl = episode.youtube_url?.trim()
+    ? episode.youtube_url.trim().startsWith('http://') ||
+      episode.youtube_url.trim().startsWith('https://')
+      ? episode.youtube_url.trim()
+      : `https://${episode.youtube_url.trim()}`
+    : ''
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -74,24 +74,36 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ open, onOpenChange, 
             </div>
           </div>
 
-          {/* Ações: Confirmar para abrir no YouTube ou fechar com área de toque mínima de 44px */}
+          {/* Ações: Link nativo em âncora <a> com target="_blank" para compatibilidade total */}
           <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 pt-1">
-            <Button
-              type="button"
-              onClick={handleOpenYouTube}
-              disabled={!episode.youtube_url}
-              className="w-full sm:flex-1 bg-dourado hover:bg-dourado-dark text-vinho font-bold py-3 min-h-[46px] text-sm rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Youtube className="w-4 h-4 fill-[#FF0000] text-transparent shrink-0" />
-              <span>Assistir no YouTube</span>
-              <ExternalLink className="w-4 h-4 shrink-0" />
-            </Button>
+            {validUrl ? (
+              <a
+                href={validUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => onOpenChange(false)}
+                className="w-full sm:flex-1 bg-dourado hover:bg-dourado-dark text-vinho font-bold py-3 min-h-[46px] text-sm rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] no-underline cursor-pointer"
+              >
+                <Youtube className="w-4 h-4 fill-[#FF0000] text-transparent shrink-0" />
+                <span>Assistir no YouTube</span>
+                <ExternalLink className="w-4 h-4 shrink-0" />
+              </a>
+            ) : (
+              <Button
+                type="button"
+                disabled
+                className="w-full sm:flex-1 bg-dourado/50 text-vinho/70 font-bold py-3 min-h-[46px] text-sm rounded-xl cursor-not-allowed"
+              >
+                <Youtube className="w-4 h-4 fill-[#FF0000] text-transparent shrink-0" />
+                <span>Link indisponível</span>
+              </Button>
+            )}
 
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="w-full sm:w-auto border-dourado/30 hover:border-dourado bg-white/5 hover:bg-white/10 text-marfim text-xs sm:text-sm font-medium py-3 min-h-[46px] px-5 rounded-xl transition-all active:scale-[0.98]"
+              className="w-full sm:w-auto border-dourado/30 hover:border-dourado bg-white/5 hover:bg-white/10 text-marfim text-xs sm:text-sm font-medium py-3 min-h-[46px] px-5 rounded-xl transition-all active:scale-[0.98] cursor-pointer"
             >
               <X className="w-4 h-4 mr-1.5 shrink-0" />
               Fechar

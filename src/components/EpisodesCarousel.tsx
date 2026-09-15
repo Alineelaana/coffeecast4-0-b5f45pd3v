@@ -17,11 +17,12 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
   const [canScrollRight, setCanScrollRight] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const isDraggingRef = useRef(false)
-  const [startX, setStartX] = useState(0)
-  const [scrollLeftState, setScrollLeftState] = useState(0)
+  const startXRef = useRef(0)
+  const startScrollLeftRef = useRef(0)
   const dragDistanceRef = useRef(0)
   const isClickPreventedRef = useRef(false)
-  const [touchStartX, setTouchStartX] = useState<number | null>(null)
+  const touchStartXRef = useRef<number | null>(null)
+  const touchStartYRef = useRef<number | null>(null)
   const touchDistanceRef = useRef(0)
 
   // Tolerância de movimento (em px) para distinguir clique de arraste/drag
@@ -72,8 +73,8 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
     isDraggingRef.current = true
     dragDistanceRef.current = 0
     isClickPreventedRef.current = false
-    setStartX(e.pageX - el.offsetLeft)
-    setScrollLeftState(el.scrollLeft)
+    startXRef.current = e.pageX - el.offsetLeft
+    startScrollLeftRef.current = el.scrollLeft
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -81,21 +82,20 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
     const el = scrollContainerRef.current
     if (!el) return
     const x = e.pageX - el.offsetLeft
-    const walk = (x - startX) * 1.3 // Multiplicador para sensação fluida
-    dragDistanceRef.current = Math.abs(x - startX)
+    const diff = x - startXRef.current
+    dragDistanceRef.current = Math.abs(diff)
     if (dragDistanceRef.current > DRAG_THRESHOLD) {
       isClickPreventedRef.current = true
       // Previne seleção indesejada apenas quando é arrasto real
       e.preventDefault()
     }
-    el.scrollLeft = scrollLeftState - walk
+    el.scrollLeft = startScrollLeftRef.current - diff * 1.3
   }
 
   const handleMouseUpOrLeave = () => {
     if (isDraggingRef.current) {
       setIsDragging(false)
       isDraggingRef.current = false
-      // Se moveu mais do que a tolerância, previne cliques subsequentes por uma janela curta
       if (dragDistanceRef.current > DRAG_THRESHOLD) {
         isClickPreventedRef.current = true
         setTimeout(() => {
@@ -109,27 +109,37 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
     }
   }
 
-  // Suporte a detecção de touch para mobile
+  // Detecção de touch para mobile: calcula apenas deslocamento horizontal para swipe
   const handleTouchStart = (e: React.TouchEvent) => {
     touchDistanceRef.current = 0
     if (e.touches.length > 0) {
-      setTouchStartX(e.touches[0].clientX)
+      touchStartXRef.current = e.touches[0].clientX
+      touchStartYRef.current = e.touches[0].clientY
     }
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStartX !== null && e.touches.length > 0) {
+    if (touchStartXRef.current !== null && e.touches.length > 0) {
       const currentX = e.touches[0].clientX
-      touchDistanceRef.current = Math.abs(currentX - touchStartX)
+      const currentY = e.touches[0].clientY
+      const diffX = Math.abs(currentX - touchStartXRef.current)
+      const diffY =
+        touchStartYRef.current !== null ? Math.abs(currentY - touchStartYRef.current) : 0
+
+      // Se o movimento for predominantemente horizontal, registra como swipe no carrossel
+      if (diffX > diffY) {
+        touchDistanceRef.current = diffX
+      }
     }
   }
 
   const handleTouchEnd = () => {
-    setTouchStartX(null)
+    touchStartXRef.current = null
+    touchStartYRef.current = null
     // Mantém touchDistanceRef por uma fração de tempo para o onClick checar se foi swipe
     setTimeout(() => {
       touchDistanceRef.current = 0
-    }, 100)
+    }, 120)
   }
 
   // Handler seguro de clique para card ou botão
