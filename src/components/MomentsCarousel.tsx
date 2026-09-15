@@ -40,7 +40,7 @@ export const MomentsCarousel: React.FC<MomentsCarouselProps> = ({ momentos }) =>
     momentos.length > 0
       ? momentos.map((m) => ({
           url: m.imagem ? getFileUrl(m, m.imagem) : fallbackImages[0].url,
-          legenda: m.legenda || 'Momento especial do CoffeeCast 4.0',
+          legenda: m.legenda || 'Momentos especiais das CoffeeCasters',
         }))
       : fallbackImages
 
