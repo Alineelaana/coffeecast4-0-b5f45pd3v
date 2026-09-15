@@ -7,26 +7,50 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus, Printer, Trash2, Calendar, Clock, Building, Sparkles, Heart } from 'lucide-react'
+import {
+  Plus,
+  Printer,
+  Trash2,
+  Calendar,
+  Clock,
+  Sparkles,
+  Edit,
+  Download,
+  Image as ImageIcon,
+  Loader2,
+  Eye,
+  Check,
+} from 'lucide-react'
 import { CoffeeCastLogo } from '@/components/CoffeeCastLogo'
+import { renderInviteToCanvas, downloadCanvasAsJpeg } from '@/lib/inviteExporter'
 import { toast } from 'sonner'
 
 export default function AdminConvitesScreen() {
   const [convites, setConvites] = useState<ConviteRecord[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Controle de modal de formulário (criação e edição)
   const [modalOpen, setModalOpen] = useState(false)
+  const [editingConvite, setEditingConvite] = useState<ConviteRecord | null>(null)
+
+  // Controle de modal de preview
   const [previewConvite, setPreviewConvite] = useState<ConviteRecord | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
 
-  // Form states
+  // Estados dos campos do formulário
   const [nome, setNome] = useState('')
   const [dataGravacao, setDataGravacao] = useState('')
   const [horario, setHorario] = useState('14:00')
   const [apresentacao, setApresentacao] = useState('')
   const [fotoFile, setFotoFile] = useState<File | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
+
+  // Previews locais das imagens selecionadas ou já salvas
+  const [fotoPreviewUrl, setFotoPreviewUrl] = useState<string>('')
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string>('')
+
   const [saving, setSaving] = useState(false)
+  const [exportingJpegId, setExportingJpegId] = useState<string | null>(null)
 
   const invitePrintRef = useRef<HTMLDivElement>(null)
 
@@ -49,7 +73,16 @@ export default function AdminConvitesScreen() {
     loadConvites()
   }, [])
 
+  // Limpa URLs de objeto para evitar memory leaks
+  useEffect(() => {
+    return () => {
+      if (fotoPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(fotoPreviewUrl)
+      if (logoPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(logoPreviewUrl)
+    }
+  }, [fotoPreviewUrl, logoPreviewUrl])
+
   const handleOpenCreate = () => {
+    setEditingConvite(null)
     setNome('')
     setDataGravacao(new Date().toISOString().split('T')[0])
     setHorario('14:00')
@@ -58,7 +91,53 @@ export default function AdminConvitesScreen() {
     )
     setFotoFile(null)
     setLogoFile(null)
+    setFotoPreviewUrl('')
+    setLogoPreviewUrl('')
     setModalOpen(true)
+  }
+
+  const handleOpenEdit = (convite: ConviteRecord) => {
+    setEditingConvite(convite)
+    setNome(convite.nome || '')
+    // data_gravacao pode vir no formato "2026-09-15 00:00:00.000Z" ou "2026-09-15"
+    const rawDate = convite.data_gravacao ? convite.data_gravacao.split('T')[0].split(' ')[0] : ''
+    setDataGravacao(rawDate || new Date().toISOString().split('T')[0])
+    setHorario(convite.horario || '14:00')
+    setApresentacao(convite.apresentacao || '')
+    setFotoFile(null)
+    setLogoFile(null)
+
+    if (convite.foto_convidado) {
+      setFotoPreviewUrl(getFileUrl(convite, convite.foto_convidado))
+    } else {
+      setFotoPreviewUrl('')
+    }
+
+    if (convite.logomarca_empresa) {
+      setLogoPreviewUrl(getFileUrl(convite, convite.logomarca_empresa))
+    } else {
+      setLogoPreviewUrl('')
+    }
+
+    setModalOpen(true)
+  }
+
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    setFotoFile(file)
+    if (file) {
+      const url = URL.createObjectURL(file)
+      setFotoPreviewUrl(url)
+    }
+  }
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    setLogoFile(file)
+    if (file) {
+      const url = URL.createObjectURL(file)
+      setLogoPreviewUrl(url)
+    }
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -72,16 +151,39 @@ export default function AdminConvitesScreen() {
       formData.append('horario', horario.trim())
       formData.append('apresentacao', apresentacao.trim())
 
-      if (fotoFile) formData.append('foto_convidado', fotoFile)
-      if (logoFile) formData.append('logomarca_empresa', logoFile)
+      if (fotoFile) {
+        formData.append('foto_convidado', fotoFile)
+      }
+      if (logoFile) {
+        formData.append('logomarca_empresa', logoFile)
+      }
 
-      await pb.collection('convites').create(formData)
-      toast.success('Convite gerado com sucesso!')
+      let updatedRecord: ConviteRecord
+
+      if (editingConvite) {
+        // Atualiza convite existente
+        updatedRecord = await pb
+          .collection('convites')
+          .update<ConviteRecord>(editingConvite.id, formData)
+        toast.success('Convite atualizado com sucesso!')
+
+        // Se o convite editado estava em preview, atualiza o preview com os novos dados
+        if (previewConvite && previewConvite.id === editingConvite.id) {
+          setPreviewConvite(updatedRecord)
+        }
+      } else {
+        // Criação de novo convite
+        updatedRecord = await pb.collection('convites').create<ConviteRecord>(formData)
+        toast.success('Convite gerado com sucesso!')
+      }
+
       setModalOpen(false)
       loadConvites()
     } catch (err) {
       console.error(err)
-      toast.error('Erro ao cadastrar convite.')
+      toast.error(
+        editingConvite ? 'Erro ao salvar alterações no convite.' : 'Erro ao cadastrar convite.',
+      )
     } finally {
       setSaving(false)
     }
@@ -93,6 +195,10 @@ export default function AdminConvitesScreen() {
     try {
       await pb.collection('convites').delete(id)
       toast.success('Convite removido!')
+      if (previewConvite && previewConvite.id === id) {
+        setPreviewOpen(false)
+        setPreviewConvite(null)
+      }
       loadConvites()
     } catch (err) {
       console.error(err)
@@ -104,14 +210,55 @@ export default function AdminConvitesScreen() {
     window.print()
   }
 
+  /**
+   * Baixar como JPEG em alta resolução
+   */
+  const handleDownloadJpeg = async (convite: ConviteRecord) => {
+    try {
+      setExportingJpegId(convite.id)
+      toast.loading('Gerando imagem JPEG em alta resolução...', { id: 'jpeg-toast' })
+
+      const guestPhotoUrl = convite.foto_convidado
+        ? getFileUrl(convite, convite.foto_convidado)
+        : 'https://img.usecurling.com/ppl/256?gender=female'
+      const companyLogoUrl = convite.logomarca_empresa
+        ? getFileUrl(convite, convite.logomarca_empresa)
+        : undefined
+
+      const canvas = await renderInviteToCanvas({
+        nome: convite.nome,
+        dataGravacao: formatDateBR(convite.data_gravacao),
+        horario: convite.horario,
+        apresentacao: convite.apresentacao,
+        guestPhotoUrl,
+        companyLogoUrl,
+      })
+
+      const safeName = convite.nome
+        .toLowerCase()
+        .replace(/[^a-z0-9]/gi, '_')
+        .replace(/_+/g, '_')
+      const fileName = `convite_coffeecast_${safeName}.jpg`
+
+      downloadCanvasAsJpeg(canvas, fileName)
+      toast.success('Convite baixado como imagem JPEG com sucesso!', { id: 'jpeg-toast' })
+    } catch (err) {
+      console.error('Erro ao exportar convite em JPEG:', err)
+      toast.error('Falha ao gerar JPEG do convite. Tente novamente.', { id: 'jpeg-toast' })
+    } finally {
+      setExportingJpegId(null)
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {/* Título e Ações Principais */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="font-serif text-2xl font-bold text-vinho">Gerador de Convites Premium</h2>
           <p className="text-xs text-vinho/70">
-            Crie e imprima ou salve em PDF convites sofisticados na identidade oficial do CoffeeCast
-            4.0.
+            Crie, edite e baixe convites sofisticados em PDF ou imagem JPEG na identidade oficial do
+            CoffeeCast 4.0.
           </p>
         </div>
 
@@ -124,8 +271,12 @@ export default function AdminConvitesScreen() {
         </Button>
       </div>
 
+      {/* Grid de Convites */}
       {loading ? (
-        <div className="py-16 text-center text-xs text-vinho/60">Carregando convites...</div>
+        <div className="py-16 text-center text-xs text-vinho/60 flex flex-col items-center justify-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin text-dourado" />
+          <span>Carregando convites...</span>
+        </div>
       ) : convites.length === 0 ? (
         <div className="bg-white rounded-2xl border border-vinho/10 p-12 text-center space-y-3">
           <Sparkles className="w-12 h-12 text-dourado mx-auto" />
@@ -147,6 +298,7 @@ export default function AdminConvitesScreen() {
             const companyLogo = item.logomarca_empresa
               ? getFileUrl(item, item.logomarca_empresa, '200x200')
               : ''
+            const isDownloadingThis = exportingJpegId === item.id
 
             return (
               <div
@@ -163,7 +315,7 @@ export default function AdminConvitesScreen() {
                       />
                       <div>
                         <h4 className="font-serif font-bold text-base text-vinho">{item.nome}</h4>
-                        <span className="text-[11px] text-vinho/60">Convidada Especial</span>
+                        <span className="text-[11px] text-vinho/60">Convidado(a) Especial</span>
                       </div>
                     </div>
 
@@ -171,7 +323,7 @@ export default function AdminConvitesScreen() {
                       <img
                         src={companyLogo}
                         alt="Empresa"
-                        className="w-10 h-10 object-contain rounded-md border border-vinho/10 p-1"
+                        className="w-10 h-10 object-contain rounded-md border border-vinho/10 p-1 bg-white"
                       />
                     )}
                   </div>
@@ -190,27 +342,60 @@ export default function AdminConvitesScreen() {
                   <p className="text-xs text-vinho/75 italic line-clamp-3">"{item.apresentacao}"</p>
                 </div>
 
-                <div className="pt-3 border-t border-vinho/10 flex items-center justify-between">
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setPreviewConvite(item)
-                      setPreviewOpen(true)
-                    }}
-                    className="bg-vinho hover:bg-vinho-light text-white text-xs rounded-full px-4 flex items-center gap-1.5"
-                  >
-                    <Printer className="w-3.5 h-3.5 text-dourado" />
-                    Visualizar & PDF
-                  </Button>
+                {/* Ações do Card */}
+                <div className="pt-3 border-t border-vinho/10 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setPreviewConvite(item)
+                        setPreviewOpen(true)
+                      }}
+                      className="flex-1 bg-vinho hover:bg-vinho-light text-white text-xs rounded-full px-3 py-1.5 flex items-center justify-center gap-1.5 shadow-xs"
+                      title="Abrir pré-visualização e imprimir em PDF"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-dourado" />
+                      <span>Ver & PDF</span>
+                    </Button>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(item.id, item.nome)}
-                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isDownloadingThis}
+                      onClick={() => handleDownloadJpeg(item)}
+                      className="border-dourado/60 text-vinho hover:bg-dourado/10 text-xs rounded-full px-3 py-1.5 flex items-center justify-center gap-1.5 font-medium"
+                      title="Baixar imagem JPEG em alta qualidade"
+                    >
+                      {isDownloadingThis ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-dourado" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5 text-dourado" />
+                      )}
+                      <span>JPEG</span>
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleOpenEdit(item)}
+                      className="text-xs text-vinho/80 hover:text-vinho hover:bg-vinho/5 flex items-center gap-1.5 h-8 px-2 rounded-lg font-medium"
+                    >
+                      <Edit className="w-3.5 h-3.5 text-dourado-dark" />
+                      Editar Convite
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(item.id, item.nome)}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                      title="Excluir convite"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             )
@@ -218,12 +403,13 @@ export default function AdminConvitesScreen() {
         </div>
       )}
 
-      {/* Modal de Criação do Convite */}
+      {/* Modal de Criação / Edição de Convite */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md bg-marfim border-2 border-dourado/50 text-vinho">
+        <DialogContent className="max-w-md bg-marfim border-2 border-dourado/50 text-vinho max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-serif text-xl font-bold text-vinho">
-              Gerar Novo Convite Oficial
+            <DialogTitle className="font-serif text-xl font-bold text-vinho flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-dourado" />
+              {editingConvite ? 'Editar Convite Oficial' : 'Gerar Novo Convite Oficial'}
             </DialogTitle>
           </DialogHeader>
 
@@ -286,29 +472,85 @@ export default function AdminConvitesScreen() {
               />
             </div>
 
+            {/* Foto do Convidado */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-vinho">Foto do Convidado(a)</Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setFotoFile(e.target.files?.[0] || null)}
-                className="bg-white border-vinho/20 text-xs"
-              />
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-vinho">Foto do Convidado(a)</Label>
+                {fotoPreviewUrl && (
+                  <span className="text-[10px] text-green-700 font-medium flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Foto anexada
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                {fotoPreviewUrl ? (
+                  <img
+                    src={fotoPreviewUrl}
+                    alt="Preview Convidado"
+                    className="w-12 h-12 rounded-full object-cover border-2 border-dourado shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-vinho/10 border border-vinho/20 flex items-center justify-center shrink-0 text-vinho/40">
+                    <ImageIcon className="w-5 h-5" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFotoChange}
+                    className="bg-white border-vinho/20 text-xs cursor-pointer"
+                  />
+                  {editingConvite && !fotoFile && (
+                    <p className="text-[10px] text-vinho/60 mt-1">
+                      Mantenha em branco para preservar a foto atual cadastrada.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
+            {/* Logomarca da Empresa */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-vinho">
-                Logomarca da Empresa (Opcional)
-              </Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-                className="bg-white border-vinho/20 text-xs"
-              />
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-vinho">
+                  Logomarca da Empresa (Opcional)
+                </Label>
+                {logoPreviewUrl && (
+                  <span className="text-[10px] text-green-700 font-medium flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Logo anexada
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                {logoPreviewUrl ? (
+                  <img
+                    src={logoPreviewUrl}
+                    alt="Preview Empresa"
+                    className="w-12 h-12 rounded-lg object-contain border border-vinho/20 bg-white p-1 shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-vinho/10 border border-vinho/20 flex items-center justify-center shrink-0 text-vinho/40">
+                    <ImageIcon className="w-5 h-5" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    className="bg-white border-vinho/20 text-xs cursor-pointer"
+                  />
+                  {editingConvite && !logoFile && (
+                    <p className="text-[10px] text-vinho/60 mt-1">
+                      Mantenha em branco para preservar a logomarca atual.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-3 border-t border-vinho/10">
               <Button
                 type="button"
                 variant="outline"
@@ -320,119 +562,179 @@ export default function AdminConvitesScreen() {
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
+                className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5 flex items-center gap-2"
               >
-                {saving ? 'Gerando...' : 'Gerar Convite'}
+                {saving ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Salvando...
+                  </>
+                ) : editingConvite ? (
+                  'Salvar Alterações'
+                ) : (
+                  'Gerar Convite'
+                )}
               </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* MODAL DE PREVIEW E IMPRESSÃO EM PDF DO CONVITE PREMIUM */}
+      {/* Modal de Preview e Exportações (PDF & JPEG) */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-2xl bg-marfim border-2 border-dourado text-vinho p-0 overflow-hidden">
+        <DialogContent className="max-w-2xl bg-marfim border-2 border-dourado text-vinho p-0 overflow-hidden max-h-[92vh] flex flex-col">
           {previewConvite && (
-            <div>
-              {/* Botão de impressão */}
-              <div className="p-4 bg-white border-b border-vinho/10 flex items-center justify-between">
-                <span className="text-xs font-bold text-vinho">
-                  Visualização do Convite Gráfico
-                </span>
-                <Button
-                  onClick={handlePrint}
-                  className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5"
-                >
-                  <Printer className="w-3.5 h-3.5 text-dourado" />
-                  Imprimir / Salvar PDF
-                </Button>
-              </div>
-
-              {/* CONTEÚDO DO CONVITE (DESIGN PREMIUM VINHO & DOURADO) */}
-              <div
-                ref={invitePrintRef}
-                className="p-8 sm:p-12 bg-gradient-to-b from-vinho via-[#36142D] to-vinho text-marfim space-y-8 relative overflow-hidden"
-              >
-                {/* Borda decorativa dourada dupla */}
-                <div className="absolute inset-3 border-2 border-dourado/50 rounded-2xl pointer-events-none" />
-                <div className="absolute inset-5 border border-dourado/20 rounded-xl pointer-events-none" />
-
-                {/* Cabeçalho do Convite */}
-                <div className="text-center space-y-3 relative z-10">
-                  <div className="flex justify-center mb-1">
-                    <CoffeeCastLogo className="w-16 h-16" variant="gold" />
-                  </div>
-                  <h3 className="font-serif font-black text-2xl sm:text-3xl tracking-wide text-white">
-                    CoffeeCast <span className="text-dourado">4.0</span>
-                  </h3>
-                  <p className="text-[11px] uppercase tracking-widest text-dourado-light font-bold">
-                    Convite Oficial de Participação
-                  </p>
+            <div className="flex flex-col h-full overflow-hidden">
+              {/* Barra Superior de Ações com Baixar JPEG, Imprimir PDF e Editar */}
+              <div className="p-4 bg-white border-b border-vinho/10 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-vinho">
+                    Visualização do Convite Gráfico
+                  </span>
+                  <span className="text-[10px] bg-dourado/20 text-vinho font-bold px-2 py-0.5 rounded-full border border-dourado/40">
+                    A5 Oficial
+                  </span>
                 </div>
 
-                {/* Card Central com Foto e Apresentação */}
-                <div className="bg-vinho-dark/80 border border-dourado/40 rounded-2xl p-6 sm:p-8 space-y-6 relative z-10 text-center shadow-xl backdrop-blur-sm">
-                  {/* Foto da convidada com moldura dourada */}
-                  <div className="flex justify-center">
-                    <div className="relative">
-                      <img
-                        src={
-                          previewConvite.foto_convidado
-                            ? getFileUrl(previewConvite, previewConvite.foto_convidado)
-                            : 'https://img.usecurling.com/ppl/256?gender=female'
-                        }
-                        alt={previewConvite.nome}
-                        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-dourado shadow-2xl"
-                      />
-                      <div className="absolute -bottom-2 -right-2 bg-vinho p-1.5 rounded-full border border-dourado">
-                        <Sparkles className="w-4 h-4 text-dourado" />
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Botão Editar direto do Preview */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setPreviewOpen(false)
+                      handleOpenEdit(previewConvite)
+                    }}
+                    className="border-vinho/20 text-vinho hover:bg-vinho/5 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5"
+                  >
+                    <Edit className="w-3.5 h-3.5 text-dourado-dark" />
+                    Editar Dados
+                  </Button>
+
+                  {/* Botão Baixar JPEG */}
+                  <Button
+                    onClick={() => handleDownloadJpeg(previewConvite)}
+                    disabled={exportingJpegId === previewConvite.id}
+                    className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs px-4 py-1.5 rounded-full flex items-center gap-1.5 shadow-xs transition-colors"
+                  >
+                    {exportingJpegId === previewConvite.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-vinho" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5 text-vinho" />
+                    )}
+                    Baixar como JPEG
+                  </Button>
+
+                  {/* Botão Imprimir / Salvar PDF */}
+                  <Button
+                    onClick={handlePrint}
+                    className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 shadow-xs"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-dourado" />
+                    Imprimir / PDF
+                  </Button>
+                </div>
+              </div>
+
+              {/* CONTEÚDO DO CONVITE (DESIGN OFICIAL VINHO & DOURADO) */}
+              <div className="overflow-y-auto flex-1 p-4 sm:p-6 bg-marfim/50">
+                <div
+                  id="printable-invite"
+                  ref={invitePrintRef}
+                  className="max-w-xl mx-auto p-6 sm:p-10 bg-gradient-to-b from-[#4B1E3F] via-[#36142D] to-[#4B1E3F] text-marfim space-y-6 sm:space-y-8 relative overflow-hidden rounded-2xl shadow-2xl border-2 border-dourado/40"
+                >
+                  {/* Borda decorativa dourada dupla */}
+                  <div className="absolute inset-3 border-2 border-dourado/50 rounded-2xl pointer-events-none" />
+                  <div className="absolute inset-5 border border-dourado/20 rounded-xl pointer-events-none" />
+
+                  {/* Cabeçalho do Convite */}
+                  <div className="text-center space-y-2 relative z-10">
+                    <div className="flex justify-center mb-1">
+                      <CoffeeCastLogo className="w-16 h-16" variant="gold" />
+                    </div>
+                    <h3 className="font-serif font-black text-2xl sm:text-3xl tracking-wide text-white">
+                      CoffeeCast <span className="text-dourado">4.0</span>
+                    </h3>
+                    <p className="text-[11px] uppercase tracking-widest text-dourado-light font-bold">
+                      Convite Oficial de Participação
+                    </p>
+                  </div>
+
+                  {/* Card Central com Foto, Logo da Empresa e Apresentação */}
+                  <div className="bg-[#2A0F23]/80 border border-dourado/40 rounded-2xl p-5 sm:p-7 space-y-5 relative z-10 text-center shadow-xl backdrop-blur-sm">
+                    {/* Logomarca da empresa no topo do card (se existir) */}
+                    {previewConvite.logomarca_empresa && (
+                      <div className="flex justify-end -mb-3">
+                        <img
+                          src={getFileUrl(previewConvite, previewConvite.logomarca_empresa)}
+                          alt="Empresa Convidada"
+                          className="h-10 max-w-[120px] object-contain rounded-lg bg-white p-1 border border-dourado/40 shadow-xs"
+                        />
+                      </div>
+                    )}
+
+                    {/* Foto da convidada com moldura dourada */}
+                    <div className="flex justify-center">
+                      <div className="relative">
+                        <img
+                          src={
+                            previewConvite.foto_convidado
+                              ? getFileUrl(previewConvite, previewConvite.foto_convidado)
+                              : 'https://img.usecurling.com/ppl/256?gender=female'
+                          }
+                          alt={previewConvite.nome}
+                          className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-dourado shadow-2xl"
+                        />
+                        <div className="absolute -bottom-2 -right-2 bg-vinho p-1.5 rounded-full border border-dourado">
+                          <Sparkles className="w-4 h-4 text-dourado" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-xs text-dourado-light uppercase font-semibold tracking-wider">
+                        Convidado(a) de Honra
+                      </span>
+                      <h4 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+                        {previewConvite.nome}
+                      </h4>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-marfim/90 leading-relaxed font-light italic max-w-lg mx-auto">
+                      "{previewConvite.apresentacao}"
+                    </p>
+
+                    {/* Informações de Gravação */}
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-4 border-t border-dourado/30 text-xs">
+                      <div className="bg-vinho/70 p-3 rounded-xl border border-dourado/20">
+                        <span className="text-[10px] text-dourado uppercase font-bold block mb-1">
+                          Data da Gravação
+                        </span>
+                        <span className="font-serif text-sm font-bold text-white">
+                          {formatDateBR(previewConvite.data_gravacao)}
+                        </span>
+                      </div>
+
+                      <div className="bg-vinho/70 p-3 rounded-xl border border-dourado/20">
+                        <span className="text-[10px] text-dourado uppercase font-bold block mb-1">
+                          Horário Marcado
+                        </span>
+                        <span className="font-serif text-sm font-bold text-white">
+                          {previewConvite.horario}
+                        </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <span className="text-xs text-dourado-light uppercase font-semibold tracking-wider">
-                      Convidada de Honra
-                    </span>
-                    <h4 className="font-serif text-2xl sm:text-3xl font-bold text-white">
-                      {previewConvite.nome}
-                    </h4>
+                  {/* Rodapé do Convite */}
+                  <div className="relative z-10 text-center space-y-1.5 pt-2">
+                    <p className="text-xs text-dourado-light italic">
+                      "Aqui o café pode até esfriar, mas o papo nunca! ☕️"
+                    </p>
+                    <p className="text-[10px] text-marfim/60 uppercase tracking-wider font-semibold">
+                      Equipe CoffeeCast 4.0 • Aline Lana
+                    </p>
                   </div>
-
-                  <p className="text-xs sm:text-sm text-marfim/90 leading-relaxed font-light italic max-w-lg mx-auto">
-                    "{previewConvite.apresentacao}"
-                  </p>
-
-                  {/* Informações de Gravação */}
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-dourado/30 text-xs">
-                    <div className="bg-vinho/70 p-3 rounded-xl border border-dourado/20">
-                      <span className="text-[10px] text-dourado uppercase font-bold block mb-1">
-                        Data da Gravação
-                      </span>
-                      <span className="font-serif text-sm font-bold text-white">
-                        {formatDateBR(previewConvite.data_gravacao)}
-                      </span>
-                    </div>
-
-                    <div className="bg-vinho/70 p-3 rounded-xl border border-dourado/20">
-                      <span className="text-[10px] text-dourado uppercase font-bold block mb-1">
-                        Horário Marcado
-                      </span>
-                      <span className="font-serif text-sm font-bold text-white">
-                        {previewConvite.horario}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Rodapé do Convite */}
-                <div className="relative z-10 text-center space-y-2 pt-2">
-                  <p className="text-xs text-dourado-light italic">
-                    "Aqui o café pode até esfriar, mas o papo nunca! ☕️"
-                  </p>
-                  <p className="text-[10px] text-marfim/60 uppercase tracking-wider">
-                    Equipe CoffeeCast 4.0 • Aline Lana
-                  </p>
                 </div>
               </div>
             </div>

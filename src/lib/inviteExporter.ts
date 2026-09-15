@@ -1,0 +1,642 @@
+/**
+ * Utilitário de renderização gráfica em alta qualidade do Convite CoffeeCast 4.0
+ * Formato A5: 148mm x 210mm (proporção 1:1.414).
+ * Em 300 DPI aprox: 1748 x 2480 px. Aqui usamos resolução nativa 1480 x 2100 px para nitidez absoluta.
+ */
+
+interface RenderInviteOptions {
+  nome: string
+  dataGravacao: string // YYYY-MM-DD ou formatada
+  horario: string
+  apresentacao: string
+  guestPhotoUrl?: string
+  companyLogoUrl?: string
+}
+
+/**
+ * Converte URLs remotas em dataURL com crossOrigin anônimo para evitar tainted canvas
+ */
+async function toDataURL(url: string): Promise<string> {
+  if (!url) return ''
+  if (url.startsWith('data:')) return url
+  try {
+    const res = await fetch(url, { mode: 'cors' })
+    const blob = await res.blob()
+    return await new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.onerror = () => resolve('')
+      reader.readAsDataURL(blob)
+    })
+  } catch (err) {
+    console.warn('Falha no fetch com cors, tentando carregamento direto da imagem:', err)
+    return url
+  }
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    if (!src) {
+      reject(new Error('URL vazia'))
+      return
+    }
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => resolve(img)
+    img.onerror = () => {
+      // Se falhar com crossOrigin, tenta sem crossOrigin caso já seja local ou dataUrl
+      const fallback = new Image()
+      fallback.onload = () => resolve(fallback)
+      fallback.onerror = (e) => reject(e)
+      fallback.src = src
+    }
+    img.src = src
+  })
+}
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  radius: number,
+) {
+  ctx.beginPath()
+  ctx.moveTo(x + radius, y)
+  ctx.lineTo(x + w - radius, y)
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius)
+  ctx.lineTo(x + w, y + h - radius)
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h)
+  ctx.lineTo(x + radius, y + h)
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius)
+  ctx.lineTo(x, y + radius)
+  ctx.quadraticCurveTo(x, y, x + radius, y)
+  ctx.closePath()
+}
+
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+): number {
+  const words = text.split(' ')
+  let line = ''
+  let currentY = y
+
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + ' '
+    const metrics = ctx.measureText(testLine)
+    const testWidth = metrics.width
+    if (testWidth > maxWidth && n > 0) {
+      ctx.fillText(line.trim(), x, currentY)
+      line = words[n] + ' '
+      currentY += lineHeight
+    } else {
+      line = testLine
+    }
+  }
+  ctx.fillText(line.trim(), x, currentY)
+  return currentY + lineHeight
+}
+
+/**
+ * Desenha a logo vetorial oficial do CoffeeCast 4.0 no canvas
+ */
+function drawVectorLogo(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+  ctx.save()
+  ctx.translate(cx - size / 2, cy - size / 2)
+  const scale = size / 100
+  ctx.scale(scale, scale)
+
+  // Gradiente Dourado
+  const goldGrad = ctx.createLinearGradient(0, 0, 100, 100)
+  goldGrad.addColorStop(0, '#F3E5AB')
+  goldGrad.addColorStop(0.5, '#D4AF37')
+  goldGrad.addColorStop(1, '#9C7311')
+
+  // Círculo pontilhado
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(50, 50, 46, 0, Math.PI * 2)
+  ctx.strokeStyle = goldGrad
+  ctx.lineWidth = 1.5
+  ctx.setLineDash([3, 3])
+  ctx.globalAlpha = 0.6
+  ctx.stroke()
+  ctx.restore()
+
+  // Círculo de preenchimento suave
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(50, 50, 42, 0, Math.PI * 2)
+  ctx.fillStyle = '#36142D'
+  ctx.globalAlpha = 0.35
+  ctx.fill()
+  ctx.restore()
+
+  // Estrela brilhante superior
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(50, 12)
+  ctx.lineTo(52, 18)
+  ctx.lineTo(58, 20)
+  ctx.lineTo(52, 22)
+  ctx.lineTo(50, 28)
+  ctx.lineTo(48, 22)
+  ctx.lineTo(42, 20)
+  ctx.lineTo(48, 18)
+  ctx.closePath()
+  ctx.fillStyle = goldGrad
+  ctx.fill()
+  ctx.restore()
+
+  // Estrela pequena direita
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(68, 24)
+  ctx.lineTo(69.2, 27)
+  ctx.lineTo(72.5, 28)
+  ctx.lineTo(69.2, 29)
+  ctx.lineTo(68, 32)
+  ctx.lineTo(66.8, 29)
+  ctx.lineTo(63.5, 28)
+  ctx.lineTo(66.8, 27)
+  ctx.closePath()
+  ctx.fillStyle = '#D4AF37'
+  ctx.globalAlpha = 0.8
+  ctx.fill()
+  ctx.restore()
+
+  // Vapor em forma de coração
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(44, 32)
+  ctx.bezierCurveTo(41, 28, 35, 29, 35, 34)
+  ctx.bezierCurveTo(35, 39, 44, 44, 50, 48)
+  ctx.bezierCurveTo(56, 44, 65, 39, 65, 34)
+  ctx.bezierCurveTo(65, 29, 59, 28, 56, 32)
+  ctx.bezierCurveTo(54, 34, 51, 36, 50, 37)
+  ctx.bezierCurveTo(49, 36, 46, 34, 44, 32)
+  ctx.strokeStyle = goldGrad
+  ctx.lineWidth = 2
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.stroke()
+  ctx.restore()
+
+  // Pires da xícara
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(24, 76)
+  ctx.bezierCurveTo(24, 76, 32, 80, 50, 80)
+  ctx.bezierCurveTo(68, 80, 76, 76, 76, 76)
+  ctx.strokeStyle = goldGrad
+  ctx.lineWidth = 3
+  ctx.lineCap = 'round'
+  ctx.stroke()
+  ctx.restore()
+
+  // Xícara elegante
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(28, 50)
+  ctx.bezierCurveTo(28, 66, 36, 74, 50, 74)
+  ctx.bezierCurveTo(64, 74, 72, 66, 72, 50)
+  ctx.closePath()
+  ctx.fillStyle = '#3F1735'
+  ctx.fill()
+  ctx.strokeStyle = goldGrad
+  ctx.lineWidth = 2.5
+  ctx.stroke()
+  ctx.restore()
+
+  // Friso superior da xícara
+  ctx.save()
+  ctx.beginPath()
+  ctx.ellipse(50, 50, 22, 3.5, 0, 0, Math.PI * 2)
+  ctx.strokeStyle = goldGrad
+  ctx.lineWidth = 2
+  ctx.stroke()
+  ctx.restore()
+
+  // Asa da xícara
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(71, 53)
+  ctx.bezierCurveTo(78, 53, 82, 58, 80, 64)
+  ctx.bezierCurveTo(78, 69, 73, 70, 68, 67)
+  ctx.strokeStyle = goldGrad
+  ctx.lineWidth = 2.5
+  ctx.lineCap = 'round'
+  ctx.stroke()
+  ctx.restore()
+
+  // Friso interno sutil
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(38, 58)
+  ctx.bezierCurveTo(42, 62, 58, 62, 62, 58)
+  ctx.strokeStyle = '#F3E5AB'
+  ctx.lineWidth = 1
+  ctx.globalAlpha = 0.7
+  ctx.stroke()
+  ctx.restore()
+
+  ctx.restore()
+}
+
+/**
+ * Renderiza o convite em um HTMLCanvasElement com altíssima definição (1480 x 2100 px - A5 proporção)
+ */
+export async function renderInviteToCanvas(
+  options: RenderInviteOptions,
+): Promise<HTMLCanvasElement> {
+  const width = 1480
+  const height = 2100
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+
+  if (!ctx) {
+    throw new Error('Falha ao obter contexto 2D do Canvas')
+  }
+
+  // Espera que as fontes estejam prontas no documento
+  if ('fonts' in document) {
+    try {
+      await (document as unknown as { fonts: { ready: Promise<unknown> } }).fonts.ready
+    } catch {
+      // Ignora erro de fontes
+    }
+  }
+
+  // Pré-carrega imagens com dataURL para garantir ausência de tainted canvas
+  let guestImg: HTMLImageElement | null = null
+  let companyImg: HTMLImageElement | null = null
+
+  const guestUrl = options.guestPhotoUrl || 'https://img.usecurling.com/ppl/256?gender=female'
+  try {
+    const dataUrl = await toDataURL(guestUrl)
+    guestImg = await loadImage(dataUrl)
+  } catch (e) {
+    console.warn('Erro ao carregar foto do convidado para o canvas:', e)
+  }
+
+  if (options.companyLogoUrl) {
+    try {
+      const dataUrl = await toDataURL(options.companyLogoUrl)
+      companyImg = await loadImage(dataUrl)
+    } catch (e) {
+      console.warn('Erro ao carregar logo da empresa para o canvas:', e)
+    }
+  }
+
+  // 1. FUNDO PRINCIPAL - Gradiente Vinho Luxuoso
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, height)
+  bgGrad.addColorStop(0, '#4B1E3F')
+  bgGrad.addColorStop(0.35, '#36142D')
+  bgGrad.addColorStop(0.7, '#2A0F23')
+  bgGrad.addColorStop(1, '#4B1E3F')
+  ctx.fillStyle = bgGrad
+  ctx.fillRect(0, 0, width, height)
+
+  // Texturas radiais de iluminação dourada e vinho sutil
+  const radialLight1 = ctx.createRadialGradient(
+    width * 0.85,
+    height * 0.15,
+    10,
+    width * 0.85,
+    height * 0.15,
+    600,
+  )
+  radialLight1.addColorStop(0, 'rgba(212, 175, 55, 0.18)')
+  radialLight1.addColorStop(1, 'rgba(212, 175, 55, 0)')
+  ctx.fillStyle = radialLight1
+  ctx.fillRect(0, 0, width, height)
+
+  const radialLight2 = ctx.createRadialGradient(
+    width * 0.15,
+    height * 0.85,
+    10,
+    width * 0.15,
+    height * 0.85,
+    700,
+  )
+  radialLight2.addColorStop(0, 'rgba(200, 142, 155, 0.12)')
+  radialLight2.addColorStop(1, 'rgba(200, 142, 155, 0)')
+  ctx.fillStyle = radialLight2
+  ctx.fillRect(0, 0, width, height)
+
+  // 2. BORDAS DECORATIVAS DOURADAS
+  // Borda externa
+  ctx.save()
+  roundRect(ctx, 40, 40, width - 80, height - 80, 36)
+  ctx.strokeStyle = '#D4AF37'
+  ctx.lineWidth = 4
+  ctx.globalAlpha = 0.7
+  ctx.stroke()
+  ctx.restore()
+
+  // Borda interna fina
+  ctx.save()
+  roundRect(ctx, 60, 60, width - 120, height - 120, 28)
+  ctx.strokeStyle = '#F3E5AB'
+  ctx.lineWidth = 1.5
+  ctx.globalAlpha = 0.35
+  ctx.stroke()
+  ctx.restore()
+
+  // Ornamentos nos cantos (estrelas de 4 pontas douradas)
+  const drawCornerStar = (x: number, y: number) => {
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.fillStyle = '#D4AF37'
+    ctx.beginPath()
+    ctx.moveTo(0, -12)
+    ctx.lineTo(3, -3)
+    ctx.lineTo(12, 0)
+    ctx.lineTo(3, 3)
+    ctx.lineTo(0, 12)
+    ctx.lineTo(-3, 3)
+    ctx.lineTo(-12, 0)
+    ctx.lineTo(-3, -3)
+    ctx.closePath()
+    ctx.fill()
+    ctx.restore()
+  }
+  drawCornerStar(60, 60)
+  drawCornerStar(width - 60, 60)
+  drawCornerStar(60, height - 60)
+  drawCornerStar(width - 60, height - 60)
+
+  // 3. CABEÇALHO DO CONVITE
+  const topY = 160
+  drawVectorLogo(ctx, width / 2, topY, 150)
+
+  ctx.textAlign = 'center'
+
+  // Título: CoffeeCast 4.0
+  ctx.save()
+  ctx.font = 'bold 64px "Playfair Display", Georgia, serif'
+  ctx.fillStyle = '#FFFFFF'
+  ctx.fillText('CoffeeCast ', width / 2 - 50, topY + 140)
+
+  ctx.font = '900 64px "Playfair Display", Georgia, serif'
+  ctx.fillStyle = '#D4AF37'
+  ctx.fillText('4.0', width / 2 + 130, topY + 140)
+  ctx.restore()
+
+  // Subtítulo dourado caixa-alta
+  ctx.save()
+  ctx.font = '700 24px "Plus Jakarta Sans", sans-serif'
+  ctx.letterSpacing = '6px'
+  ctx.fillStyle = '#F3E5AB'
+  ctx.fillText('CONVITE OFICIAL DE PARTICIPAÇÃO', width / 2, topY + 190)
+  ctx.restore()
+
+  // 4. CARD CENTRAL (Moldura com foto, nome e apresentação)
+  const cardX = 130
+  const cardY = topY + 240
+  const cardW = width - 260
+  const cardH = 1180
+
+  ctx.save()
+  // Fundo do card
+  roundRect(ctx, cardX, cardY, cardW, cardH, 36)
+  ctx.fillStyle = 'rgba(42, 15, 35, 0.88)'
+  ctx.fill()
+  ctx.strokeStyle = '#D4AF37'
+  ctx.lineWidth = 2.5
+  ctx.globalAlpha = 0.55
+  ctx.stroke()
+  ctx.restore()
+
+  // Se tiver logomarca da empresa no topo do card
+  if (companyImg) {
+    ctx.save()
+    const logoMaxW = 160
+    const logoMaxH = 80
+    const scale = Math.min(logoMaxW / companyImg.width, logoMaxH / companyImg.height, 1)
+    const dw = companyImg.width * scale
+    const dh = companyImg.height * scale
+    const lx = cardX + cardW - dw - 50
+    const ly = cardY + 50
+
+    // Fundo branco suave para a logo da empresa
+    roundRect(ctx, lx - 12, ly - 12, dw + 24, dh + 24, 16)
+    ctx.fillStyle = '#FFFFFF'
+    ctx.fill()
+    ctx.strokeStyle = '#D4AF37'
+    ctx.lineWidth = 1.5
+    ctx.stroke()
+
+    ctx.drawImage(companyImg, lx, ly, dw, dh)
+    ctx.restore()
+  }
+
+  // FOTO CIRCULAR DO CONVIDADO(A)
+  const photoSize = 250
+  const photoCx = width / 2
+  const photoCy = cardY + 180
+
+  if (guestImg) {
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(photoCx, photoCy, photoSize / 2, 0, Math.PI * 2)
+    ctx.closePath()
+    ctx.clip()
+
+    // Desenha imagem centralizada e preenchida proporcionalmente
+    const imgAspect = guestImg.width / guestImg.height
+    let sx = 0
+    let sy = 0
+    let sWidth = guestImg.width
+    let sHeight = guestImg.height
+
+    if (imgAspect > 1) {
+      sWidth = guestImg.height
+      sx = (guestImg.width - sWidth) / 2
+    } else {
+      sHeight = guestImg.width
+      sy = (guestImg.height - sHeight) / 2
+    }
+
+    ctx.drawImage(
+      guestImg,
+      sx,
+      sy,
+      sWidth,
+      sHeight,
+      photoCx - photoSize / 2,
+      photoCy - photoSize / 2,
+      photoSize,
+      photoSize,
+    )
+    ctx.restore()
+  }
+
+  // Moldura dourada circular da foto
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(photoCx, photoCy, photoSize / 2 + 5, 0, Math.PI * 2)
+  ctx.strokeStyle = '#D4AF37'
+  ctx.lineWidth = 8
+  ctx.stroke()
+
+  ctx.beginPath()
+  ctx.arc(photoCx, photoCy, photoSize / 2 + 10, 0, Math.PI * 2)
+  ctx.strokeStyle = 'rgba(243, 229, 171, 0.4)'
+  ctx.lineWidth = 2
+  ctx.stroke()
+  ctx.restore()
+
+  // Selo de brilho/estrelinha sobre a foto
+  ctx.save()
+  const badgeX = photoCx + photoSize / 2 - 15
+  const badgeY = photoCy + photoSize / 2 - 15
+  ctx.beginPath()
+  ctx.arc(badgeX, badgeY, 26, 0, Math.PI * 2)
+  ctx.fillStyle = '#4B1E3F'
+  ctx.fill()
+  ctx.strokeStyle = '#D4AF37'
+  ctx.lineWidth = 3
+  ctx.stroke()
+
+  // Estrela no badge
+  ctx.translate(badgeX, badgeY)
+  ctx.fillStyle = '#D4AF37'
+  ctx.beginPath()
+  ctx.moveTo(0, -12)
+  ctx.lineTo(3.5, -3.5)
+  ctx.lineTo(12, 0)
+  ctx.lineTo(3.5, 3.5)
+  ctx.lineTo(0, 12)
+  ctx.lineTo(-3.5, 3.5)
+  ctx.lineTo(-12, 0)
+  ctx.lineTo(-3.5, -3.5)
+  ctx.closePath()
+  ctx.fill()
+  ctx.restore()
+
+  // Texto: Convidada de Honra
+  ctx.save()
+  ctx.font = '700 22px "Plus Jakarta Sans", sans-serif'
+  ctx.letterSpacing = '4px'
+  ctx.fillStyle = '#D4AF37'
+  ctx.textAlign = 'center'
+  ctx.fillText('CONVIDADO(A) DE HONRA', width / 2, photoCy + photoSize / 2 + 70)
+  ctx.restore()
+
+  // Nome do Convidado
+  ctx.save()
+  ctx.font = 'bold 56px "Playfair Display", Georgia, serif'
+  ctx.fillStyle = '#FFFFFF'
+  ctx.textAlign = 'center'
+  ctx.fillText(options.nome || 'Convidado Especial', width / 2, photoCy + photoSize / 2 + 140)
+  ctx.restore()
+
+  // Linha dourada decorativa abaixo do nome
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(width / 2 - 140, photoCy + photoSize / 2 + 175)
+  ctx.lineTo(width / 2 + 140, photoCy + photoSize / 2 + 175)
+  ctx.strokeStyle = '#D4AF37'
+  ctx.lineWidth = 2
+  ctx.stroke()
+  // Ponto central
+  ctx.beginPath()
+  ctx.arc(width / 2, photoCy + photoSize / 2 + 175, 5, 0, Math.PI * 2)
+  ctx.fillStyle = '#D4AF37'
+  ctx.fill()
+  ctx.restore()
+
+  // Texto de Apresentação (itálico com aspas)
+  ctx.save()
+  ctx.font = 'italic 300 28px "Plus Jakarta Sans", Georgia, serif'
+  ctx.fillStyle = 'rgba(250, 248, 245, 0.92)'
+  ctx.textAlign = 'center'
+  const textQuote = `"${options.apresentacao || ''}"`
+  const textStartY = photoCy + photoSize / 2 + 230
+  wrapText(ctx, textQuote, width / 2, textStartY, cardW - 160, 42)
+  ctx.restore()
+
+  // BLOCOS INFORMATIVOS DE GRAVAÇÃO (Data e Horário)
+  const infoBoxY = cardY + cardH - 220
+  const infoBoxW = (cardW - 140) / 2
+  const infoBoxH = 140
+
+  // Caixa 1: Data
+  ctx.save()
+  roundRect(ctx, cardX + 50, infoBoxY, infoBoxW, infoBoxH, 20)
+  ctx.fillStyle = 'rgba(75, 30, 63, 0.85)'
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)'
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
+  ctx.textAlign = 'center'
+  ctx.font = '700 18px "Plus Jakarta Sans", sans-serif'
+  ctx.letterSpacing = '2px'
+  ctx.fillStyle = '#D4AF37'
+  ctx.fillText('DATA DA GRAVAÇÃO', cardX + 50 + infoBoxW / 2, infoBoxY + 45)
+
+  ctx.font = 'bold 32px "Playfair Display", Georgia, serif'
+  ctx.fillStyle = '#FFFFFF'
+  ctx.fillText(options.dataGravacao, cardX + 50 + infoBoxW / 2, infoBoxY + 98)
+  ctx.restore()
+
+  // Caixa 2: Horário
+  ctx.save()
+  roundRect(ctx, cardX + 90 + infoBoxW, infoBoxY, infoBoxW, infoBoxH, 20)
+  ctx.fillStyle = 'rgba(75, 30, 63, 0.85)'
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)'
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
+  ctx.textAlign = 'center'
+  ctx.font = '700 18px "Plus Jakarta Sans", sans-serif'
+  ctx.letterSpacing = '2px'
+  ctx.fillStyle = '#D4AF37'
+  ctx.fillText('HORÁRIO MARCADO', cardX + 90 + infoBoxW + infoBoxW / 2, infoBoxY + 45)
+
+  ctx.font = 'bold 32px "Playfair Display", Georgia, serif'
+  ctx.fillStyle = '#FFFFFF'
+  ctx.fillText(options.horario || '14:00', cardX + 90 + infoBoxW + infoBoxW / 2, infoBoxY + 98)
+  ctx.restore()
+
+  // 5. RODAPÉ DO CONVITE
+  const footerY = height - 160
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.font = 'italic 24px "Playfair Display", Georgia, serif'
+  ctx.fillStyle = '#F3E5AB'
+  ctx.fillText('"Aqui o café pode até esfriar, mas o papo nunca! ☕️"', width / 2, footerY)
+
+  ctx.font = '700 18px "Plus Jakarta Sans", sans-serif'
+  ctx.letterSpacing = '3px'
+  ctx.fillStyle = 'rgba(250, 248, 245, 0.65)'
+  ctx.fillText('EQUIPE COFFEECAST 4.0 • ALINE LANA', width / 2, footerY + 45)
+  ctx.restore()
+
+  return canvas
+}
+
+/**
+ * Dispara o download imediato de um Canvas como JPEG com alta compressão de qualidade (0.95)
+ */
+export function downloadCanvasAsJpeg(canvas: HTMLCanvasElement, filename: string) {
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.95)
+  const link = document.createElement('a')
+  link.download =
+    filename.endsWith('.jpg') || filename.endsWith('.jpeg') ? filename : `${filename}.jpg`
+  link.href = dataUrl
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
