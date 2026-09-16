@@ -1,8 +1,0 @@
-{
-  "sharp": "require is not defined",
-  "jimp": "require is not defined",
-  "canvas": "require is not defined",
-  "pngjs": "require is not defined",
-  "zlib": "require is not defined",
-  "child_process": "require is not defined"
-}

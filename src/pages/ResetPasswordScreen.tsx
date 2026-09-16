@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Eye, EyeOff, Lock, ArrowLeft, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
-import officialLogo from '@/assets/captura-de-tela-2026-09-16-as-18.32.11-c0470.png'
+import officialLogo from '@/assets/design-sem-nome-5dedc.png'
 
 export default function ResetPasswordScreen() {
   const [searchParams] = useSearchParams()
@@ -87,11 +87,11 @@ export default function ResetPasswordScreen() {
           <div className="flex justify-center mb-1">
             <div className="relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-dourado/30 to-amber-500/20 rounded-2xl blur-sm" />
-              <div className="relative bg-vinho/95 p-3 rounded-2xl border border-dourado/40 shadow-md">
+              <div className="relative bg-vinho-dark/95 px-6 py-4 rounded-2xl border border-dourado/40 shadow-md flex items-center justify-center">
                 <img
                   src={officialLogo}
                   alt="Logo Oficial CoffeeCast 4.0"
-                  className="h-16 w-auto object-contain mx-auto"
+                  className="h-20 w-auto object-contain mx-auto"
                 />
               </div>
             </div>

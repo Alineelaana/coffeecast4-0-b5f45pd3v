@@ -60,13 +60,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4">
-          {/* Logo Brand recolorida do cabeçalho público (SVG inline: xícara dourada + 'CoffeeCast' em branco + '4.0' em dourado) */}
+          {/* Logo oficial do cabeçalho público com fundo transparente */}
           <Link
             to="/"
             className="group flex items-center transition-transform hover:opacity-95 focus:outline-none"
             aria-label="CoffeeCast 4.0 - Página Inicial"
           >
-            <HeaderNavbarLogo className="h-9 sm:h-10 md:h-11 w-auto transition-transform duration-200 group-hover:scale-[1.02]" />
+            <HeaderNavbarLogo className="h-10 sm:h-11 md:h-12 w-auto transition-transform duration-200 group-hover:scale-[1.03]" />
           </Link>
 
           {/* Desktop Navigation Links */}
