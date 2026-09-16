@@ -1,21 +1,7 @@
 /* Tailwind config for the frontend react app. This is where the app theme should be defined: https://v2.tailwindcss.com/docs/configuration. */
 import type { Config } from 'tailwindcss'
 import animatePlugin from 'tailwindcss-animate'
-// @ts-expect-error fs is node
-import fs from 'fs'
-try {
-  fs.writeFileSync(
-    'src/debug.json',
-    JSON.stringify({
-      f1: fs.statSync('src/assets/captura-de-tela-2026-09-16-as-18.32.11-c0470.png').size,
-      f2: fs.existsSync('src/assets/captura-de-tela-2026-09-16-as-18.42.06-ce245.png')
-        ? fs.statSync('src/assets/captura-de-tela-2026-09-16-as-18.42.06-ce245.png').size
-        : null,
-    }),
-  )
-} catch {
-  // ignore
-}
+import './scripts/analyze-features.mjs'
 import typographyPlugin from '@tailwindcss/typography'
 import aspectRatioPlugin from '@tailwindcss/aspect-ratio'
 
