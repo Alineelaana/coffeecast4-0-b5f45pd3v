@@ -23,7 +23,7 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import officialLogo from '@/assets/design-sem-nome-5dedc.png'
+import officialLogo from '@/assets/chatgpt-image-15-de-set.de-2026-135749-7d01c.png'
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')

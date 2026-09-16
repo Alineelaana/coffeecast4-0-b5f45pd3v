@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Eye, EyeOff, Lock, ArrowLeft, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
-import officialLogo from '@/assets/design-sem-nome-5dedc.png'
+import officialLogo from '@/assets/chatgpt-image-15-de-set.de-2026-135749-7d01c.png'
 
 export default function ResetPasswordScreen() {
   const [searchParams] = useSearchParams()
