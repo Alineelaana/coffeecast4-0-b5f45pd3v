@@ -1,5 +1,5 @@
 import React from 'react'
-import officialLogo from '@/assets/chatgpt-image-15-de-set.de-2026-135749-7d01c.png'
+import officialLogo from '@/assets/whatsapp-image-2026-09-16-at-20.11.11-c31c9.jpeg'
 
 interface HeaderLogoProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   className?: string
@@ -7,10 +7,11 @@ interface HeaderLogoProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 
 /**
  * Logo oficial do cabeçalho público (Navbar) do CoffeeCast 4.0:
- * - Nova arte oficial de alta resolução com fundo transparente
- * - Xícara dourada com vapor em coração, estrela dourada de 4 pontas
- * - Wordmark "Coffeeecast" em branco com contorno elegante
- * - "4.0" e equalizador de áudio em dourado reluzente
+ * - Nova arte oficial de alta resolução enviada pela anfitriã (Aline Lana)
+ * - Xícara dourada brilhante com pires, vapor formando coração dourado
+ * - Estrela brilhante de 8 pontas no canto superior direito do coração
+ * - Wordmark "Coffeeecast" em branco com efeito 3D
+ * - "4.0" em dourado grande à direita e equalizador de áudio dourado entre finas linhas horizontais
  * - Proporção preservada (w-auto object-contain), sem recortar ou distorcer
  */
 export const HeaderNavbarLogo: React.FC<HeaderLogoProps> = ({
