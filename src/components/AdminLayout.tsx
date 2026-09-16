@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { CoffeeCastLogo } from '@/components/CoffeeCastLogo'
+import officialLogo from '@/assets/sem-nome-1350-x-1080-px-1-c4c50.png'
 import {
   LayoutDashboard,
   Tv,
@@ -169,17 +169,24 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-[#FAF8F5] flex flex-col md:flex-row font-sans">
       {/* SIDEBAR DESKTOP */}
       <aside className="hidden md:flex flex-col w-72 bg-vinho border-r border-vinho-dark text-marfim shadow-2xl shrink-0 sticky top-0 h-screen overflow-y-auto">
-        {/* Topo da Sidebar com Logo */}
-        <div className="p-6 border-b border-vinho-light/40 flex items-center gap-3">
-          <CoffeeCastLogo className="w-10 h-10" variant="gold" />
-          <div>
-            <h2 className="font-serif font-black text-lg text-white leading-tight">
-              CoffeeCast <span className="text-dourado">4.0</span>
-            </h2>
-            <p className="text-[10px] uppercase tracking-wider text-dourado-light font-medium">
+        {/* Topo da Sidebar com Logo Oficial Clicável */}
+        <div className="p-5 border-b border-vinho-light/40">
+          <NavLink
+            to="/admin"
+            end
+            className="group flex flex-col items-center text-center p-2 rounded-2xl hover:bg-vinho-light/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-dourado/60"
+            title="Ir para a Visão Geral do Painel Administrativo"
+            aria-label="Ir para a Visão Geral do Painel Administrativo"
+          >
+            <img
+              src={officialLogo}
+              alt="CoffeeCast 4.0 — Painel Administrativo"
+              className="h-16 w-auto max-w-[210px] object-contain drop-shadow-[0_3px_10px_rgba(212,175,55,0.35)] transition-transform duration-200 group-hover:scale-105 cursor-pointer"
+            />
+            <span className="text-[10px] uppercase tracking-widest text-dourado-light font-medium mt-2 group-hover:text-white transition-colors">
               Painel Administrativo
-            </p>
-          </div>
+            </span>
+          </NavLink>
         </div>
 
         {/* Menu de Navegação */}
@@ -276,13 +283,20 @@ export default function AdminLayout() {
       </aside>
 
       {/* CABEÇALHO MOBILE ESTILO APP */}
-      <header className="md:hidden bg-vinho text-white border-b-2 border-dourado px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-md min-h-[56px]">
-        <div className="flex items-center gap-2">
-          <CoffeeCastLogo className="w-8 h-8" variant="gold" />
-          <span className="font-serif font-black text-base text-white">
-            CoffeeCast <span className="text-dourado">4.0</span>
-          </span>
-        </div>
+      <header className="md:hidden bg-vinho text-white border-b-2 border-dourado px-4 py-2 flex items-center justify-between sticky top-0 z-40 shadow-md min-h-[56px]">
+        <NavLink
+          to="/admin"
+          end
+          className="flex items-center gap-2 group p-1 -ml-1 rounded-xl active:scale-95 transition-transform"
+          title="Ir para a Visão Geral do Painel Administrativo"
+          aria-label="Ir para a Visão Geral do Painel Administrativo"
+        >
+          <img
+            src={officialLogo}
+            alt="CoffeeCast 4.0 — Painel Administrativo"
+            className="h-10 w-auto max-w-[150px] object-contain drop-shadow-[0_2px_8px_rgba(212,175,55,0.35)] cursor-pointer"
+          />
+        </NavLink>
 
         <button
           onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
@@ -302,13 +316,26 @@ export default function AdminLayout() {
         <div className="md:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex">
           <div className="w-72 max-w-[85vw] bg-vinho text-marfim h-full flex flex-col p-4 shadow-2xl overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-vinho-light/40">
-              <div className="flex items-center gap-2">
-                <CoffeeCastLogo className="w-8 h-8" variant="gold" />
-                <span className="font-serif font-bold text-sm text-white">Menu Admin</span>
-              </div>
+              <NavLink
+                to="/admin"
+                end
+                onClick={() => setMobileSidebarOpen(false)}
+                className="group flex flex-col items-start p-1 rounded-xl active:scale-95 transition-transform"
+                title="Ir para a Visão Geral do Painel Administrativo"
+                aria-label="Ir para a Visão Geral do Painel Administrativo"
+              >
+                <img
+                  src={officialLogo}
+                  alt="CoffeeCast 4.0 — Painel Administrativo"
+                  className="h-11 w-auto max-w-[160px] object-contain drop-shadow-[0_2px_8px_rgba(212,175,55,0.35)] cursor-pointer"
+                />
+                <span className="text-[9px] uppercase tracking-wider text-dourado-light font-medium mt-1">
+                  Painel Administrativo
+                </span>
+              </NavLink>
               <button
                 onClick={() => setMobileSidebarOpen(false)}
-                className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-marfim/70 hover:text-white hover:bg-white/10 active:scale-95 transition-all"
+                className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-marfim/70 hover:text-white hover:bg-white/10 active:scale-95 transition-all"
                 aria-label="Fechar menu"
               >
                 <X className="w-5 h-5 text-dourado" />
