@@ -54,23 +54,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-vinho-dark/95 text-marfim shadow-lg backdrop-blur-md border-b border-dourado/40 py-2.5'
-          : 'bg-gradient-to-b from-[#36142d]/85 via-[#36142d]/45 to-transparent text-white py-3.5'
+          ? 'bg-vinho-dark/95 text-marfim shadow-lg backdrop-blur-md border-b border-dourado/40 py-2 sm:py-2.5'
+          : 'bg-gradient-to-b from-[#36142d]/90 via-[#36142d]/60 to-transparent text-white py-2.5 sm:py-3.5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
           {/* Logo oficial do cabeçalho público com fundo transparente */}
           <Link
             to="/"
-            className="group flex items-center transition-transform hover:opacity-95 focus:outline-none"
+            className="group flex items-center shrink-0 transition-transform hover:opacity-95 focus:outline-none py-0.5"
             aria-label="CoffeeCast 4.0 - Página Inicial"
           >
-            <HeaderNavbarLogo className="h-10 sm:h-11 md:h-12 w-auto transition-transform duration-200 group-hover:scale-[1.03]" />
+            <HeaderNavbarLogo className="h-12 xs:h-13 sm:h-14 md:h-16 lg:h-[4.25rem] xl:h-[4.5rem] w-auto transition-all duration-200 group-hover:scale-[1.03]" />
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-6">
+          <nav className="hidden lg:flex items-center gap-5 xl:gap-6">
             {navLinks.map((link) => (
               <a
                 key={link.label}
@@ -84,11 +84,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
           </nav>
 
           {/* Action Buttons */}
-          <div className="hidden sm:flex items-center gap-2.5">
+          <div className="hidden sm:flex items-center gap-2 shrink-0">
             {user ? (
               <Link
                 to="/membros"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/50 text-dourado-light bg-vinho/80 hover:bg-vinho hover:border-dourado"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/50 text-dourado-light bg-vinho/80 hover:bg-vinho hover:border-dourado whitespace-nowrap"
               >
                 <Sparkles className="w-3.5 h-3.5 text-dourado" />
                 Área de Membros
@@ -96,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
             ) : (
               <button
                 onClick={onOpenMembersModal}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/40 text-marfim hover:bg-vinho/60 hover:border-dourado"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/40 text-marfim hover:bg-vinho/60 hover:border-dourado whitespace-nowrap cursor-pointer"
               >
                 <Lock className="w-3.5 h-3.5 text-dourado" />
                 Área de Membros
@@ -104,21 +104,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
             )}
 
             {isAdmin ? (
-              <Link to="/admin">
+              <Link to="/admin" className="shrink-0">
                 <Button
                   size="sm"
-                  className="bg-dourado hover:bg-dourado-dark text-vinho font-bold shadow-sm transition-all text-xs rounded-full px-3.5"
+                  className="bg-dourado hover:bg-dourado-dark text-vinho font-bold shadow-sm transition-all text-xs rounded-full px-3.5 whitespace-nowrap"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 mr-1" />
                   Painel Admin
                 </Button>
               </Link>
             ) : (
-              <Link to="/login">
+              <Link to="/login" className="shrink-0">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-xs rounded-full px-3.5 font-medium transition-all border-dourado/60 text-dourado hover:bg-dourado/15 bg-transparent"
+                  className="text-xs rounded-full px-3.5 font-medium transition-all border-dourado/60 text-dourado hover:bg-dourado/15 bg-transparent whitespace-nowrap"
                 >
                   <Sparkles className="w-3.5 h-3.5 mr-1 text-dourado" />
                   Administração

@@ -27,8 +27,9 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({ onWatchEpisodes }) =
     <section
       id="inicio"
       aria-label="Banner Oficial CoffeeCast 4.0"
-      className="relative w-full bg-[#1b0816] overflow-hidden select-none pt-16 sm:pt-20"
+      className="relative w-full bg-[#1b0816] overflow-hidden select-none pt-18 sm:pt-22 md:pt-24"
     >
+      {' '}
       {/*
         Container responsivo com proporção natural do banner (1600x600 = 8:3 = 2.666:1).
         A imagem é renderizada de forma integral e fluida (w-full h-auto), garantindo que
