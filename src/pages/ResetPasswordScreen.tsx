@@ -84,14 +84,14 @@ export default function ResetPasswordScreen() {
 
       <div className="w-full max-w-md bg-marfim text-vinho rounded-3xl border-2 border-dourado/60 shadow-2xl p-8 sm:p-10 relative z-10 space-y-6">
         <div className="text-center space-y-3">
-          <div className="flex justify-center mb-1">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-dourado/30 to-amber-500/20 rounded-2xl blur-sm" />
-              <div className="relative bg-vinho-dark/95 px-6 py-4 rounded-2xl border border-dourado/40 shadow-md flex items-center justify-center">
+          <div className="flex justify-center mb-2">
+            <div className="relative group w-full flex justify-center">
+              <div className="absolute -inset-2 bg-gradient-to-r from-dourado/50 via-amber-300/40 to-dourado/50 rounded-3xl blur-md transition-all group-hover:blur-lg" />
+              <div className="relative w-full max-w-xs bg-vinho-dark/95 px-6 sm:px-8 py-5 sm:py-6 rounded-3xl border-2 border-dourado/60 shadow-2xl flex items-center justify-center">
                 <img
                   src={officialLogo}
                   alt="Logo Oficial CoffeeCast 4.0"
-                  className="h-20 w-auto object-contain mx-auto"
+                  className="h-28 sm:h-36 md:h-40 w-auto max-w-full object-contain mx-auto drop-shadow-[0_4px_16px_rgba(212,175,55,0.3)] transition-transform duration-300 group-hover:scale-[1.03]"
                 />
               </div>
             </div>

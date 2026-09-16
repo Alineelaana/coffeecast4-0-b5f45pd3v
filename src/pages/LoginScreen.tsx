@@ -124,15 +124,15 @@ export default function LoginScreen() {
 
       <div className="w-full max-w-md bg-marfim text-vinho rounded-3xl border-2 border-dourado/60 shadow-2xl p-8 sm:p-10 relative z-10 space-y-6">
         <div className="text-center space-y-3">
-          {/* Logo Oficial CoffeeCast 4.0 em destaque elegante */}
-          <div className="flex justify-center mb-1">
-            <div className="relative group">
-              <div className="absolute -inset-1.5 bg-gradient-to-r from-dourado/40 via-amber-300/30 to-dourado/40 rounded-2xl blur-sm transition-all" />
-              <div className="relative bg-vinho-dark/95 px-6 py-4 rounded-2xl border border-dourado/50 shadow-xl flex items-center justify-center">
+          {/* Logo Oficial CoffeeCast 4.0 em destaque elegante e ampliado */}
+          <div className="flex justify-center mb-2">
+            <div className="relative group w-full flex justify-center">
+              <div className="absolute -inset-2 bg-gradient-to-r from-dourado/50 via-amber-300/40 to-dourado/50 rounded-3xl blur-md transition-all group-hover:blur-lg" />
+              <div className="relative w-full max-w-xs bg-vinho-dark/95 px-6 sm:px-8 py-5 sm:py-6 rounded-3xl border-2 border-dourado/60 shadow-2xl flex items-center justify-center">
                 <img
                   src={officialLogo}
                   alt="CoffeeCast 4.0 Logo Oficial"
-                  className="h-20 sm:h-24 w-auto object-contain drop-shadow-md"
+                  className="h-28 sm:h-36 md:h-40 w-auto max-w-full object-contain drop-shadow-[0_4px_16px_rgba(212,175,55,0.3)] transition-transform duration-300 group-hover:scale-[1.03]"
                 />
               </div>
             </div>

@@ -62,7 +62,7 @@ Para mais esclarecimentos sobre nossas políticas, entre em contato com nossa eq
     <div className="min-h-screen bg-marfim text-vinho flex flex-col font-sans">
       <Navbar onOpenMembersModal={() => setMembersModalOpen(true)} />
 
-      <main className="flex-1 pt-28 sm:pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 pt-28 sm:pt-36 md:pt-40 lg:pt-44 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <Link
             to="/"

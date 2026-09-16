@@ -27,7 +27,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({ onWatchEpisodes }) =
     <section
       id="inicio"
       aria-label="Banner Oficial CoffeeCast 4.0"
-      className="relative w-full bg-[#1b0816] overflow-hidden select-none pt-18 sm:pt-22 md:pt-24"
+      className="relative w-full bg-[#1b0816] overflow-hidden select-none pt-20 sm:pt-26 md:pt-30 lg:pt-34 xl:pt-36"
     >
       {' '}
       {/*

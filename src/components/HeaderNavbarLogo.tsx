@@ -14,7 +14,7 @@ interface HeaderLogoProps extends React.ImgHTMLAttributes<HTMLImageElement> {
  * - Fundo vinho escuro do cabeçalho garante alto contraste e legibilidade
  */
 export const HeaderNavbarLogo: React.FC<HeaderLogoProps> = ({
-  className = 'h-14 sm:h-16 md:h-18 lg:h-20 w-auto',
+  className = 'h-16 sm:h-20 md:h-24 lg:h-28 w-auto',
   alt = 'CoffeeCast 4.0',
   ...props
 }) => {
@@ -22,7 +22,7 @@ export const HeaderNavbarLogo: React.FC<HeaderLogoProps> = ({
     <img
       src={officialLogo}
       alt={alt}
-      className={`object-contain drop-shadow-md transition-transform duration-200 ${className}`}
+      className={`object-contain drop-shadow-[0_4px_12px_rgba(212,175,55,0.25)] transition-transform duration-200 ${className}`}
       {...props}
     />
   )

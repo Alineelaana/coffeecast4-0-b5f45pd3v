@@ -54,29 +54,29 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-vinho-dark/95 text-marfim shadow-lg backdrop-blur-md border-b border-dourado/40 py-2 sm:py-2.5'
-          : 'bg-gradient-to-b from-[#36142d]/90 via-[#36142d]/60 to-transparent text-white py-2.5 sm:py-3.5'
+          ? 'bg-vinho-dark/95 text-marfim shadow-xl backdrop-blur-md border-b border-dourado/40 py-1.5 sm:py-2'
+          : 'bg-gradient-to-b from-[#36142d]/95 via-[#36142d]/75 to-transparent text-white py-2 sm:py-2.5'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-3 sm:gap-4">
-          {/* Logo oficial do cabeçalho público com fundo transparente */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
+          {/* Logo oficial do cabeçalho público com fundo transparente - tamanho ampliado conforme pedido */}
           <Link
             to="/"
             className="group flex items-center shrink-0 transition-transform hover:opacity-95 focus:outline-none py-0.5"
             aria-label="CoffeeCast 4.0 - Página Inicial"
           >
-            <HeaderNavbarLogo className="h-12 xs:h-13 sm:h-14 md:h-16 lg:h-[4.25rem] xl:h-[4.5rem] w-auto transition-all duration-200 group-hover:scale-[1.03]" />
+            <HeaderNavbarLogo className="h-16 sm:h-20 md:h-24 lg:h-28 xl:h-[7.25rem] w-auto transition-all duration-200 group-hover:scale-[1.02]" />
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-5 xl:gap-6">
+          {/* Desktop Navigation Links (escondidos em telas menores que xl se necessário para dar total espaço à logo e botões) */}
+          <nav className="hidden xl:flex items-center gap-4 2xl:gap-6 shrink">
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={location.pathname === '/' ? link.href : `/${link.href}`}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className="text-sm font-medium transition-colors text-marfim/90 hover:text-dourado relative py-1"
+                className="text-xs 2xl:text-sm font-medium transition-colors text-marfim/90 hover:text-dourado relative py-1 whitespace-nowrap"
               >
                 {link.label}
               </a>
@@ -84,7 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
           </nav>
 
           {/* Action Buttons */}
-          <div className="hidden sm:flex items-center gap-2 shrink-0">
+          <div className="hidden md:flex items-center gap-2 shrink-0">
             {user ? (
               <Link
                 to="/membros"
@@ -127,26 +127,47 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="flex lg:hidden items-center gap-2">
+          {/* Mobile / Tablet menu button */}
+          <div className="flex xl:hidden items-center gap-2 shrink-0">
+            {/* Em telas sm e md, mostramos o botão da Área de Membros se não houver espaço completo para todos os botões */}
+            <div className="flex md:hidden items-center gap-1.5 shrink-0">
+              {user ? (
+                <Link
+                  to="/membros"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all border border-dourado/50 text-dourado-light bg-vinho/80 whitespace-nowrap"
+                >
+                  <Sparkles className="w-3 h-3 text-dourado" />
+                  Membros
+                </Link>
+              ) : (
+                <button
+                  onClick={onOpenMembersModal}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all border border-dourado/40 text-marfim bg-vinho/60 whitespace-nowrap"
+                >
+                  <Lock className="w-3 h-3 text-dourado" />
+                  Membros
+                </button>
+              )}
+            </div>
+
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-colors text-marfim hover:bg-vinho/60 active:scale-95"
+              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-colors text-marfim hover:bg-vinho/60 active:scale-95 shrink-0"
               aria-label="Abrir menu de navegação"
             >
               {mobileMenuOpen ? (
-                <X className="w-6 h-6 text-dourado" />
+                <X className="w-7 h-7 text-dourado" />
               ) : (
-                <Menu className="w-6 h-6" />
+                <Menu className="w-7 h-7" />
               )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Drawer estilo App de celular */}
+      {/* Mobile / Tablet Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-vinho-dark border-b-2 border-dourado/60 text-marfim px-5 py-5 shadow-2xl animate-fade-in-down max-h-[calc(100vh-5rem)] overflow-y-auto">
+        <div className="xl:hidden bg-vinho-dark border-b-2 border-dourado/60 text-marfim px-5 py-5 shadow-2xl animate-fade-in-down max-h-[calc(100vh-6rem)] overflow-y-auto">
           <div className="flex flex-col space-y-1">
             {navLinks.map((link) => (
               <a
