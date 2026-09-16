@@ -8,6 +8,7 @@ import { Toaster } from 'sonner'
 import Index from '@/pages/Index'
 import PoliticaScreen from '@/pages/PoliticaScreen'
 import LoginScreen from '@/pages/LoginScreen'
+import ResetPasswordScreen from '@/pages/ResetPasswordScreen'
 import MembersScreen from '@/pages/MembersScreen'
 import NotFound from '@/pages/NotFound'
 
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/" element={<Index />} />
           <Route path="/politica/:slug" element={<PoliticaScreen />} />
           <Route path="/login" element={<LoginScreen />} />
+          <Route path="/reset-password" element={<ResetPasswordScreen />} />
 
           {/* Área de Membros (Disponível para Master, Gerencial, Ouro e Prata) */}
           <Route

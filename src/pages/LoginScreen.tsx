@@ -1,12 +1,29 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { CoffeeCastLogo } from '@/components/CoffeeCastLogo'
+import pb from '@/lib/pocketbase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Eye, EyeOff, Lock, ArrowLeft, ShieldCheck, Sparkles, AlertTriangle } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import {
+  Eye,
+  EyeOff,
+  Lock,
+  ArrowLeft,
+  AlertTriangle,
+  KeyRound,
+  Mail,
+  CheckCircle2,
+} from 'lucide-react'
 import { toast } from 'sonner'
+import officialLogo from '@/assets/captura-de-tela-2026-09-16-as-18.32.11-c0470.png'
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
@@ -15,6 +32,12 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [infoMessage, setInfoMessage] = useState<string | null>(null)
+
+  // Estado do fluxo "Esqueci minha senha"
+  const [forgotModalOpen, setForgotModalOpen] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotSuccess, setForgotSuccess] = useState(false)
 
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -51,10 +74,35 @@ export default function LoginScreen() {
     }
   }
 
-  // Atalho para preencher a conta Master do usuário
-  const fillMasterCredentials = () => {
-    setEmail('alineelaana@gmail.com')
-    setPassword('alineelaana4')
+  const handleOpenForgotModal = () => {
+    setForgotEmail(email.trim())
+    setForgotSuccess(false)
+    setForgotModalOpen(true)
+  }
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!forgotEmail.trim()) {
+      toast.error('Informe seu e-mail de acesso.')
+      return
+    }
+
+    setForgotLoading(true)
+
+    try {
+      // Dispara o fluxo nativo de recuperação de senha do PocketBase (coleção users)
+      await pb.collection('users').requestPasswordReset(forgotEmail.trim())
+      setForgotSuccess(true)
+      // Por segurança, mensagem neutra e amigável confirmando a instrução
+      toast.success('Se o e-mail estiver cadastrado, as instruções de redefinição foram enviadas!')
+    } catch (err: unknown) {
+      console.warn('Recuperação de senha executada:', err)
+      // Por segurança, mesmo em caso de erro da API que indique e-mail não existente, não expomos existência
+      setForgotSuccess(true)
+      toast.success('Se o e-mail estiver cadastrado, as instruções de redefinição foram enviadas!')
+    } finally {
+      setForgotLoading(false)
+    }
   }
 
   return (
@@ -75,11 +123,22 @@ export default function LoginScreen() {
       </div>
 
       <div className="w-full max-w-md bg-marfim text-vinho rounded-3xl border-2 border-dourado/60 shadow-2xl p-8 sm:p-10 relative z-10 space-y-6">
-        <div className="text-center space-y-2">
-          <div className="flex justify-center mb-2">
-            <CoffeeCastLogo className="w-16 h-16" variant="dark" />
+        <div className="text-center space-y-3">
+          {/* Logo Oficial CoffeeCast 4.0 em destaque elegante */}
+          <div className="flex justify-center mb-1">
+            <div className="relative group">
+              <div className="absolute -inset-1.5 bg-gradient-to-r from-dourado/40 via-amber-300/30 to-dourado/40 rounded-2xl blur-sm transition-all" />
+              <div className="relative bg-vinho/95 px-5 py-3 rounded-2xl border border-dourado/50 shadow-lg flex items-center justify-center">
+                <img
+                  src={officialLogo}
+                  alt="CoffeeCast 4.0 Logo Oficial"
+                  className="h-16 sm:h-20 w-auto object-contain drop-shadow"
+                />
+              </div>
+            </div>
           </div>
-          <h1 className="font-serif text-2xl sm:text-3xl font-black text-vinho">
+
+          <h1 className="font-serif text-2xl sm:text-3xl font-black text-vinho tracking-tight">
             Painel Administrativo
           </h1>
           <p className="text-xs text-vinho/70">
@@ -109,7 +168,7 @@ export default function LoginScreen() {
               id="email"
               type="email"
               required
-              placeholder="alineelaana@gmail.com"
+              placeholder="seuemail@exemplo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm rounded-xl py-2.5"
@@ -157,32 +216,111 @@ export default function LoginScreen() {
               </>
             )}
           </Button>
-        </form>
 
-        {/* Informações da conta principal Master */}
-        <div className="pt-2 border-t border-vinho/10">
-          <div className="bg-rose-brand/60 border border-rose-brand p-3 rounded-xl space-y-2">
-            <div className="flex items-center justify-between text-xs text-vinho font-semibold">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-dourado" />
-                Conta Master (Aline Lana)
-              </span>
-              <button
-                type="button"
-                onClick={fillMasterCredentials}
-                className="text-[11px] text-dourado-dark hover:underline flex items-center gap-1"
-              >
-                <Sparkles className="w-3 h-3" />
-                Preencher
-              </button>
-            </div>
-            <p className="text-[11px] text-vinho/70">
-              E-mail: <code>alineelaana@gmail.com</code> <br />
-              Senha inicial: <code>alineelaana4</code>
-            </p>
+          {/* Link para recuperação de senha */}
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={handleOpenForgotModal}
+              className="inline-flex items-center gap-1.5 text-xs text-vinho/70 hover:text-vinho font-medium underline underline-offset-4 decoration-dourado/60 hover:decoration-dourado transition-colors"
+            >
+              <KeyRound className="w-3.5 h-3.5 text-dourado" />
+              Esqueci minha senha
+            </button>
           </div>
-        </div>
+        </form>
       </div>
+
+      {/* Modal / Dialog de Recuperação de Senha */}
+      <Dialog open={forgotModalOpen} onOpenChange={setForgotModalOpen}>
+        <DialogContent className="max-w-md bg-marfim border-2 border-dourado/60 text-vinho shadow-2xl p-6 sm:p-8 rounded-3xl">
+          <DialogHeader className="text-center sm:text-center space-y-2">
+            <div className="mx-auto w-12 h-12 bg-dourado/15 rounded-full flex items-center justify-center text-vinho mb-1 border border-dourado/40">
+              <KeyRound className="w-6 h-6 text-dourado-dark" />
+            </div>
+            <DialogTitle className="font-serif text-2xl font-bold text-vinho">
+              Recuperar Senha
+            </DialogTitle>
+            <DialogDescription className="text-xs text-vinho/75">
+              Digite o e-mail cadastrado na sua conta. Enviaremos um link seguro para você redefinir
+              sua senha de acesso.
+            </DialogDescription>
+          </DialogHeader>
+
+          {forgotSuccess ? (
+            <div className="space-y-4 py-3 text-center">
+              <div className="mx-auto w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-vinho">Instruções enviadas!</p>
+                <p className="text-xs text-vinho/75 leading-relaxed">
+                  Se o endereço <strong className="font-mono text-vinho">{forgotEmail}</strong>{' '}
+                  constar em nossa base, as instruções com o link de recuperação foram despachadas
+                  para sua caixa de entrada.
+                </p>
+                <p className="text-[11px] text-vinho/60 pt-2">
+                  Verifique também a pasta de <em>Spam</em> ou <em>Lixo Eletrônico</em>.
+                </p>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  onClick={() => setForgotModalOpen(false)}
+                  className="w-full bg-vinho hover:bg-vinho-light text-white font-bold py-2.5 text-xs rounded-xl shadow-md"
+                >
+                  Entendi e Voltar ao Login
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="space-y-4 pt-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="forgot-email" className="text-xs font-semibold text-vinho">
+                  E-mail cadastrado
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    required
+                    placeholder="seuemail@exemplo.com"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm rounded-xl py-2.5 pl-9"
+                  />
+                  <Mail className="w-4 h-4 text-vinho/50 absolute left-3 top-1/2 -translate-y-1/2" />
+                </div>
+              </div>
+
+              <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setForgotModalOpen(false)}
+                  className="w-full sm:w-1/2 text-xs border-vinho/20 text-vinho hover:bg-vinho/5 rounded-xl min-h-[42px]"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={forgotLoading}
+                  className="w-full sm:w-1/2 bg-vinho hover:bg-vinho-light text-white font-bold text-xs rounded-xl shadow-md min-h-[42px] flex items-center justify-center gap-2"
+                >
+                  {forgotLoading ? (
+                    <span>Enviando...</span>
+                  ) : (
+                    <>
+                      <Mail className="w-3.5 h-3.5 text-dourado" />
+                      Enviar Instruções
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
