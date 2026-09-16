@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { CoffeeCastBrand } from './CoffeeCastLogo'
 import { MessageCircle, Heart, Shield, Lock, ExternalLink, Instagram, Linkedin } from 'lucide-react'
+import officialLogo from '@/assets/sem-nome-1350-x-1080-px-1-c4c50.png'
 import pb from '@/lib/pocketbase/client'
 import { normalizeSocialUrl } from '@/lib/formatters'
 import type { ConteudoSiteRecord, SocialLinks } from '@/types/database'
@@ -102,7 +102,17 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
           {/* Coluna 1: Marca e Propósito */}
           <div className="space-y-4">
-            <CoffeeCastBrand variant="light" iconSize="w-12 h-12" />
+            <a
+              href="#inicio"
+              className="inline-block group focus:outline-none focus:ring-2 focus:ring-dourado/50 rounded-xl"
+              aria-label="CoffeeCast 4.0 — Voltar ao início"
+            >
+              <img
+                src={officialLogo}
+                alt="CoffeeCast 4.0"
+                className="h-16 sm:h-20 w-auto max-w-[240px] object-contain drop-shadow-[0_4px_14px_rgba(212,175,55,0.35)] transition-transform duration-200 group-hover:scale-105"
+              />
+            </a>
             <p className="text-sm text-marfim/80 leading-relaxed font-light">
               "Mais que conversas, histórias que transformam." O podcast brasileiro feito por e
               sobre mulheres, trazendo acolhimento, inspiração e autenticidade para cada encontro.
