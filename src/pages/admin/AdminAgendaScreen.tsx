@@ -28,9 +28,16 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  Calendar as CalendarIcon,
+  ListFilter,
+  History,
+  CalendarCheck2,
+  CalendarRange,
+  List,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
+import { AgendaCalendarView } from '@/components/admin/AgendaCalendarView'
 
 function RoteiroExpandivel({
   roteiro,
@@ -127,6 +134,56 @@ function RoteiroExpandivel({
 export default function AdminAgendaScreen() {
   const [agendamentos, setAgendamentos] = useState<AgendaRecord[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Filtros solicitados pela Aline:
+  // "calendario" (visão padrão), "passada", "futura", "periodo", "todos" (lista completa)
+  const [activeFilter, setActiveFilter] = useState<
+    'calendario' | 'passada' | 'futura' | 'periodo' | 'todos'
+  >('calendario')
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null)
+
+  // Normaliza hoje no formato local YYYY-MM-DD
+  const todayYmd = React.useMemo(() => {
+    const d = new Date()
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }, [])
+
+  // Lista filtrada pelos modos: Passada, Futura, Período ou Todos
+  const filteredAgendamentos = React.useMemo(() => {
+    if (activeFilter === 'passada') {
+      // Data anterior à data de hoje no navegador
+      return agendamentos.filter((item) => {
+        const ymd = toInputDate(item.data_gravacao)
+        return ymd ? ymd < todayYmd : false
+      })
+    }
+
+    if (activeFilter === 'futura') {
+      // Data de hoje em diante no navegador
+      return agendamentos.filter((item) => {
+        const ymd = toInputDate(item.data_gravacao)
+        return ymd ? ymd >= todayYmd : false
+      })
+    }
+
+    if (activeFilter === 'periodo') {
+      return agendamentos.filter((item) => {
+        const ymd = toInputDate(item.data_gravacao)
+        if (!ymd) return false
+        if (dataInicio && ymd < dataInicio) return false
+        if (dataFim && ymd > dataFim) return false
+        return true
+      })
+    }
+
+    // Para 'calendario' e 'todos', retorna a lista completa
+    return agendamentos
+  }, [agendamentos, activeFilter, todayYmd, dataInicio, dataFim])
 
   // Saldo de horas disponíveis para feedback visual
   const [saldoDisponivel, setSaldoDisponivel] = useState<number | null>(null)
@@ -362,185 +419,403 @@ export default function AdminAgendaScreen() {
         </div>
       </div>
 
-      {/* Mobile Cards View */}
-      <div className="block md:hidden space-y-3">
-        {loading ? (
-          <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center text-xs text-vinho/60">
-            Carregando agenda...
-          </div>
-        ) : agendamentos.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center space-y-3">
-            <p className="text-sm text-vinho/70 font-medium">Nenhum agendamento marcado.</p>
-            <Button onClick={handleOpenCreate} variant="outline" size="sm" className="min-h-[44px]">
-              Agendar primeira gravação
+      {/* Barra de Filtros & Modos de Visualização (Calendário como padrão) */}
+      <div className="bg-white rounded-2xl border border-vinho/10 p-3 sm:p-4 shadow-2xs space-y-3">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 lg:pb-0">
+            <span className="text-xs font-semibold text-vinho/60 hidden sm:inline mr-1 flex items-center gap-1">
+              <ListFilter className="w-3.5 h-3.5 text-dourado-dark" /> Filtrar:
+            </span>
+
+            {/* 1. Visão Padrão: Mostrar no Calendário */}
+            <Button
+              type="button"
+              variant={activeFilter === 'calendario' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveFilter('calendario')}
+              className={`rounded-xl text-xs h-9 px-3 gap-1.5 transition-all shrink-0 ${
+                activeFilter === 'calendario'
+                  ? 'bg-vinho text-white font-bold shadow-xs hover:bg-vinho-light'
+                  : 'border-vinho/15 text-vinho hover:bg-vinho/5'
+              }`}
+            >
+              <CalendarIcon className="w-3.5 h-3.5 text-dourado" />
+              <span>Mostrar no Calendário</span>
+            </Button>
+
+            {/* 2. Agenda Futura */}
+            <Button
+              type="button"
+              variant={activeFilter === 'futura' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveFilter('futura')}
+              className={`rounded-xl text-xs h-9 px-3 gap-1.5 transition-all shrink-0 ${
+                activeFilter === 'futura'
+                  ? 'bg-vinho text-white font-bold shadow-xs hover:bg-vinho-light'
+                  : 'border-vinho/15 text-vinho hover:bg-vinho/5'
+              }`}
+            >
+              <CalendarCheck2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Agenda Futura</span>
+            </Button>
+
+            {/* 3. Agenda Passada */}
+            <Button
+              type="button"
+              variant={activeFilter === 'passada' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveFilter('passada')}
+              className={`rounded-xl text-xs h-9 px-3 gap-1.5 transition-all shrink-0 ${
+                activeFilter === 'passada'
+                  ? 'bg-vinho text-white font-bold shadow-xs hover:bg-vinho-light'
+                  : 'border-vinho/15 text-vinho hover:bg-vinho/5'
+              }`}
+            >
+              <History className="w-3.5 h-3.5 text-rose-300" />
+              <span>Agenda Passada</span>
+            </Button>
+
+            {/* 4. Selecionar Período */}
+            <Button
+              type="button"
+              variant={activeFilter === 'periodo' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveFilter('periodo')}
+              className={`rounded-xl text-xs h-9 px-3 gap-1.5 transition-all shrink-0 ${
+                activeFilter === 'periodo'
+                  ? 'bg-vinho text-white font-bold shadow-xs hover:bg-vinho-light'
+                  : 'border-vinho/15 text-vinho hover:bg-vinho/5'
+              }`}
+            >
+              <CalendarRange className="w-3.5 h-3.5 text-dourado" />
+              <span>Selecionar Período</span>
+            </Button>
+
+            {/* 5. Todos os episódios */}
+            <Button
+              type="button"
+              variant={activeFilter === 'todos' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveFilter('todos')}
+              className={`rounded-xl text-xs h-9 px-3 gap-1.5 transition-all shrink-0 ${
+                activeFilter === 'todos'
+                  ? 'bg-vinho text-white font-bold shadow-xs hover:bg-vinho-light'
+                  : 'border-vinho/15 text-vinho hover:bg-vinho/5'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>Todos ({agendamentos.length})</span>
             </Button>
           </div>
-        ) : (
-          agendamentos.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-2xl border border-vinho/10 p-4 shadow-sm space-y-3"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-vinho">{item.titulo}</h3>
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-dourado-dark">
-                    <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-                    <span>Gravação: {formatDateBR(item.data_gravacao)}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleOpenEdit(item)}
-                    className="h-9 w-9 p-0 text-vinho/70 hover:text-vinho min-h-[36px]"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(item.id, item.titulo)}
-                    className="h-9 w-9 p-0 text-red-500 hover:text-red-700 min-h-[36px]"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+
+          <div className="text-xs text-vinho/70 font-medium self-end lg:self-center">
+            {activeFilter === 'calendario' ? (
+              <span>Exibindo visão interativa de calendário</span>
+            ) : (
+              <span>
+                Mostrando <strong>{filteredAgendamentos.length}</strong> de {agendamentos.length}{' '}
+                episódios
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Campos de Início e Fim para Selecionar Período */}
+        {activeFilter === 'periodo' && (
+          <div className="p-3 bg-marfim rounded-xl border border-vinho/15 space-y-2 animate-fadeIn">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex-1 space-y-1">
+                <Label
+                  htmlFor="filtro-data-inicio"
+                  className="text-[11px] font-semibold text-vinho"
+                >
+                  Data de Início:
+                </Label>
+                <Input
+                  id="filtro-data-inicio"
+                  type="date"
+                  value={dataInicio}
+                  onChange={(e) => setDataInicio(e.target.value)}
+                  className="bg-white border-vinho/20 text-xs h-9"
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-vinho/5">
-                <div>
-                  <span className="text-[10px] text-vinho/60 block">Débito no Banco</span>
-                  {item.horas_utilizadas ? (
-                    <span className="font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 inline-flex items-center gap-1 text-[11px] mt-0.5">
-                      <Clock className="w-3 h-3" />
-                      {item.horas_utilizadas}h
-                    </span>
-                  ) : (
-                    <span className="text-vinho/40 italic text-[11px]">0h (isento)</span>
-                  )}
-                </div>
-
-                <div>
-                  <span className="text-[10px] text-vinho/60 block">Convidado(a)</span>
-                  <span className="font-medium text-vinho truncate block">
-                    {item.tem_convidado ? item.nome_convidado || 'A definir' : 'Sem convidado'}
-                  </span>
-                </div>
+              <div className="flex-1 space-y-1">
+                <Label htmlFor="filtro-data-fim" className="text-[11px] font-semibold text-vinho">
+                  Data de Fim:
+                </Label>
+                <Input
+                  id="filtro-data-fim"
+                  type="date"
+                  value={dataFim}
+                  onChange={(e) => setDataFim(e.target.value)}
+                  className="bg-white border-vinho/20 text-xs h-9"
+                />
               </div>
 
-              <RoteiroExpandivel roteiro={item.roteiro} variant="card" />
-
-              {item.patrocinado && (
-                <div className="pt-1">
-                  <Badge className="bg-vinho text-dourado text-[10px] font-semibold">
-                    Patrocínio: {item.patrocinadores || 'Confirmado'}
-                  </Badge>
+              {(dataInicio || dataFim) && (
+                <div className="sm:self-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDataInicio('')
+                      setDataFim('')
+                    }}
+                    className="text-xs text-vinho/70 hover:text-vinho h-9"
+                  >
+                    Limpar Período
+                  </Button>
                 </div>
               )}
             </div>
-          ))
+            <p className="text-[10px] text-vinho/60">
+              O filtro por período considera a data de gravação do episódio dentro do intervalo
+              escolhido.
+            </p>
+          </div>
         )}
       </div>
 
-      {/* Desktop Table View */}
-      <div className="hidden md:block bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-x-auto">
-        {loading ? (
-          <div className="py-16 text-center text-xs text-vinho/60">Carregando agenda...</div>
-        ) : agendamentos.length === 0 ? (
-          <div className="py-16 text-center space-y-2">
-            <p className="text-sm text-vinho/70 font-medium">Nenhum agendamento marcado.</p>
-            <Button onClick={handleOpenCreate} variant="outline" size="sm">
-              Agendar primeira gravação
-            </Button>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader className="bg-marfim">
-              <TableRow className="border-b border-vinho/10">
-                <TableHead className="font-bold text-vinho text-xs">Título / Roteiro</TableHead>
-                <TableHead className="font-bold text-vinho text-xs">Gravação</TableHead>
-                <TableHead className="font-bold text-vinho text-xs">Horas a Utilizar</TableHead>
-                <TableHead className="font-bold text-vinho text-xs">Postagem</TableHead>
-                <TableHead className="font-bold text-vinho text-xs">Convidado(a)</TableHead>
-                <TableHead className="font-bold text-vinho text-xs">Patrocínio</TableHead>
-                <TableHead className="w-24 text-right font-bold text-vinho text-xs">
-                  Ações
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-vinho/5">
-              {agendamentos.map((item) => (
-                <TableRow key={item.id} className="hover:bg-vinho/5">
-                  <TableCell className="text-xs font-bold text-vinho max-w-xs align-top">
-                    <div>{item.titulo}</div>
-                    <RoteiroExpandivel roteiro={item.roteiro} variant="table" />
-                  </TableCell>
-                  <TableCell className="text-xs font-semibold text-dourado-dark">
-                    <div className="flex items-center gap-1.5">
-                      <CalendarDays className="w-3.5 h-3.5" />
-                      {formatDateBR(item.data_gravacao)}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {item.horas_utilizadas ? (
-                      <span className="font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 inline-flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {item.horas_utilizadas}h debitada(s)
-                      </span>
-                    ) : (
-                      <span className="text-vinho/40 italic text-[11px]">0h (isento)</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-xs text-vinho/75">
-                    {formatDateBR(item.data_postagem)}
-                  </TableCell>
-                  <TableCell className="text-xs text-vinho">
-                    {item.tem_convidado ? (
-                      <div>
-                        <span className="font-bold block">{item.nome_convidado}</span>
-                        {item.empresa && (
-                          <span className="text-[10px] text-vinho/60 block">{item.empresa}</span>
-                        )}
+      {/* 1. MODO CALENDÁRIO (Visão padrão solicitada) */}
+      {activeFilter === 'calendario' && (
+        <div className="space-y-4">
+          <AgendaCalendarView
+            agendamentos={agendamentos}
+            selectedDate={selectedCalendarDate}
+            onSelectDate={setSelectedCalendarDate}
+            onEditItem={handleOpenEdit}
+            onDeleteItem={handleDelete}
+          />
+        </div>
+      )}
+
+      {/* 2. MODO LISTA / TABELA (Para Agenda Passada, Agenda Futura, Selecionar Período e Todos) */}
+      {activeFilter !== 'calendario' && (
+        <div className="space-y-6">
+          {/* Mobile Cards View */}
+          <div className="block md:hidden space-y-3">
+            {loading ? (
+              <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center text-xs text-vinho/60">
+                Carregando agenda...
+              </div>
+            ) : agendamentos.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center space-y-3">
+                <p className="text-sm text-vinho/70 font-medium">Nenhum agendamento marcado.</p>
+                <Button
+                  onClick={handleOpenCreate}
+                  variant="outline"
+                  size="sm"
+                  className="min-h-[44px]"
+                >
+                  Agendar primeira gravação
+                </Button>
+              </div>
+            ) : filteredAgendamentos.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-vinho/10 p-8 text-center space-y-2">
+                <p className="text-sm text-vinho/70 font-medium">
+                  Nenhum episódio encontrado para este filtro.
+                </p>
+                <Button
+                  onClick={() => {
+                    setActiveFilter('calendario')
+                    setDataInicio('')
+                    setDataFim('')
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  Voltar ao Calendário
+                </Button>
+              </div>
+            ) : (
+              filteredAgendamentos.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-2xl border border-vinho/10 p-4 shadow-sm space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-bold text-vinho">{item.titulo}</h3>
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-dourado-dark">
+                        <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+                        <span>Gravação: {formatDateBR(item.data_gravacao)}</span>
                       </div>
-                    ) : (
-                      <span className="text-vinho/40 italic">Sem convidado</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {item.patrocinado ? (
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenEdit(item)}
+                        className="h-9 w-9 p-0 text-vinho/70 hover:text-vinho min-h-[36px]"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(item.id, item.titulo)}
+                        className="h-9 w-9 p-0 text-red-500 hover:text-red-700 min-h-[36px]"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-vinho/5">
+                    <div>
+                      <span className="text-[10px] text-vinho/60 block">Débito no Banco</span>
+                      {item.horas_utilizadas ? (
+                        <span className="font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 inline-flex items-center gap-1 text-[11px] mt-0.5">
+                          <Clock className="w-3 h-3" />
+                          {item.horas_utilizadas}h
+                        </span>
+                      ) : (
+                        <span className="text-vinho/40 italic text-[11px]">0h (isento)</span>
+                      )}
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-vinho/60 block">Convidado(a)</span>
+                      <span className="font-medium text-vinho truncate block">
+                        {item.tem_convidado ? item.nome_convidado || 'A definir' : 'Sem convidado'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <RoteiroExpandivel roteiro={item.roteiro} variant="card" />
+
+                  {item.patrocinado && (
+                    <div className="pt-1">
                       <Badge className="bg-vinho text-dourado text-[10px] font-semibold">
-                        {item.patrocinadores || 'Patrocinado'}
+                        Patrocínio: {item.patrocinadores || 'Confirmado'}
                       </Badge>
-                    ) : (
-                      <span className="text-xs text-vinho/40">Não</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleOpenEdit(item)}
-                      className="h-8 w-8 p-0 text-vinho/70 hover:text-vinho hover:bg-vinho/10"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(item.id, item.titulo)}
-                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white rounded-2xl border border-vinho/10 shadow-sm overflow-x-auto">
+            {loading ? (
+              <div className="py-16 text-center text-xs text-vinho/60">Carregando agenda...</div>
+            ) : agendamentos.length === 0 ? (
+              <div className="py-16 text-center space-y-2">
+                <p className="text-sm text-vinho/70 font-medium">Nenhum agendamento marcado.</p>
+                <Button onClick={handleOpenCreate} variant="outline" size="sm">
+                  Agendar primeira gravação
+                </Button>
+              </div>
+            ) : filteredAgendamentos.length === 0 ? (
+              <div className="py-16 text-center space-y-2">
+                <p className="text-sm text-vinho/70 font-medium">
+                  Nenhum episódio encontrado para este filtro.
+                </p>
+                <Button
+                  onClick={() => {
+                    setActiveFilter('calendario')
+                    setDataInicio('')
+                    setDataFim('')
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  Voltar ao Calendário
+                </Button>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader className="bg-marfim">
+                  <TableRow className="border-b border-vinho/10">
+                    <TableHead className="font-bold text-vinho text-xs">Título / Roteiro</TableHead>
+                    <TableHead className="font-bold text-vinho text-xs">Gravação</TableHead>
+                    <TableHead className="font-bold text-vinho text-xs">Horas a Utilizar</TableHead>
+                    <TableHead className="font-bold text-vinho text-xs">Postagem</TableHead>
+                    <TableHead className="font-bold text-vinho text-xs">Convidado(a)</TableHead>
+                    <TableHead className="font-bold text-vinho text-xs">Patrocínio</TableHead>
+                    <TableHead className="w-24 text-right font-bold text-vinho text-xs">
+                      Ações
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-vinho/5">
+                  {filteredAgendamentos.map((item) => (
+                    <TableRow key={item.id} className="hover:bg-vinho/5">
+                      <TableCell className="text-xs font-bold text-vinho max-w-xs align-top">
+                        <div>{item.titulo}</div>
+                        <RoteiroExpandivel roteiro={item.roteiro} variant="table" />
+                      </TableCell>
+                      <TableCell className="text-xs font-semibold text-dourado-dark">
+                        <div className="flex items-center gap-1.5">
+                          <CalendarDays className="w-3.5 h-3.5" />
+                          {formatDateBR(item.data_gravacao)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {item.horas_utilizadas ? (
+                          <span className="font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 inline-flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {item.horas_utilizadas}h debitada(s)
+                          </span>
+                        ) : (
+                          <span className="text-vinho/40 italic text-[11px]">0h (isento)</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-vinho/75">
+                        {formatDateBR(item.data_postagem)}
+                      </TableCell>
+                      <TableCell className="text-xs text-vinho">
+                        {item.tem_convidado ? (
+                          <div>
+                            <span className="font-bold block">{item.nome_convidado}</span>
+                            {item.empresa && (
+                              <span className="text-[10px] text-vinho/60 block">
+                                {item.empresa}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-vinho/40 italic">Sem convidado</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.patrocinado ? (
+                          <Badge className="bg-vinho text-dourado text-[10px] font-semibold">
+                            {item.patrocinadores || 'Patrocinado'}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-vinho/40">Não</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenEdit(item)}
+                          className="h-8 w-8 p-0 text-vinho/70 hover:text-vinho hover:bg-vinho/10"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(item.id, item.titulo)}
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Modal de Agendamento Completo */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
