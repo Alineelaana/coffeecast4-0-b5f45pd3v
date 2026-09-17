@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import pb from '@/lib/pocketbase/client'
 import { formatCurrencyBRL, formatDateBR, toInputDate } from '@/lib/formatters'
-import type { TransacaoRecord } from '@/types/database'
+import type { TransacaoRecord, IntegranteRecord } from '@/types/database'
 import {
   Table,
   TableBody,
@@ -36,13 +36,19 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Sparkles,
+  Users,
+  Info,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
+// As 4 integrantes oficiais do CoffeeCast 4.0
+const INTEGRANTES_DEFAULT = ['Aline Lana', 'Dayana Ribas', 'Rosi Lima', 'Flávia Franco']
+
 export default function AdminFinanceiroScreen() {
   const [transacoes, setTransacoes] = useState<TransacaoRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [nomesIntegrantes, setNomesIntegrantes] = useState<string[]>(INTEGRANTES_DEFAULT)
 
   // Filtros
   const [filtroSituacao, setFiltroSituacao] = useState<string>('todos')
@@ -60,15 +66,31 @@ export default function AdminFinanceiroScreen() {
   const [valor, setValor] = useState('')
   const [dataVencimento, setDataVencimento] = useState('')
   const [situacao, setSituacao] = useState<'quitado' | 'em_aberto'>('em_aberto')
+  // Divisão por integrante (string editável por integrante no formulário)
+  const [divisaoForm, setDivisaoForm] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
 
-  const loadTransacoes = async () => {
+  const loadData = async () => {
     try {
       setLoading(true)
-      const list = await pb.collection('transacoes').getFullList<TransacaoRecord>({
-        sort: '-data_vencimento',
-      })
-      setTransacoes(list)
+      const [transList, intList] = await Promise.all([
+        pb.collection('transacoes').getFullList<TransacaoRecord>({
+          sort: '-data_vencimento',
+        }),
+        pb
+          .collection('integrantes')
+          .getFullList<IntegranteRecord>({
+            sort: 'ordem',
+          })
+          .catch(() => [] as IntegranteRecord[]),
+      ])
+      setTransacoes(transList)
+      if (intList && intList.length > 0) {
+        const nomes = intList.map((i) => i.nome.trim()).filter(Boolean)
+        if (nomes.length > 0) {
+          setNomesIntegrantes(nomes)
+        }
+      }
     } catch (err) {
       console.error(err)
       toast.error('Erro ao carregar registros financeiros.')
@@ -78,7 +100,7 @@ export default function AdminFinanceiroScreen() {
   }
 
   useEffect(() => {
-    loadTransacoes()
+    loadData()
   }, [])
 
   const handleOpenCreate = () => {
@@ -89,6 +111,12 @@ export default function AdminFinanceiroScreen() {
     setValor('')
     setDataVencimento(toInputDate(new Date().toISOString()))
     setSituacao('em_aberto')
+    // Vazio por padrão — o sistema NÃO deve dividir automaticamente
+    const initialDiv: Record<string, string> = {}
+    nomesIntegrantes.forEach((nome) => {
+      initialDiv[nome] = ''
+    })
+    setDivisaoForm(initialDiv)
     setModalOpen(true)
   }
 
@@ -100,6 +128,22 @@ export default function AdminFinanceiroScreen() {
     setValor(String(t.valor))
     setDataVencimento(toInputDate(t.data_vencimento))
     setSituacao(t.situacao)
+
+    // Preenche com o que já foi salvo ou deixa vazio
+    const initialDiv: Record<string, string> = {}
+    nomesIntegrantes.forEach((nome) => {
+      const v = t.divisao_integrantes?.[nome]
+      initialDiv[nome] = v !== undefined && v !== null && v > 0 ? String(v) : ''
+    })
+    // Também mantém se tiver alguma chave extra salva anteriormente
+    if (t.divisao_integrantes) {
+      Object.entries(t.divisao_integrantes).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v > 0 && initialDiv[k] === undefined) {
+          initialDiv[k] = String(v)
+        }
+      })
+    }
+    setDivisaoForm(initialDiv)
     setModalOpen(true)
   }
 
@@ -115,6 +159,16 @@ export default function AdminFinanceiroScreen() {
         return
       }
 
+      // Constrói objeto de divisão com apenas as integrantes com valor preenchido (> 0)
+      const divisaoObj: Record<string, number> = {}
+      Object.entries(divisaoForm).forEach(([nome, strVal]) => {
+        if (!strVal || strVal.trim() === '') return
+        const parsed = parseFloat(strVal.replace(',', '.'))
+        if (!isNaN(parsed) && parsed > 0) {
+          divisaoObj[nome] = parsed
+        }
+      })
+
       const payload: Partial<TransacaoRecord> = {
         descricao: descricao.trim(),
         tipo,
@@ -123,6 +177,7 @@ export default function AdminFinanceiroScreen() {
         situacao,
         tipo_movimentacao: tipoMovimentacao,
         origem: editingItem?.origem || 'manual',
+        divisao_integrantes: Object.keys(divisaoObj).length > 0 ? divisaoObj : null,
       }
 
       if (editingItem) {
@@ -138,10 +193,10 @@ export default function AdminFinanceiroScreen() {
       }
 
       setModalOpen(false)
-      loadTransacoes()
+      loadData()
     } catch (err) {
       console.error(err)
-      toast.error('Erro ao salvar despesa.')
+      toast.error('Erro ao salvar movimentação financeira.')
     } finally {
       setSaving(false)
     }
@@ -153,7 +208,7 @@ export default function AdminFinanceiroScreen() {
     try {
       await pb.collection('transacoes').delete(id)
       toast.success('Gasto excluído com sucesso!')
-      loadTransacoes()
+      loadData()
     } catch (err) {
       console.error(err)
       toast.error('Erro ao excluir registro.')
@@ -205,6 +260,25 @@ export default function AdminFinanceiroScreen() {
   const totalAberto = transacoes
     .filter((t) => t.situacao === 'em_aberto')
     .reduce((acc, curr) => acc + (curr.valor || 0), 0)
+
+  // Resumo acumulado pago por cada integrante (Requisito 7 — Bônus útil)
+  const resumoIntegrantes = useMemo(() => {
+    const mapa: Record<string, number> = {}
+    nomesIntegrantes.forEach((n) => {
+      mapa[n] = 0
+    })
+
+    transacoes.forEach((t) => {
+      if (t.divisao_integrantes) {
+        Object.entries(t.divisao_integrantes).forEach(([nome, val]) => {
+          if (typeof val === 'number' && val > 0) {
+            mapa[nome] = (mapa[nome] || 0) + val
+          }
+        })
+      }
+    })
+    return mapa
+  }, [transacoes, nomesIntegrantes])
 
   const tipoLabels: Record<string, string> = {
     gravacao: 'Horas de Gravação',
@@ -396,6 +470,48 @@ export default function AdminFinanceiroScreen() {
         </div>
       </div>
 
+      {/* Resumo por Integrante do CoffeeCast (Total Pago Acumulado) */}
+      <div className="bg-gradient-to-br from-white via-white to-marfim border border-vinho/15 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-vinho/10 pb-2.5">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-dourado-dark shrink-0" />
+            <h3 className="font-serif text-sm sm:text-base font-bold text-vinho">
+              Total Pago por Integrante (CoffeeCast 4.0)
+            </h3>
+          </div>
+          <span className="text-[11px] text-vinho/65">
+            Soma acumulada das divisões registradas em despesas
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+          {nomesIntegrantes.map((nome) => {
+            const pagoTotal = resumoIntegrantes[nome] || 0
+            return (
+              <div
+                key={nome}
+                className="bg-white/90 border border-vinho/10 rounded-xl p-3 shadow-xs flex flex-col justify-between"
+              >
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-vinho">
+                  <span className="w-2 h-2 rounded-full bg-dourado shrink-0" />
+                  <span className="truncate" title={nome}>
+                    {nome}
+                  </span>
+                </div>
+                <div className="mt-1.5">
+                  <span className="font-serif font-black text-sm sm:text-base text-vinho block">
+                    {formatCurrencyBRL(pagoTotal)}
+                  </span>
+                  <span className="text-[10px] text-vinho/60">
+                    {pagoTotal > 0 ? 'Contribuição registrada' : 'Sem lançamentos'}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
       {/* Barra de Filtros */}
       <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-vinho/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-2">
@@ -491,6 +607,34 @@ export default function AdminFinanceiroScreen() {
                       {tipoLabels[item.tipo] || item.tipo}
                     </Badge>
                   </div>
+
+                  {/* Exibição da divisão entre integrantes (Mobile) */}
+                  {item.divisao_integrantes &&
+                    Object.entries(item.divisao_integrantes).filter(
+                      ([, v]) => typeof v === 'number' && v > 0,
+                    ).length > 0 && (
+                      <div className="mt-2 p-2 bg-marfim/60 border border-vinho/10 rounded-lg space-y-1">
+                        <span className="text-[10px] font-bold text-vinho flex items-center gap-1">
+                          <Users className="w-3 h-3 text-dourado-dark" />
+                          Divisão registrada:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {Object.entries(item.divisao_integrantes)
+                            .filter(([, v]) => typeof v === 'number' && v > 0)
+                            .map(([n, v]) => (
+                              <span
+                                key={n}
+                                className="inline-flex items-center gap-1 text-[10px] bg-white border border-vinho/10 px-2 py-0.5 rounded-md text-vinho font-medium"
+                              >
+                                <span className="text-vinho/70">{n.split(' ')[0]}:</span>
+                                <strong className="text-vinho font-bold">
+                                  {formatCurrencyBRL(v)}
+                                </strong>
+                              </span>
+                            ))}
+                        </div>
+                      </div>
+                    )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <Button
@@ -599,6 +743,31 @@ export default function AdminFinanceiroScreen() {
                         </Link>
                       )}
                     </div>
+
+                    {/* Exibição compacta da divisão entre integrantes (Desktop) */}
+                    {item.divisao_integrantes &&
+                      Object.entries(item.divisao_integrantes).filter(
+                        ([, v]) => typeof v === 'number' && v > 0,
+                      ).length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                          <span className="text-[10px] text-vinho/60 font-semibold inline-flex items-center gap-1">
+                            <Users className="w-3 h-3 text-dourado-dark" />
+                            Divisão:
+                          </span>
+                          {Object.entries(item.divisao_integrantes)
+                            .filter(([, v]) => typeof v === 'number' && v > 0)
+                            .map(([n, v]) => (
+                              <span
+                                key={n}
+                                className="inline-flex items-center gap-1 text-[10px] bg-marfim border border-vinho/10 px-1.5 py-0.5 rounded text-vinho"
+                                title={`${n}: ${formatCurrencyBRL(v)}`}
+                              >
+                                <span className="text-vinho/70">{n.split(' ')[0]}:</span>
+                                <span className="font-bold">{formatCurrencyBRL(v)}</span>
+                              </span>
+                            ))}
+                        </div>
+                      )}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-[10px] border-vinho/20 text-vinho">
@@ -775,6 +944,115 @@ export default function AdminFinanceiroScreen() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            {/* Seção Divisão entre integrantes */}
+            <div className="border border-vinho/15 bg-white/70 rounded-xl p-3.5 space-y-3">
+              <div className="flex items-center justify-between gap-2 border-b border-vinho/10 pb-2">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-dourado-dark shrink-0" />
+                  <span className="text-xs font-bold text-vinho">
+                    Divisão entre Integrantes (CoffeeCast 4.0)
+                  </span>
+                </div>
+                <span className="text-[10px] text-vinho/60 hidden sm:inline">
+                  Campos manuais e editáveis
+                </span>
+              </div>
+
+              <p className="text-[11px] text-vinho/70 leading-relaxed">
+                Preencha quanto cada integrante pagou nesta despesa (ex.: uma pode pagar tudo agora
+                e as outras depois). Você pode editar e atualizar estes valores a qualquer momento.
+              </p>
+
+              <div className="space-y-2 pt-1">
+                {nomesIntegrantes.map((nome) => {
+                  const valAtual = divisaoForm[nome] || ''
+                  return (
+                    <div
+                      key={nome}
+                      className="flex items-center justify-between gap-2 p-1.5 bg-white rounded-lg border border-vinho/10 focus-within:border-dourado transition-all"
+                    >
+                      <Label
+                        htmlFor={`div-${nome}`}
+                        className="text-xs font-semibold text-vinho flex items-center gap-2 cursor-pointer flex-1 min-w-0 truncate"
+                        title={nome}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-dourado shrink-0" />
+                        <span className="truncate">{nome}</span>
+                      </Label>
+
+                      <div className="flex items-center gap-1.5 shrink-0 w-36 sm:w-40">
+                        <span className="text-[11px] font-bold text-vinho/60">R$</span>
+                        <Input
+                          id={`div-${nome}`}
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0,00"
+                          value={valAtual}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setDivisaoForm((prev) => ({ ...prev, [nome]: v }))
+                          }}
+                          className="h-8 text-xs font-bold text-vinho bg-marfim/50 border-vinho/15 text-right"
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Auxiliar de soma vs total da movimentação */}
+              {(() => {
+                const totalLancamento = parseFloat(valor.replace(',', '.')) || 0
+                const totalPreenchido = Object.values(divisaoForm).reduce((acc, v) => {
+                  const n = parseFloat((v || '').replace(',', '.'))
+                  return acc + (!isNaN(n) && n > 0 ? n : 0)
+                }, 0)
+                const diferenca = totalLancamento - totalPreenchido
+                const temPreenchimento = totalPreenchido > 0
+
+                return (
+                  <div className="pt-2 border-t border-vinho/10 space-y-1">
+                    <div className="flex items-center justify-between text-xs font-medium text-vinho">
+                      <span className="flex items-center gap-1 text-vinho/80">
+                        <Info className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
+                        Soma preenchida:
+                      </span>
+                      <span className="font-bold">
+                        {formatCurrencyBRL(totalPreenchido)}{' '}
+                        {totalLancamento > 0 && (
+                          <span className="text-vinho/60 font-normal">
+                            de {formatCurrencyBRL(totalLancamento)}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {temPreenchimento && totalLancamento > 0 && (
+                      <div className="text-[11px] flex items-center justify-between">
+                        {Math.abs(diferenca) < 0.01 ? (
+                          <span className="text-emerald-700 font-bold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                            Total preenchido bate exatamente com o valor!
+                          </span>
+                        ) : diferenca > 0 ? (
+                          <span className="text-amber-800 font-medium">
+                            Faltam R$ {diferenca.toFixed(2).replace('.', ',')} para cobrir o total
+                            (salvamento permitido).
+                          </span>
+                        ) : (
+                          <span className="text-rose-700 font-medium">
+                            Soma excede o total em R${' '}
+                            {Math.abs(diferenca).toFixed(2).replace('.', ',')} (salvamento
+                            permitido).
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">

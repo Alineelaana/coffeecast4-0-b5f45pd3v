@@ -89,6 +89,14 @@ export interface ContatoRecord {
 export type TransacaoMovimentacao = 'receita' | 'despesa'
 export type TransacaoOrigem = 'manual' | 'horas_compradas'
 
+export interface DivisaoIntegranteItem {
+  nome: string
+  valor: number
+  pago?: boolean
+}
+
+export type DivisaoIntegrantes = Record<string, number> | DivisaoIntegranteItem[]
+
 export interface TransacaoRecord {
   id: string
   descricao: string
@@ -99,6 +107,7 @@ export interface TransacaoRecord {
   tipo_movimentacao?: TransacaoMovimentacao
   origem?: TransacaoOrigem
   horas_compradas_id?: string
+  divisao_integrantes?: Record<string, number> | null
   created: string
   updated: string
 }

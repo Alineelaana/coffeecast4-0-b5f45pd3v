@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T04:57:52.197Z",
+  "generatedAt": "2026-09-17T05:04:38.701Z",
   "collections": [
     {
       "name": "users",
@@ -455,6 +455,12 @@
           "required": false,
           "system": false,
           "selectValues": ["manual", "horas_compradas"]
+        },
+        {
+          "name": "divisao_integrantes",
+          "type": "json",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
