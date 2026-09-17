@@ -52,6 +52,20 @@ export default function AdminUsuariosScreen() {
   const loadUsers = async () => {
     try {
       setLoading(true)
+      // Tenta carregar primeiro pelo endpoint administrativo com garantia de dados completos (email/role/ativo)
+      try {
+        const res = await pb.send<{ success: boolean; items: UserRecord[] }>(
+          '/backend/v1/admin/users/list',
+          { method: 'GET' },
+        )
+        if (res?.items && Array.isArray(res.items)) {
+          setUsers(res.items)
+          return
+        }
+      } catch (adminListErr) {
+        console.warn('Fallback para listagem padrão de users:', adminListErr)
+      }
+
       const list = await pb.collection('users').getFullList<UserRecord>({
         sort: '-created',
       })
@@ -80,6 +94,7 @@ export default function AdminUsuariosScreen() {
     // Preserva todos os campos atuais do usuário ao abrir o formulário de edição
     setEditingUser(user)
     setEditName(user.name ?? '')
+    // Garante que o e-mail seja preenchido se já existir no registro
     setEditEmail(user.email ?? '')
     setEditRole(user.role || 'prata')
     setEditAtivo(user.ativo !== false)
@@ -93,13 +108,16 @@ export default function AdminUsuariosScreen() {
 
     setSavingEdit(true)
     try {
-      if (!editName.trim()) {
+      const finalName = editName.trim() || editingUser.name || ''
+      const finalEmail = (editEmail.trim() || editingUser.email || '').trim()
+
+      if (!finalName) {
         toast.error('O nome não pode estar em branco.')
         setSavingEdit(false)
         return
       }
 
-      if (!editEmail.trim()) {
+      if (!finalEmail) {
         toast.error('O e-mail não pode estar em branco.')
         setSavingEdit(false)
         return
@@ -125,13 +143,14 @@ export default function AdminUsuariosScreen() {
       }
 
       // Envia atualização para o endpoint administrativo seguro
+      // Preserva email e demais dados originais caso o usuário não os tenha alterado
       const res = await pb.send('/backend/v1/admin/users/update', {
         method: 'POST',
         body: {
           id: editingUser.id,
-          name: editName.trim(),
-          email: editEmail.trim(),
-          role: editRole,
+          name: finalName,
+          email: finalEmail,
+          role: editRole || editingUser.role,
           ativo: editAtivo,
           password: editPassword.trim() || undefined,
         },

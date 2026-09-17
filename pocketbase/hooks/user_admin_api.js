@@ -130,3 +130,46 @@ routerAdd(
   },
   $apis.requireAuth(),
 )
+
+// Endpoint administrativo para listar usuários com email e dados completos para Master
+routerAdd(
+  'GET',
+  '/backend/v1/admin/users/list',
+  (e) => {
+    try {
+      const user = e.auth
+      if (!user) {
+        return e.unauthorizedError('Acesso restrito ao painel administrativo.')
+      }
+
+      const userRole = user.getString('role')
+      if (userRole !== 'master') {
+        return e.forbiddenError(
+          'Apenas o Superadministrador Master pode gerenciar e listar detalhes de usuários.',
+        )
+      }
+
+      const records = $app.findRecordsByFilter('_pb_users_auth_', '', '-created', 500, 0)
+      const list = records.map((rec) => ({
+        id: rec.id,
+        name: rec.getString('name'),
+        email: rec.getString('email'),
+        role: rec.getString('role') || 'prata',
+        ativo: rec.getBool('ativo'),
+        created: rec.getString('created'),
+        updated: rec.getString('updated'),
+      }))
+
+      return e.json(200, {
+        success: true,
+        items: list,
+      })
+    } catch (err) {
+      console.log('Erro ao listar usuários via user_admin_api:', err)
+      return e.json(500, {
+        error: 'Falha ao listar usuários: ' + (err.message || String(err)),
+      })
+    }
+  },
+  $apis.requireAuth(),
+)
