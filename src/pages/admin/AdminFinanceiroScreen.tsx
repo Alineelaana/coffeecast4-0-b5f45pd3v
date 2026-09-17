@@ -28,10 +28,16 @@ import {
   Trash2,
   DollarSign,
   TrendingDown,
+  TrendingUp,
   CheckCircle2,
   Clock,
   Filter,
+  Layers,
+  ArrowUpRight,
+  ArrowDownRight,
+  Sparkles,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
 export default function AdminFinanceiroScreen() {
@@ -41,11 +47,13 @@ export default function AdminFinanceiroScreen() {
   // Filtros
   const [filtroSituacao, setFiltroSituacao] = useState<string>('todos')
   const [filtroTipo, setFiltroTipo] = useState<string>('todos')
+  const [filtroMovimentacao, setFiltroMovimentacao] = useState<string>('todos')
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<TransacaoRecord | null>(null)
 
   const [descricao, setDescricao] = useState('')
+  const [tipoMovimentacao, setTipoMovimentacao] = useState<'receita' | 'despesa'>('despesa')
   const [tipo, setTipo] = useState<'gravacao' | 'edicao' | 'equipamento' | 'marketing' | 'outros'>(
     'gravacao',
   )
@@ -76,6 +84,7 @@ export default function AdminFinanceiroScreen() {
   const handleOpenCreate = () => {
     setEditingItem(null)
     setDescricao('')
+    setTipoMovimentacao('despesa')
     setTipo('gravacao')
     setValor('')
     setDataVencimento(toInputDate(new Date().toISOString()))
@@ -86,6 +95,7 @@ export default function AdminFinanceiroScreen() {
   const handleOpenEdit = (t: TransacaoRecord) => {
     setEditingItem(t)
     setDescricao(t.descricao)
+    setTipoMovimentacao(t.tipo_movimentacao || 'despesa')
     setTipo(t.tipo)
     setValor(String(t.valor))
     setDataVencimento(toInputDate(t.data_vencimento))
@@ -105,20 +115,26 @@ export default function AdminFinanceiroScreen() {
         return
       }
 
-      const payload = {
+      const payload: Partial<TransacaoRecord> = {
         descricao: descricao.trim(),
         tipo,
         valor: valNum,
         data_vencimento: toInputDate(dataVencimento),
         situacao,
+        tipo_movimentacao: tipoMovimentacao,
+        origem: editingItem?.origem || 'manual',
       }
 
       if (editingItem) {
         await pb.collection('transacoes').update(editingItem.id, payload)
-        toast.success('Despesa atualizada!')
+        toast.success(
+          tipoMovimentacao === 'receita' ? 'Receita atualizada!' : 'Despesa atualizada!',
+        )
       } else {
         await pb.collection('transacoes').create(payload)
-        toast.success('Despesa cadastrada!')
+        toast.success(
+          tipoMovimentacao === 'receita' ? 'Receita cadastrada!' : 'Despesa cadastrada!',
+        )
       }
 
       setModalOpen(false)
@@ -164,10 +180,24 @@ export default function AdminFinanceiroScreen() {
   const filtered = transacoes.filter((item) => {
     if (filtroSituacao !== 'todos' && item.situacao !== filtroSituacao) return false
     if (filtroTipo !== 'todos' && item.tipo !== filtroTipo) return false
+    if (filtroMovimentacao !== 'todos') {
+      const mov = item.tipo_movimentacao || 'despesa'
+      if (mov !== filtroMovimentacao) return false
+    }
     return true
   })
 
-  // Totais
+  // Agregações financeiras completas
+  const totalReceitas = transacoes
+    .filter((t) => t.tipo_movimentacao === 'receita')
+    .reduce((acc, curr) => acc + (curr.valor || 0), 0)
+
+  const totalDespesas = transacoes
+    .filter((t) => (t.tipo_movimentacao || 'despesa') === 'despesa')
+    .reduce((acc, curr) => acc + (curr.valor || 0), 0)
+
+  const saldoLiquido = totalReceitas - totalDespesas
+
   const totalQuitado = transacoes
     .filter((t) => t.situacao === 'quitado')
     .reduce((acc, curr) => acc + (curr.valor || 0), 0)
@@ -263,50 +293,105 @@ export default function AdminFinanceiroScreen() {
           })}
         </div>
       </div>
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-white border border-vinho/10 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+      {/* Cards de Resumo Integrados: Receitas (Horas/Entradas), Despesas e Saldo */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        {/* Receitas (Entradas / Pacotes de Horas) */}
+        <div className="bg-white border border-emerald-500/20 rounded-2xl p-5 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-vinho/60 uppercase tracking-wider">
-              Total em Aberto
-            </p>
-            <h3 className="font-serif text-2xl font-black text-rose-700 mt-1">
-              {formatCurrencyBRL(totalAberto)}
-            </h3>
-            <span className="text-[11px] text-rose-600 font-medium">A pagar nos vencimentos</span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center">
-            <Clock className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white border border-vinho/10 rounded-2xl p-5 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-vinho/60 uppercase tracking-wider">
-              Total Quitado
+            <p className="text-xs font-semibold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+              <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />
+              Total Receitas
             </p>
             <h3 className="font-serif text-2xl font-black text-emerald-700 mt-1">
-              {formatCurrencyBRL(totalQuitado)}
+              {formatCurrencyBRL(totalReceitas)}
             </h3>
-            <span className="text-[11px] text-emerald-600 font-medium">Pagamentos liquidados</span>
+            <span className="text-[11px] text-emerald-600 font-medium">
+              Controle de Horas & Entradas
+            </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
-            <CheckCircle2 className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-6 h-6" />
           </div>
         </div>
 
+        {/* Despesas (Saídas de Custos) */}
+        <div className="bg-white border border-rose-500/20 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-rose-800 uppercase tracking-wider flex items-center gap-1">
+              <ArrowDownRight className="w-3.5 h-3.5 text-rose-600" />
+              Total Despesas
+            </p>
+            <h3 className="font-serif text-2xl font-black text-rose-700 mt-1">
+              {formatCurrencyBRL(totalDespesas)}
+            </h3>
+            <span className="text-[11px] text-rose-600 font-medium">
+              Custos de Produção & Edição
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center shrink-0">
+            <TrendingDown className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Saldo Líquido */}
+        <div
+          className={`rounded-2xl p-5 shadow-sm flex items-center justify-between border-2 ${
+            saldoLiquido >= 0
+              ? 'bg-gradient-to-br from-vinho via-vinho to-vinho-dark border-dourado text-white'
+              : 'bg-rose-50 border-rose-300 text-rose-900'
+          }`}
+        >
+          <div>
+            <p
+              className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1 ${
+                saldoLiquido >= 0 ? 'text-dourado-light' : 'text-rose-700'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Saldo Líquido
+            </p>
+            <h3
+              className={`font-serif text-2xl font-black mt-1 ${
+                saldoLiquido >= 0 ? 'text-dourado' : 'text-rose-700'
+              }`}
+            >
+              {formatCurrencyBRL(saldoLiquido)}
+            </h3>
+            <span
+              className={`text-[11px] font-medium ${
+                saldoLiquido >= 0 ? 'text-white/80' : 'text-rose-600'
+              }`}
+            >
+              Receitas menos despesas
+            </span>
+          </div>
+          <div
+            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+              saldoLiquido >= 0 ? 'bg-dourado/20 text-dourado' : 'bg-rose-100 text-rose-700'
+            }`}
+          >
+            <DollarSign className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Situação: Quitado vs Em Aberto */}
         <div className="bg-white border border-vinho/10 rounded-2xl p-5 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-vinho/60 uppercase tracking-wider">
-              Volume Total de Gastos
+              Status Pagamentos
             </p>
-            <h3 className="font-serif text-2xl font-black text-vinho mt-1">
-              {formatCurrencyBRL(totalQuitado + totalAberto)}
-            </h3>
-            <span className="text-[11px] text-vinho/60 font-medium">Total orçado</span>
+            <div className="mt-1 space-y-0.5">
+              <span className="text-xs font-bold text-emerald-700 block">
+                Quitado: {formatCurrencyBRL(totalQuitado)}
+              </span>
+              <span className="text-xs font-bold text-rose-600 block">
+                Aberto: {formatCurrencyBRL(totalAberto)}
+              </span>
+            </div>
+            <span className="text-[11px] text-vinho/60 font-medium">Controle de liquidação</span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-vinho/10 text-vinho flex items-center justify-center">
-            <DollarSign className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-xl bg-vinho/10 text-vinho flex items-center justify-center shrink-0">
+            <Clock className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -319,6 +404,20 @@ export default function AdminFinanceiroScreen() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2 text-xs flex-1 sm:flex-none">
+            <span className="text-vinho/70 shrink-0">Fluxo:</span>
+            <Select value={filtroMovimentacao} onValueChange={setFiltroMovimentacao}>
+              <SelectTrigger className="h-9 sm:h-8 w-full sm:w-36 text-xs bg-marfim border-vinho/15">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os Fluxos</SelectItem>
+                <SelectItem value="receita">Receitas (Entradas)</SelectItem>
+                <SelectItem value="despesa">Despesas (Saídas)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex items-center gap-2 text-xs flex-1 sm:flex-none">
             <span className="text-vinho/70 shrink-0">Situação:</span>
             <Select value={filtroSituacao} onValueChange={setFiltroSituacao}>
@@ -371,9 +470,27 @@ export default function AdminFinanceiroScreen() {
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-1">
                   <h4 className="text-xs font-bold text-vinho leading-tight">{item.descricao}</h4>
-                  <Badge variant="outline" className="text-[10px] border-vinho/20 text-vinho">
-                    {tipoLabels[item.tipo] || item.tipo}
-                  </Badge>
+                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    <Badge
+                      className={`text-[9px] font-bold ${
+                        item.tipo_movimentacao === 'receita'
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          : 'bg-rose-100 text-rose-800 border-rose-300'
+                      }`}
+                    >
+                      {item.tipo_movimentacao === 'receita' ? '+ Receita' : '- Despesa'}
+                    </Badge>
+                    {item.origem === 'horas_compradas' && (
+                      <Link to="/admin/horas">
+                        <Badge className="bg-dourado/20 text-dourado-dark border-dourado/40 text-[9px] font-bold cursor-pointer hover:bg-dourado/30">
+                          Controle de Horas
+                        </Badge>
+                      </Link>
+                    )}
+                    <Badge variant="outline" className="text-[10px] border-vinho/20 text-vinho">
+                      {tipoLabels[item.tipo] || item.tipo}
+                    </Badge>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <Button
@@ -463,14 +580,37 @@ export default function AdminFinanceiroScreen() {
               {filtered.map((item) => (
                 <TableRow key={item.id} className="hover:bg-vinho/5">
                   <TableCell className="text-xs font-bold text-vinho max-w-sm">
-                    {item.descricao}
+                    <div>{item.descricao}</div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Badge
+                        className={`text-[9px] font-bold ${
+                          item.tipo_movimentacao === 'receita'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : 'bg-rose-100 text-rose-800 border border-rose-300'
+                        }`}
+                      >
+                        {item.tipo_movimentacao === 'receita' ? '+ Receita' : '- Despesa'}
+                      </Badge>
+                      {item.origem === 'horas_compradas' && (
+                        <Link to="/admin/horas">
+                          <Badge className="bg-dourado/20 text-dourado-dark border border-dourado/40 text-[9px] font-bold cursor-pointer hover:bg-dourado/30">
+                            Origem: Controle de Horas
+                          </Badge>
+                        </Link>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-[10px] border-vinho/20 text-vinho">
                       {tipoLabels[item.tipo] || item.tipo}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-xs font-bold text-vinho">
+                  <TableCell
+                    className={`text-xs font-black ${
+                      item.tipo_movimentacao === 'receita' ? 'text-emerald-700' : 'text-vinho'
+                    }`}
+                  >
+                    {item.tipo_movimentacao === 'receita' ? '+' : '-'}{' '}
                     {formatCurrencyBRL(item.valor)}
                   </TableCell>
                   <TableCell className="text-xs text-vinho/70">
@@ -529,19 +669,39 @@ export default function AdminFinanceiroScreen() {
         <DialogContent className="w-[94vw] max-w-md max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho">
-              {editingItem ? 'Editar Despesa' : 'Cadastrar Nova Despesa'}
+              {editingItem
+                ? editingItem.tipo_movimentacao === 'receita'
+                  ? 'Editar Receita'
+                  : 'Editar Despesa'
+                : 'Cadastrar Movimentação Financeira'}
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSave} className="space-y-4 pt-2">
             <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-vinho">Tipo de Movimentação *</Label>
+              <Select
+                value={tipoMovimentacao}
+                onValueChange={(val: 'receita' | 'despesa') => setTipoMovimentacao(val)}
+              >
+                <SelectTrigger className="bg-white border-vinho/20 text-xs font-semibold">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="despesa">Despesa (Saída de Caixa / Custo)</SelectItem>
+                  <SelectItem value="receita">Receita (Entrada / Compra de Horas)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
               <Label htmlFor="t-desc" className="text-xs font-semibold text-vinho">
-                Descrição do Gasto *
+                Descrição da Movimentação *
               </Label>
               <Input
                 id="t-desc"
                 required
-                placeholder="Ex.: Pagamento de horas de gravação - Estúdio Áudio 4.0"
+                placeholder="Ex.: Pacote de horas de estúdio, edição ou equipamento..."
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
                 className="bg-white border-vinho/20 text-sm"
@@ -631,7 +791,7 @@ export default function AdminFinanceiroScreen() {
                 disabled={saving}
                 className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
               >
-                {saving ? 'Salvando...' : 'Salvar Despesa'}
+                {saving ? 'Salvando...' : 'Salvar Movimentação'}
               </Button>
             </div>
           </form>

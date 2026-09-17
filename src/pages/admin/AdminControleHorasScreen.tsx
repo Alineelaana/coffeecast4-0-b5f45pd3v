@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import pb from '@/lib/pocketbase/client'
 import { formatCurrencyBRL, formatDateBR, toInputDate } from '@/lib/formatters'
-import type { HorasCompradasRecord, AgendaRecord } from '@/types/database'
+import type { HorasCompradasRecord, AgendaRecord, TransacaoRecord } from '@/types/database'
 import {
   Table,
   TableBody,
@@ -45,6 +45,7 @@ import { Link } from 'react-router-dom'
 export default function AdminControleHorasScreen() {
   const [compras, setCompras] = useState<HorasCompradasRecord[]>([])
   const [agendamentos, setAgendamentos] = useState<AgendaRecord[]>([])
+  const [transacoesMap, setTransacoesMap] = useState<Record<string, TransacaoRecord>>({})
   const [loading, setLoading] = useState(true)
 
   // Filtro na listagem de compras
@@ -67,16 +68,30 @@ export default function AdminControleHorasScreen() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [comprasList, agendaList] = await Promise.all([
+      const [comprasList, agendaList, transacoesList] = await Promise.all([
         pb.collection('horas_compradas').getFullList<HorasCompradasRecord>({
           sort: '-data',
         }),
         pb.collection('agenda').getFullList<AgendaRecord>({
           sort: '-data_gravacao',
         }),
+        pb
+          .collection('transacoes')
+          .getFullList<TransacaoRecord>({
+            filter: "origem = 'horas_compradas' || horas_compradas_id != ''",
+          })
+          .catch(() => [] as TransacaoRecord[]),
       ])
       setCompras(comprasList)
       setAgendamentos(agendaList)
+
+      const map: Record<string, TransacaoRecord> = {}
+      transacoesList.forEach((t) => {
+        if (t.horas_compradas_id) {
+          map[t.horas_compradas_id] = t
+        }
+      })
+      setTransacoesMap(map)
     } catch (err) {
       console.error('Erro ao carregar controle de horas:', err)
       toast.error('Erro ao carregar dados do banco de horas.')
@@ -169,10 +184,20 @@ export default function AdminControleHorasScreen() {
 
       if (editingItem) {
         await pb.collection('horas_compradas').update(editingItem.id, payload)
-        toast.success('Registro de horas atualizado com sucesso!')
+        if (valNum && valNum > 0) {
+          toast.success('Registro de horas atualizado! Movimentação sincronizada no Financeiro.')
+        } else {
+          toast.success('Registro de horas atualizado com sucesso!')
+        }
       } else {
         await pb.collection('horas_compradas').create(payload)
-        toast.success('Horas cadastradas com sucesso!')
+        if (valNum && valNum > 0) {
+          toast.success(
+            'Horas cadastradas! Movimentação financeira (receita) criada automaticamente no Financeiro.',
+          )
+        } else {
+          toast.success('Horas cadastradas com sucesso!')
+        }
       }
 
       setModalOpen(false)
@@ -191,7 +216,7 @@ export default function AdminControleHorasScreen() {
 
     try {
       await pb.collection('horas_compradas').delete(id)
-      toast.success('Horas removidas do banco!')
+      toast.success('Horas removidas do banco e movimentação financeira vinculada excluída!')
       fetchData()
     } catch (err) {
       console.error(err)
@@ -204,7 +229,9 @@ export default function AdminControleHorasScreen() {
     const nova = item.situacao === 'paga' ? 'em_aberto' : 'paga'
     try {
       await pb.collection('horas_compradas').update(item.id, { situacao: nova })
-      toast.success(`Situação atualizada para "${nova === 'paga' ? 'Paga' : 'Em Aberto'}"!`)
+      toast.success(
+        `Situação atualizada para "${nova === 'paga' ? 'Paga' : 'Em Aberto'}" e sincronizada no Financeiro!`,
+      )
       setCompras((prev) => prev.map((c) => (c.id === item.id ? { ...c, situacao: nova } : c)))
     } catch (err) {
       console.error(err)
@@ -461,7 +488,16 @@ export default function AdminControleHorasScreen() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <h4 className="text-sm font-bold text-vinho">{item.descricao}</h4>
-                      <span className="text-xs text-vinho/60">{formatDateBR(item.data)}</span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-vinho/60">{formatDateBR(item.data)}</span>
+                        {transacoesMap[item.id] && (
+                          <Link to="/admin/financeiro">
+                            <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[9px] font-bold">
+                              No Financeiro ✓
+                            </Badge>
+                          </Link>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <Button
@@ -573,7 +609,17 @@ export default function AdminControleHorasScreen() {
                         {formatDateBR(item.data)}
                       </TableCell>
                       <TableCell className="text-xs font-bold text-vinho max-w-xs">
-                        {item.descricao}
+                        <div>{item.descricao}</div>
+                        {transacoesMap[item.id] && (
+                          <div className="mt-1">
+                            <Link to="/admin/financeiro">
+                              <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[9px] font-bold hover:bg-emerald-200 cursor-pointer">
+                                Lançado no Financeiro (
+                                {formatCurrencyBRL(transacoesMap[item.id].valor)})
+                              </Badge>
+                            </Link>
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-xs">
                         <span className="font-bold text-vinho bg-vinho/10 px-2.5 py-1 rounded-full border border-vinho/15">
@@ -841,15 +887,18 @@ export default function AdminControleHorasScreen() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="hc-valor" className="text-xs font-semibold text-vinho">
-                  Valor Pago (R$) <span className="text-vinho/60 font-normal">(opcional)</span>
+                  Valor Pago (R$)
                 </Label>
                 <Input
                   id="hc-valor"
                   placeholder="Ex.: 1500,00"
                   value={valor}
                   onChange={(e) => setValor(e.target.value)}
-                  className="bg-white border-vinho/20 text-sm"
+                  className="bg-white border-vinho/20 text-sm font-semibold"
                 />
+                <span className="text-[10px] text-vinho/65 block">
+                  Integração: cria automaticamente uma receita no Financeiro.
+                </span>
               </div>
 
               <div className="space-y-1.5">

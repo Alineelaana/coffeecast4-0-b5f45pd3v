@@ -87,7 +87,7 @@ export default function DashboardScreen() {
         setProximasGravacoes(agendaList.slice(0, 5))
         setUltimosContatos(contatosList.slice(0, 5))
 
-        // Agrupamento por tipo de transação
+        // Agrupamento por tipo de transação (apenas despesas de custos para o gráfico de custos)
         const tipoMap: Record<string, number> = {
           gravacao: 0,
           edicao: 0,
@@ -96,10 +96,13 @@ export default function DashboardScreen() {
           outros: 0,
         }
         transacoesList.forEach((t) => {
-          if (tipoMap[t.tipo] !== undefined) {
-            tipoMap[t.tipo] += t.valor || 0
-          } else {
-            tipoMap.outros += t.valor || 0
+          // Despesas compõem a distribuição de custos
+          if ((t.tipo_movimentacao || 'despesa') === 'despesa') {
+            if (tipoMap[t.tipo] !== undefined) {
+              tipoMap[t.tipo] += t.valor || 0
+            } else {
+              tipoMap.outros += t.valor || 0
+            }
           }
         })
         setTransacoesPorTipo(tipoMap)

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T04:51:16.211Z",
+  "generatedAt": "2026-09-17T04:57:52.197Z",
   "collections": [
     {
       "name": "users",
@@ -434,12 +434,34 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "tipo_movimentacao",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["receita", "despesa"]
+        },
+        {
+          "name": "horas_compradas_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "horas_compradas"
+        },
+        {
+          "name": "origem",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["manual", "horas_compradas"]
         }
       ],
       "indexes": [
         "CREATE INDEX idx_transacoes_vencimento ON transacoes (data_vencimento)",
         "CREATE INDEX idx_transacoes_situacao ON transacoes (situacao)",
-        "CREATE INDEX idx_transacoes_tipo ON transacoes (tipo)"
+        "CREATE INDEX idx_transacoes_tipo ON transacoes (tipo)",
+        "CREATE INDEX `idx_transacoes_horas_compradas` ON `transacoes` (horas_compradas_id)"
       ]
     },
     {

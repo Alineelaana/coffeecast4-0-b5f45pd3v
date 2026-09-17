@@ -86,6 +86,9 @@ export interface ContatoRecord {
   updated: string
 }
 
+export type TransacaoMovimentacao = 'receita' | 'despesa'
+export type TransacaoOrigem = 'manual' | 'horas_compradas'
+
 export interface TransacaoRecord {
   id: string
   descricao: string
@@ -93,6 +96,9 @@ export interface TransacaoRecord {
   valor: number
   data_vencimento: string
   situacao: 'quitado' | 'em_aberto'
+  tipo_movimentacao?: TransacaoMovimentacao
+  origem?: TransacaoOrigem
+  horas_compradas_id?: string
   created: string
   updated: string
 }
