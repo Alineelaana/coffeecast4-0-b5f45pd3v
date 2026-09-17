@@ -60,9 +60,7 @@ export default function AdminFinanceiroScreen() {
 
   const [descricao, setDescricao] = useState('')
   const [tipoMovimentacao, setTipoMovimentacao] = useState<'receita' | 'despesa'>('despesa')
-  const [tipo, setTipo] = useState<'gravacao' | 'edicao' | 'equipamento' | 'marketing' | 'outros'>(
-    'gravacao',
-  )
+  const [tipo, setTipo] = useState<TransacaoRecord['tipo']>('gravacao')
   const [valor, setValor] = useState('')
   const [dataVencimento, setDataVencimento] = useState('')
   const [situacao, setSituacao] = useState<'quitado' | 'em_aberto'>('em_aberto')
@@ -285,8 +283,34 @@ export default function AdminFinanceiroScreen() {
     edicao: 'Edição de Áudio/Vídeo',
     equipamento: 'Equipamentos',
     marketing: 'Marketing',
-    outros: 'Outros',
+    outros: 'Outros Custos',
+    participacao_convidado: 'Participação de Convidado',
+    entrevista: 'Entrevista',
+    monetizacao_youtube: 'Monetização YouTube',
+    monetizacao_instagram: 'Monetização Instagram',
+    monetizacao_tiktok: 'Monetização TikTok',
+    monetizacao: 'Monetização',
   }
+
+  // Opções organizadas por tipo de movimentação
+  const CATEGORIAS_RECEITA: { value: TransacaoRecord['tipo']; label: string }[] = [
+    { value: 'participacao_convidado', label: 'Participação de Convidado' },
+    { value: 'entrevista', label: 'Entrevista' },
+    { value: 'monetizacao_youtube', label: 'Monetização YouTube' },
+    { value: 'monetizacao_instagram', label: 'Monetização Instagram' },
+    { value: 'monetizacao_tiktok', label: 'Monetização TikTok' },
+    { value: 'monetizacao', label: 'Monetização' },
+    { value: 'gravacao', label: 'Horas de Gravação (Estúdio)' },
+    { value: 'outros', label: 'Outras Receitas' },
+  ]
+
+  const CATEGORIAS_DESPESA: { value: TransacaoRecord['tipo']; label: string }[] = [
+    { value: 'gravacao', label: 'Horas de Gravação' },
+    { value: 'edicao', label: 'Edição Áudio/Vídeo' },
+    { value: 'equipamento', label: 'Equipamentos' },
+    { value: 'marketing', label: 'Marketing' },
+    { value: 'outros', label: 'Outros Custos' },
+  ]
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -335,6 +359,12 @@ export default function AdminFinanceiroScreen() {
               equipamento: '#5F2650',
               marketing: '#C88E9B',
               outros: '#853C73',
+              participacao_convidado: '#10B981',
+              entrevista: '#059669',
+              monetizacao_youtube: '#EF4444',
+              monetizacao_instagram: '#E1306C',
+              monetizacao_tiktok: '#1E293B',
+              monetizacao: '#047857',
             }
             const barColor = colorsMap[key] || '#4B1E3F'
 
@@ -557,11 +587,17 @@ export default function AdminFinanceiroScreen() {
               <SelectContent>
                 <SelectItem value="todos">Todas Categorias</SelectItem>
                 <SelectItem value="gravacao">Horas de Gravação</SelectItem>
-                <SelectItem value="edicao">Edição</SelectItem>
+                <SelectItem value="edicao">Edição Áudio/Vídeo</SelectItem>
                 <SelectItem value="equipamento">Equipamentos</SelectItem>
                 <SelectItem value="marketing">Marketing</SelectItem>
+                <SelectItem value="participacao_convidado">Participação de Convidado</SelectItem>
+                <SelectItem value="entrevista">Entrevista</SelectItem>
+                <SelectItem value="monetizacao_youtube">Monetização YouTube</SelectItem>
+                <SelectItem value="monetizacao_instagram">Monetização Instagram</SelectItem>
+                <SelectItem value="monetizacao_tiktok">Monetização TikTok</SelectItem>
+                <SelectItem value="monetizacao">Monetização</SelectItem>
                 <SelectItem value="outros">Outros</SelectItem>
-              </SelectContent>
+              </SelectContent>{' '}
             </Select>
           </div>
         </div>
@@ -851,7 +887,23 @@ export default function AdminFinanceiroScreen() {
               <Label className="text-xs font-semibold text-vinho">Tipo de Movimentação *</Label>
               <Select
                 value={tipoMovimentacao}
-                onValueChange={(val: 'receita' | 'despesa') => setTipoMovimentacao(val)}
+                onValueChange={(val: 'receita' | 'despesa') => {
+                  setTipoMovimentacao(val)
+                  // Ao trocar para receita, se o tipo atual não for típico de receita, muda para o primeiro padrão
+                  if (val === 'receita') {
+                    if (
+                      !CATEGORIAS_RECEITA.some((c) => c.value === tipo) &&
+                      tipo !== 'gravacao' &&
+                      tipo !== 'outros'
+                    ) {
+                      setTipo('participacao_convidado')
+                    }
+                  } else if (val === 'despesa') {
+                    if (!CATEGORIAS_DESPESA.some((c) => c.value === tipo)) {
+                      setTipo('gravacao')
+                    }
+                  }
+                }}
               >
                 <SelectTrigger className="bg-white border-vinho/20 text-xs font-semibold">
                   <SelectValue />
@@ -880,21 +932,22 @@ export default function AdminFinanceiroScreen() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-vinho">Categoria *</Label>
-                <Select
-                  value={tipo}
-                  onValueChange={(
-                    val: 'gravacao' | 'edicao' | 'equipamento' | 'marketing' | 'outros',
-                  ) => setTipo(val)}
-                >
+                <Select value={tipo} onValueChange={(val: TransacaoRecord['tipo']) => setTipo(val)}>
                   <SelectTrigger className="bg-white border-vinho/20 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="gravacao">Horas de Gravação</SelectItem>
-                    <SelectItem value="edicao">Edição Áudio/Vídeo</SelectItem>
-                    <SelectItem value="equipamento">Equipamentos</SelectItem>
-                    <SelectItem value="marketing">Marketing</SelectItem>
-                    <SelectItem value="outros">Outros Custos</SelectItem>
+                    {tipoMovimentacao === 'receita'
+                      ? CATEGORIAS_RECEITA.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </SelectItem>
+                        ))
+                      : CATEGORIAS_DESPESA.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
                   </SelectContent>
                 </Select>
               </div>

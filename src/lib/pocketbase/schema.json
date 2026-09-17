@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T05:13:35.711Z",
+  "generatedAt": "2026-09-17T05:19:54.315Z",
   "collections": [
     {
       "name": "users",
@@ -400,7 +400,19 @@
           "type": "select",
           "required": true,
           "system": false,
-          "selectValues": ["gravacao", "edicao", "equipamento", "marketing", "outros"]
+          "selectValues": [
+            "gravacao",
+            "edicao",
+            "equipamento",
+            "marketing",
+            "outros",
+            "participacao_convidado",
+            "entrevista",
+            "monetizacao_youtube",
+            "monetizacao_instagram",
+            "monetizacao_tiktok",
+            "monetizacao"
+          ]
         },
         {
           "name": "valor",

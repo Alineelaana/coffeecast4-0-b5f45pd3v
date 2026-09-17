@@ -122,6 +122,12 @@ export default function DashboardScreen() {
     equipamento: '#5F2650', // Vinho Claro
     marketing: '#C88E9B', // Rosé
     outros: '#853C73', // Púrpura suave
+    participacao_convidado: '#10B981', // Emerald
+    entrevista: '#059669', // Emerald dark
+    monetizacao_youtube: '#EF4444', // Red
+    monetizacao_instagram: '#E1306C', // Insta pink
+    monetizacao_tiktok: '#1E293B', // Slate dark
+    monetizacao: '#047857', // Emerald deep
   }
 
   const tipoLabels: Record<string, string> = {
@@ -130,6 +136,12 @@ export default function DashboardScreen() {
     equipamento: 'Equipamentos',
     marketing: 'Marketing & Divulgação',
     outros: 'Outros Custos',
+    participacao_convidado: 'Participação de Convidado',
+    entrevista: 'Entrevista',
+    monetizacao_youtube: 'Monetização YouTube',
+    monetizacao_instagram: 'Monetização Instagram',
+    monetizacao_tiktok: 'Monetização TikTok',
+    monetizacao: 'Monetização',
   }
 
   const totalGastosGeral = Object.values(transacoesPorTipo).reduce((a, b) => a + b, 0)

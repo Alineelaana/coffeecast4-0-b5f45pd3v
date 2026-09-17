@@ -100,7 +100,18 @@ export type DivisaoIntegrantes = Record<string, number> | DivisaoIntegranteItem[
 export interface TransacaoRecord {
   id: string
   descricao: string
-  tipo: 'gravacao' | 'edicao' | 'equipamento' | 'marketing' | 'outros'
+  tipo:
+    | 'gravacao'
+    | 'edicao'
+    | 'equipamento'
+    | 'marketing'
+    | 'outros'
+    | 'participacao_convidado'
+    | 'entrevista'
+    | 'monetizacao_youtube'
+    | 'monetizacao_instagram'
+    | 'monetizacao_tiktok'
+    | 'monetizacao'
   valor: number
   data_vencimento: string
   situacao: 'quitado' | 'em_aberto'
