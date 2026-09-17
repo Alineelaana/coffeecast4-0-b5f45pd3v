@@ -75,7 +75,7 @@ routerAdd(
       // 3. Atualizar Cargo/Nível (Role)
       if (typeof body.role === 'string' && body.role.trim() !== '') {
         const newRole = body.role.trim()
-        const validRoles = ['master', 'gerencial', 'ouro', 'prata']
+        const validRoles = ['master', 'adm', 'gerencial', 'ouro', 'prata']
         if (!validRoles.includes(newRole)) {
           return e.badRequestError('Cargo/nível de permissão inválido.')
         }
@@ -87,6 +87,17 @@ routerAdd(
         }
 
         targetRecord.set('role', newRole)
+      }
+
+      // 3.1 Atualizar Permissões de ADM (adm_permissions)
+      // Se body.adm_permissions foi enviado (objeto ou null/string)
+      if (body.adm_permissions !== undefined) {
+        if (targetRecord.getString('role') === 'adm' || body.role === 'adm') {
+          targetRecord.set('adm_permissions', body.adm_permissions)
+        } else {
+          // Se não for ADM, limpa permissões específicas de ADM
+          targetRecord.set('adm_permissions', null)
+        }
       }
 
       // 4. Atualizar Status/Ativo
@@ -117,6 +128,7 @@ routerAdd(
           email: targetRecord.getString('email'),
           role: targetRecord.getString('role'),
           ativo: targetRecord.getBool('ativo'),
+          adm_permissions: targetRecord.get('adm_permissions'),
           created: targetRecord.getString('created'),
           updated: targetRecord.getString('updated'),
         },
@@ -156,6 +168,7 @@ routerAdd(
         email: rec.getString('email'),
         role: rec.getString('role') || 'prata',
         ativo: rec.getBool('ativo'),
+        adm_permissions: rec.get('adm_permissions'),
         created: rec.getString('created'),
         updated: rec.getString('updated'),
       }))

@@ -35,7 +35,7 @@ import { Badge } from '@/components/ui/badge'
 import { useStorefront } from '@/context/StorefrontContext'
 
 export default function AdminLayout() {
-  const { user, logout, role, isMaster } = useAuth()
+  const { user, logout, role, isMaster, isAdm, hasScreenPermission } = useAuth()
   const { stores, activeStore, activeStoreId, setActiveStoreId } = useStorefront()
   const navigate = useNavigate()
   const location = useLocation()
@@ -43,7 +43,7 @@ export default function AdminLayout() {
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [ninePendingCount, setNinePendingCount] = useState(0)
 
-  // Submenu exclusivo Master colapsável
+  // Submenu exclusivo Master / Gestão Avançada colapsável
   const isMasterPathActive = [
     '/admin/storefront',
     '/admin/conteudo',
@@ -170,22 +170,24 @@ export default function AdminLayout() {
     navigate('/login')
   }
 
-  // Itens gerais do menu principal (Acessíveis para Master e Gerencial):
-  // "Nossos Momentos" e "Episódios" agora são abertos para Gerencial e Master
-  const mainMenuItems = [
+  // Itens gerais do menu principal
+  const rawMainMenuItems = [
     {
+      key: 'dashboard',
       label: 'Visão Geral',
       path: '/admin',
       icon: LayoutDashboard,
       exact: true,
     },
     {
+      key: 'notificacoes',
       label: 'Notificações',
       path: '/admin/notificacoes',
       icon: Bell,
       badgeCount: unreadNotificationsCount,
     },
     {
+      key: 'nine',
       label: 'Nine Assistente Virtual',
       path: '/admin/nine',
       icon: Bot,
@@ -193,47 +195,56 @@ export default function AdminLayout() {
       highlight: true,
     },
     {
+      key: 'episodios',
       label: 'Episódios',
       path: '/admin/episodios',
       icon: Tv,
     },
     {
+      key: 'momentos',
       label: 'Nossos Momentos',
       path: '/admin/momentos',
       icon: Camera,
     },
     {
+      key: 'roteiros',
       label: 'Roteiros e Apresentações',
       path: '/admin/roteiros',
       icon: FileText,
     },
     {
+      key: 'depoimentos',
       label: 'Depoimentos',
       path: '/admin/depoimentos',
       icon: MessageSquareQuote,
     },
     {
+      key: 'contatos',
       label: 'Contatos & Leads',
       path: '/admin/contatos',
       icon: Inbox,
     },
     {
+      key: 'financeiro',
       label: 'Financeiro',
       path: '/admin/financeiro',
       icon: DollarSign,
       highlight: true,
     },
     {
+      key: 'horas',
       label: 'Controle de Horas',
       path: '/admin/horas',
       icon: Clock,
     },
     {
+      key: 'agenda',
       label: 'Agenda de Gravação',
       path: '/admin/agenda',
       icon: CalendarDays,
     },
     {
+      key: 'convites',
       label: 'Gerador de Convites',
       path: '/admin/convites',
       icon: FileCheck2,
@@ -241,16 +252,10 @@ export default function AdminLayout() {
     },
   ]
 
-  // SUBMENU EXCLUSIVO MASTER
-  // Agrupa todas as abas que só os usuários master podem acessar:
-  // - Storefront (Multi-Loja)
-  // - Área do Domínio (Domínio do Site)
-  // - Usuários & Permissões
-  // - Editar Site (Conteúdo)
-  // - Integrantes
-  // - Políticas do Site
-  const masterMenuItems = [
+  // SUBMENU EXCLUSIVO MASTER / GESTÃO AVANÇADA
+  const rawMasterMenuItems = [
     {
+      key: 'storefront',
       label: 'Storefront',
       path: '/admin/storefront',
       icon: Store,
@@ -258,6 +263,7 @@ export default function AdminLayout() {
       exact: false,
     },
     {
+      key: 'dominio',
       label: 'Área do Domínio',
       path: '/admin/dominio',
       icon: Globe,
@@ -265,30 +271,46 @@ export default function AdminLayout() {
       exact: false,
     },
     {
+      key: 'usuarios',
       label: 'Usuários & Permissões',
       path: '/admin/usuarios',
       icon: UserCheck,
+      masterOnly: true, // Apenas o Master pode ver e editar usuários & permissões
       exact: false,
     },
     {
+      key: 'conteudo',
       label: 'Editar Site',
       path: '/admin/conteudo',
       icon: FileText,
       exact: false,
     },
     {
+      key: 'integrantes',
       label: 'Integrantes',
       path: '/admin/integrantes',
       icon: Users2,
       exact: false,
     },
     {
+      key: 'politicas',
       label: 'Políticas do Site',
       path: '/admin/politicas',
       icon: ShieldAlert,
       exact: false,
     },
   ]
+
+  // Filtragem dinâmica de itens do menu conforme as permissões do perfil autenticado
+  const mainMenuItems = rawMainMenuItems.filter((item) => hasScreenPermission(item.key))
+
+  const masterMenuItems = rawMasterMenuItems.filter((item) => {
+    if (item.masterOnly && !isMaster) return false
+    return hasScreenPermission(item.key)
+  })
+
+  // Exibe o submenu "Exclusivo Master" / "Gestão da Loja / Master" se houver itens autorizados
+  const showMasterSection = isMaster || masterMenuItems.length > 0
 
   const getPageTitle = () => {
     const allItems = [...mainMenuItems, ...masterMenuItems]
@@ -301,11 +323,13 @@ export default function AdminLayout() {
   const roleLabel =
     role === 'master'
       ? 'Master (Superadministrador)'
-      : role === 'gerencial'
-        ? 'Categoria Gerencial'
-        : role === 'ouro'
-          ? 'Categoria Ouro'
-          : 'Categoria Prata'
+      : role === 'adm'
+        ? 'ADM (Administrador)'
+        : role === 'gerencial'
+          ? 'Categoria Gerencial'
+          : role === 'ouro'
+            ? 'Categoria Ouro'
+            : 'Categoria Prata'
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] flex flex-col md:flex-row font-sans">
@@ -387,8 +411,8 @@ export default function AdminLayout() {
             )
           })}
 
-          {/* SUBMENU EXCLUSIVO MASTER (Aparece SOMENTE para Master) */}
-          {isMaster && (
+          {/* SUBMENU EXCLUSIVO MASTER / GESTÃO AVANÇADA */}
+          {showMasterSection && (
             <div className="pt-4 mt-4 border-t border-vinho-light/40">
               <button
                 type="button"
@@ -403,11 +427,13 @@ export default function AdminLayout() {
                   <div className="w-5 h-5 rounded-md bg-dourado/20 flex items-center justify-center text-dourado">
                     <Shield className="w-3.5 h-3.5 text-dourado" />
                   </div>
-                  <span className="tracking-wide">Exclusivo Master</span>
+                  <span className="tracking-wide">
+                    {isMaster ? 'Exclusivo Master' : 'Gestão do Site & Loja'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Badge className="bg-dourado text-vinho font-bold text-[9px] px-1.5 py-0 rounded">
-                    Master
+                    {isMaster ? 'Master' : 'ADM'}
                   </Badge>
                   <ChevronDown
                     className={`w-4 h-4 text-dourado transition-transform duration-200 ${
@@ -621,8 +647,8 @@ export default function AdminLayout() {
                 )
               })}
 
-              {/* Submenu Exclusivo Master no Mobile (visível apenas para Master) */}
-              {isMaster && (
+              {/* Submenu Exclusivo Master / Gestão Avançada no Mobile */}
+              {showMasterSection && (
                 <div className="pt-3 mt-3 border-t border-vinho-light/40">
                   <button
                     type="button"
@@ -635,11 +661,11 @@ export default function AdminLayout() {
                   >
                     <div className="flex items-center gap-2.5">
                       <Shield className="w-4 h-4 text-dourado" />
-                      <span>Exclusivo Master</span>
+                      <span>{isMaster ? 'Exclusivo Master' : 'Gestão do Site & Loja'}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Badge className="bg-dourado text-vinho font-bold text-[9px] px-1.5 py-0 rounded">
-                        Master
+                        {isMaster ? 'Master' : 'ADM'}
                       </Badge>
                       <ChevronDown
                         className={`w-4 h-4 text-dourado transition-transform duration-200 ${
@@ -729,19 +755,20 @@ export default function AdminLayout() {
             </p>
           </div>
 
-          {/* SELETOR GLOBAL DE LOJA (VISÍVEL APENAS PARA MASTER) */}
-          {isMaster && stores.length > 0 && (
+          {/* SELETOR GLOBAL DE LOJA (VISÍVEL PARA MASTER E ADM AUTORIZADO) */}
+          {(isMaster || isAdm) && stores.length > 0 && (
             <div className="flex items-center gap-2 bg-marfim/80 border border-vinho/15 px-3 py-1.5 rounded-2xl shadow-2xs">
               <Store className="w-4 h-4 text-dourado-dark shrink-0" />
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase font-bold text-vinho/60 tracking-wider">
-                  Loja Ativa
+                  {isAdm && !isMaster ? 'Sua Loja' : 'Loja Ativa'}
                 </span>
                 <select
                   value={activeStoreId || ''}
                   onChange={(e) => setActiveStoreId(e.target.value || null)}
                   className="bg-transparent text-xs font-bold text-vinho focus:outline-none cursor-pointer max-w-[190px] truncate"
                   title="Selecione a loja para alternar o contexto de trabalho"
+                  disabled={stores.length <= 1}
                 >
                   {stores.map((s) => (
                     <option key={s.id} value={s.id} className="text-vinho bg-white">
@@ -750,7 +777,7 @@ export default function AdminLayout() {
                   ))}
                 </select>
               </div>
-              {activeStore && (
+              {activeStore && hasScreenPermission('storefront') && (
                 <NavLink
                   to="/admin/storefront"
                   className="text-[11px] text-dourado-dark hover:underline font-bold ml-1"

@@ -9,8 +9,14 @@ routerAdd(
       }
 
       const userRole = authUser.getString('role')
-      if (userRole !== 'master' && userRole !== 'gerencial') {
-        return e.forbiddenError('Acesso restrito a usuários Master e Gerencial')
+      if (userRole === 'adm') {
+        const perms = authUser.get('adm_permissions') || {}
+        const allowedScreens = Array.isArray(perms.allowedScreens) ? perms.allowedScreens : []
+        if (!allowedScreens.includes('roteiros')) {
+          return e.forbiddenError('Você não tem permissão para usar o assistente de roteiros.')
+        }
+      } else if (userRole !== 'master' && userRole !== 'gerencial') {
+        return e.forbiddenError('Acesso restrito a usuários Master, ADM autorizados e Gerencial')
       }
 
       const body = e.requestInfo().body || {}

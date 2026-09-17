@@ -91,36 +91,120 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-              {/* Visão Geral (Disponível para Master e Gerencial) */}
-              <Route index element={<DashboardScreen />} />
+              {/* Visão Geral (Disponível para Master, Gerencial e ADM com permissão) */}
+              <Route
+                index
+                element={
+                  <ProtectedRoute screenKey="dashboard">
+                    <DashboardScreen />
+                  </ProtectedRoute>
+                }
+              />
 
-              {/* Gestão Operacional permitida para Master e Gerencial */}
-              <Route path="notificacoes" element={<AdminNotificacoesScreen />} />
-              <Route path="nine" element={<AdminNineScreen />} />
-              <Route path="roteiros" element={<AdminRoteirosScreen />} />
-              <Route path="contatos" element={<AdminContatosScreen />} />
-              <Route path="financeiro" element={<AdminFinanceiroScreen />} />
-              <Route path="horas" element={<AdminControleHorasScreen />} />
-              <Route path="agenda" element={<AdminAgendaScreen />} />
-              <Route path="convites" element={<AdminConvitesScreen />} />
+              {/* Gestão Operacional */}
+              <Route
+                path="notificacoes"
+                element={
+                  <ProtectedRoute screenKey="notificacoes">
+                    <AdminNotificacoesScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="nine"
+                element={
+                  <ProtectedRoute screenKey="nine">
+                    <AdminNineScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="roteiros"
+                element={
+                  <ProtectedRoute screenKey="roteiros">
+                    <AdminRoteirosScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="contatos"
+                element={
+                  <ProtectedRoute screenKey="contatos">
+                    <AdminContatosScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="financeiro"
+                element={
+                  <ProtectedRoute screenKey="financeiro">
+                    <AdminFinanceiroScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="horas"
+                element={
+                  <ProtectedRoute screenKey="horas">
+                    <AdminControleHorasScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="agenda"
+                element={
+                  <ProtectedRoute screenKey="agenda">
+                    <AdminAgendaScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="convites"
+                element={
+                  <ProtectedRoute screenKey="convites">
+                    <AdminConvitesScreen />
+                  </ProtectedRoute>
+                }
+              />
 
-              {/* Gestão de Conteúdo e Mídia disponível para Master e Gerencial */}
-              <Route path="episodios" element={<AdminEpisodesScreen />} />
-              <Route path="momentos" element={<AdminMomentosScreen />} />
-              <Route path="depoimentos" element={<AdminDepoimentosScreen />} />
+              {/* Gestão de Conteúdo e Mídia */}
+              <Route
+                path="episodios"
+                element={
+                  <ProtectedRoute screenKey="episodios">
+                    <AdminEpisodesScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="momentos"
+                element={
+                  <ProtectedRoute screenKey="momentos">
+                    <AdminMomentosScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="depoimentos"
+                element={
+                  <ProtectedRoute screenKey="depoimentos">
+                    <AdminDepoimentosScreen />
+                  </ProtectedRoute>
+                }
+              />
 
-              {/* Rotas Restritas Exclusivamente ao Superadministrador Master:
-                - Storefront Multi-Loja (storefront)
-                - Editar Site (conteudo)
-                - Domínio do Site (dominio)
-                - Integrantes (integrantes)
-                - Políticas do Site (politicas)
-                - Usuários & Permissões (usuarios)
-            */}
+              {/* Rotas Avançadas / Master:
+                - Storefront Multi-Loja (storefront) -> Acessível por Master e ADM autorizado
+                - Editar Site (conteudo) -> Acessível por Master e ADM autorizado
+                - Domínio do Site (dominio) -> Acessível por Master e ADM autorizado
+                - Integrantes (integrantes) -> Acessível por Master e ADM autorizado
+                - Políticas do Site (politicas) -> Acessível por Master e ADM autorizado
+                - Usuários & Permissões (usuarios) -> Exclusivo soberano do Master
+              */}
               <Route
                 path="storefront"
                 element={
-                  <ProtectedRoute requireMaster>
+                  <ProtectedRoute screenKey="storefront">
                     <AdminStorefrontScreen />
                   </ProtectedRoute>
                 }
@@ -128,7 +212,7 @@ export default function App() {
               <Route
                 path="conteudo"
                 element={
-                  <ProtectedRoute requireMaster>
+                  <ProtectedRoute screenKey="conteudo">
                     <AdminConteudoScreen />
                   </ProtectedRoute>
                 }
@@ -136,7 +220,7 @@ export default function App() {
               <Route
                 path="dominio"
                 element={
-                  <ProtectedRoute requireMaster>
+                  <ProtectedRoute screenKey="dominio">
                     <AdminDominioScreen />
                   </ProtectedRoute>
                 }
@@ -144,7 +228,7 @@ export default function App() {
               <Route
                 path="integrantes"
                 element={
-                  <ProtectedRoute requireMaster>
+                  <ProtectedRoute screenKey="integrantes">
                     <AdminIntegrantesScreen />
                   </ProtectedRoute>
                 }
@@ -152,7 +236,7 @@ export default function App() {
               <Route
                 path="politicas"
                 element={
-                  <ProtectedRoute requireMaster>
+                  <ProtectedRoute screenKey="politicas">
                     <AdminPoliticasScreen />
                   </ProtectedRoute>
                 }

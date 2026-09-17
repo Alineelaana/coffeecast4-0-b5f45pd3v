@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import pb from '@/lib/pocketbase/client'
 import { useAuth } from '@/context/AuthContext'
-import type { UserRecord, UserRole } from '@/types/database'
+import type { UserRecord, UserRole, AdmPermissions, StoreRecord } from '@/types/database'
 import {
   Table,
   TableBody,
@@ -22,13 +22,133 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Shield, Trash2, UserPlus, Edit3, Key, CheckCircle2, XCircle } from 'lucide-react'
+import {
+  Plus,
+  Shield,
+  Trash2,
+  UserPlus,
+  Edit3,
+  Key,
+  CheckCircle2,
+  XCircle,
+  Store,
+  Sliders,
+  CheckSquare,
+  Square,
+} from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
+
+// Lista de telas e blocos gerenciáveis do painel com rótulos amigáveis em português
+const AVAILABLE_SCREENS = [
+  {
+    key: 'dashboard',
+    label: 'Visão Geral (Dashboard)',
+    description: 'Resumo com contadores e métricas do sistema',
+    group: 'Operacional',
+  },
+  {
+    key: 'notificacoes',
+    label: 'Central de Notificações',
+    description: 'Avisos e pendências em tempo real',
+    group: 'Operacional',
+  },
+  {
+    key: 'nine',
+    label: 'Nine Assistente Virtual',
+    description: 'Atendimento inteligente e conversas de visitantes',
+    group: 'Operacional',
+  },
+  {
+    key: 'financeiro',
+    label: 'Financeiro & Movimentações',
+    description: 'Controle de receitas, despesas e fluxo de caixa',
+    group: 'Gestão Financeira',
+  },
+  {
+    key: 'horas',
+    label: 'Controle de Horas (Banco)',
+    description: 'Registro de pacotes de horas e consumo em gravações',
+    group: 'Gestão Financeira',
+  },
+  {
+    key: 'agenda',
+    label: 'Agenda de Gravação',
+    description: 'Calendário de gravações, postagens e estúdio',
+    group: 'Produção & Gravações',
+  },
+  {
+    key: 'roteiros',
+    label: 'Roteiros e Apresentações',
+    description: 'Fichas de convidados e gerador de roteiros com IA',
+    group: 'Produção & Gravações',
+  },
+  {
+    key: 'convites',
+    label: 'Gerador de Convites',
+    description: 'Criação e exportação de convites para convidados',
+    group: 'Produção & Gravações',
+  },
+  {
+    key: 'contatos',
+    label: 'Contatos & Leads',
+    description: 'Mensagens recebidas pelo formulário do site público',
+    group: 'Produção & Gravações',
+  },
+  {
+    key: 'episodios',
+    label: 'Episódios',
+    description: 'Catálogo de episódios gravados do canal',
+    group: 'Conteúdo do Site',
+  },
+  {
+    key: 'momentos',
+    label: 'Nossos Momentos (Galeria)',
+    description: 'Mural de fotos dos bastidores e convidados',
+    group: 'Conteúdo do Site',
+  },
+  {
+    key: 'depoimentos',
+    label: 'Depoimentos',
+    description: 'Avaliações recebidas e exibidas no carrossel',
+    group: 'Conteúdo do Site',
+  },
+  {
+    key: 'storefront',
+    label: 'Storefront (Multi-Loja)',
+    description: 'Configuração completa da página de loja do cliente',
+    group: 'Exclusivo / Loja',
+  },
+  {
+    key: 'conteudo',
+    label: 'Editar Site (Textos Centrais)',
+    description: 'Edição de chamadas, textos e links institucionais',
+    group: 'Exclusivo / Loja',
+  },
+  {
+    key: 'dominio',
+    label: 'Área do Domínio (DNS)',
+    description: 'Apontamento de domínio próprio e certificados',
+    group: 'Exclusivo / Loja',
+  },
+  {
+    key: 'integrantes',
+    label: 'Integrantes & Apresentadores',
+    description: 'Equipe oficial e apresentadores cadastrados',
+    group: 'Exclusivo / Loja',
+  },
+  {
+    key: 'politicas',
+    label: 'Políticas do Site (LGPD)',
+    description: 'Termos de uso, privacidade e política de cookies',
+    group: 'Exclusivo / Loja',
+  },
+]
 
 export default function AdminUsuariosScreen() {
   const { user: currentUser } = useAuth()
   const [users, setUsers] = useState<UserRecord[]>([])
+  const [stores, setStores] = useState<StoreRecord[]>([])
   const [loading, setLoading] = useState(true)
 
   // Modal de Criação
@@ -36,7 +156,15 @@ export default function AdminUsuariosScreen() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState<UserRole>('prata')
+  const [role, setRole] = useState<UserRole>('adm')
+  const [selectedScreens, setSelectedScreens] = useState<string[]>([
+    'dashboard',
+    'storefront',
+    'episodios',
+    'depoimentos',
+  ])
+  const [allStores, setAllStores] = useState(false)
+  const [selectedStoreIds, setSelectedStoreIds] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
   // Modal de Edição Completa
@@ -44,15 +172,28 @@ export default function AdminUsuariosScreen() {
   const [editingUser, setEditingUser] = useState<UserRecord | null>(null)
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
-  const [editRole, setEditRole] = useState<UserRole>('prata')
+  const [editRole, setEditRole] = useState<UserRole>('adm')
+  const [editSelectedScreens, setEditSelectedScreens] = useState<string[]>([])
+  const [editAllStores, setEditAllStores] = useState(false)
+  const [editSelectedStoreIds, setEditSelectedStoreIds] = useState<string[]>([])
   const [editAtivo, setEditAtivo] = useState(true)
   const [editPassword, setEditPassword] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
 
-  const loadUsers = async () => {
+  const loadUsersAndStores = async () => {
     try {
       setLoading(true)
-      // Tenta carregar primeiro pelo endpoint administrativo com garantia de dados completos (email/role/ativo)
+      // Carregar lojas para o seletor do ADM
+      try {
+        const storeList = await pb.collection('stores').getFullList<StoreRecord>({
+          sort: 'name',
+        })
+        setStores(storeList)
+      } catch (storeErr) {
+        console.warn('Erro ao carregar lojas para seleção:', storeErr)
+      }
+
+      // Tenta carregar usuários primeiro pelo endpoint administrativo com garantia de dados completos
       try {
         const res = await pb.send<{ success: boolean; items: UserRecord[] }>(
           '/backend/v1/admin/users/list',
@@ -79,14 +220,17 @@ export default function AdminUsuariosScreen() {
   }
 
   useEffect(() => {
-    loadUsers()
+    loadUsersAndStores()
   }, [])
 
   const handleOpenCreate = () => {
     setName('')
     setEmail('')
     setPassword('')
-    setRole('prata')
+    setRole('adm')
+    setSelectedScreens(['dashboard', 'storefront', 'episodios', 'depoimentos'])
+    setAllStores(stores.length === 0)
+    setSelectedStoreIds(stores.length > 0 ? [stores[0].id] : [])
     setModalOpen(true)
   }
 
@@ -94,10 +238,23 @@ export default function AdminUsuariosScreen() {
     // Preserva todos os campos atuais do usuário ao abrir o formulário de edição
     setEditingUser(user)
     setEditName(user.name ?? '')
-    // Garante que o e-mail seja preenchido se já existir no registro
     setEditEmail(user.email ?? '')
     setEditRole(user.role || 'prata')
     setEditAtivo(user.ativo !== false)
+
+    // Pré-preenche as permissões existentes do ADM com preservação integral
+    const perms = user.adm_permissions
+    if (perms) {
+      setEditSelectedScreens(Array.isArray(perms.allowedScreens) ? perms.allowedScreens : [])
+      setEditAllStores(Boolean(perms.allStores))
+      setEditSelectedStoreIds(Array.isArray(perms.storeIds) ? perms.storeIds : [])
+    } else {
+      // Padrão amigável caso estivesse vazio ao converter para ADM
+      setEditSelectedScreens(['dashboard', 'storefront', 'episodios', 'depoimentos'])
+      setEditAllStores(stores.length === 0)
+      setEditSelectedStoreIds(stores.length > 0 ? [stores[0].id] : [])
+    }
+
     setEditPassword('')
     setEditModalOpen(true)
   }
@@ -142,6 +299,16 @@ export default function AdminUsuariosScreen() {
         return
       }
 
+      // Monta o payload de adm_permissions caso o cargo seja ADM
+      let admPermissionsPayload: AdmPermissions | null = null
+      if (editRole === 'adm') {
+        admPermissionsPayload = {
+          allowedScreens: editSelectedScreens,
+          allStores: editAllStores,
+          storeIds: editAllStores ? [] : editSelectedStoreIds,
+        }
+      }
+
       // Envia atualização para o endpoint administrativo seguro
       // Preserva email e demais dados originais caso o usuário não os tenha alterado
       const res = await pb.send('/backend/v1/admin/users/update', {
@@ -152,17 +319,17 @@ export default function AdminUsuariosScreen() {
           email: finalEmail,
           role: editRole || editingUser.role,
           ativo: editAtivo,
+          adm_permissions: admPermissionsPayload,
           password: editPassword.trim() || undefined,
         },
       })
-
       if (res?.error) {
         throw new Error(res.error)
       }
 
       toast.success('Informações do usuário atualizadas com sucesso!')
       setEditModalOpen(false)
-      loadUsers()
+      loadUsersAndStores()
     } catch (err: any) {
       console.error(err)
       const msg = err?.data?.message || err?.message || 'Erro ao atualizar dados do usuário.'
@@ -183,18 +350,28 @@ export default function AdminUsuariosScreen() {
         return
       }
 
+      let admPermissionsPayload: AdmPermissions | null = null
+      if (role === 'adm') {
+        admPermissionsPayload = {
+          allowedScreens: selectedScreens,
+          allStores: allStores,
+          storeIds: allStores ? [] : selectedStoreIds,
+        }
+      }
+
       await pb.collection('users').create({
         email: email.trim(),
         password: password.trim(),
         passwordConfirm: password.trim(),
         name: name.trim(),
         role,
+        adm_permissions: admPermissionsPayload,
         ativo: true,
       })
 
-      toast.success('Novo usuário administrador cadastrado!')
+      toast.success('Novo usuário administrador cadastrado com sucesso!')
       setModalOpen(false)
-      loadUsers()
+      loadUsersAndStores()
     } catch (err) {
       console.error(err)
       toast.error('Erro ao cadastrar usuário.')
@@ -206,11 +383,52 @@ export default function AdminUsuariosScreen() {
   const handleUpdateRole = async (userId: string, newRole: UserRole) => {
     try {
       await pb.collection('users').update(userId, { role: newRole })
-      toast.success(`Nível de permissão atualizado para ${newRole.toUpperCase()}!`)
+      toast.success(`Nível atualizado para ${newRole.toUpperCase()}!`)
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)))
     } catch (err) {
       console.error(err)
-      toast.error('Erro ao atualizar permissão.')
+      toast.error('Erro ao atualizar nível.')
+    }
+  }
+
+  const toggleScreen = (screenKey: string, isEdit: boolean) => {
+    if (isEdit) {
+      setEditSelectedScreens((prev) =>
+        prev.includes(screenKey) ? prev.filter((k) => k !== screenKey) : [...prev, screenKey],
+      )
+    } else {
+      setSelectedScreens((prev) =>
+        prev.includes(screenKey) ? prev.filter((k) => k !== screenKey) : [...prev, screenKey],
+      )
+    }
+  }
+
+  const toggleStore = (storeId: string, isEdit: boolean) => {
+    if (isEdit) {
+      setEditSelectedStoreIds((prev) =>
+        prev.includes(storeId) ? prev.filter((id) => id !== storeId) : [...prev, storeId],
+      )
+    } else {
+      setSelectedStoreIds((prev) =>
+        prev.includes(storeId) ? prev.filter((id) => id !== storeId) : [...prev, storeId],
+      )
+    }
+  }
+
+  const selectAllScreens = (isEdit: boolean) => {
+    const allKeys = AVAILABLE_SCREENS.map((s) => s.key)
+    if (isEdit) {
+      setEditSelectedScreens(allKeys)
+    } else {
+      setSelectedScreens(allKeys)
+    }
+  }
+
+  const clearAllScreens = (isEdit: boolean) => {
+    if (isEdit) {
+      setEditSelectedScreens([])
+    } else {
+      setSelectedScreens([])
     }
   }
 
@@ -225,7 +443,7 @@ export default function AdminUsuariosScreen() {
     try {
       await pb.collection('users').delete(userId)
       toast.success('Usuário removido!')
-      loadUsers()
+      loadUsersAndStores()
     } catch (err) {
       console.error(err)
       toast.error('Erro ao excluir usuário.')
@@ -376,6 +594,7 @@ export default function AdminUsuariosScreen() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="adm">ADM (Administrador Custom)</SelectItem>
                             <SelectItem value="gerencial">Gerencial</SelectItem>
                             <SelectItem value="ouro">Ouro</SelectItem>
                             <SelectItem value="prata">Prata</SelectItem>
@@ -493,6 +712,9 @@ export default function AdminUsuariosScreen() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="adm">
+                    ADM (Permissões granulares de telas e lojas autorizadas)
+                  </SelectItem>
                   <SelectItem value="gerencial">
                     Categoria Gerencial (Membros + Contatos, Financeiro, Agenda e Convites)
                   </SelectItem>
@@ -504,13 +726,125 @@ export default function AdminUsuariosScreen() {
                 </SelectContent>
               </Select>
               <p className="text-[10px] text-vinho/65">
-                • <strong>Master:</strong> Acesso total ao site, administração e membros.
-                <br />• <strong>Gerencial:</strong> Acesso a membros e admin operacional (Visão
-                Geral, Contatos, Financeiro, Banco de Horas, Agenda e Convites).
+                • <strong>Master:</strong> Acesso total soberano ao sistema.
+                <br />• <strong>ADM:</strong> Acesso somente às telas e lojas autorizadas pelo
+                Master.
+                <br />• <strong>Gerencial:</strong> Acesso a membros e admin operacional.
                 <br />• <strong>Ouro & Prata:</strong> Acesso restrito à Área de Membros.
-              </p>{' '}
+              </p>
             </div>
 
+            {/* SEÇÃO DE PERMISSÕES GRANULARES PARA NOVO ADM */}
+            {role === 'adm' && (
+              <div className="p-3.5 bg-amber-50/70 border-2 border-dourado/40 rounded-2xl space-y-3.5">
+                <div className="flex items-center justify-between border-b border-vinho/10 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-dourado-dark" />
+                    <span className="text-xs font-bold text-vinho">
+                      Permissões Granulares do ADM
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px]">
+                    <button
+                      type="button"
+                      onClick={() => selectAllScreens(false)}
+                      className="text-dourado-dark hover:underline font-semibold"
+                    >
+                      Marcar todas
+                    </button>
+                    <span>•</span>
+                    <button
+                      type="button"
+                      onClick={() => clearAllScreens(false)}
+                      className="text-vinho/60 hover:underline"
+                    >
+                      Limpar
+                    </button>
+                  </div>
+                </div>
+
+                {/* Vínculo com Loja(s) */}
+                <div className="space-y-2 bg-white/80 p-2.5 rounded-xl border border-vinho/10">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-vinho flex items-center gap-1.5">
+                      <Store className="w-3.5 h-3.5 text-dourado-dark" />
+                      Loja(s) Autorizada(s)
+                    </Label>
+                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-vinho cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={allStores}
+                        onChange={(e) => setAllStores(e.target.checked)}
+                        className="rounded text-vinho focus:ring-dourado"
+                      />
+                      Todas as Lojas
+                    </label>
+                  </div>
+
+                  {!allStores && (
+                    <div className="space-y-1 pt-1">
+                      {stores.length === 0 ? (
+                        <p className="text-[11px] text-vinho/60 italic">
+                          Nenhuma loja cadastrada no Storefront ainda. Crie uma loja no menu
+                          Storefront para vincular.
+                        </p>
+                      ) : (
+                        stores.map((s) => (
+                          <label
+                            key={s.id}
+                            className="flex items-center gap-2 p-1.5 rounded hover:bg-vinho/5 cursor-pointer text-xs text-vinho"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedStoreIds.includes(s.id)}
+                              onChange={() => toggleStore(s.id, false)}
+                              className="rounded text-vinho focus:ring-dourado"
+                            />
+                            <span className="font-medium truncate">{s.name}</span>
+                            <span className="text-[10px] text-vinho/50">({s.slug})</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Seleção de Telas / Blocos Autorizados */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-vinho block">
+                    Telas & Blocos Autorizados do Master:
+                  </Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
+                    {AVAILABLE_SCREENS.map((screen) => {
+                      const checked = selectedScreens.includes(screen.key)
+                      return (
+                        <label
+                          key={screen.key}
+                          className={`flex items-start gap-2 p-2 rounded-xl border text-xs cursor-pointer transition-all ${
+                            checked
+                              ? 'bg-vinho-light/10 border-dourado/60 text-vinho font-semibold shadow-2xs'
+                              : 'bg-white/60 border-vinho/10 text-vinho/70 hover:bg-white'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleScreen(screen.key, false)}
+                            className="mt-0.5 rounded text-vinho focus:ring-dourado"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="truncate text-xs leading-tight">{screen.label}</p>
+                            <p className="text-[10px] text-vinho/50 truncate font-normal">
+                              {screen.description}
+                            </p>
+                          </div>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
@@ -579,6 +913,116 @@ export default function AdminUsuariosScreen() {
                 )}
               </div>
 
+              {/* SEÇÃO DE PERMISSÕES GRANULARES PARA ADM NA EDIÇÃO */}
+              {editRole === 'adm' && (
+                <div className="p-3.5 bg-amber-50/70 border-2 border-dourado/40 rounded-2xl space-y-3.5">
+                  <div className="flex items-center justify-between border-b border-vinho/10 pb-2">
+                    <div className="flex items-center gap-2">
+                      <Sliders className="w-4 h-4 text-dourado-dark" />
+                      <span className="text-xs font-bold text-vinho">
+                        Permissões Granulares do ADM
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px]">
+                      <button
+                        type="button"
+                        onClick={() => selectAllScreens(true)}
+                        className="text-dourado-dark hover:underline font-semibold"
+                      >
+                        Marcar todas
+                      </button>
+                      <span>•</span>
+                      <button
+                        type="button"
+                        onClick={() => clearAllScreens(true)}
+                        className="text-vinho/60 hover:underline"
+                      >
+                        Limpar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Vínculo com Loja(s) do ADM */}
+                  <div className="space-y-2 bg-white/80 p-2.5 rounded-xl border border-vinho/10">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-bold text-vinho flex items-center gap-1.5">
+                        <Store className="w-3.5 h-3.5 text-dourado-dark" />
+                        Loja(s) Autorizada(s)
+                      </Label>
+                      <label className="flex items-center gap-1.5 text-[11px] font-semibold text-vinho cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editAllStores}
+                          onChange={(e) => setEditAllStores(e.target.checked)}
+                          className="rounded text-vinho focus:ring-dourado"
+                        />
+                        Todas as Lojas
+                      </label>
+                    </div>
+
+                    {!editAllStores && (
+                      <div className="space-y-1 pt-1">
+                        {stores.length === 0 ? (
+                          <p className="text-[11px] text-vinho/60 italic">
+                            Nenhuma loja cadastrada no Storefront.
+                          </p>
+                        ) : (
+                          stores.map((s) => (
+                            <label
+                              key={s.id}
+                              className="flex items-center gap-2 p-1.5 rounded hover:bg-vinho/5 cursor-pointer text-xs text-vinho"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={editSelectedStoreIds.includes(s.id)}
+                                onChange={() => toggleStore(s.id, true)}
+                                className="rounded text-vinho focus:ring-dourado"
+                              />
+                              <span className="font-medium truncate">{s.name}</span>
+                              <span className="text-[10px] text-vinho/50">({s.slug})</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Telas e Blocos Autorizados */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-vinho block">
+                      Telas & Blocos Autorizados do Master:
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
+                      {AVAILABLE_SCREENS.map((screen) => {
+                        const checked = editSelectedScreens.includes(screen.key)
+                        return (
+                          <label
+                            key={screen.key}
+                            className={`flex items-start gap-2 p-2 rounded-xl border text-xs cursor-pointer transition-all ${
+                              checked
+                                ? 'bg-vinho-light/10 border-dourado/60 text-vinho font-semibold shadow-2xs'
+                                : 'bg-white/60 border-vinho/10 text-vinho/70 hover:bg-white'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleScreen(screen.key, true)}
+                              className="mt-0.5 rounded text-vinho focus:ring-dourado"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="truncate text-xs leading-tight">{screen.label}</p>
+                              <p className="text-[10px] text-vinho/50 truncate font-normal">
+                                {screen.description}
+                              </p>
+                            </div>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-vinho">Nível / Cargo *</Label>
                 <Select
@@ -591,6 +1035,7 @@ export default function AdminUsuariosScreen() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="master">Master (Superadministrador)</SelectItem>
+                    <SelectItem value="adm">ADM (Administrador de Loja / Custom)</SelectItem>
                     <SelectItem value="gerencial">Gerencial (Operacional e Membros)</SelectItem>
                     <SelectItem value="ouro">Ouro (Área de Membros)</SelectItem>
                     <SelectItem value="prata">Prata (Área de Membros)</SelectItem>

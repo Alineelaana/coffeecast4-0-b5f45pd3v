@@ -13,8 +13,29 @@ routerAdd(
       }
 
       const userRole = user.getString('role')
-      if (userRole !== 'master') {
-        return e.forbiddenError('Acesso restrito exclusivamente ao cargo Master.')
+      let allowedStoreIds = null // null significa todas (Master)
+
+      if (userRole === 'master') {
+        // Master tem acesso a todas
+      } else if (userRole === 'adm') {
+        // ADM precisa ter permissão explícita para Storefront
+        const perms = user.get('adm_permissions') || {}
+        const allowedScreens = Array.isArray(perms.allowedScreens) ? perms.allowedScreens : []
+        if (!allowedScreens.includes('storefront')) {
+          return e.forbiddenError('Você não tem permissão para gerenciar a área de Storefront.')
+        }
+
+        // Verificar lojas autorizadas
+        if (!perms.allStores) {
+          allowedStoreIds = Array.isArray(perms.storeIds) ? perms.storeIds : []
+          if (allowedStoreIds.length === 0) {
+            return e.json(200, { stores: [] })
+          }
+        }
+      } else {
+        return e.forbiddenError(
+          'Acesso restrito exclusivamente a Master e Administradores (ADM) autorizados.',
+        )
       }
 
       const stores = $app.findRecordsByFilter('stores', '', '-created', 500, 0)
@@ -23,6 +44,11 @@ routerAdd(
       for (let i = 0; i < stores.length; i++) {
         const store = stores[i]
         const storeId = store.id
+
+        // Se for ADM restrito a lojas específicas, ignora lojas não autorizadas
+        if (allowedStoreIds && !allowedStoreIds.includes(storeId)) {
+          continue
+        }
 
         // Contar membros, episódios, banners, depoimentos
         const membersCount = $app.countRecords(

@@ -19,15 +19,17 @@ interface StorefrontContextType {
 const StorefrontContext = createContext<StorefrontContextType | undefined>(undefined)
 
 export const StorefrontProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isMaster, user } = useAuth()
+  const { isMaster, isAdm, user } = useAuth()
   const [stores, setStores] = useState<StoreWithCounts[]>([])
   const [activeStoreId, setActiveStoreIdState] = useState<string | null>(() => {
     return localStorage.getItem(STORAGE_ACTIVE_STORE_KEY) || null
   })
   const [isLoadingStores, setIsLoadingStores] = useState(false)
 
+  const hasAccessToStores = Boolean(user && (isMaster || isAdm))
+
   const refreshStores = useCallback(async () => {
-    if (!user || !isMaster) {
+    if (!user || (!isMaster && !isAdm)) {
       setStores([])
       return
     }
@@ -35,13 +37,24 @@ export const StorefrontProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       setIsLoadingStores(true)
       const list = await StorefrontService.getStoresOverview()
-      setStores(list)
+
+      // Se for ADM, filtrar apenas as lojas autorizadas para o seu perfil
+      let filtered = list
+      if (isAdm && !isMaster) {
+        const perms = user.adm_permissions
+        if (perms && !perms.allStores) {
+          const allowedIds = Array.isArray(perms.storeIds) ? perms.storeIds : []
+          filtered = list.filter((s) => allowedIds.includes(s.id))
+        }
+      }
+
+      setStores(filtered)
 
       // Se há lojas e a ativa não estiver na lista ou for nula, seleciona a primeira
-      if (list.length > 0) {
+      if (filtered.length > 0) {
         setActiveStoreIdState((current) => {
-          if (!current || !list.some((s) => s.id === current)) {
-            const firstId = list[0].id
+          if (!current || !filtered.some((s) => s.id === current)) {
+            const firstId = filtered[0].id
             localStorage.setItem(STORAGE_ACTIVE_STORE_KEY, firstId)
             return firstId
           }
@@ -56,7 +69,7 @@ export const StorefrontProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } finally {
       setIsLoadingStores(false)
     }
-  }, [user, isMaster])
+  }, [user, isMaster, isAdm])
 
   const refreshActiveStore = useCallback(async () => {
     if (!activeStoreId) return
@@ -74,7 +87,7 @@ export const StorefrontProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Realtime subscription para atualizar quando alguma store mudar
   useEffect(() => {
-    if (!user || !isMaster) return
+    if (!user || (!isMaster && !isAdm)) return
 
     let unsub: (() => void) | undefined
     pb.collection('stores')
@@ -89,7 +102,7 @@ export const StorefrontProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return () => {
       if (unsub) unsub()
     }
-  }, [user, isMaster, refreshStores])
+  }, [user, isMaster, isAdm, refreshStores])
 
   const setActiveStoreId = (id: string | null) => {
     setActiveStoreIdState(id)

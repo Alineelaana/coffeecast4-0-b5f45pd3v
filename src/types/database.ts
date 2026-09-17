@@ -1,4 +1,10 @@
-export type UserRole = 'master' | 'gerencial' | 'ouro' | 'prata'
+export type UserRole = 'master' | 'adm' | 'gerencial' | 'ouro' | 'prata'
+
+export interface AdmPermissions {
+  allowedScreens: string[] // Ex.: ['dashboard', 'financeiro', 'horas', 'roteiros', 'storefront', ...]
+  allStores?: boolean // Se verdadeiro, gerencia todas as lojas
+  storeIds?: string[] // IDs das lojas autorizadas se allStores for falso
+}
 
 export interface UserRecord {
   id: string
@@ -7,6 +13,7 @@ export interface UserRecord {
   avatar?: string
   role: UserRole
   ativo: boolean
+  adm_permissions?: AdmPermissions | null
   created: string
   updated: string
 }

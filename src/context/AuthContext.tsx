@@ -7,6 +7,7 @@ interface AuthContextType {
   isLoading: boolean
   isAdmin: boolean
   isMaster: boolean
+  isAdm: boolean
   isGerencial: boolean
   isMembro: boolean
   role: UserRole | null
@@ -16,6 +17,8 @@ interface AuthContextType {
   ) => Promise<{ success: boolean; role?: UserRole; error?: string }>
   logout: () => void
   refreshUser: () => Promise<void>
+  hasScreenPermission: (screenKey: string) => boolean
+  canManageStore: (storeId: string) => boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -34,6 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       avatar: (rec as unknown as { avatar?: string }).avatar,
       role: ((rec as unknown as { role?: string }).role as UserRole) || 'prata',
       ativo: Boolean((rec as unknown as { ativo?: boolean }).ativo ?? true),
+      adm_permissions: (rec as unknown as { adm_permissions?: any }).adm_permissions || null,
       created: rec.created,
       updated: rec.updated,
     }
@@ -90,16 +94,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Regras de acesso por categoria:
   // - Master: Superadministrador com acesso total (admin + membros)
-  // - Gerencial: Acesso a membros e painel admin (com restrições a Conteúdo, Episódios, Integrantes, etc.)
+  // - ADM: Administrador com permissões granulares por tela/bloco e por loja definidas pelo Master
+  // - Gerencial: Acesso a membros e painel admin operacional
   // - Ouro e Prata: Apenas Área de Membros (não podem acessar o painel admin)
   const isMaster = Boolean(user && user.ativo && role === 'master')
+  const isAdm = Boolean(user && user.ativo && role === 'adm')
   const isGerencial = Boolean(user && user.ativo && role === 'gerencial')
   const isMembro = Boolean(
     user &&
     user.ativo &&
-    (role === 'ouro' || role === 'prata' || role === 'gerencial' || role === 'master'),
+    (role === 'ouro' ||
+      role === 'prata' ||
+      role === 'gerencial' ||
+      role === 'adm' ||
+      role === 'master'),
   )
-  const isAdmin = Boolean(user && user.ativo && (role === 'master' || role === 'gerencial'))
+  const isAdmin = Boolean(
+    user && user.ativo && (role === 'master' || role === 'adm' || role === 'gerencial'),
+  )
+
+  const hasScreenPermission = (screenKey: string): boolean => {
+    if (!user || !user.ativo) return false
+    if (role === 'master') return true // Master tem acesso soberano total
+
+    if (role === 'adm') {
+      const perms = user.adm_permissions
+      if (!perms) return false
+      const screens = Array.isArray(perms.allowedScreens) ? perms.allowedScreens : []
+      return screens.includes(screenKey)
+    }
+
+    if (role === 'gerencial') {
+      // Gerencial tem acesso ao operacional padrão, mas não ao submenu exclusivo master
+      const gerencialAllowed = [
+        'dashboard',
+        'notificacoes',
+        'nine',
+        'episodios',
+        'momentos',
+        'roteiros',
+        'depoimentos',
+        'contatos',
+        'financeiro',
+        'horas',
+        'agenda',
+        'convites',
+      ]
+      return gerencialAllowed.includes(screenKey)
+    }
+
+    return false
+  }
+
+  const canManageStore = (storeId: string): boolean => {
+    if (!user || !user.ativo) return false
+    if (role === 'master') return true
+    if (role === 'adm') {
+      const perms = user.adm_permissions
+      if (!perms) return false
+      if (perms.allStores) return true
+      const allowed = Array.isArray(perms.storeIds) ? perms.storeIds : []
+      return allowed.includes(storeId)
+    }
+    return false
+  }
 
   return (
     <AuthContext.Provider
@@ -108,12 +166,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         isAdmin,
         isMaster,
+        isAdm,
         isGerencial,
         isMembro,
         role,
         login,
         logout,
         refreshUser,
+        hasScreenPermission,
+        canManageStore,
       }}
     >
       {children}

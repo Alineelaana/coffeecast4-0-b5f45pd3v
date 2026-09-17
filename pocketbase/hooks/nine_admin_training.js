@@ -14,8 +14,16 @@ routerAdd(
       }
 
       const userRole = user.getString('role')
-      if (userRole !== 'master' && userRole !== 'gerencial') {
-        return e.forbiddenError('Permissão restrita aos administradores Master e Gerencial.')
+      if (userRole === 'adm') {
+        const perms = user.get('adm_permissions') || {}
+        const allowedScreens = Array.isArray(perms.allowedScreens) ? perms.allowedScreens : []
+        if (!allowedScreens.includes('nine')) {
+          return e.forbiddenError('Você não tem permissão para editar as configurações da Nine.')
+        }
+      } else if (userRole !== 'master' && userRole !== 'gerencial') {
+        return e.forbiddenError(
+          'Permissão restrita aos administradores Master, ADM autorizados e Gerencial.',
+        )
       }
 
       let body = {}
