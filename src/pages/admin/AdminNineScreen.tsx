@@ -1782,7 +1782,8 @@ export default function AdminNineScreen() {
                     <label className="text-xs font-bold text-vinho flex items-center justify-between">
                       <span>Prompt de Personalidade e Regras (System Prompt):</span>
                       <span className="text-[11px] text-vinho/50 font-normal">
-                        Dica: tom acolhedor, linguagem feminina elegante e metáforas de café ☕
+                        Dica: conversa natural entre humanos, acolhimento à mesa de café e âncora
+                        estrita ☕
                       </span>
                     </label>
                     <Textarea
@@ -1790,7 +1791,7 @@ export default function AdminNineScreen() {
                       onChange={(e) => setPromptSistema(e.target.value)}
                       rows={16}
                       disabled={loadingConfig}
-                      placeholder="Ex: Você é a Nine, assistente virtual oficial do podcast CoffeeCast 4.0..."
+                      placeholder="Ex: IDENTIDADE E PROPÓSITO: Você é Nine, a assistente virtual oficial do CoffeeCast 4.0..."
                       className="font-mono text-xs leading-relaxed bg-[#FAF8F5] border-vinho/20 focus:border-dourado rounded-xl resize-y"
                     />
                   </div>
@@ -1898,9 +1899,9 @@ export default function AdminNineScreen() {
                 </CardHeader>
                 <CardContent className="space-y-3 text-xs text-vinho/80 leading-relaxed">
                   <p>
-                    <strong className="text-vinho">1. Prompt = Personalidade:</strong> Use o prompt
-                    apenas para definir como a Nine fala, acolhe, usa café como metáfora e trata os
-                    visitantes.
+                    <strong className="text-vinho">1. Conversa Natural e Humana:</strong> A Nine
+                    responde sempre como num papo espontâneo entre duas pessoas tomando café, em 1ª
+                    pessoa, variando palavras e sem listar tudo de uma vez.
                   </p>
                   <p>
                     <strong className="text-vinho">2. Dados que mudam = Banco de Dados:</strong>{' '}
@@ -1908,9 +1909,9 @@ export default function AdminNineScreen() {
                     imediatamente.
                   </p>
                   <p>
-                    <strong className="text-vinho">3. Regra de Ouro:</strong> A Nine sempre orienta
-                    a falar com Aline Lana pelo WhatsApp (31) 99129-7619 se uma pergunta for sobre
-                    valores de patrocínio ou não estiver confirmada.
+                    <strong className="text-vinho">3. Âncora de Conhecimento:</strong> A Nine nunca
+                    inventa dados. Se a informação não estiver na base ou banco, orienta com
+                    simpatia para falar com Aline Lana pelo WhatsApp (31) 99129-7619.
                   </p>
                 </CardContent>
               </Card>
