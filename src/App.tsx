@@ -38,6 +38,7 @@ import AdminDominioScreen from '@/pages/admin/AdminDominioScreen'
 import AdminStorefrontScreen from '@/pages/admin/AdminStorefrontScreen'
 import AdminPoliticasScreen from '@/pages/admin/AdminPoliticasScreen'
 import AdminUsuariosScreen from '@/pages/admin/AdminUsuariosScreen'
+import AdminAuditoriaScreen from '@/pages/admin/AdminAuditoriaScreen'
 import AdminNotificacoesScreen from '@/pages/admin/AdminNotificacoesScreen'
 import AdminRoteirosScreen from '@/pages/admin/AdminRoteirosScreen'
 import AdminNineScreen from '@/pages/admin/AdminNineScreen'
@@ -281,6 +282,14 @@ export default function App() {
                 element={
                   <ProtectedRoute screenKey="politicas">
                     <AdminPoliticasScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="auditoria"
+                element={
+                  <ProtectedRoute screenKey="auditoria">
+                    <AdminAuditoriaScreen />
                   </ProtectedRoute>
                 }
               />

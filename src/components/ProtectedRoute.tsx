@@ -75,6 +75,22 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Checagem de permissão granular por tela (quando screenKey for especificado)
   if (screenKey && !hasScreenPermission(screenKey)) {
+    // Registrar tentativa de acesso não autorizada na auditoria automaticamente
+    try {
+      import('@/services/auditoria').then(({ AuditoriaService }) => {
+        AuditoriaService.registrarEvento({
+          tipo_acao: 'bloqueio_acesso',
+          area_sistema: screenKey.toUpperCase(),
+          descricao: `Tentativa de acesso não autorizada à área ${screenKey} por ${user.name || user.email} (${role})`,
+          resultado: 'bloqueio',
+          suspeito: true,
+          motivo_suspeito: 'Usuário sem permissão tentou abrir rota restrita',
+        })
+      })
+    } catch {
+      /* intentionally ignored */
+    }
+
     return (
       <div className="p-8 max-w-xl mx-auto my-12 bg-white rounded-2xl border border-vinho/15 shadow-sm text-center space-y-4">
         <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 mx-auto flex items-center justify-center font-bold text-lg">

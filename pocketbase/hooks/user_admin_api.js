@@ -26,6 +26,9 @@ routerAdd(
         return e.badRequestError('ID do usuário é obrigatório.')
       }
 
+      // Preparar snapshot antes da alteração para auditoria
+      let snapshotAntes = null
+
       let targetUser = null
       try {
         targetUser = $app.findCollectionByNameOrId('_pb_users_auth_')
@@ -124,6 +127,44 @@ routerAdd(
           return e.badRequestError('A nova senha deve conter no mínimo 8 caracteres.')
         }
         targetRecord.setPassword(newPassword)
+      }
+
+      // Registrar log de auditoria da alteração de permissão / usuário
+      try {
+        const colAudit = $app.findCollectionByNameOrId('auditoria_eventos')
+        const logRec = new Record(colAudit)
+        logRec.set('usuario_id', user.id)
+        logRec.set('usuario_email', user.getString('email'))
+        logRec.set('usuario_nome', user.getString('name') || user.getString('email'))
+        logRec.set('usuario_role', user.getString('role'))
+        logRec.set(
+          'tipo_acao',
+          body.adm_permissions !== undefined || body.role !== undefined
+            ? 'alteracao_permissao'
+            : 'edicao',
+        )
+        logRec.set('area_sistema', 'Usuários & Permissões')
+        logRec.set(
+          'descricao',
+          'Alteração administrativa realizada no usuário: ' +
+            targetRecord.getString('name') +
+            ' (' +
+            targetRecord.getString('email') +
+            ')',
+        )
+        logRec.set('registro_afetado', targetRecord.id)
+        logRec.set('tabela_afetada', '_pb_users_auth_')
+        logRec.set('resultado', 'sucesso')
+        logRec.set('diff_depois', {
+          name: targetRecord.getString('name'),
+          email: targetRecord.getString('email'),
+          role: targetRecord.getString('role'),
+          ativo: targetRecord.getBool('ativo'),
+          adm_permissions: targetRecord.get('adm_permissions'),
+        })
+        $app.save(logRec)
+      } catch (errAudit) {
+        console.log('Aviso ao auditar atualização de usuário:', errAudit)
       }
 
       $app.save(targetRecord)

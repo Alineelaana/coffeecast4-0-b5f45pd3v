@@ -1,9 +1,18 @@
 export type UserRole = 'master' | 'adm' | 'gerencial' | 'ouro' | 'prata'
 
+export interface AuditoriaSubPermissions {
+  ver_registros?: boolean
+  ver_dashboard?: boolean
+  ver_alertas?: boolean
+  criar_regras?: boolean
+  exportar?: boolean
+}
+
 export interface AdmPermissions {
-  allowedScreens: string[] // Ex.: ['dashboard', 'financeiro', 'horas', 'roteiros', 'storefront', ...]
+  allowedScreens: string[] // Ex.: ['dashboard', 'financeiro', 'horas', 'roteiros', 'storefront', 'auditoria', ...]
   allStores?: boolean // Se verdadeiro, gerencia todas as lojas
   storeIds?: string[] // IDs das lojas autorizadas se allStores for falso
+  auditoria?: AuditoriaSubPermissions // Sub-permissões granulares da Auditoria do Sistema
 }
 
 export interface UserRecord {
@@ -469,6 +478,136 @@ export interface ChatUserItem {
   avatar?: string
   role: UserRole
   bio?: string
+}
+
+// ==========================================
+// AUDITORIA DO SISTEMA
+// ==========================================
+
+export type AuditoriaTipoAcao =
+  | 'login'
+  | 'logout'
+  | 'tentativa_login'
+  | 'falha_login'
+  | 'alteracao_senha'
+  | 'criacao'
+  | 'edicao'
+  | 'exclusao'
+  | 'download'
+  | 'upload'
+  | 'alteracao_permissao'
+  | 'criacao_usuario'
+  | 'mudanca_nivel'
+  | 'acao_administrativa'
+  | 'movimentacao_financeira'
+  | 'alteracao_site'
+  | 'agenda'
+  | 'cadastro'
+  | 'configuracao'
+  | 'chat'
+  | 'bloqueio_acesso'
+  | 'outro'
+
+export type AuditoriaResultado = 'sucesso' | 'erro' | 'bloqueio'
+
+export interface AuditoriaEventoRecord {
+  id: string
+  usuario_id?: string
+  usuario_email?: string
+  usuario_nome?: string
+  usuario_role?: string
+  loja_id?: string
+  loja_nome?: string
+  tipo_acao: AuditoriaTipoAcao
+  area_sistema: string
+  descricao: string
+  registro_afetado?: string
+  tabela_afetada?: string
+  ip?: string
+  dispositivo?: string
+  navegador?: string
+  resultado: AuditoriaResultado
+  diff_antes?: Record<string, unknown> | null
+  diff_depois?: Record<string, unknown> | null
+  metadata?: Record<string, unknown> | null
+  suspeito?: boolean
+  motivo_suspeito?: string
+  created: string
+  updated: string
+}
+
+export type AlertaPrioridade = 'baixa' | 'media' | 'alta' | 'critica'
+export type AlertaStatus = 'novo' | 'visualizado' | 'em_analise' | 'resolvido'
+
+export interface AlertaHistoricoItem {
+  status_anterior?: string
+  status: AlertaStatus
+  alterado_por_id?: string
+  alterado_por_nome: string
+  data: string
+  observacao?: string
+}
+
+export interface AuditoriaRegraRecord {
+  id: string
+  nome: string
+  descricao?: string
+  evento_monitorado: string
+  palavra_chave?: string
+  usuarios_monitorados?: string[] | null
+  niveis_monitorados?: string[] | null
+  lojas_monitoradas?: string[] | null
+  areas_monitoradas?: string[] | null
+  criterio_disparo?: string
+  prioridade: AlertaPrioridade
+  destinatarios?: string[] | null
+  ativo: boolean
+  criado_por?: string
+  created: string
+  updated: string
+}
+
+export interface AuditoriaAlertaRecord {
+  id: string
+  regra_id?: string
+  regra_nome: string
+  evento_id?: string
+  prioridade: AlertaPrioridade
+  status: AlertaStatus
+  motivo: string
+  detalhes?: string
+  usuario_envolvido_id?: string
+  usuario_envolvido_nome?: string
+  usuario_envolvido_email?: string
+  loja_id?: string
+  loja_nome?: string
+  area_sistema?: string
+  link_relacionado?: string
+  historico_status?: AlertaHistoricoItem[] | null
+  visualizado_por_id?: string
+  visualizado_por_nome?: string
+  data_visualizacao?: string
+  resolvido_por_id?: string
+  resolvido_por_nome?: string
+  data_resolucao?: string
+  resolucao_notas?: string
+  created: string
+  updated: string
+}
+
+export interface AuditoriaFiltros {
+  dataInicio?: string
+  dataFim?: string
+  usuarioId?: string
+  role?: string
+  lojaId?: string
+  area?: string
+  tipoAcao?: string
+  resultado?: string
+  ip?: string
+  dispositivo?: string
+  busca?: string
+  suspeito?: boolean
 }
 
 export interface ChatOverviewItem {

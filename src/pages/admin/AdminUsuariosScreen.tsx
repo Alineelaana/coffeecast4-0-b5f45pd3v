@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import pb from '@/lib/pocketbase/client'
 import { useAuth } from '@/context/AuthContext'
-import type { UserRecord, UserRole, AdmPermissions, StoreRecord } from '@/types/database'
+import type {
+  UserRecord,
+  UserRole,
+  AdmPermissions,
+  StoreRecord,
+  AuditoriaSubPermissions,
+} from '@/types/database'
 import {
   Table,
   TableBody,
@@ -123,6 +129,12 @@ const AVAILABLE_SCREENS = [
     group: 'Conteúdo do Site',
   },
   {
+    key: 'auditoria',
+    label: 'Auditoria do Sistema',
+    description: 'Rastreamento de atividades, segurança, regras e central de alertas',
+    group: 'Exclusivo / Segurança',
+  },
+  {
     key: 'storefront',
     label: 'Storefront (Multi-Loja)',
     description: 'Configuração completa da página de loja do cliente',
@@ -175,6 +187,13 @@ export default function AdminUsuariosScreen() {
   ])
   const [allStores, setAllStores] = useState(false)
   const [selectedStoreIds, setSelectedStoreIds] = useState<string[]>([])
+  const [auditoriaPerms, setAuditoriaPerms] = useState<AuditoriaSubPermissions>({
+    ver_registros: true,
+    ver_dashboard: true,
+    ver_alertas: true,
+    criar_regras: false,
+    exportar: false,
+  })
   const [saving, setSaving] = useState(false)
 
   // Filtro de origem da Nine
@@ -192,6 +211,13 @@ export default function AdminUsuariosScreen() {
   const [editSelectedScreens, setEditSelectedScreens] = useState<string[]>([])
   const [editAllStores, setEditAllStores] = useState(false)
   const [editSelectedStoreIds, setEditSelectedStoreIds] = useState<string[]>([])
+  const [editAuditoriaPerms, setEditAuditoriaPerms] = useState<AuditoriaSubPermissions>({
+    ver_registros: true,
+    ver_dashboard: true,
+    ver_alertas: true,
+    criar_regras: false,
+    exportar: false,
+  })
   const [editAtivo, setEditAtivo] = useState(true)
   const [editPassword, setEditPassword] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
@@ -265,10 +291,24 @@ export default function AdminUsuariosScreen() {
       setEditSelectedScreens(Array.isArray(perms.allowedScreens) ? perms.allowedScreens : [])
       setEditAllStores(Boolean(perms.allStores))
       setEditSelectedStoreIds(Array.isArray(perms.storeIds) ? perms.storeIds : [])
+      setEditAuditoriaPerms({
+        ver_registros: perms.auditoria?.ver_registros !== false,
+        ver_dashboard: perms.auditoria?.ver_dashboard !== false,
+        ver_alertas: perms.auditoria?.ver_alertas !== false,
+        criar_regras: Boolean(perms.auditoria?.criar_regras),
+        exportar: Boolean(perms.auditoria?.exportar),
+      })
     } else {
       setEditSelectedScreens(['dashboard', 'storefront', 'episodios', 'depoimentos'])
       setEditAllStores(stores.length === 0)
       setEditSelectedStoreIds(stores.length > 0 ? [stores[0].id] : [])
+      setEditAuditoriaPerms({
+        ver_registros: true,
+        ver_dashboard: true,
+        ver_alertas: true,
+        criar_regras: false,
+        exportar: false,
+      })
     }
 
     setEditPassword('')
@@ -322,6 +362,7 @@ export default function AdminUsuariosScreen() {
           allowedScreens: editSelectedScreens,
           allStores: editAllStores,
           storeIds: editAllStores ? [] : editSelectedStoreIds,
+          auditoria: editSelectedScreens.includes('auditoria') ? editAuditoriaPerms : undefined,
         }
       }
 
@@ -374,6 +415,7 @@ export default function AdminUsuariosScreen() {
           allowedScreens: selectedScreens,
           allStores: allStores,
           storeIds: allStores ? [] : selectedStoreIds,
+          auditoria: selectedScreens.includes('auditoria') ? auditoriaPerms : undefined,
         }
       }
 
@@ -816,7 +858,6 @@ export default function AdminUsuariosScreen() {
                 className="bg-white border-vinho/20 text-sm"
               />
             </div>
-
             <div className="space-y-1.5">
               <Label htmlFor="u-email" className="text-xs font-semibold text-vinho">
                 E-mail de Login *
@@ -831,7 +872,6 @@ export default function AdminUsuariosScreen() {
                 className="bg-white border-vinho/20 text-sm"
               />
             </div>
-
             <div className="space-y-1.5">
               <Label htmlFor="u-telefone" className="text-xs font-semibold text-vinho">
                 Telefone / WhatsApp (Opcional)
@@ -844,7 +884,6 @@ export default function AdminUsuariosScreen() {
                 className="bg-white border-vinho/20 text-sm"
               />
             </div>
-
             <div className="space-y-1.5">
               <Label htmlFor="u-pass" className="text-xs font-semibold text-vinho">
                 Senha Inicial (Mínimo 8 dígitos) *
@@ -859,7 +898,6 @@ export default function AdminUsuariosScreen() {
                 className="bg-white border-vinho/20 text-sm"
               />
             </div>
-
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-vinho">
                 Nível de Permissão Inicial *
@@ -890,7 +928,6 @@ export default function AdminUsuariosScreen() {
                 <br />• <strong>Ouro & Prata:</strong> Acesso restrito à Área de Membros.
               </p>
             </div>
-
             {/* SEÇÃO DE PERMISSÕES GRANULARES PARA NOVO ADM */}
             {role === 'adm' && (
               <div className="p-3.5 bg-amber-50/70 border-2 border-dourado/40 rounded-2xl space-y-3.5">
@@ -1000,8 +1037,77 @@ export default function AdminUsuariosScreen() {
                     })}
                   </div>
                 </div>
+
+                {/* SUB-PERMISSÕES GRANULARES DE AUDITORIA */}
+                {selectedScreens.includes('auditoria') && (
+                  <div className="p-3 bg-white/95 border border-vinho/20 rounded-xl space-y-2 shadow-2xs">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-dourado-dark" />
+                      <span className="text-xs font-bold text-vinho">
+                        Funções Permitidas na Auditoria:
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={auditoriaPerms.ver_registros !== false}
+                          onChange={(e) =>
+                            setAuditoriaPerms((p) => ({ ...p, ver_registros: e.target.checked }))
+                          }
+                          className="rounded text-vinho focus:ring-dourado"
+                        />
+                        <span>Ver Registros</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={auditoriaPerms.ver_dashboard !== false}
+                          onChange={(e) =>
+                            setAuditoriaPerms((p) => ({ ...p, ver_dashboard: e.target.checked }))
+                          }
+                          className="rounded text-vinho focus:ring-dourado"
+                        />
+                        <span>Ver Dashboard</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={auditoriaPerms.ver_alertas !== false}
+                          onChange={(e) =>
+                            setAuditoriaPerms((p) => ({ ...p, ver_alertas: e.target.checked }))
+                          }
+                          className="rounded text-vinho focus:ring-dourado"
+                        />
+                        <span>Ver Alertas</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(auditoriaPerms.criar_regras)}
+                          onChange={(e) =>
+                            setAuditoriaPerms((p) => ({ ...p, criar_regras: e.target.checked }))
+                          }
+                          className="rounded text-vinho focus:ring-dourado"
+                        />
+                        <span>Criar Regras</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer col-span-2">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(auditoriaPerms.exportar)}
+                          onChange={(e) =>
+                            setAuditoriaPerms((p) => ({ ...p, exportar: e.target.checked }))
+                          }
+                          className="rounded text-vinho focus:ring-dourado"
+                        />
+                        <span>Exportar Relatórios (CSV)</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            )}{' '}
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
@@ -1204,6 +1310,87 @@ export default function AdminUsuariosScreen() {
                       })}
                     </div>
                   </div>
+
+                  {/* Sub-permissões Granulares de Auditoria no Modal de Edição */}
+                  {editSelectedScreens.includes('auditoria') && (
+                    <div className="p-3 bg-white/95 border border-vinho/20 rounded-xl space-y-2 shadow-2xs">
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-dourado-dark" />
+                        <span className="text-xs font-bold text-vinho">
+                          Funções Permitidas na Auditoria:
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editAuditoriaPerms.ver_registros !== false}
+                            onChange={(e) =>
+                              setEditAuditoriaPerms((p) => ({
+                                ...p,
+                                ver_registros: e.target.checked,
+                              }))
+                            }
+                            className="rounded text-vinho focus:ring-dourado"
+                          />
+                          <span>Ver Registros</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editAuditoriaPerms.ver_dashboard !== false}
+                            onChange={(e) =>
+                              setEditAuditoriaPerms((p) => ({
+                                ...p,
+                                ver_dashboard: e.target.checked,
+                              }))
+                            }
+                            className="rounded text-vinho focus:ring-dourado"
+                          />
+                          <span>Ver Dashboard</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editAuditoriaPerms.ver_alertas !== false}
+                            onChange={(e) =>
+                              setEditAuditoriaPerms((p) => ({
+                                ...p,
+                                ver_alertas: e.target.checked,
+                              }))
+                            }
+                            className="rounded text-vinho focus:ring-dourado"
+                          />
+                          <span>Ver Alertas</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(editAuditoriaPerms.criar_regras)}
+                            onChange={(e) =>
+                              setEditAuditoriaPerms((p) => ({
+                                ...p,
+                                criar_regras: e.target.checked,
+                              }))
+                            }
+                            className="rounded text-vinho focus:ring-dourado"
+                          />
+                          <span>Criar Regras</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer col-span-2">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(editAuditoriaPerms.exportar)}
+                            onChange={(e) =>
+                              setEditAuditoriaPerms((p) => ({ ...p, exportar: e.target.checked }))
+                            }
+                            className="rounded text-vinho focus:ring-dourado"
+                          />
+                          <span>Exportar Relatórios (CSV)</span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               <div className="space-y-1.5">

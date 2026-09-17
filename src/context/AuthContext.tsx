@@ -19,6 +19,9 @@ interface AuthContextType {
   refreshUser: () => Promise<void>
   hasScreenPermission: (screenKey: string) => boolean
   canManageStore: (storeId: string) => boolean
+  hasAuditoriaPermission: (
+    subKey: keyof import('@/types/database').AuditoriaSubPermissions,
+  ) => boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -78,17 +81,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await pb.collection('users').authWithPassword(email.trim(), pass)
       const currentUser = mapAuthRecord()
       setUser(currentUser)
+
+      // Registrar auditoria de login
+      if (currentUser) {
+        try {
+          import('@/services/auditoria').then(({ AuditoriaService }) => {
+            AuditoriaService.registrarEvento({
+              tipo_acao: 'login',
+              area_sistema: 'Autenticação',
+              descricao: `Login realizado com sucesso por ${currentUser.name || currentUser.email} (${currentUser.role})`,
+              usuario_id: currentUser.id,
+              usuario_email: currentUser.email,
+              usuario_nome: currentUser.name || currentUser.email,
+              usuario_role: currentUser.role,
+              resultado: 'sucesso',
+            })
+          })
+        } catch {
+          /* intentionally ignored */
+        }
+      }
+
       return { success: true, role: currentUser?.role }
     } catch (err: unknown) {
       const errorMessage =
         err && typeof err === 'object' && 'message' in err
           ? String((err as { message: string }).message)
           : 'Credenciais inválidas. Verifique seu e-mail e senha.'
+
+      // Registrar falha de login na auditoria
+      try {
+        import('@/services/auditoria').then(({ AuditoriaService }) => {
+          AuditoriaService.registrarEvento({
+            tipo_acao: 'falha_login',
+            area_sistema: 'Autenticação',
+            descricao: `Tentativa de login falha com o e-mail: ${email.trim()}`,
+            usuario_email: email.trim(),
+            resultado: 'erro',
+            suspeito: true,
+            motivo_suspeito: 'Senha incorreta ou usuário inexistente',
+          })
+        })
+      } catch {
+        /* intentionally ignored */
+      }
+
       return { success: false, error: errorMessage }
     }
   }
 
   const logout = () => {
+    if (user) {
+      try {
+        import('@/services/auditoria').then(({ AuditoriaService }) => {
+          AuditoriaService.registrarEvento({
+            tipo_acao: 'logout',
+            area_sistema: 'Autenticação',
+            descricao: `Sessão encerrada (logout) por ${user.name || user.email}`,
+            usuario_id: user.id,
+            usuario_email: user.email,
+            usuario_nome: user.name || user.email,
+            usuario_role: user.role,
+            resultado: 'sucesso',
+          })
+        })
+      } catch {
+        /* intentionally ignored */
+      }
+    }
     pb.authStore.clear()
     setUser(null)
   }
@@ -163,6 +223,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false
   }
 
+  const hasAuditoriaPermission = (
+    subKey: keyof import('@/types/database').AuditoriaSubPermissions,
+  ): boolean => {
+    if (!user || !user.ativo) return false
+    if (role === 'master') return true // Master soberano tem acesso total
+    if (role === 'adm') {
+      const perms = user.adm_permissions
+      if (!perms) return false
+      const screens = Array.isArray(perms.allowedScreens) ? perms.allowedScreens : []
+      if (!screens.includes('auditoria')) return false
+      if (!perms.auditoria) return true // Se o Master liberou auditoria e não especificou subpermissões, dá acesso padrão
+      return Boolean(perms.auditoria[subKey])
+    }
+    return false
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -179,6 +255,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshUser,
         hasScreenPermission,
         canManageStore,
+        hasAuditoriaPermission,
       }}
     >
       {children}

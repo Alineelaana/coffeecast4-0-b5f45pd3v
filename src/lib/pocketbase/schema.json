@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T17:56:28.360Z",
+  "generatedAt": "2026-09-17T18:13:45.256Z",
   "collections": [
     {
       "name": "users",
@@ -2108,6 +2108,464 @@
       "indexes": [
         "CREATE INDEX idx_chat_msg_conversa_created ON chat_mensagens (conversa, created ASC)",
         "CREATE INDEX idx_chat_msg_remetente ON chat_mensagens (remetente)"
+      ]
+    },
+    {
+      "name": "auditoria_eventos",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"adm\")",
+        "view": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"adm\")",
+        "create": "@request.auth.id != \"\"",
+        "update": null,
+        "delete": null
+      },
+      "fields": [
+        {
+          "name": "usuario_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "usuario_email",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "usuario_nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "usuario_role",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "loja_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "loja_nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tipo_acao",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "login",
+            "logout",
+            "tentativa_login",
+            "falha_login",
+            "alteracao_senha",
+            "criacao",
+            "edicao",
+            "exclusao",
+            "download",
+            "upload",
+            "alteracao_permissao",
+            "criacao_usuario",
+            "mudanca_nivel",
+            "acao_administrativa",
+            "movimentacao_financeira",
+            "alteracao_site",
+            "agenda",
+            "cadastro",
+            "configuracao",
+            "chat",
+            "bloqueio_acesso",
+            "outro"
+          ]
+        },
+        {
+          "name": "area_sistema",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "descricao",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "registro_afetado",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tabela_afetada",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ip",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "dispositivo",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "navegador",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "resultado",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["sucesso", "erro", "bloqueio"]
+        },
+        {
+          "name": "diff_antes",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "diff_depois",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "metadata",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "suspeito",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "motivo_suspeito",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_audit_eventos_created ON auditoria_eventos (created DESC)",
+        "CREATE INDEX idx_audit_eventos_usuario ON auditoria_eventos (usuario_id)",
+        "CREATE INDEX idx_audit_eventos_tipo ON auditoria_eventos (tipo_acao)",
+        "CREATE INDEX idx_audit_eventos_area ON auditoria_eventos (area_sistema)",
+        "CREATE INDEX idx_audit_eventos_resultado ON auditoria_eventos (resultado)",
+        "CREATE INDEX idx_audit_eventos_suspeito ON auditoria_eventos (suspeito)",
+        "CREATE INDEX idx_audit_eventos_loja ON auditoria_eventos (loja_id)"
+      ]
+    },
+    {
+      "name": "auditoria_regras",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"adm\")",
+        "view": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"adm\")",
+        "create": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"adm\")",
+        "update": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"adm\")",
+        "delete": "@request.auth.role = \"master\""
+      },
+      "fields": [
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "descricao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "evento_monitorado",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "palavra_chave",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "usuarios_monitorados",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "niveis_monitorados",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "lojas_monitoradas",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "areas_monitoradas",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "criterio_disparo",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "prioridade",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["baixa", "media", "alta", "critica"]
+        },
+        {
+          "name": "destinatarios",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ativo",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "criado_por",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_audit_regras_ativo ON auditoria_regras (ativo)",
+        "CREATE INDEX idx_audit_regras_evento ON auditoria_regras (evento_monitorado)"
+      ]
+    },
+    {
+      "name": "auditoria_alertas",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"adm\")",
+        "view": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"adm\")",
+        "create": "@request.auth.id != \"\"",
+        "update": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"adm\")",
+        "delete": "@request.auth.role = \"master\""
+      },
+      "fields": [
+        {
+          "name": "regra_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "regra_nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "evento_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "prioridade",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["baixa", "media", "alta", "critica"]
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["novo", "visualizado", "em_analise", "resolvido"]
+        },
+        {
+          "name": "motivo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "detalhes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "usuario_envolvido_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "usuario_envolvido_nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "usuario_envolvido_email",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "loja_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "loja_nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "area_sistema",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "link_relacionado",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "historico_status",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "visualizado_por_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "visualizado_por_nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_visualizacao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "resolvido_por_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "resolvido_por_nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_resolucao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "resolucao_notas",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_audit_alertas_created ON auditoria_alertas (created DESC)",
+        "CREATE INDEX idx_audit_alertas_status ON auditoria_alertas (status)",
+        "CREATE INDEX idx_audit_alertas_prioridade ON auditoria_alertas (prioridade)",
+        "CREATE INDEX idx_audit_alertas_usuario ON auditoria_alertas (usuario_envolvido_id)"
       ]
     }
   ]

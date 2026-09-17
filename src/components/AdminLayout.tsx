@@ -32,6 +32,7 @@ import {
   Store,
   ChevronDown,
   Sparkles,
+  Activity,
 } from 'lucide-react'
 import { getFileUrl } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
@@ -330,6 +331,14 @@ export default function AdminLayout() {
       path: '/admin/dominio',
       icon: Globe,
       badge: 'DNS',
+      exact: false,
+    },
+    {
+      key: 'auditoria',
+      label: 'Auditoria do Sistema',
+      path: '/admin/auditoria',
+      icon: Activity,
+      badge: 'Segurança',
       exact: false,
     },
     {
