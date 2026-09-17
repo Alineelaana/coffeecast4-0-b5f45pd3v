@@ -660,3 +660,54 @@ export interface ChatOverviewItem {
   created: string
   updated: string
 }
+
+// ==========================================
+// BACKUPS DO BANCO DE DADOS
+// ==========================================
+
+export type BackupTipo = 'automatico' | 'manual'
+export type BackupStatus = 'concluido' | 'erro'
+
+export interface BackupRecord {
+  id: string
+  nome_arquivo: string
+  tipo: BackupTipo
+  arquivo?: string
+  tamanho_bytes?: number
+  total_registros?: number
+  resumo_colecoes?: Record<string, number>
+  payload_dados?: Record<string, unknown>
+  criado_por_nome?: string
+  criado_por_email?: string
+  status: BackupStatus
+  detalhes_erro?: string
+  created: string
+  updated: string
+}
+
+export interface BackupStatsInfo {
+  cron: {
+    ativo: boolean
+    expressao: string
+    descricao: string
+    politica_retencao: string
+  }
+  ultimo_backup: {
+    id: string
+    nome_arquivo: string
+    tipo: BackupTipo
+    total_registros: number
+    tamanho_bytes: number
+    created: string
+  } | null
+  ultimo_backup_automatico: {
+    id: string
+    nome_arquivo: string
+    tipo: BackupTipo
+    total_registros: number
+    tamanho_bytes: number
+    created: string
+  } | null
+  total_backups: number
+  contadores_atuais: Record<string, number>
+}

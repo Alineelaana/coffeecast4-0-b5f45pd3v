@@ -60,6 +60,7 @@ export default function AdminLayout() {
     '/admin/politicas',
     '/admin/usuarios',
     '/admin/chat/gestao',
+    '/admin/backups',
     '/admin/documentacao',
   ].some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`))
 
@@ -350,6 +351,15 @@ export default function AdminLayout() {
       path: '/admin/usuarios',
       icon: UserCheck,
       masterOnly: true, // Apenas o Master pode ver e editar usuários & permissões
+      exact: false,
+    },
+    {
+      key: 'backups',
+      label: 'Backups do Banco',
+      path: '/admin/backups',
+      icon: ShieldCheck,
+      masterOnly: true, // Exclusivo Master para proteção contra perda de dados
+      badge: 'Master',
       exact: false,
     },
     {
