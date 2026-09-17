@@ -38,6 +38,7 @@ export default function LoginScreen() {
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotLoading, setForgotLoading] = useState(false)
   const [forgotSuccess, setForgotSuccess] = useState(false)
+  const [forgotError, setForgotError] = useState<string | null>(null)
 
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -77,29 +78,49 @@ export default function LoginScreen() {
   const handleOpenForgotModal = () => {
     setForgotEmail(email.trim())
     setForgotSuccess(false)
+    setForgotError(null)
     setForgotModalOpen(true)
   }
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!forgotEmail.trim()) {
+    const cleanEmail = forgotEmail.trim()
+    if (!cleanEmail) {
       toast.error('Informe seu e-mail de acesso.')
       return
     }
 
     setForgotLoading(true)
+    setForgotError(null)
 
     try {
       // Dispara o fluxo nativo de recuperação de senha do PocketBase (coleção users)
-      await pb.collection('users').requestPasswordReset(forgotEmail.trim())
+      await pb.collection('users').requestPasswordReset(cleanEmail)
       setForgotSuccess(true)
-      // Por segurança, mensagem neutra e amigável confirmando a instrução
-      toast.success('Se o e-mail estiver cadastrado, as instruções de redefinição foram enviadas!')
+      toast.success('Instruções de redefinição enviadas com sucesso!')
     } catch (err: unknown) {
-      console.warn('Recuperação de senha executada:', err)
-      // Por segurança, mesmo em caso de erro da API que indique e-mail não existente, não expomos existência
-      setForgotSuccess(true)
-      toast.success('Se o e-mail estiver cadastrado, as instruções de redefinição foram enviadas!')
+      console.warn('Recuperação de senha com retorno:', err)
+
+      // Identifica status retornado pelo PocketBase
+      const status =
+        err && typeof err === 'object' && 'status' in err
+          ? Number((err as { status: unknown }).status)
+          : 0
+
+      // Se for erro de rede/servidor (500, 502, 503, 0), avisamos com carinho que pode haver
+      // instabilidade no serviço de envio, sem expor jargão técnico.
+      if (status >= 500 || status === 0) {
+        setForgotError(
+          'O serviço de envio de e-mails está temporariamente indisponível ou em manutenção. Por favor, tente novamente em alguns instantes ou fale com a administração.',
+        )
+        toast.error('Não foi possível enviar o e-mail no momento.')
+      } else {
+        // Status 400 (ex.: e-mail não encontrado ou formato incompatível).
+        // Por diretrizes de segurança de autenticação, não expomos se o e-mail existe ou não,
+        // mas orientamos o usuário sobre conferência e caixa de spam.
+        setForgotSuccess(true)
+        toast.success('Se o e-mail estiver cadastrado, as instruções foram enviadas!')
+      }
     } finally {
       setForgotLoading(false)
     }
@@ -255,26 +276,61 @@ export default function LoginScreen() {
               <div className="space-y-1">
                 <p className="text-sm font-semibold text-vinho">Instruções enviadas!</p>
                 <p className="text-xs text-vinho/75 leading-relaxed">
-                  Se o endereço <strong className="font-mono text-vinho">{forgotEmail}</strong>{' '}
-                  constar em nossa base, as instruções com o link de recuperação foram despachadas
-                  para sua caixa de entrada.
+                  Se o endereço{' '}
+                  <strong className="font-mono text-vinho break-all">{forgotEmail}</strong> constar
+                  em nossa base de usuários, as instruções com o link exclusivo de recuperação foram
+                  despachadas para a sua caixa de entrada.
                 </p>
-                <p className="text-[11px] text-vinho/60 pt-2">
-                  Verifique também a pasta de <em>Spam</em> ou <em>Lixo Eletrônico</em>.
-                </p>
+                <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3 text-[11px] text-amber-900 text-left space-y-1 mt-3">
+                  <p className="font-semibold text-amber-950 flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                    Não encontrou na caixa de entrada?
+                  </p>
+                  <ul className="list-disc list-inside text-amber-900/90 space-y-0.5">
+                    <li>
+                      Verifique as pastas <strong>Spam</strong>, <strong>Lixo Eletrônico</strong> ou{' '}
+                      <strong>Promoções</strong>.
+                    </li>
+                    <li>
+                      O e-mail é disparado com o assunto{' '}
+                      <em>"Recupere sua senha — CoffeeCast 4.0 ☕"</em>.
+                    </li>
+                    <li>
+                      Certifique-se de que digitou o mesmo endereço utilizado no seu cadastro.
+                    </li>
+                  </ul>
+                </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setForgotSuccess(false)
+                    setForgotError(null)
+                  }}
+                  className="w-full sm:w-1/2 text-xs border-vinho/20 text-vinho hover:bg-vinho/5 rounded-xl min-h-[42px]"
+                >
+                  Tentar outro e-mail
+                </Button>
                 <Button
                   onClick={() => setForgotModalOpen(false)}
-                  className="w-full bg-vinho hover:bg-vinho-light text-white font-bold py-2.5 text-xs rounded-xl shadow-md"
+                  className="w-full sm:w-1/2 bg-vinho hover:bg-vinho-light text-white font-bold py-2.5 text-xs rounded-xl shadow-md min-h-[42px]"
                 >
-                  Entendi e Voltar ao Login
+                  Voltar ao Login
                 </Button>
               </div>
             </div>
           ) : (
             <form onSubmit={handleForgotPassword} className="space-y-4 pt-2">
+              {forgotError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <span className="leading-relaxed">{forgotError}</span>
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <Label htmlFor="forgot-email" className="text-xs font-semibold text-vinho">
                   E-mail cadastrado
@@ -291,6 +347,9 @@ export default function LoginScreen() {
                   />
                   <Mail className="w-4 h-4 text-vinho/50 absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>
+                <p className="text-[11px] text-vinho/60">
+                  Informe o mesmo endereço de e-mail associado à sua conta no CoffeeCast.
+                </p>
               </div>
 
               <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
