@@ -27,6 +27,8 @@ import {
   UserCheck,
   Bot,
   Store,
+  ChevronDown,
+  Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -40,6 +42,25 @@ export default function AdminLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [ninePendingCount, setNinePendingCount] = useState(0)
+
+  // Submenu exclusivo Master colapsável
+  const isMasterPathActive = [
+    '/admin/storefront',
+    '/admin/conteudo',
+    '/admin/dominio',
+    '/admin/integrantes',
+    '/admin/politicas',
+    '/admin/usuarios',
+  ].some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`))
+
+  const [masterSubmenuOpen, setMasterSubmenuOpen] = useState(true)
+
+  // Garante que se o usuário estiver em uma página do submenu Master, o submenu fique aberto
+  React.useEffect(() => {
+    if (isMasterPathActive) {
+      setMasterSubmenuOpen(true)
+    }
+  }, [location.pathname, isMasterPathActive])
 
   // Carrega e atualiza badge de pendências (novos roteiros + novos contatos + novos depoimentos)
   const fetchUnreadCount = async () => {
@@ -149,25 +170,20 @@ export default function AdminLayout() {
     navigate('/login')
   }
 
-  // Itens do menu com controle estrito de permissão:
-  // - Master: Acesso total (vê e acessa todos os itens)
-  // - Gerencial: Acesso a tudo EXCETO: Editar Site (/admin/conteudo), Episódios (/admin/episodios),
-  //   Integrantes (/admin/integrantes), Depoimentos (/admin/depoimentos), Nossos Momentos (/admin/momentos),
-  //   Políticas do Site (/admin/politicas) e Usuários & Permissões (/admin/usuarios).
-  const menuItems = [
+  // Itens gerais do menu principal (Acessíveis para Master e Gerencial):
+  // "Nossos Momentos" e "Episódios" agora são abertos para Gerencial e Master
+  const mainMenuItems = [
     {
       label: 'Visão Geral',
       path: '/admin',
       icon: LayoutDashboard,
       exact: true,
-      masterOnly: false,
     },
     {
       label: 'Notificações',
       path: '/admin/notificacoes',
       icon: Bell,
       badgeCount: unreadNotificationsCount,
-      masterOnly: false,
     },
     {
       label: 'Nine Assistente Virtual',
@@ -175,121 +191,108 @@ export default function AdminLayout() {
       icon: Bot,
       badgeCount: ninePendingCount,
       highlight: true,
-      masterOnly: false,
     },
-    ...(isMaster
-      ? [
-          {
-            label: 'Storefront',
-            path: '/admin/storefront',
-            icon: Store,
-            badge: 'Multi-Loja',
-            highlight: true,
-            masterOnly: true,
-          },
-          {
-            label: 'Editar Site',
-            path: '/admin/conteudo',
-            icon: FileText,
-            badge: 'Master',
-            masterOnly: true,
-          },
-          {
-            label: 'Domínio do Site',
-            path: '/admin/dominio',
-            icon: Globe,
-            badge: 'Master',
-            masterOnly: true,
-          },
-          {
-            label: 'Episódios',
-            path: '/admin/episodios',
-            icon: Tv,
-            badge: 'Master',
-            masterOnly: true,
-          },
-          {
-            label: 'Integrantes',
-            path: '/admin/integrantes',
-            icon: Users2,
-            badge: 'Master',
-            masterOnly: true,
-          },
-          {
-            label: 'Nossos Momentos',
-            path: '/admin/momentos',
-            icon: Camera,
-            badge: 'Master',
-            masterOnly: true,
-          },
-        ]
-      : []),
+    {
+      label: 'Episódios',
+      path: '/admin/episodios',
+      icon: Tv,
+    },
+    {
+      label: 'Nossos Momentos',
+      path: '/admin/momentos',
+      icon: Camera,
+    },
     {
       label: 'Roteiros e Apresentações',
       path: '/admin/roteiros',
       icon: FileText,
-      masterOnly: false,
     },
     {
       label: 'Depoimentos',
       path: '/admin/depoimentos',
       icon: MessageSquareQuote,
-      masterOnly: false,
     },
     {
       label: 'Contatos & Leads',
       path: '/admin/contatos',
       icon: Inbox,
-      masterOnly: false,
     },
     {
       label: 'Financeiro',
       path: '/admin/financeiro',
       icon: DollarSign,
       highlight: true,
-      masterOnly: false,
     },
     {
       label: 'Controle de Horas',
       path: '/admin/horas',
       icon: Clock,
-      masterOnly: false,
     },
     {
       label: 'Agenda de Gravação',
       path: '/admin/agenda',
       icon: CalendarDays,
-      masterOnly: false,
     },
     {
       label: 'Gerador de Convites',
       path: '/admin/convites',
       icon: FileCheck2,
       badge: 'PDF',
-      masterOnly: false,
     },
-    ...(isMaster
-      ? [
-          {
-            label: 'Políticas do Site',
-            path: '/admin/politicas',
-            icon: ShieldAlert,
-            badge: 'Master',
-            masterOnly: true,
-          },
-          {
-            label: 'Usuários & Permissões',
-            path: '/admin/usuarios',
-            icon: UserCheck,
-            badge: 'Master',
-            masterOnly: true,
-          },
-        ]
-      : []),
+  ]
+
+  // SUBMENU EXCLUSIVO MASTER
+  // Agrupa todas as abas que só os usuários master podem acessar:
+  // - Storefront (Multi-Loja)
+  // - Área do Domínio (Domínio do Site)
+  // - Usuários & Permissões
+  // - Editar Site (Conteúdo)
+  // - Integrantes
+  // - Políticas do Site
+  const masterMenuItems = [
+    {
+      label: 'Storefront',
+      path: '/admin/storefront',
+      icon: Store,
+      badge: 'Multi-Loja',
+      exact: false,
+    },
+    {
+      label: 'Área do Domínio',
+      path: '/admin/dominio',
+      icon: Globe,
+      badge: 'DNS',
+      exact: false,
+    },
+    {
+      label: 'Usuários & Permissões',
+      path: '/admin/usuarios',
+      icon: UserCheck,
+      exact: false,
+    },
+    {
+      label: 'Editar Site',
+      path: '/admin/conteudo',
+      icon: FileText,
+      exact: false,
+    },
+    {
+      label: 'Integrantes',
+      path: '/admin/integrantes',
+      icon: Users2,
+      exact: false,
+    },
+    {
+      label: 'Políticas do Site',
+      path: '/admin/politicas',
+      icon: ShieldAlert,
+      exact: false,
+    },
   ]
 
   const getPageTitle = () => {
-    const current = menuItems.find((m) =>
+    const allItems = [...mainMenuItems, ...masterMenuItems]
+    const current = allItems.find((m) =>
       m.exact ? location.pathname === m.path : location.pathname.startsWith(m.path),
     )
     return current ? current.label : 'Painel de Controle'
@@ -331,10 +334,10 @@ export default function AdminLayout() {
         {/* Menu de Navegação */}
         <nav className="flex-1 px-4 py-6 space-y-1.5">
           <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-marfim/60 mb-2">
-            Gestão do Podcast
+            Gestão Operacional
           </p>
 
-          {menuItems.map((item) => {
+          {mainMenuItems.map((item) => {
             const isActive = item.exact
               ? location.pathname === item.path
               : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
@@ -383,6 +386,82 @@ export default function AdminLayout() {
               </NavLink>
             )
           })}
+
+          {/* SUBMENU EXCLUSIVO MASTER (Aparece SOMENTE para Master) */}
+          {isMaster && (
+            <div className="pt-4 mt-4 border-t border-vinho-light/40">
+              <button
+                type="button"
+                onClick={() => setMasterSubmenuOpen(!masterSubmenuOpen)}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  isMasterPathActive
+                    ? 'bg-vinho-dark/90 text-dourado border border-dourado/40 shadow-xs'
+                    : 'text-dourado-light/90 hover:text-dourado hover:bg-vinho-light/40'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded-md bg-dourado/20 flex items-center justify-center text-dourado">
+                    <Shield className="w-3.5 h-3.5 text-dourado" />
+                  </div>
+                  <span className="tracking-wide">Exclusivo Master</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Badge className="bg-dourado text-vinho font-bold text-[9px] px-1.5 py-0 rounded">
+                    Master
+                  </Badge>
+                  <ChevronDown
+                    className={`w-4 h-4 text-dourado transition-transform duration-200 ${
+                      masterSubmenuOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </div>
+              </button>
+
+              {/* Itens do Submenu Colapsável com Animação Suave */}
+              {masterSubmenuOpen && (
+                <div className="pl-3 pr-1 pt-1.5 space-y-1 border-l-2 border-dourado/30 ml-4 mt-1 transition-all">
+                  {masterMenuItems.map((item) => {
+                    const isActive =
+                      location.pathname === item.path ||
+                      location.pathname.startsWith(`${item.path}/`)
+                    const Icon = item.icon
+
+                    return (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                          isActive
+                            ? 'bg-vinho-light text-white shadow-xs border-l-3 border-dourado pl-2.5'
+                            : 'text-marfim/75 hover:text-white hover:bg-vinho-light/40'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 truncate">
+                          <Icon
+                            className={`w-3.5 h-3.5 shrink-0 ${
+                              isActive ? 'text-dourado' : 'text-dourado-light/70'
+                            }`}
+                          />
+                          <span className="truncate">{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <Badge
+                            className={`text-[8px] px-1 py-0 rounded ${
+                              isActive
+                                ? 'bg-dourado text-vinho font-bold'
+                                : 'bg-vinho-dark text-dourado-light border border-dourado/20'
+                            }`}
+                          >
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </NavLink>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         {/* Rodapé da Sidebar com Usuário Logado e Logout */}
@@ -507,7 +586,11 @@ export default function AdminLayout() {
             </div>
 
             <nav className="flex-1 py-3 space-y-1">
-              {menuItems.map((item) => {
+              <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-marfim/60 mb-1">
+                Gestão Geral
+              </p>
+
+              {mainMenuItems.map((item) => {
                 const isActive = item.exact
                   ? location.pathname === item.path
                   : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
@@ -518,7 +601,7 @@ export default function AdminLayout() {
                     key={item.path}
                     to={item.path}
                     onClick={() => setMobileSidebarOpen(false)}
-                    className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold min-h-[44px] transition-all active:scale-[0.98] ${
+                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold min-h-[44px] transition-all active:scale-[0.98] ${
                       isActive
                         ? 'bg-vinho-light text-white border-l-4 border-dourado shadow-sm font-bold'
                         : 'text-marfim/85 hover:bg-vinho-light/40'
@@ -537,6 +620,80 @@ export default function AdminLayout() {
                   </NavLink>
                 )
               })}
+
+              {/* Submenu Exclusivo Master no Mobile (visível apenas para Master) */}
+              {isMaster && (
+                <div className="pt-3 mt-3 border-t border-vinho-light/40">
+                  <button
+                    type="button"
+                    onClick={() => setMasterSubmenuOpen(!masterSubmenuOpen)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold min-h-[44px] transition-all ${
+                      isMasterPathActive
+                        ? 'bg-vinho-dark text-dourado border border-dourado/40 shadow-xs'
+                        : 'text-dourado-light hover:bg-vinho-light/40'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Shield className="w-4 h-4 text-dourado" />
+                      <span>Exclusivo Master</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Badge className="bg-dourado text-vinho font-bold text-[9px] px-1.5 py-0 rounded">
+                        Master
+                      </Badge>
+                      <ChevronDown
+                        className={`w-4 h-4 text-dourado transition-transform duration-200 ${
+                          masterSubmenuOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </div>
+                  </button>
+
+                  {masterSubmenuOpen && (
+                    <div className="pl-3 pr-1 pt-1.5 space-y-1 border-l-2 border-dourado/30 ml-4 mt-1">
+                      {masterMenuItems.map((item) => {
+                        const isActive =
+                          location.pathname === item.path ||
+                          location.pathname.startsWith(`${item.path}/`)
+                        const Icon = item.icon
+
+                        return (
+                          <NavLink
+                            key={item.path}
+                            to={item.path}
+                            onClick={() => setMobileSidebarOpen(false)}
+                            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold min-h-[40px] transition-all ${
+                              isActive
+                                ? 'bg-vinho-light text-white border-l-3 border-dourado pl-2.5 font-bold'
+                                : 'text-marfim/80 hover:bg-vinho-light/40'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 truncate">
+                              <Icon
+                                className={`w-3.5 h-3.5 shrink-0 ${
+                                  isActive ? 'text-dourado' : 'text-dourado-light/70'
+                                }`}
+                              />
+                              <span className="truncate">{item.label}</span>
+                            </div>
+                            {item.badge && (
+                              <Badge
+                                className={`text-[8px] px-1.5 py-0 rounded ${
+                                  isActive
+                                    ? 'bg-dourado text-vinho font-bold'
+                                    : 'bg-vinho-dark text-dourado-light border border-dourado/20'
+                                }`}
+                              >
+                                {item.badge}
+                              </Badge>
+                            )}
+                          </NavLink>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </nav>
 
             <div className="pt-4 border-t border-vinho-light/40 flex items-center justify-between">

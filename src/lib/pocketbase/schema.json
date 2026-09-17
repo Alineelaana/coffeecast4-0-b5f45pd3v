@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T16:22:30.700Z",
+  "generatedAt": "2026-09-17T16:31:36.070Z",
   "collections": [
     {
       "name": "users",
@@ -63,9 +63,9 @@
       "apiRules": {
         "list": "",
         "view": "",
-        "create": "@request.auth.role = \"master\"",
-        "update": "@request.auth.role = \"master\"",
-        "delete": "@request.auth.role = \"master\""
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\""
       },
       "fields": [
         {
@@ -246,9 +246,9 @@
       "apiRules": {
         "list": "",
         "view": "",
-        "create": "@request.auth.role = \"master\"",
-        "update": "@request.auth.role = \"master\"",
-        "delete": "@request.auth.role = \"master\""
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\""
       },
       "fields": [
         {

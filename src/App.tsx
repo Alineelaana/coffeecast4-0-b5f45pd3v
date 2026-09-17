@@ -104,16 +104,18 @@ export default function App() {
               <Route path="agenda" element={<AdminAgendaScreen />} />
               <Route path="convites" element={<AdminConvitesScreen />} />
 
+              {/* Gestão de Conteúdo e Mídia disponível para Master e Gerencial */}
+              <Route path="episodios" element={<AdminEpisodesScreen />} />
+              <Route path="momentos" element={<AdminMomentosScreen />} />
+              <Route path="depoimentos" element={<AdminDepoimentosScreen />} />
+
               {/* Rotas Restritas Exclusivamente ao Superadministrador Master:
                 - Storefront Multi-Loja (storefront)
                 - Editar Site (conteudo)
                 - Domínio do Site (dominio)
-                - Episódios (episodios)
-                - Integrantes
-                - Depoimentos
-                - Nossos Momentos
-                - Políticas do Site
-                - Usuários & Permissões
+                - Integrantes (integrantes)
+                - Políticas do Site (politicas)
+                - Usuários & Permissões (usuarios)
             */}
               <Route
                 path="storefront"
@@ -140,27 +142,10 @@ export default function App() {
                 }
               />
               <Route
-                path="episodios"
-                element={
-                  <ProtectedRoute requireMaster>
-                    <AdminEpisodesScreen />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="integrantes"
                 element={
                   <ProtectedRoute requireMaster>
                     <AdminIntegrantesScreen />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="depoimentos" element={<AdminDepoimentosScreen />} />
-              <Route
-                path="momentos"
-                element={
-                  <ProtectedRoute requireMaster>
-                    <AdminMomentosScreen />
                   </ProtectedRoute>
                 }
               />

@@ -51,7 +51,12 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 
+import { ShieldAlert, ArrowLeft } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
+
 export default function AdminStorefrontScreen() {
+  const { isMaster } = useAuth()
   const {
     stores,
     activeStore,
@@ -193,8 +198,33 @@ export default function AdminStorefrontScreen() {
   }
 
   useEffect(() => {
-    loadActiveStoreContent()
-  }, [activeStoreId])
+    if (isMaster) {
+      loadActiveStoreContent()
+    }
+  }, [activeStoreId, isMaster])
+
+  if (!isMaster) {
+    return (
+      <div className="max-w-xl mx-auto my-12 bg-white rounded-2xl border border-vinho/10 p-8 text-center space-y-4 shadow-sm">
+        <div className="w-14 h-14 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center mx-auto">
+          <ShieldAlert className="w-7 h-7" />
+        </div>
+        <h2 className="font-serif text-2xl font-bold text-vinho">Área Restrita ao Master</h2>
+        <p className="text-sm text-vinho/70 leading-relaxed">
+          A plataforma Storefront Multi-Lojas é restrita exclusivamente ao Superadministrador
+          Master. Sua categoria não possui permissão para acessar esta área.
+        </p>
+        <div className="pt-2">
+          <Link to="/admin">
+            <Button className="bg-vinho hover:bg-vinho-light text-white text-xs font-semibold rounded-full px-6 min-h-[44px] inline-flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Voltar à Visão Geral
+            </Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   // ==========================================
   // HANDLERS DE LOJA
