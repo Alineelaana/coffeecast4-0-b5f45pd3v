@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T17:08:08.719Z",
+  "generatedAt": "2026-09-17T17:16:00.518Z",
   "collections": [
     {
       "name": "users",
@@ -54,6 +54,18 @@
         {
           "name": "adm_permissions",
           "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "telefone",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "origem",
+          "type": "text",
           "required": false,
           "system": false
         }
@@ -1202,6 +1214,25 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "user",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "visitante_email",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "visitante_telefone",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [

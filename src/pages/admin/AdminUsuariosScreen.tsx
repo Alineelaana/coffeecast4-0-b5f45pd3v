@@ -35,6 +35,9 @@ import {
   Sliders,
   CheckSquare,
   Square,
+  Phone,
+  MessageSquare,
+  Filter,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
@@ -155,6 +158,7 @@ export default function AdminUsuariosScreen() {
   const [modalOpen, setModalOpen] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [telefone, setTelefone] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<UserRole>('adm')
   const [selectedScreens, setSelectedScreens] = useState<string[]>([
@@ -167,11 +171,17 @@ export default function AdminUsuariosScreen() {
   const [selectedStoreIds, setSelectedStoreIds] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
+  // Filtro de origem da Nine
+  const [filtroOrigem, setFiltroOrigem] = useState<'todos' | 'nine' | 'outros'>('todos')
+  const [busca, setBusca] = useState('')
+
   // Modal de Edição Completa
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<UserRecord | null>(null)
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
+  const [editTelefone, setEditTelefone] = useState('')
+  const [editOrigem, setEditOrigem] = useState('')
   const [editRole, setEditRole] = useState<UserRole>('adm')
   const [editSelectedScreens, setEditSelectedScreens] = useState<string[]>([])
   const [editAllStores, setEditAllStores] = useState(false)
@@ -226,6 +236,7 @@ export default function AdminUsuariosScreen() {
   const handleOpenCreate = () => {
     setName('')
     setEmail('')
+    setTelefone('')
     setPassword('')
     setRole('adm')
     setSelectedScreens(['dashboard', 'storefront', 'episodios', 'depoimentos'])
@@ -235,21 +246,20 @@ export default function AdminUsuariosScreen() {
   }
 
   const handleOpenEdit = (user: UserRecord) => {
-    // Preserva todos os campos atuais do usuário ao abrir o formulário de edição
     setEditingUser(user)
     setEditName(user.name ?? '')
     setEditEmail(user.email ?? '')
+    setEditTelefone(user.telefone ?? '')
+    setEditOrigem(user.origem ?? '')
     setEditRole(user.role || 'prata')
     setEditAtivo(user.ativo !== false)
 
-    // Pré-preenche as permissões existentes do ADM com preservação integral
     const perms = user.adm_permissions
     if (perms) {
       setEditSelectedScreens(Array.isArray(perms.allowedScreens) ? perms.allowedScreens : [])
       setEditAllStores(Boolean(perms.allStores))
       setEditSelectedStoreIds(Array.isArray(perms.storeIds) ? perms.storeIds : [])
     } else {
-      // Padrão amigável caso estivesse vazio ao converter para ADM
       setEditSelectedScreens(['dashboard', 'storefront', 'episodios', 'depoimentos'])
       setEditAllStores(stores.length === 0)
       setEditSelectedStoreIds(stores.length > 0 ? [stores[0].id] : [])
@@ -317,6 +327,8 @@ export default function AdminUsuariosScreen() {
           id: editingUser.id,
           name: finalName,
           email: finalEmail,
+          telefone: editTelefone.trim() || undefined,
+          origem: editOrigem.trim() || undefined,
           role: editRole || editingUser.role,
           ativo: editAtivo,
           adm_permissions: admPermissionsPayload,
@@ -364,6 +376,7 @@ export default function AdminUsuariosScreen() {
         password: password.trim(),
         passwordConfirm: password.trim(),
         name: name.trim(),
+        telefone: telefone.trim() || undefined,
         role,
         adm_permissions: admPermissionsPayload,
         ativo: true,
@@ -472,6 +485,61 @@ export default function AdminUsuariosScreen() {
         </Button>
       </div>
 
+      {/* Barra de Filtros e Busca Rápida */}
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-vinho/10 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <Button
+            type="button"
+            variant={filtroOrigem === 'todos' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFiltroOrigem('todos')}
+            className={
+              filtroOrigem === 'todos'
+                ? 'bg-vinho text-white text-xs font-semibold'
+                : 'text-vinho border-vinho/20 text-xs'
+            }
+          >
+            Todos ({users.length})
+          </Button>
+          <Button
+            type="button"
+            variant={filtroOrigem === 'nine' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFiltroOrigem('nine')}
+            className={
+              filtroOrigem === 'nine'
+                ? 'bg-dourado text-vinho font-bold text-xs'
+                : 'text-vinho border-dourado/40 text-xs'
+            }
+          >
+            <MessageSquare className="w-3.5 h-3.5 mr-1 text-dourado-dark" />
+            Captados pela Nine ({users.filter((u) => u.origem?.includes('Nine')).length})
+          </Button>
+          <Button
+            type="button"
+            variant={filtroOrigem === 'outros' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFiltroOrigem('outros')}
+            className={
+              filtroOrigem === 'outros'
+                ? 'bg-vinho text-white text-xs font-semibold'
+                : 'text-vinho border-vinho/20 text-xs'
+            }
+          >
+            Outros ({users.filter((u) => !u.origem?.includes('Nine')).length})
+          </Button>
+        </div>
+
+        <div className="w-full sm:w-64">
+          <Input
+            placeholder="Buscar por nome, email ou telefone..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="text-xs bg-marfim/40 border-vinho/15 h-9"
+          />
+        </div>
+      </div>
+
       {/* Mobile Cards View */}
       <div className="block md:hidden space-y-3">
         {loading ? (
@@ -479,70 +547,98 @@ export default function AdminUsuariosScreen() {
             Carregando usuários...
           </div>
         ) : (
-          users.map((u) => {
-            const isSuperAdmin = u.email === 'alineelaana@gmail.com'
-            return (
-              <div
-                key={u.id}
-                className="bg-white rounded-2xl border border-vinho/10 p-4 shadow-sm space-y-3"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-vinho">{u.name || 'Usuário'}</span>
-                      {isSuperAdmin && (
-                        <Badge className="bg-dourado text-vinho text-[9px] font-bold">MASTER</Badge>
+          users
+            .filter((u) => {
+              if (filtroOrigem === 'nine' && !u.origem?.includes('Nine')) return false
+              if (filtroOrigem === 'outros' && u.origem?.includes('Nine')) return false
+              if (busca.trim()) {
+                const b = busca.toLowerCase()
+                const matchesName = (u.name || '').toLowerCase().includes(b)
+                const matchesEmail = (u.email || '').toLowerCase().includes(b)
+                const matchesPhone = (u.telefone || '').toLowerCase().includes(b)
+                if (!matchesName && !matchesEmail && !matchesPhone) return false
+              }
+              return true
+            })
+            .map((u) => {
+              const isSuperAdmin = u.email === 'alineelaana@gmail.com'
+              const isNineOrigin = Boolean(u.origem && u.origem.includes('Nine'))
+              return (
+                <div
+                  key={u.id}
+                  className="bg-white rounded-2xl border border-vinho/10 p-4 shadow-sm space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-sm font-bold text-vinho">{u.name || 'Usuário'}</span>
+                        {isSuperAdmin && (
+                          <Badge className="bg-dourado text-vinho text-[9px] font-bold">
+                            MASTER
+                          </Badge>
+                        )}
+                        {isNineOrigin && (
+                          <Badge className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-semibold flex items-center gap-1">
+                            <MessageSquare className="w-2.5 h-2.5 text-amber-700" />
+                            Nine · Chat
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-vinho/60 font-mono">{u.email}</p>
+                      {u.telefone && (
+                        <p className="text-[11px] text-vinho/70 flex items-center gap-1 font-mono">
+                          <Phone className="w-3 h-3 text-dourado-dark" />
+                          {u.telefone}
+                        </p>
                       )}
                     </div>
-                    <p className="text-xs text-vinho/60 font-mono">{u.email}</p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenEdit(u)}
-                      className="h-8 px-2.5 text-xs text-vinho border-vinho/20 hover:bg-vinho/5 flex items-center gap-1 font-semibold rounded-lg"
-                      title="Editar usuário completo"
-                    >
-                      <Edit3 className="w-3.5 h-3.5 text-dourado-dark" />
-                      Editar
-                    </Button>
-                    {!isSuperAdmin && (
+                    <div className="flex items-center gap-1">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleDelete(u.id, u.email)}
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700 rounded-lg"
-                        title="Remover acesso"
+                        onClick={() => handleOpenEdit(u)}
+                        className="h-8 px-2.5 text-xs text-vinho border-vinho/20 hover:bg-vinho/5 flex items-center gap-1 font-semibold rounded-lg"
+                        title="Editar usuário completo"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Edit3 className="w-3.5 h-3.5 text-dourado-dark" />
+                        Editar
                       </Button>
+                      {!isSuperAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(u.id, u.email)}
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-700 rounded-lg"
+                          title="Remover acesso"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-vinho/5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-vinho/70 font-medium">Permissão:</span>
+                      <Badge className="bg-vinho/10 text-vinho border border-vinho/20 text-[10px] font-bold uppercase">
+                        {u.role}
+                      </Badge>
+                    </div>
+                    {u.ativo !== false ? (
+                      <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-medium flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        Ativo
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-medium flex items-center gap-1">
+                        <XCircle className="w-3 h-3 text-rose-600" />
+                        Inativo
+                      </Badge>
                     )}
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-vinho/5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-vinho/70 font-medium">Permissão:</span>
-                    <Badge className="bg-vinho/10 text-vinho border border-vinho/20 text-[10px] font-bold uppercase">
-                      {u.role}
-                    </Badge>
-                  </div>
-                  {u.ativo !== false ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-medium flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                      Ativo
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-medium flex items-center gap-1">
-                      <XCircle className="w-3 h-3 text-rose-600" />
-                      Inativo
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            )
-          })
+              )
+            })
         )}
       </div>
 
@@ -555,6 +651,8 @@ export default function AdminUsuariosScreen() {
             <TableHeader className="bg-marfim">
               <TableRow className="border-b border-vinho/10">
                 <TableHead className="font-bold text-vinho text-xs">Nome / E-mail</TableHead>
+                <TableHead className="font-bold text-vinho text-xs">Telefone / WhatsApp</TableHead>
+                <TableHead className="font-bold text-vinho text-xs">Origem / Captação</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Nível de Permissão</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Status</TableHead>
                 <TableHead className="w-36 text-right font-bold text-vinho text-xs">
@@ -563,87 +661,127 @@ export default function AdminUsuariosScreen() {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-vinho/5">
-              {users.map((u) => {
-                const isSuperAdmin = u.email === 'alineelaana@gmail.com'
-                return (
-                  <TableRow key={u.id} className="hover:bg-vinho/5">
-                    <TableCell className="text-xs font-bold text-vinho">
-                      <div className="flex items-center gap-2">
-                        <span>{u.name || 'Usuário'}</span>
-                        {isSuperAdmin && (
-                          <Badge className="bg-dourado text-vinho text-[9px] font-bold">
-                            MASTER
+              {users
+                .filter((u) => {
+                  if (filtroOrigem === 'nine' && !u.origem?.includes('Nine')) return false
+                  if (filtroOrigem === 'outros' && u.origem?.includes('Nine')) return false
+                  if (busca.trim()) {
+                    const b = busca.toLowerCase()
+                    const matchesName = (u.name || '').toLowerCase().includes(b)
+                    const matchesEmail = (u.email || '').toLowerCase().includes(b)
+                    const matchesPhone = (u.telefone || '').toLowerCase().includes(b)
+                    if (!matchesName && !matchesEmail && !matchesPhone) return false
+                  }
+                  return true
+                })
+                .map((u) => {
+                  const isSuperAdmin = u.email === 'alineelaana@gmail.com'
+                  const isNineOrigin = Boolean(u.origem && u.origem.includes('Nine'))
+                  return (
+                    <TableRow key={u.id} className="hover:bg-vinho/5">
+                      <TableCell className="text-xs font-bold text-vinho">
+                        <div className="flex items-center gap-2">
+                          <span>{u.name || 'Usuário'}</span>
+                          {isSuperAdmin && (
+                            <Badge className="bg-dourado text-vinho text-[9px] font-bold">
+                              MASTER
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="block text-[11px] font-normal text-vinho/60">
+                          {u.email}
+                        </span>
+                      </TableCell>
+
+                      <TableCell className="text-xs text-vinho font-mono">
+                        {u.telefone ? (
+                          <div className="flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
+                            <span>{u.telefone}</span>
+                          </div>
+                        ) : (
+                          <span className="text-vinho/40 text-[11px]">—</span>
+                        )}
+                      </TableCell>
+
+                      <TableCell className="text-xs text-vinho">
+                        {isNineOrigin ? (
+                          <Badge className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-semibold flex items-center gap-1 w-fit">
+                            <MessageSquare className="w-3 h-3 text-amber-700" />
+                            <span>Nine · Chat do Site</span>
+                          </Badge>
+                        ) : u.origem ? (
+                          <span className="text-[11px] text-vinho/70">{u.origem}</span>
+                        ) : (
+                          <span className="text-[11px] text-vinho/40">Painel / Direto</span>
+                        )}
+                      </TableCell>
+
+                      <TableCell>
+                        {isSuperAdmin ? (
+                          <span className="text-xs font-bold text-dourado-dark flex items-center gap-1">
+                            <Shield className="w-3.5 h-3.5" />
+                            Superadministrador
+                          </span>
+                        ) : (
+                          <Select
+                            value={u.role}
+                            onValueChange={(val: UserRole) => handleUpdateRole(u.id, val)}
+                          >
+                            <SelectTrigger className="h-7 w-32 text-[11px] font-semibold border-vinho/15">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="adm">ADM (Administrador Custom)</SelectItem>
+                              <SelectItem value="gerencial">Gerencial</SelectItem>
+                              <SelectItem value="ouro">Ouro</SelectItem>
+                              <SelectItem value="prata">Prata</SelectItem>
+                              <SelectItem value="master">Master</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </TableCell>
+
+                      <TableCell>
+                        {u.ativo !== false ? (
+                          <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-medium inline-flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            Ativo
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-medium inline-flex items-center gap-1">
+                            <XCircle className="w-3 h-3 text-rose-600" />
+                            Inativo
                           </Badge>
                         )}
-                      </div>
-                      <span className="block text-[11px] font-normal text-vinho/60">{u.email}</span>
-                    </TableCell>
+                      </TableCell>
 
-                    <TableCell>
-                      {isSuperAdmin ? (
-                        <span className="text-xs font-bold text-dourado-dark flex items-center gap-1">
-                          <Shield className="w-3.5 h-3.5" />
-                          Superadministrador
-                        </span>
-                      ) : (
-                        <Select
-                          value={u.role}
-                          onValueChange={(val: UserRole) => handleUpdateRole(u.id, val)}
-                        >
-                          <SelectTrigger className="h-7 w-32 text-[11px] font-semibold border-vinho/15">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="adm">ADM (Administrador Custom)</SelectItem>
-                            <SelectItem value="gerencial">Gerencial</SelectItem>
-                            <SelectItem value="ouro">Ouro</SelectItem>
-                            <SelectItem value="prata">Prata</SelectItem>
-                            <SelectItem value="master">Master</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </TableCell>
-
-                    <TableCell>
-                      {u.ativo !== false ? (
-                        <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-medium inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          Ativo
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-medium inline-flex items-center gap-1">
-                          <XCircle className="w-3 h-3 text-rose-600" />
-                          Inativo
-                        </Badge>
-                      )}
-                    </TableCell>
-
-                    <TableCell className="text-right space-x-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenEdit(u)}
-                        className="h-7 px-2.5 text-[11px] font-semibold text-vinho border-vinho/20 hover:bg-vinho/10 inline-flex items-center gap-1 rounded-md"
-                        title="Editar todas as informações do usuário"
-                      >
-                        <Edit3 className="w-3 h-3 text-dourado-dark" />
-                        Editar
-                      </Button>
-                      {!isSuperAdmin && (
+                      <TableCell className="text-right space-x-1">
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          onClick={() => handleDelete(u.id, u.email)}
-                          className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md"
-                          title="Remover acesso"
+                          onClick={() => handleOpenEdit(u)}
+                          className="h-7 px-2.5 text-[11px] font-semibold text-vinho border-vinho/20 hover:bg-vinho/10 inline-flex items-center gap-1 rounded-md"
+                          title="Editar todas as informações do usuário"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Edit3 className="w-3 h-3 text-dourado-dark" />
+                          Editar
                         </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
+                        {!isSuperAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(u.id, u.email)}
+                            className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md"
+                            title="Remover acesso"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
             </TableBody>
           </Table>
         )}
@@ -684,6 +822,19 @@ export default function AdminUsuariosScreen() {
                 placeholder="usuario@coffeecast.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="bg-white border-vinho/20 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="u-telefone" className="text-xs font-semibold text-vinho">
+                Telefone / WhatsApp (Opcional)
+              </Label>
+              <Input
+                id="u-telefone"
+                placeholder="(31) 99999-9999"
+                value={telefone}
+                onChange={(e) => setTelefone(e.target.value)}
                 className="bg-white border-vinho/20 text-sm"
               />
             </div>
@@ -911,6 +1062,32 @@ export default function AdminUsuariosScreen() {
                     O e-mail do Superadministrador Master principal não pode ser alterado.
                   </p>
                 )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-telefone" className="text-xs font-semibold text-vinho">
+                  Telefone / WhatsApp
+                </Label>
+                <Input
+                  id="edit-telefone"
+                  value={editTelefone}
+                  onChange={(e) => setEditTelefone(e.target.value)}
+                  placeholder="(31) 99999-9999"
+                  className="bg-white border-vinho/20 text-sm"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-origem" className="text-xs font-semibold text-vinho">
+                  Origem do Contato / Cadastro
+                </Label>
+                <Input
+                  id="edit-origem"
+                  value={editOrigem}
+                  onChange={(e) => setEditOrigem(e.target.value)}
+                  placeholder="Ex.: Nine — Chat do Site, Painel, etc."
+                  className="bg-white border-vinho/20 text-sm"
+                />
               </div>
 
               {/* SEÇÃO DE PERMISSÕES GRANULARES PARA ADM NA EDIÇÃO */}

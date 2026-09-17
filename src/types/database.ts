@@ -13,6 +13,8 @@ export interface UserRecord {
   avatar?: string
   role: UserRole
   ativo: boolean
+  telefone?: string
+  origem?: string
   adm_permissions?: AdmPermissions | null
   created: string
   updated: string
@@ -255,6 +257,9 @@ export interface NineConversaRecord {
   id: string
   conversation_id: string
   visitante_nome?: string
+  visitante_email?: string
+  visitante_telefone?: string
+  user?: string
   modo_atendimento: NineModoAtendimento
   ultima_mensagem?: string
   ultimo_remetente?: 'visitante' | 'nine' | 'humano'

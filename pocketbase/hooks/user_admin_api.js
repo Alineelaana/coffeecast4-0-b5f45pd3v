@@ -72,7 +72,17 @@ routerAdd(
         }
       }
 
-      // 3. Atualizar Cargo/Nível (Role)
+      // 3. Atualizar Telefone se fornecido
+      if (typeof body.telefone === 'string') {
+        targetRecord.set('telefone', body.telefone.trim())
+      }
+
+      // 3.1 Atualizar Origem se fornecido
+      if (typeof body.origem === 'string') {
+        targetRecord.set('origem', body.origem.trim())
+      }
+
+      // 3.2 Atualizar Cargo/Nível (Role)
       if (typeof body.role === 'string' && body.role.trim() !== '') {
         const newRole = body.role.trim()
         const validRoles = ['master', 'adm', 'gerencial', 'ouro', 'prata']
@@ -88,7 +98,6 @@ routerAdd(
 
         targetRecord.set('role', newRole)
       }
-
       // 3.1 Atualizar Permissões de ADM (adm_permissions)
       // Se body.adm_permissions foi enviado (objeto ou null/string)
       if (body.adm_permissions !== undefined) {
@@ -126,6 +135,8 @@ routerAdd(
           id: targetRecord.id,
           name: targetRecord.getString('name'),
           email: targetRecord.getString('email'),
+          telefone: targetRecord.getString('telefone'),
+          origem: targetRecord.getString('origem'),
           role: targetRecord.getString('role'),
           ativo: targetRecord.getBool('ativo'),
           adm_permissions: targetRecord.get('adm_permissions'),
@@ -166,6 +177,8 @@ routerAdd(
         id: rec.id,
         name: rec.getString('name'),
         email: rec.getString('email'),
+        telefone: rec.getString('telefone') || '',
+        origem: rec.getString('origem') || '',
         role: rec.getString('role') || 'prata',
         ativo: rec.getBool('ativo'),
         adm_permissions: rec.get('adm_permissions'),

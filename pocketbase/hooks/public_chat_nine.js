@@ -42,12 +42,15 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
 
     const conversasCol = $app.findCollectionByNameOrId('nine_conversas')
     const mensagensCol = $app.findCollectionByNameOrId('nine_mensagens')
+    const usersCol = $app.findCollectionByNameOrId('users')
+
+    let isFirstMessageOfConversation = false
 
     if (!conversaRecord) {
+      isFirstMessageOfConversation = true
       conversaRecord = new Record(conversasCol)
       conversaRecord.set('conversation_id', conversationId)
       conversaRecord.set('visitante_nome', (body.visitante_nome || '').trim() || 'Visitante')
-      // Se global está desligado, já inicia como aguardando_humano
       conversaRecord.set('modo_atendimento', isGlobalAuto ? 'automatico' : 'aguardando_humano')
       conversaRecord.set('ultima_mensagem', rawMessage)
       conversaRecord.set('ultimo_remetente', 'visitante')
@@ -55,7 +58,6 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       conversaRecord.set('total_mensagens', 1)
       $app.save(conversaRecord)
     } else {
-      // Atualizar dados da conversa
       const currentTotal = conversaRecord.getInt('total_mensagens') || 0
       conversaRecord.set('ultima_mensagem', rawMessage)
       conversaRecord.set('ultimo_remetente', 'visitante')
@@ -100,59 +102,303 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       })
     }
 
-    // ATENDIMENTO AUTOMÁTICO ATIVO:
-    // Resolver usuário de serviço para o agente nativo
-    let userId = ''
-    if (e.auth && e.auth.id) {
-      userId = e.auth.id
-    } else {
+    // =========================================================================
+    // FLUXO DE IDENTIFICAÇÃO DO VISITANTE (Nome completo, e-mail e telefone/WhatsApp)
+    // Regras obrigatórias:
+    // 1. No início de cada NOVA conversa, antes de continuar o atendimento, solicitar nome completo, e-mail e telefone/WhatsApp.
+    // 2. O visitante pode mandar os dados juntos ou separadamente; fazer parse e validação rigorosos no servidor.
+    // 3. Ao identificar os 3 dados válidos: verificar por e-mail OU telefone se já possui cadastro.
+    //    - Se já existir: atualizar ou complementar dados faltantes sem criar duplicado.
+    //    - Se não existir: criar automaticamente usuário nível 'prata', nome completo, e-mail, telefone e origem 'Nine — Chat do Site'.
+    // 4. Vincular o usuário à conversa (campo 'user' e campos de contato) e passar a chamar pelo primeiro nome.
+    // =========================================================================
+
+    // Helpers inline de extração e validação (regras goja: tudo dentro da função)
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/
+    const phoneRegex = /(?:\+?55\s?)?(?:\(?\d{2}\)?\s?)?(?:9\s?\d{4}[-\s]?\d{4}|\d{4}[-\s]?\d{4})/
+
+    let storedEmail = (conversaRecord.getString('visitante_email') || '').trim().toLowerCase()
+    let storedPhone = (conversaRecord.getString('visitante_telefone') || '').trim()
+    let storedName = (conversaRecord.getString('visitante_nome') || '').trim()
+    let linkedUserId = (conversaRecord.getString('user') || '').trim()
+
+    // Se já tinha nome genérico "Visitante", considera não coletado
+    if (storedName === 'Visitante') {
+      storedName = ''
+    }
+
+    // Se já estiver vinculado a um usuário cadastrado, garantir dados preenchidos
+    if (linkedUserId) {
       try {
-        const visitante = $app.findAuthRecordByEmail('users', 'visitante@app.local')
-        if (visitante) {
-          userId = visitante.id
+        const existingLinkedUser = $app.findFirstRecordByData('users', 'id', linkedUserId)
+        if (existingLinkedUser) {
+          if (!storedName) storedName = existingLinkedUser.getString('name')
+          if (!storedEmail) storedEmail = existingLinkedUser.getString('email').toLowerCase()
+          if (!storedPhone) storedPhone = existingLinkedUser.getString('telefone')
         }
-      } catch (visitanteLookupErr) {
-        console.log(
-          'Aviso: lookup de visitante@app.local falhou, tentando auto-criação:',
-          visitanteLookupErr,
-        )
-      }
+      } catch (_) {}
+    }
 
-      // Auto-cura: se o usuário visitante não foi encontrado, tenta criar dinamicamente
-      if (!userId) {
-        try {
-          const usersCol = $app.findCollectionByNameOrId('users')
-          const rec = new Record(usersCol)
-          rec.setEmail('visitante@app.local')
-          rec.setPassword($security.randomString(28))
-          rec.setVerified(true)
-          rec.set('name', 'Visitante CoffeeCast')
-          rec.set('role', 'prata')
-          rec.set('ativo', true)
-          $app.save(rec)
-          userId = rec.id
-        } catch (createVisitorErr) {
-          console.log('Erro ao auto-criar visitante@app.local no hook:', createVisitorErr)
-        }
-      }
+    // Tentar detectar novos dados na mensagem atual
+    const emailMatch = rawMessage.match(emailRegex)
+    if (emailMatch && emailMatch[0]) {
+      storedEmail = emailMatch[0].trim().toLowerCase()
+    }
 
-      // Fallback final: se ainda não houver userId, busca qualquer usuário do sistema para vincular a chamada
-      if (!userId) {
-        try {
-          const fallbackUsers = $app.findRecordsByFilter('users', 'ativo = true', 'created', 1, 0)
-          if (fallbackUsers && fallbackUsers.length > 0) {
-            userId = fallbackUsers[0].id
-          }
-        } catch (fbUserErr) {
-          console.log('Erro ao buscar fallback user para Nine:', fbUserErr)
+    // Detectar telefone na mensagem atual
+    const phoneMatch = rawMessage.match(phoneRegex)
+    if (phoneMatch && phoneMatch[0]) {
+      const cleanedDigits = phoneMatch[0].replace(/\D/g, '')
+      // Telefone brasileiro plausível: 10 ou 11 dígitos (com DDD) ou 8/9 dígitos
+      if (cleanedDigits.length >= 8 && cleanedDigits.length <= 13) {
+        storedPhone = phoneMatch[0].trim()
+      }
+    }
+
+    // Detectar nome completo se ainda não tínhamos
+    if (!storedName) {
+      // Remover e-mail e telefone da mensagem para isolar potencial nome
+      let msgWithoutData = rawMessage
+      if (emailMatch && emailMatch[0]) {
+        msgWithoutData = msgWithoutData.replace(emailMatch[0], '')
+      }
+      if (phoneMatch && phoneMatch[0]) {
+        msgWithoutData = msgWithoutData.replace(phoneMatch[0], '')
+      }
+      msgWithoutData = msgWithoutData.replace(/nome\s*(?:completo)?\s*[:=-]?/gi, '')
+      msgWithoutData = msgWithoutData.replace(/meu\s*nome\s*é\s*/gi, '')
+      msgWithoutData = msgWithoutData.replace(/sou\s*(?:o|a)\s*/gi, '')
+      msgWithoutData = msgWithoutData.replace(/me\s*chamo\s*/gi, '')
+
+      const lines = msgWithoutData.split(/[\n,;]/)
+      for (let li = 0; li < lines.length; li++) {
+        const lineCandidate = lines[li].replace(/[^a-zA-ZÀ-ÿ\s]/g, ' ').trim()
+        const words = lineCandidate.split(/\s+/).filter((w) => w.length >= 2)
+        // Nome plausível: 2 a 5 palavras, começando com maiúscula ou letras comuns, sem palavras-chave comuns de pergunta
+        const blacklistedWords = [
+          'ola',
+          'olá',
+          'bom',
+          'dia',
+          'boa',
+          'tarde',
+          'noite',
+          'gostaria',
+          'quero',
+          'saber',
+          'como',
+          'funciona',
+          'sobre',
+          'nine',
+          'coffeecast',
+        ]
+        const filteredWords = words.filter((w) => !blacklistedWords.includes(w.toLowerCase()))
+        if (filteredWords.length >= 2 && filteredWords.length <= 6) {
+          storedName = filteredWords
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+            .join(' ')
+          break
         }
       }
     }
 
+    // Atualizar registro da conversa com os dados acumulados até aqui
+    if (storedEmail) conversaRecord.set('visitante_email', storedEmail)
+    if (storedPhone) conversaRecord.set('visitante_telefone', storedPhone)
+    if (storedName) conversaRecord.set('visitante_nome', storedName)
+
+    // Se temos os 3 dados (nome completo, e-mail válido e telefone plausível), sincronizar no banco (users)
+    const hasValidEmail = Boolean(
+      storedEmail && storedEmail.includes('@') && storedEmail.includes('.'),
+    )
+    const hasValidPhone = Boolean(storedPhone && storedPhone.replace(/\D/g, '').length >= 8)
+    const hasFullName = Boolean(storedName && storedName.trim().split(/\s+/).length >= 2)
+
+    const isFullyIdentified = hasValidEmail && hasValidPhone && hasFullName
+
+    if (isFullyIdentified) {
+      // 1. Procurar no banco por e-mail OU telefone
+      let matchedUser = null
+
+      if (storedEmail) {
+        try {
+          matchedUser = $app.findAuthRecordByEmail('users', storedEmail)
+        } catch (_) {}
+      }
+
+      if (!matchedUser && storedPhone) {
+        try {
+          // Busca por telefone exato ou dígito limpo
+          const phoneUsers = $app.findRecordsByFilter(
+            'users',
+            `telefone ~ "${storedPhone.replace(/\D/g, '').slice(-8)}"`,
+            '-created',
+            1,
+            0,
+          )
+          if (phoneUsers && phoneUsers.length > 0) {
+            matchedUser = phoneUsers[0]
+          }
+        } catch (_) {}
+      }
+
+      const nowIso = new Date().toISOString()
+      const originTag = 'Nine — Chat do Site (' + nowIso.slice(0, 10) + ')'
+
+      if (matchedUser) {
+        // Já existe: atualizar/complementar dados que estiverem vazios
+        let needsSave = false
+        if (!matchedUser.getString('name') && storedName) {
+          matchedUser.set('name', storedName)
+          needsSave = true
+        }
+        if (!matchedUser.getString('telefone') && storedPhone) {
+          matchedUser.set('telefone', storedPhone)
+          needsSave = true
+        }
+        if (!matchedUser.getString('origem')) {
+          matchedUser.set('origem', originTag)
+          needsSave = true
+        }
+        if (needsSave) {
+          try {
+            $app.save(matchedUser)
+          } catch (updateErr) {
+            console.log('Aviso ao complementar dados de usuário existente:', updateErr)
+          }
+        }
+        linkedUserId = matchedUser.id
+      } else {
+        // Não existe: criar novo usuário nível Prata
+        try {
+          const newUser = new Record(usersCol)
+          newUser.setEmail(storedEmail)
+          newUser.setPassword($security.randomString(24))
+          newUser.setVerified(true)
+          newUser.set('name', storedName)
+          newUser.set('telefone', storedPhone)
+          newUser.set('role', 'prata')
+          newUser.set('ativo', true)
+          newUser.set('origem', originTag)
+          $app.save(newUser)
+          linkedUserId = newUser.id
+        } catch (createPrataErr) {
+          console.log('Aviso ao criar usuário nível Prata pela Nine:', createPrataErr)
+          // Se falhou por email duplicado, busca novamente
+          try {
+            const retryUser = $app.findAuthRecordByEmail('users', storedEmail)
+            if (retryUser) {
+              linkedUserId = retryUser.id
+            }
+          } catch (_) {}
+        }
+      }
+
+      if (linkedUserId) {
+        conversaRecord.set('user', linkedUserId)
+      }
+    }
+
+    $app.save(conversaRecord)
+
+    // Primeiro nome do visitante para tratamento acolhedor
+    let firstName = ''
+    if (storedName) {
+      firstName = storedName.trim().split(/\s+/)[0]
+    }
+
+    // Se ainda NÃO está totalmente identificado (falta nome, e-mail ou telefone):
+    // A Nine deve solicitar os dados pendentes de forma acolhedora, natural e não burocrática,
+    // explicando que é para personalizar o atendimento com carinho.
+    // Se o visitante tiver feito uma pergunta na primeira mensagem, a Nine acolhe com gentileza e pede os dados.
+    if (!isFullyIdentified) {
+      const missingFields = []
+      if (!hasFullName) missingFields.push('seu nome completo')
+      if (!hasValidEmail) missingFields.push('seu melhor e-mail')
+      if (!hasValidPhone) missingFields.push('seu telefone ou WhatsApp com DDD')
+
+      let askReply = ''
+
+      if (isFirstMessageOfConversation || conversaRecord.getInt('total_mensagens') <= 2) {
+        askReply =
+          'Olá! Que alegria receber você aqui no CoffeeCast 4.0! ☕✨\n\n' +
+          'Antes de mergulharmos no nosso papo, me conta: qual é o ' +
+          missingFields.join(', ') +
+          '? Assim eu já preparo um café bem quentinho e personalizo todo o seu atendimento com o maior carinho.'
+      } else {
+        // Mensagem subsequente enquanto ainda faltam dados
+        const firstNameGreeting = firstName ? `${firstName}, ` : ''
+        askReply =
+          `Com certeza! ${firstNameGreeting}Para eu te passar todos os detalhes certinhos e registrar nosso contato com carinho, só me confirma, por favor: ` +
+          missingFields.join(' e ') +
+          '? ☕'
+      }
+
+      // Salvar a resposta da Nine
+      try {
+        const nineMsgRec = new Record(mensagensCol)
+        nineMsgRec.set('conversation_id', conversationId)
+        nineMsgRec.set('remetente', 'nine')
+        nineMsgRec.set('remetente_nome', 'Nine')
+        nineMsgRec.set('conteudo', askReply)
+        $app.save(nineMsgRec)
+
+        conversaRecord.set('ultima_mensagem', askReply)
+        conversaRecord.set('ultimo_remetente', 'nine')
+        conversaRecord.set('data_ultima_mensagem', new Date().toISOString())
+        conversaRecord.set('total_mensagens', (conversaRecord.getInt('total_mensagens') || 0) + 1)
+        $app.save(conversaRecord)
+      } catch (saveAskErr) {
+        console.log('Aviso ao salvar solicitação de dados pela Nine:', saveAskErr)
+      }
+
+      return e.json(200, {
+        content: askReply,
+        conversation_id: conversationId,
+        message_id: '',
+        citations: [],
+        mode: 'collecting-visitor-data',
+        modo_atendimento: conversaRecord.getString('modo_atendimento'),
+        em_atendimento_humano: false,
+        coleta_pendente: true,
+      })
+    }
+
     // =========================================================================
+    // VISITANTE IDENTIFICADO! PROSSEGUIR COM ATENDIMENTO NATURAL E PERSONALIZADO
+    // =========================================================================
+
+    // Resolver usuário de serviço para o agente nativo (usa o próprio usuário cadastrado ou o visitante@app.local)
+    let agentUserId = linkedUserId
+    if (!agentUserId) {
+      if (e.auth && e.auth.id) {
+        agentUserId = e.auth.id
+      } else {
+        try {
+          const visitante = $app.findAuthRecordByEmail('users', 'visitante@app.local')
+          if (visitante) {
+            agentUserId = visitante.id
+          }
+        } catch (_) {}
+
+        if (!agentUserId) {
+          try {
+            const usersColRef = $app.findCollectionByNameOrId('users')
+            const rec = new Record(usersColRef)
+            rec.setEmail('visitante@app.local')
+            rec.setPassword($security.randomString(28))
+            rec.setVerified(true)
+            rec.set('name', 'Visitante CoffeeCast')
+            rec.set('role', 'prata')
+            rec.set('ativo', true)
+            $app.save(rec)
+            agentUserId = rec.id
+          } catch (_) {}
+        }
+      }
+    }
+
     // CONTEXTO DINÂMICO CONSULTADO EM TEMPO REAL NO BANCO DE DADOS
-    // A Nine consulta episódios, integrantes, agenda, base de conhecimento e conteúdo
-    // =========================================================================
     let dynamicContextParts = []
 
     // 1. Entradas Ativas da Base de Conhecimento (nine_conhecimento)
@@ -180,7 +426,6 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       console.log('Aviso ao carregar nine_conhecimento:', kbErr)
     }
 
-    // Se ainda houver algo legado em nine_config e não duplicado
     if (legacyKnowledge && dynamicContextParts.length === 0) {
       dynamicContextParts.push('### BASE DE CONHECIMENTO COMPLEMENTAR:\n' + legacyKnowledge)
     }
@@ -259,7 +504,7 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       '• Contato Comercial & Produção: Aline Lana pelo WhatsApp (31) 99129-7619.'
     dynamicContextParts.push(pagesText)
 
-    // 6. Prompt Livre Adicional da Base de Conhecimento (se configurado)
+    // 6. Prompt Livre Adicional da Base de Conhecimento
     if (customPromptLivre && customPromptLivre.trim().length > 0) {
       dynamicContextParts.push(
         '### INSTRUÇÕES E ORIENTAÇÕES ADICIONAIS DA BASE DE CONHECIMENTO (PROMPT LIVRE):\n' +
@@ -267,32 +512,31 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       )
     }
 
-    // Juntar todo o bloco de dados do banco
     const dynamicContextBlock = dynamicContextParts.join('\n\n')
 
-    // Diretrizes essenciais de TOM NATURAL e CONVERSA HUMANA (sempre aplicadas a toda resposta)
+    // Diretrizes essenciais de NORMA-PADRÃO, LÍNGUA, TOM NATURAL E PERSONALIZAÇÃO
     const naturalHumanGuidelines =
-      'DIRETRIZES DE TOM, ESTILO E NATURALIDADE HUMANA (OBRIGATÓRIO):\n' +
-      '1. CONVERSA NATURAL ENTRE DUAS PESSOAS: Responda SEMPRE em português do Brasil com naturalidade e espontaneidade, como duas pessoas conversando à mesa tomando café. Não soe robótica, burocrática, mecânica nem como um manual técnico de instruções.\n' +
-      '2. PRIMEIRA PESSOA E CALOR HUMANO: Fale em primeira pessoa ("eu", "aqui no CoffeeCast", "a gente"), com frases fluidas, calorosas e acolhedoras. Varie seu vocabulário e construções frasais; evite repetir bordões ou fórmulas prontas em todas as mensagens.\n' +
-      '3. RITMO DE CONVERSA (SEM DESPEJAR TUDO): Dê respostas diretas e amigáveis, do tamanho certo para um papo. Não jogue listas enormes de dados de uma vez se a pessoa fez uma pergunta simples. Entregue o essencial e mantenha o papo vivo.\n' +
-      '4. PROATIVIDADE E PERGUNTAS DE VOLTA: Quando fizer sentido para o contexto, faça uma pergunta de volta para entender o que a pessoa precisa ou manter a conversa fluindo de forma gostosa.\n' +
-      '5. NOME DA PESSOA E EMOJIS: Se souber o nome do visitante (ou ele se apresentar), use o nome com carinho. Use emojis com moderação e bom gosto, combinando com o clima de café e acolhimento (☕, ✨, 💛).\n\n' +
+      'DIRETRIZES DE LÍNGUA, NORMA-PADRÃO E ACORDO ORTOGRÁFICO (OBRIGATÓRIO E RIGOROSO):\n' +
+      '1. NORMA-PADRÃO DO PORTUGUÊS DO BRASIL: Responda SEMPRE em português do Brasil, seguindo com absoluto rigor a norma-padrão e o Acordo Ortográfico vigente. NUNCA cometa erros de concordância nominal ou verbal, regência, crase, pontuação, acentuação gráfica ou escrita.\n' +
+      '2. TRATAMENTO PELO PRIMEIRO NOME: Chame sempre a pessoa pelo primeiro nome (' +
+      (firstName || 'visitante') +
+      '), iniciando o atendimento com acolhimento caloroso e educado.\n' +
+      '3. PRONOMES E GÊNERO: Quando houver informação suficiente sobre a pessoa (como nome ou autodescrição inequívocos), utilize os pronomes e flexões adequados. Se não houver certeza absoluta, NUNCA presuma gênero: utilize uma linguagem neutra, fluida e natural (ex.: "Que bom ter sua companhia!", "Seja muito bem-vindo(a)!", "É um grande prazer conversar com você!").\n' +
+      '4. CONVERSA NATURAL ENTRE DUAS PESSOAS: Fale como quem bate um papo à mesa com café fresquinho. Calorosa, espontânea, humana e empática. Nada de respostas burocráticas ou robóticas.\n' +
+      '5. PRIMEIRA PESSOA E CALOR HUMANO: Fale em primeira pessoa ("eu", "aqui no CoffeeCast", "a gente"), demonstrando simpatia genuína.\n' +
+      '6. RITMO DE CONVERSA (SEM DESPEJAR TUDO): Dê respostas claras e no tamanho ideal para um diálogo. Não jogue listas gigantes se a pergunta for simples.\n' +
+      '7. PROATIVIDADE E PERGUNTAS DE VOLTA: Faça uma pergunta de volta para manter o papo vivo e entender o que a pessoa precisa.\n' +
+      '8. EMOJIS COM MODERAÇÃO: Use emojis elegantes com bom gosto e no tom do café e acolhimento (☕, ✨, 💛).\n\n' +
       'ÂNCORA ESTREITA DE CONHECIMENTO (REGRA INEGOCIÁVEL):\n' +
       '1. Baseie-se ESTRITAMENTE nos conhecimentos oficiais do treinamento (Prompt Master, Base de Conhecimento, Prompt Livre e dados dinâmicos do banco: episódios, integrantes, agenda, páginas e contatos).\n' +
       '2. NUNCA INVENTE informações, datas, nomes, valores, links ou confirmações que não estejam presentes nas fontes fornecidas.\n' +
-      '3. Se a informação NÃO constar nessas fontes oficiais, diga com toda a naturalidade humana que não possui essa informação no momento e ofereça com carinho o contato direto da produção: Aline Lana pelo WhatsApp (31) 99129-7619 ou pelo formulário de contato do site.'
+      '3. Se a informação NÃO constar nessas fontes oficiais, admita com toda a simpatia e naturalidade que não possui esse dado no momento e recomende com carinho o contato direto da produção: Aline Lana pelo WhatsApp (31) 99129-7619 ou pelos formulários de contato do site.'
 
-    // System prompt base focado na personalidade, comportamento e regras
     const systemPromptBase =
       (customPrompt ? customPrompt + '\n\n' + naturalHumanGuidelines : '') ||
       'Você é a Nine, a assistente virtual oficial do podcast CoffeeCast 4.0 ("Mais que conversas, histórias que transformam").\n\n' +
-        'Sua personalidade:\n' +
-        '- Calorosa, acolhedora, feminina, elegante, prestativa e amigável (adora conversar com café ☕).\n' +
-        '- Comunica-se SEMPRE em Português do Brasil.\n\n' +
         naturalHumanGuidelines
 
-    // Montar a instrução unificada separando Personalidade e Contexto Dinâmico
     const fullPromptWithContext =
       systemPromptBase +
       '\n\n==================================================\n' +
@@ -300,31 +544,35 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       dynamicContextBlock +
       '\n==================================================\n' +
       'INSTRUÇÃO FINAL DE RESPOSTA:\n' +
-      'Responda à mensagem da pessoa soando como uma conversa natural e acolhedora entre humanos, sem rigidez de robô, usando estritamente os fatos das fontes acima. Se faltar algum dado, diga com simpatia e recomende o WhatsApp da Aline (31) 99129-7619.'
+      'Responda em português do Brasil padrão (Acordo Ortográfico vigente), sem erros de concordância ou pontuação. Chame ' +
+      (firstName || 'a pessoa') +
+      ' pelo primeiro nome com calor humano, como à mesa tomando café. Use pronomes adequados se souber o gênero ou linguagem neutra e natural se incerto. Use estritamente os fatos das fontes acima. Se faltar algum dado, indique com carinho o WhatsApp da Aline Lana (31) 99129-7619.'
 
     let responseContent = ''
     let returnedMessageId = ''
     let citations = []
     let modeUsed = 'none'
 
-    // Mensagem aprimorada para o agente nativo com o contexto dinâmico e lembrete de conversa natural
-    const visitorName = (conversaRecord.getString('visitante_nome') || '').trim()
-    const visitorInfo =
-      visitorName && visitorName !== 'Visitante' ? `[NOME DO VISITANTE: ${visitorName}]\n` : ''
+    const visitorContextInfo =
+      `[DADOS DO VISITANTE IDENTIFICADO]\n` +
+      `Primeiro nome: ${firstName || 'Amigo(a)'}\n` +
+      `Nome completo: ${storedName || 'Visitante'}\n` +
+      `E-mail: ${storedEmail || 'não informado'}\n` +
+      `Telefone/WhatsApp: ${storedPhone || 'não informado'}\n` +
+      `[REGRA: Chame ${firstName || 'a pessoa'} pelo primeiro nome. Responda em português do Brasil padrão estrito, sem erros de concordância ou ortografia, com tom caloroso e natural. Se o gênero for incerto, use linguagem neutra.]\n\n`
 
     const userMessageWithContext =
-      '[INSTRUÇÃO DE TOM: Responda como uma conversa natural e calorosa entre duas pessoas tomando café, em 1ª pessoa, sem rigidez robótica. Baseie-se estritamente nas fontes abaixo e nunca invente dados.]\n\n' +
-      visitorInfo +
+      visitorContextInfo +
       '[CONHECIMENTOS E DADOS OFICIAIS DO COFFEECAST 4.0]\n' +
       dynamicContextBlock +
       '\n\n[MENSAGEM DO VISITANTE]\n' +
       rawMessage
 
-    // 1. Tentar executar via $ai.agent("nine-chat") se tiver userId válido
-    if (userId && typeof $ai !== 'undefined' && $ai.agent) {
+    // 1. Tentar executar via $ai.agent("nine-chat") com agentUserId
+    if (agentUserId && typeof $ai !== 'undefined' && $ai.agent) {
       try {
         const agentResult = $ai.agent('nine-chat').chat({
-          user_id: userId,
+          user_id: agentUserId,
           conversation_id: null,
           message: userMessageWithContext,
         })
@@ -340,7 +588,7 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       }
     }
 
-    // 2. Fallback via $ai.chat usando fullPromptWithContext (independente de userId)
+    // 2. Fallback via $ai.chat
     if (!responseContent && typeof $ai !== 'undefined' && typeof $ai.chat === 'function') {
       try {
         const chatRes = $ai.chat({
@@ -367,8 +615,13 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
     }
 
     if (!responseContent) {
-      responseContent = 'Não consegui responder agora — tente novamente em instantes 💛'
-      modeUsed = 'fallback-text'
+      const welcomeFallback = firstName
+        ? `${firstName}, que alegria ter você aqui! ☕ `
+        : 'Olá! ☕ '
+      responseContent =
+        welcomeFallback +
+        'Obrigada por compartilhar seus dados. Como posso te ajudar hoje sobre os episódios, integrantes ou gravações do CoffeeCast 4.0?'
+      modeUsed = 'fallback-greeting'
     }
 
     // Salvar a resposta da Nine em nine_mensagens
@@ -380,7 +633,6 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       nineMsgRec.set('conteudo', responseContent)
       $app.save(nineMsgRec)
 
-      // Atualizar última mensagem e total na conversa
       conversaRecord.set('ultima_mensagem', responseContent)
       conversaRecord.set('ultimo_remetente', 'nine')
       conversaRecord.set('data_ultima_mensagem', new Date().toISOString())
@@ -398,6 +650,8 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       mode: modeUsed,
       modo_atendimento: conversaRecord.getString('modo_atendimento'),
       em_atendimento_humano: false,
+      visitante_nome: storedName,
+      primeiro_nome: firstName,
     })
   } catch (err) {
     console.log('Erro geral no endpoint nine-chat:', err)
