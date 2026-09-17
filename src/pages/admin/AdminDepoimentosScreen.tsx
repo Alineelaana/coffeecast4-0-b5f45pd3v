@@ -47,12 +47,27 @@ export default function AdminDepoimentosScreen() {
   const { isMaster, isGerencial } = useAuth()
   const [activeTab, setActiveTab] = useState<'publicados' | 'recebidos'>('publicados')
   const [copiedLink, setCopiedLink] = useState(false)
+  const [copiedRoteiroLink, setCopiedRoteiroLink] = useState(false)
   const [copiedConvidadoLink, setCopiedConvidadoLink] = useState(false)
 
   const publicTestimonialUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/depoimento` : '/depoimento'
+  const publicRoteiroUrl =
+    typeof window !== 'undefined' ? `${window.location.origin}/roteiro` : '/roteiro'
   const publicConvidadoUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/convidado` : '/convidado'
+
+  const handleCopyRoteiroLink = async () => {
+    try {
+      await navigator.clipboard.writeText(publicRoteiroUrl)
+      setCopiedRoteiroLink(true)
+      toast.success('Link do formulário de roteiro copiado com sucesso!')
+      setTimeout(() => setCopiedRoteiroLink(false), 3000)
+    } catch (err) {
+      console.error('Falha ao copiar:', err)
+      toast.error('Não foi possível copiar automaticamente. Selecione e copie o link.')
+    }
+  }
 
   const handleCopyLink = async () => {
     try {
@@ -406,9 +421,57 @@ export default function AdminDepoimentosScreen() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-1">
-            {/* Linha 1: Link Direto /depoimento */}
-            <div className="bg-black/30 border border-dourado/30 rounded-xl p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 pt-1">
+            {/* Linha 1: Link Direto /roteiro */}
+            <div className="bg-black/30 border border-dourado/40 rounded-xl p-3 flex flex-col justify-between gap-2.5">
+              <div className="min-w-0 space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-dourado">
+                    Link Direto: Roteiro do EP
+                  </span>
+                  <span className="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-1.5 py-0.2 rounded font-semibold">
+                    Novo
+                  </span>
+                </div>
+                <div className="text-xs font-mono text-dourado-light truncate select-all">
+                  {publicRoteiroUrl}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  type="button"
+                  onClick={handleCopyRoteiroLink}
+                  className="flex-1 bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-xl px-3 py-2 min-h-[38px] shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                >
+                  {copiedRoteiroLink ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copiar link</span>
+                    </>
+                  )}
+                </Button>
+
+                <a
+                  href={publicRoteiroUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-marfim hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 min-h-[38px] transition-colors cursor-pointer"
+                  title="Abrir página do roteiro em nova aba"
+                >
+                  <span>Abrir</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-dourado" />
+                </a>
+              </div>
+            </div>
+
+            {/* Linha 2: Link Direto /depoimento */}
+            <div className="bg-black/30 border border-dourado/30 rounded-xl p-3 flex flex-col justify-between gap-2.5">
               <div className="min-w-0 space-y-0.5">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-dourado">
@@ -424,7 +487,7 @@ export default function AdminDepoimentosScreen() {
                 <Button
                   type="button"
                   onClick={handleCopyLink}
-                  className="flex-1 sm:flex-none bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-xl px-3.5 py-2 min-h-[38px] shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                  className="flex-1 bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-xl px-3 py-2 min-h-[38px] shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                 >
                   {copiedLink ? (
                     <>
@@ -443,7 +506,7 @@ export default function AdminDepoimentosScreen() {
                   href={publicTestimonialUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-marfim hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 min-h-[38px] transition-colors cursor-pointer"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-marfim hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 min-h-[38px] transition-colors cursor-pointer"
                   title="Abrir página do depoimento em nova aba"
                 >
                   <span>Abrir</span>
@@ -452,15 +515,15 @@ export default function AdminDepoimentosScreen() {
               </div>
             </div>
 
-            {/* Linha 2: Portal /convidado */}
-            <div className="bg-black/30 border border-dourado/30 rounded-xl p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            {/* Linha 3: Portal /convidado */}
+            <div className="bg-black/30 border border-dourado/30 rounded-xl p-3 flex flex-col justify-between gap-2.5">
               <div className="min-w-0 space-y-0.5">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-dourado">
                     Portal: Área do Convidado
                   </span>
                   <span className="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-1.5 py-0.2 rounded font-semibold">
-                    Novo
+                    2 Opções
                   </span>
                 </div>
                 <div className="text-xs font-mono text-dourado-light truncate select-all">
@@ -472,7 +535,7 @@ export default function AdminDepoimentosScreen() {
                 <Button
                   type="button"
                   onClick={handleCopyConvidadoLink}
-                  className="flex-1 sm:flex-none bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-xl px-3.5 py-2 min-h-[38px] shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                  className="flex-1 bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-xl px-3 py-2 min-h-[38px] shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                 >
                   {copiedConvidadoLink ? (
                     <>
@@ -491,7 +554,7 @@ export default function AdminDepoimentosScreen() {
                   href={publicConvidadoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-marfim hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 min-h-[38px] transition-colors cursor-pointer"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-marfim hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 min-h-[38px] transition-colors cursor-pointer"
                   title="Abrir Área do Convidado em nova aba"
                 >
                   <span>Abrir</span>

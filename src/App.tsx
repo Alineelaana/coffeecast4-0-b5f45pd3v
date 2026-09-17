@@ -8,6 +8,7 @@ import { Toaster } from 'sonner'
 import Index from '@/pages/Index'
 import ConvidadoScreen from '@/pages/ConvidadoScreen'
 import DepoimentoScreen from '@/pages/DepoimentoScreen'
+import RoteiroScreen from '@/pages/RoteiroScreen'
 import PoliticaScreen from '@/pages/PoliticaScreen'
 import LoginScreen from '@/pages/LoginScreen'
 import ResetPasswordScreen from '@/pages/ResetPasswordScreen'
@@ -31,6 +32,7 @@ import AdminDominioScreen from '@/pages/admin/AdminDominioScreen'
 import AdminPoliticasScreen from '@/pages/admin/AdminPoliticasScreen'
 import AdminUsuariosScreen from '@/pages/admin/AdminUsuariosScreen'
 import AdminNotificacoesScreen from '@/pages/admin/AdminNotificacoesScreen'
+import AdminRoteirosScreen from '@/pages/admin/AdminRoteirosScreen'
 
 export default function App() {
   return (
@@ -40,6 +42,7 @@ export default function App() {
           {/* Rotas Públicas */}
           <Route path="/" element={<Index />} />
           <Route path="/convidado" element={<ConvidadoScreen />} />
+          <Route path="/roteiro" element={<RoteiroScreen />} />
           <Route path="/depoimento" element={<DepoimentoScreen />} />
           <Route path="/politica/:slug" element={<PoliticaScreen />} />
           <Route path="/login" element={<LoginScreen />} />
@@ -69,6 +72,7 @@ export default function App() {
 
             {/* Gestão Operacional permitida para Master e Gerencial */}
             <Route path="notificacoes" element={<AdminNotificacoesScreen />} />
+            <Route path="roteiros" element={<AdminRoteirosScreen />} />
             <Route path="contatos" element={<AdminContatosScreen />} />
             <Route path="financeiro" element={<AdminFinanceiroScreen />} />
             <Route path="horas" element={<AdminControleHorasScreen />} />

@@ -173,3 +173,33 @@ export interface PoliticaRecord {
   created: string
   updated: string
 }
+
+export type RoteiroConvidadoStatus = 'pendente' | 'lida' | 'arquivada'
+
+export interface RoteiroConvidadoRecord {
+  id: string
+  nome: string
+  data_nascimento: string
+  estado_civil: string
+  tem_conjuge?: boolean
+  nome_conjuge?: string
+  tem_filhos?: boolean
+  quantidade_filhos?: string
+  nomes_filhos?: string
+  tem_empresa?: boolean
+  nome_empresa?: string
+  sobre_empresa?: string
+  tema_enfatizar?: string
+  tem_tema_sensivel?: boolean
+  tema_sensivel_detalhes?: string
+  biografia?: string
+  foto: string
+  logomarca?: string
+  autorizacao_imagem: boolean
+  status: RoteiroConvidadoStatus
+  visualizado?: boolean
+  roteiro_final_texto?: string
+  roteiro_final_arquivo?: string
+  created: string
+  updated: string
+}

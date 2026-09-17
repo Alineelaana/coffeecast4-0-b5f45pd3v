@@ -2,12 +2,17 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import pb from '@/lib/pocketbase/client'
 import { formatDateBR, getFileUrl } from '@/lib/formatters'
-import type { DepoimentoConvidadoRecord, ContatoRecord } from '@/types/database'
+import type {
+  DepoimentoConvidadoRecord,
+  ContatoRecord,
+  RoteiroConvidadoRecord,
+} from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   Bell,
   MessageSquareQuote,
+  FileText,
   Inbox,
   CheckCircle2,
   ExternalLink,
@@ -20,7 +25,7 @@ import { toast } from 'sonner'
 
 export interface NotificationItem {
   id: string
-  origem: 'depoimento' | 'contato'
+  origem: 'depoimento' | 'contato' | 'roteiro'
   titulo: string
   subtitulo: string
   resumo: string
@@ -30,20 +35,26 @@ export interface NotificationItem {
   targetPath: string
   recordId: string
   foto?: string
-  rawRecord: DepoimentoConvidadoRecord | ContatoRecord
+  rawRecord: DepoimentoConvidadoRecord | ContatoRecord | RoteiroConvidadoRecord
 }
 
 export default function AdminNotificacoesScreen() {
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtroOrigem, setFiltroOrigem] = useState<'todos' | 'depoimento' | 'contato'>('todos')
+  const [filtroOrigem, setFiltroOrigem] = useState<'todos' | 'roteiro' | 'depoimento' | 'contato'>(
+    'todos',
+  )
   const [filtroLidas, setFiltroLidas] = useState<'todos' | 'nao_lidas' | 'lidas'>('nao_lidas')
 
   const loadNotifications = async () => {
     try {
       setLoading(true)
-      const [depList, contList] = await Promise.all([
+      const [rotList, depList, contList] = await Promise.all([
+        pb
+          .collection('roteiros_convidados')
+          .getFullList<RoteiroConvidadoRecord>({ sort: '-created' })
+          .catch(() => []),
         pb
           .collection('depoimentos_convidados')
           .getFullList<DepoimentoConvidadoRecord>({ sort: '-created' })
@@ -55,6 +66,27 @@ export default function AdminNotificacoesScreen() {
       ])
 
       const list: NotificationItem[] = []
+
+      // Roteiros dos convidados
+      rotList.forEach((rot) => {
+        list.push({
+          id: `rot_${rot.id}`,
+          origem: 'roteiro',
+          titulo: `Roteiro de ${rot.nome}`,
+          subtitulo:
+            rot.tem_empresa && rot.nome_empresa
+              ? `Empresa: ${rot.nome_empresa}`
+              : `Nasc.: ${rot.data_nascimento} (${rot.estado_civil})`,
+          resumo: rot.tema_enfatizar || rot.biografia || 'Respostas enviadas pelo convidado.',
+          data: rot.created,
+          lida: Boolean(rot.visualizado || rot.status !== 'pendente'),
+          statusOriginal: rot.status,
+          targetPath: '/admin/roteiros',
+          recordId: rot.id,
+          foto: rot.foto ? getFileUrl(rot, rot.foto, '100x100') : undefined,
+          rawRecord: rot,
+        })
+      })
 
       // Depoimentos dos convidados
       depList.forEach((dep) => {
@@ -109,8 +141,18 @@ export default function AdminNotificacoesScreen() {
 
   // Subscriptions em tempo real
   useEffect(() => {
+    let unsubRot: (() => void) | undefined
     let unsubDep: (() => void) | undefined
     let unsubCont: (() => void) | undefined
+
+    pb.collection('roteiros_convidados')
+      .subscribe('*', () => {
+        loadNotifications()
+      })
+      .then((unsub) => {
+        unsubRot = unsub
+      })
+      .catch(() => {})
 
     pb.collection('depoimentos_convidados')
       .subscribe('*', () => {
@@ -131,6 +173,7 @@ export default function AdminNotificacoesScreen() {
       .catch(() => {})
 
     return () => {
+      if (unsubRot) unsubRot()
       if (unsubDep) unsubDep()
       if (unsubCont) unsubCont()
     }
@@ -141,7 +184,11 @@ export default function AdminNotificacoesScreen() {
     if (e) e.stopPropagation()
 
     try {
-      if (item.origem === 'depoimento') {
+      if (item.origem === 'roteiro') {
+        await pb.collection('roteiros_convidados').update(item.recordId, {
+          visualizado: true,
+        })
+      } else if (item.origem === 'depoimento') {
         await pb.collection('depoimentos_convidados').update(item.recordId, {
           visualizado: true,
         })
@@ -167,7 +214,12 @@ export default function AdminNotificacoesScreen() {
     try {
       await Promise.all(
         naoLidas.map((item) => {
-          if (item.origem === 'depoimento') {
+          if (item.origem === 'roteiro') {
+            return pb
+              .collection('roteiros_convidados')
+              .update(item.recordId, { visualizado: true })
+              .catch(() => {})
+          } else if (item.origem === 'depoimento') {
             return pb
               .collection('depoimentos_convidados')
               .update(item.recordId, { visualizado: true })
@@ -193,7 +245,11 @@ export default function AdminNotificacoesScreen() {
   const handleAbrirDestino = async (item: NotificationItem) => {
     if (!item.lida) {
       // Marca como lida em background
-      if (item.origem === 'depoimento') {
+      if (item.origem === 'roteiro') {
+        pb.collection('roteiros_convidados')
+          .update(item.recordId, { visualizado: true })
+          .catch(() => {})
+      } else if (item.origem === 'depoimento') {
         pb.collection('depoimentos_convidados')
           .update(item.recordId, { visualizado: true })
           .catch(() => {})
@@ -215,6 +271,7 @@ export default function AdminNotificacoesScreen() {
   })
 
   const totalNaoLidas = notifications.filter((n) => !n.lida).length
+  const naoLidasRot = notifications.filter((n) => !n.lida && n.origem === 'roteiro').length
   const naoLidasDep = notifications.filter((n) => !n.lida && n.origem === 'depoimento').length
   const naoLidasCont = notifications.filter((n) => !n.lida && n.origem === 'contato').length
 
@@ -251,7 +308,7 @@ export default function AdminNotificacoesScreen() {
       </div>
 
       {/* Contadores e Filtros Rápidos */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <div
           onClick={() => {
             setFiltroOrigem('todos')
@@ -271,6 +328,27 @@ export default function AdminNotificacoesScreen() {
           </div>
           <p className="text-2xl font-serif font-bold mt-2">{totalNaoLidas}</p>
           <span className="text-[11px] opacity-75">Aguardando visualização ou ação</span>
+        </div>
+
+        <div
+          onClick={() => {
+            setFiltroOrigem('roteiro')
+            setFiltroLidas('nao_lidas')
+          }}
+          className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+            filtroOrigem === 'roteiro' && filtroLidas === 'nao_lidas'
+              ? 'bg-vinho text-white border-vinho shadow-md'
+              : 'bg-white text-vinho border-vinho/10 hover:border-dourado/60'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider opacity-80">
+              Novos Roteiros
+            </span>
+            <FileText className="w-4 h-4 text-dourado" />
+          </div>
+          <p className="text-2xl font-serif font-bold mt-2">{naoLidasRot}</p>
+          <span className="text-[11px] opacity-75">Preenchidos para o episódio</span>
         </div>
 
         <div
@@ -307,7 +385,7 @@ export default function AdminNotificacoesScreen() {
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider opacity-80">
-              Novos Contatos / Leads
+              Contatos / Leads
             </span>
             <Inbox className="w-4 h-4 text-dourado" />
           </div>
@@ -327,6 +405,15 @@ export default function AdminNotificacoesScreen() {
             }`}
           >
             Todas as Origens
+          </button>
+          <button
+            onClick={() => setFiltroOrigem('roteiro')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              filtroOrigem === 'roteiro' ? 'bg-vinho text-white' : 'text-vinho/70 hover:bg-vinho/5'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5 text-dourado shrink-0" />
+            <span>Roteiros</span>
           </button>
           <button
             onClick={() => setFiltroOrigem('depoimento')}
@@ -401,6 +488,7 @@ export default function AdminNotificacoesScreen() {
           </div>
         ) : (
           filtered.map((item) => {
+            const isRoteiro = item.origem === 'roteiro'
             const isDepoimento = item.origem === 'depoimento'
             return (
               <div
@@ -425,12 +513,16 @@ export default function AdminNotificacoesScreen() {
                     ) : (
                       <div
                         className={`w-11 h-11 rounded-full flex items-center justify-center ${
-                          isDepoimento
-                            ? 'bg-dourado/20 text-vinho border border-dourado/40'
-                            : 'bg-vinho/10 text-vinho border border-vinho/20'
+                          isRoteiro
+                            ? 'bg-vinho text-dourado border border-dourado/40'
+                            : isDepoimento
+                              ? 'bg-dourado/20 text-vinho border border-dourado/40'
+                              : 'bg-vinho/10 text-vinho border border-vinho/20'
                         }`}
                       >
-                        {isDepoimento ? (
+                        {isRoteiro ? (
+                          <FileText className="w-5 h-5 text-dourado" />
+                        ) : isDepoimento ? (
                           <MessageSquareQuote className="w-5 h-5 text-dourado-dark" />
                         ) : (
                           <Inbox className="w-5 h-5 text-vinho" />
@@ -448,12 +540,18 @@ export default function AdminNotificacoesScreen() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                          isDepoimento
-                            ? 'bg-dourado/20 text-vinho border border-dourado/40'
-                            : 'bg-vinho/10 text-vinho border border-vinho/20'
+                          isRoteiro
+                            ? 'bg-vinho text-white'
+                            : isDepoimento
+                              ? 'bg-dourado/20 text-vinho border border-dourado/40'
+                              : 'bg-vinho/10 text-vinho border border-vinho/20'
                         }`}
                       >
-                        {isDepoimento ? 'Depoimento' : 'Contato / Proposta'}
+                        {isRoteiro
+                          ? 'Roteiro de Episódio'
+                          : isDepoimento
+                            ? 'Depoimento'
+                            : 'Contato / Proposta'}
                       </Badge>
 
                       {!item.lida && (
@@ -499,7 +597,13 @@ export default function AdminNotificacoesScreen() {
                     size="sm"
                     className="bg-vinho hover:bg-vinho-light text-white text-xs font-semibold h-9 rounded-xl px-3.5 min-h-[36px] flex items-center gap-1.5 group-hover:scale-102 transition-transform"
                   >
-                    <span>{isDepoimento ? 'Ver Depoimentos' : 'Ver Contato'}</span>
+                    <span>
+                      {isRoteiro
+                        ? 'Ver Roteiros'
+                        : isDepoimento
+                          ? 'Ver Depoimentos'
+                          : 'Ver Contato'}
+                    </span>
                     <ArrowRight className="w-3.5 h-3.5 text-dourado" />
                   </Button>
                 </div>

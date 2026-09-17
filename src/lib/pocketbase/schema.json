@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T01:25:19.694Z",
+  "generatedAt": "2026-09-17T01:41:17.100Z",
   "collections": [
     {
       "name": "users",
@@ -852,6 +852,170 @@
       "indexes": [
         "CREATE INDEX idx_dep_conv_status ON depoimentos_convidados (status)",
         "CREATE INDEX idx_dep_conv_created ON depoimentos_convidados (created)"
+      ]
+    },
+    {
+      "name": "roteiros_convidados",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "create": "",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\""
+      },
+      "fields": [
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "data_nascimento",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "estado_civil",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "tem_conjuge",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "nome_conjuge",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tem_filhos",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "quantidade_filhos",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "nomes_filhos",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tem_empresa",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "nome_empresa",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "sobre_empresa",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tema_enfatizar",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tem_tema_sensivel",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tema_sensivel_detalhes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "biografia",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "foto",
+          "type": "file",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "logomarca",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "autorizacao_imagem",
+          "type": "bool",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["pendente", "lida", "arquivada"]
+        },
+        {
+          "name": "visualizado",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "roteiro_final_texto",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "roteiro_final_arquivo",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_roteiros_status ON roteiros_convidados (status)",
+        "CREATE INDEX idx_roteiros_created ON roteiros_convidados (created)"
       ]
     }
   ]

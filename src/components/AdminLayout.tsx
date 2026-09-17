@@ -36,10 +36,17 @@ export default function AdminLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
 
-  // Carrega e atualiza badge de pendências (novos contatos + novos depoimentos)
+  // Carrega e atualiza badge de pendências (novos roteiros + novos contatos + novos depoimentos)
   const fetchUnreadCount = async () => {
     try {
-      const [depList, contList] = await Promise.all([
+      const [rotList, depList, contList] = await Promise.all([
+        pb
+          .collection('roteiros_convidados')
+          .getFullList({
+            filter: 'status = "pendente" || visualizado = false',
+            fields: 'id',
+          })
+          .catch(() => []),
         pb
           .collection('depoimentos_convidados')
           .getFullList({
@@ -56,7 +63,7 @@ export default function AdminLayout() {
           .catch(() => []),
       ])
 
-      setUnreadNotificationsCount(depList.length + contList.length)
+      setUnreadNotificationsCount(rotList.length + depList.length + contList.length)
     } catch (e) {
       console.error('Erro ao buscar notificações não lidas:', e)
     }
@@ -65,8 +72,18 @@ export default function AdminLayout() {
   React.useEffect(() => {
     fetchUnreadCount()
 
+    let unsubRot: (() => void) | undefined
     let unsubDep: (() => void) | undefined
     let unsubCont: (() => void) | undefined
+
+    pb.collection('roteiros_convidados')
+      .subscribe('*', () => {
+        fetchUnreadCount()
+      })
+      .then((unsub) => {
+        unsubRot = unsub
+      })
+      .catch(() => {})
 
     pb.collection('depoimentos_convidados')
       .subscribe('*', () => {
@@ -87,6 +104,7 @@ export default function AdminLayout() {
       .catch(() => {})
 
     return () => {
+      if (unsubRot) unsubRot()
       if (unsubDep) unsubDep()
       if (unsubCont) unsubCont()
     }
@@ -156,6 +174,12 @@ export default function AdminLayout() {
           },
         ]
       : []),
+    {
+      label: 'Roteiros e Apresentações',
+      path: '/admin/roteiros',
+      icon: FileText,
+      masterOnly: false,
+    },
     {
       label: 'Depoimentos',
       path: '/admin/depoimentos',

@@ -165,66 +165,61 @@ export default function ConvidadoScreen() {
               </div>
             </div>
 
-            {/* Card 2: Roteiro do Episódio (ESPAÇO RESERVADO - EM BREVE) */}
-            <div className="bg-gradient-to-b from-marfim-dark/50 via-white to-marfim/80 rounded-3xl p-6 sm:p-8 border-2 border-vinho/15 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden">
+            {/* Card 2: Roteiro do Episódio (ATIVO - DISPONÍVEL AGORA) */}
+            <div className="group bg-white rounded-3xl p-6 sm:p-8 border-2 border-dourado/60 shadow-xl hover:shadow-2xl hover:border-dourado transition-all duration-300 flex flex-col justify-between relative overflow-hidden">
+              {/* Brilho rosé no topo */}
+              <div className="absolute top-0 right-0 w-44 h-44 bg-rose-brand/10 rounded-full blur-2xl pointer-events-none group-hover:bg-rose-brand/15 transition-all" />
+
               <div className="space-y-5 relative z-10">
                 {/* Header do Card */}
                 <div className="flex items-start justify-between gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-vinho/10 text-vinho/70 flex items-center justify-center">
-                    <FileText className="w-7 h-7 text-vinho/70" />
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-vinho via-[#4B1E3F] to-vinho-dark text-dourado flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                    <FileText className="w-7 h-7 text-dourado" />
                   </div>
-                  <Badge
-                    variant="outline"
-                    className="border-dourado/60 bg-dourado/15 text-dourado-dark font-bold text-xs px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs"
-                  >
-                    <Clock className="w-3 h-3 text-dourado" />
-                    Em breve
+                  <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-3 py-1 rounded-full shadow-xs flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Disponível agora
                   </Badge>
                 </div>
 
                 <div className="space-y-2">
-                  <h2 className="font-serif text-2xl sm:text-3xl font-bold text-vinho/80">
+                  <h2 className="font-serif text-2xl sm:text-3xl font-bold text-vinho group-hover:text-vinho-dark transition-colors">
                     Roteiro do Episódio
                   </h2>
-                  <p className="text-sm text-vinho/65 leading-relaxed">
-                    Espaço reservado para o alinhamento das pautas, biografia, temas principais e
-                    detalhes do episódio antes da gravação em estúdio.
+                  <p className="text-sm text-vinho/75 leading-relaxed">
+                    Vai gravar seu episódio no estúdio? Responda às perguntinhas de preparação com
+                    seus dados pessoais, família, empresa, tema preferido e temas sensíveis para
+                    deixarmos tudo perfeito!
                   </p>
                 </div>
 
-                {/* Vantagens / O que virá */}
+                {/* Vantagens / Informações rápidas */}
                 <div className="space-y-2 pt-2 border-t border-vinho/10">
-                  <div className="flex items-center gap-2 text-xs text-vinho/60">
+                  <div className="flex items-center gap-2 text-xs text-vinho/80">
                     <Calendar className="w-3.5 h-3.5 text-dourado shrink-0" />
                     <span>Alinhamento prévio dos tópicos da conversa</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-vinho/60">
+                  <div className="flex items-center gap-2 text-xs text-vinho/80">
                     <Mic className="w-3.5 h-3.5 text-dourado shrink-0" />
-                    <span>Envio de pontos altos da sua trajetória</span>
+                    <span>Envio de foto para divulgação e logo da empresa</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-vinho/60">
-                    <LockOpen className="w-3.5 h-3.5 text-dourado shrink-0" />
-                    <span>Também funcionará sem necessidade de login</span>
+                  <div className="flex items-center gap-2 text-xs text-vinho/80">
+                    <LockOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Acesso direto e público, sem necessidade de senha</span>
                   </div>
                 </div>
               </div>
 
-              {/* Botão Informativo / Desabilitado com Toast Amigável */}
+              {/* Botão de Ação para o Novo Formulário */}
               <div className="pt-6 relative z-10">
-                <Button
-                  type="button"
-                  onClick={handleRoteiroClick}
-                  variant="outline"
-                  className="w-full border-vinho/25 hover:border-dourado hover:bg-dourado/10 text-vinho/75 font-semibold text-sm sm:text-base py-6 rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Clock className="w-4 h-4 text-dourado shrink-0" />
-                  <span>Em preparação pela equipe</span>
-                  <span className="text-[11px] bg-dourado/20 text-vinho-dark px-2 py-0.5 rounded-full font-bold ml-1">
-                    Avisaremos
-                  </span>
-                </Button>
-                <p className="text-[11px] text-center text-vinho/55 mt-2 font-light">
-                  A equipe CoffeeCast 4.0 está finalizando esta etapa para você.
+                <Link to="/roteiro" className="block">
+                  <Button className="w-full bg-vinho hover:bg-vinho-dark text-white font-bold text-sm sm:text-base py-6 rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group-hover:bg-gradient-to-r group-hover:from-vinho group-hover:to-[#36142d]">
+                    <span>Preencher roteiro agora</span>
+                    <ArrowRight className="w-4 h-4 text-dourado transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
+                <p className="text-[11px] text-center text-vinho/60 mt-2 font-light">
+                  Leva poucos minutos e prepara sua gravação com carinho.
                 </p>
               </div>
             </div>
