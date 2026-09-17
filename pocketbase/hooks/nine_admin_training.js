@@ -18,7 +18,13 @@ routerAdd(
         return e.forbiddenError('Permissão restrita aos administradores Master e Gerencial.')
       }
 
-      const body = e.requestInfo().body || {}
+      let body = {}
+      try {
+        body = e.requestInfo().body || {}
+      } catch (_) {
+        body = {}
+      }
+
       const promptSistema = (body.prompt_sistema || '').trim()
       const observacoes = (body.observacoes || '').trim()
       const atendimentoAutomatico =
@@ -69,7 +75,8 @@ routerAdd(
 
       return e.json(200, {
         success: true,
-        message: 'Prompt de personalidade e regras da Nine salvos com sucesso!',
+        message:
+          'Prompt de treinamento e configurações da Nine salvos e sincronizados com sucesso!',
         record: {
           id: configRecord.id,
           chave: configRecord.getString('chave'),

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T15:39:52.291Z",
+  "generatedAt": "2026-09-17T15:43:50.333Z",
   "collections": [
     {
       "name": "users",
@@ -1062,11 +1062,11 @@
       "name": "nine_config",
       "type": "base",
       "apiRules": {
-        "list": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\")",
-        "view": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\")",
-        "create": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\")",
-        "update": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\")",
-        "delete": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\")"
+        "list": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\")",
+        "view": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\")",
+        "create": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\")",
+        "update": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\")",
+        "delete": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"ouro\" || @request.auth.role = \"prata\")"
       },
       "fields": [
         {

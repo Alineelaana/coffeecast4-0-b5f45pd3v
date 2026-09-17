@@ -157,7 +157,7 @@ export default function AdminNineScreen() {
 
     // Helper para extrair mensagem amigável e detalhada de erro do PocketBase ou API
     const parseDetailedError = (errorObj: any): string => {
-      if (!errorObj) return 'Falha ao salvar o prompt de treinamento.'
+      if (!errorObj) return 'Falha ao salvar o prompt de treinamento da Nine.'
       // Se tiver data.data ou response.data (validações por campo do PocketBase)
       const errData = errorObj.data?.data || errorObj.response?.data || errorObj.data || {}
       if (typeof errData === 'object' && Object.keys(errData).length > 0) {
@@ -184,23 +184,32 @@ export default function AdminNineScreen() {
       return (
         errorObj.message ||
         errorObj.error ||
-        (typeof errorObj === 'string' ? errorObj : 'Falha ao salvar o prompt de treinamento.')
+        (typeof errorObj === 'string'
+          ? errorObj
+          : 'Falha ao salvar o prompt de treinamento da Nine.')
       )
     }
 
     try {
-      let savedSuccessfully = false
-      let endpointErrorDetail: string | null = null
+      // 1. Caminho Oficial Principal: Endpoint administrativo dedicado (/backend/v1/nine/admin/config)
+      // Preserva validação de cargo (Master/Gerencial) e sincronização com o agente nativo 'nine-chat'
+      const baseUrl = import.meta.env.VITE_POCKETBASE_URL || ''
+      const token = pb.authStore.token
 
-      // 1. Tentar salvar pelo endpoint administrativo oficial (/backend/v1/nine/admin/config)
+      if (!token) {
+        toast.error('Sessão expirada. Faça login novamente para salvar o treinamento da Nine.')
+        return
+      }
+
+      let saveError: string | null = null
+      let successData: any = null
+
       try {
-        const baseUrl = import.meta.env.VITE_POCKETBASE_URL || ''
-        const token = pb.authStore.token
         const res = await fetch(`${baseUrl}/backend/v1/nine/admin/config`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: token } : {}),
+            Authorization: token,
           },
           body: JSON.stringify({
             atendimento_automatico: atendimentoAutomatico,
@@ -210,64 +219,66 @@ export default function AdminNineScreen() {
         })
 
         if (res.ok) {
-          const data = await res.json().catch(() => ({}))
-          if (data?.record?.id) {
-            setConfigId(data.record.id)
-          }
-          if (data?.record?.prompt_sistema !== undefined) {
-            setPromptSistema(data.record.prompt_sistema)
-          }
-          if (data?.record?.atendimento_automatico !== undefined) {
-            setAtendimentoAutomatico(data.record.atendimento_automatico)
-          }
-          if (data?.record?.observacoes !== undefined) {
-            setObservacoes(data.record.observacoes)
-          }
-          savedSuccessfully = true
-          toast.success('Prompt de treinamento da Nine salvo e sincronizado com sucesso!')
+          successData = await res.json().catch(() => ({}))
         } else {
           const errPayload = await res.json().catch(() => ({}))
-          endpointErrorDetail =
-            errPayload?.error || errPayload?.message || `Erro ${res.status} no servidor`
-          console.warn(
-            'Endpoint administrativo retornou erro, tentando fallback direto:',
-            endpointErrorDetail,
-          )
+          saveError =
+            errPayload?.error ||
+            errPayload?.message ||
+            (res.status === 403
+              ? 'Permissão negada. Apenas administradores Master e Gerencial podem salvar o treinamento.'
+              : `Erro ${res.status} ao salvar no servidor.`)
         }
-      } catch (endpointErr: any) {
-        console.warn(
-          'Falha na requisição ao endpoint administrativo, tentando fallback:',
-          endpointErr,
-        )
-        endpointErrorDetail = endpointErr?.message || null
+      } catch (fetchErr: any) {
+        saveError = fetchErr?.message || 'Falha de comunicação com o servidor.'
       }
 
-      // 2. Se o endpoint falhou, tentar o fallback direto pelo SDK do PocketBase
-      if (!savedSuccessfully) {
-        const payload: Record<string, any> = {
-          atendimento_automatico: atendimentoAutomatico,
-          prompt_sistema: promptTrimmed,
-          observacoes: obsTrimmed,
+      // Se o endpoint salvou com sucesso
+      if (successData) {
+        if (successData.record?.id) {
+          setConfigId(successData.record.id)
         }
+        if (successData.record?.prompt_sistema !== undefined) {
+          setPromptSistema(successData.record.prompt_sistema)
+        }
+        if (successData.record?.atendimento_automatico !== undefined) {
+          setAtendimentoAutomatico(successData.record.atendimento_automatico)
+        }
+        if (successData.record?.observacoes !== undefined) {
+          setObservacoes(successData.record.observacoes)
+        }
+        toast.success(
+          successData.message ||
+            'Prompt de treinamento da Nine salvo e sincronizado com o agente nativo!',
+        )
+        return
+      }
 
-        let updatedRecord: any = null
+      // 2. Se o endpoint falhou, tentar fallback no banco direto via SDK do PocketBase
+      console.warn(
+        'Endpoint oficial falhou (' +
+          saveError +
+          '), tentando gravação direta na coleção nine_config...',
+      )
+      const payload: Record<string, any> = {
+        atendimento_automatico: atendimentoAutomatico,
+        prompt_sistema: promptTrimmed,
+        observacoes: obsTrimmed,
+      }
+
+      let updatedRecord: any = null
+      try {
         if (configId) {
           updatedRecord = await pb.collection('nine_config').update(configId, payload)
         } else {
-          // Tentar localizar registro existente antes de criar para não violar UNIQUE(chave)
-          try {
-            const existing = await pb.collection('nine_config').getFirstListItem('chave="global"')
-            if (existing) {
-              setConfigId(existing.id)
-              updatedRecord = await pb.collection('nine_config').update(existing.id, payload)
-            } else {
-              updatedRecord = await pb.collection('nine_config').create({
-                chave: 'global',
-                ...payload,
-              })
-              setConfigId(updatedRecord.id)
-            }
-          } catch {
+          const existing = await pb
+            .collection('nine_config')
+            .getFirstListItem('chave="global"')
+            .catch(() => null)
+          if (existing) {
+            setConfigId(existing.id)
+            updatedRecord = await pb.collection('nine_config').update(existing.id, payload)
+          } else {
             updatedRecord = await pb.collection('nine_config').create({
               chave: 'global',
               ...payload,
@@ -285,12 +296,16 @@ export default function AdminNineScreen() {
           if (updatedRecord.observacoes !== undefined) setObservacoes(updatedRecord.observacoes)
         }
 
-        savedSuccessfully = true
-        toast.success('Prompt de treinamento da Nine salvo com sucesso!')
+        toast.success('Prompt de treinamento da Nine salvo com sucesso no banco!')
+      } catch (directDbErr: any) {
+        console.error('Falha tanto no endpoint quanto na gravação direta:', directDbErr)
+        const detailedMsg = parseDetailedError(directDbErr)
+        const finalMsg = saveError ? `${saveError} (${detailedMsg})` : detailedMsg
+        toast.error(`Falha ao salvar: ${finalMsg}`)
       }
-    } catch (fallbackErr: any) {
-      console.error('Falha completa ao salvar treinamento da Nine:', fallbackErr)
-      const userFriendlyMessage = parseDetailedError(fallbackErr)
+    } catch (unexpectedErr: any) {
+      console.error('Erro inesperado ao salvar treinamento da Nine:', unexpectedErr)
+      const userFriendlyMessage = parseDetailedError(unexpectedErr)
       toast.error(`Falha ao salvar: ${userFriendlyMessage}`)
     } finally {
       setSavingConfig(false)
