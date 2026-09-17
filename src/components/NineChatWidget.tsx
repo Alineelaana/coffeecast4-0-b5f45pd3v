@@ -53,7 +53,7 @@ export const NineChatWidget: React.FC = () => {
   const [modoAtendimento, setModoAtendimento] = useState<string>('automatico')
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Recupera conversationId persistido no localStorage (se existir)
   useEffect(() => {
@@ -93,10 +93,20 @@ export const NineChatWidget: React.FC = () => {
       scrollToBottom()
       setHasUnreadNotice(false)
       setTimeout(() => {
-        inputRef.current?.focus()
+        textareaRef.current?.focus()
       }, 200)
     }
   }, [isOpen, messages, isLoading])
+
+  // Ajusta a altura dinâmica do textarea conforme o conteúdo cresce
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      const scrollHeight = textareaRef.current.scrollHeight
+      // Altura mínima de ~42px (1 linha) e máxima de ~120px (cerca de 5 linhas), após isso scroll
+      textareaRef.current.style.height = `${Math.min(Math.max(scrollHeight, 42), 120)}px`
+    }
+  }, [inputValue])
 
   // Polling leve para sincronizar respostas humanas e novas mensagens da conversa quando o chat estiver aberto
   useEffect(() => {
@@ -168,6 +178,9 @@ export const NineChatWidget: React.FC = () => {
 
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+    }
     setIsLoading(true)
 
     try {
@@ -227,8 +240,25 @@ export const NineChatWidget: React.FC = () => {
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Se estiver em dispositivo móvel/touchscreen ou largura reduzida, Enter insere quebra de linha normalmente
+    // e o envio deve ser feito pelo botão de envio.
+    const isMobileDevice =
+      typeof window !== 'undefined' &&
+      (window.innerWidth < 768 || 'ontouchstart' in window || navigator.maxTouchPoints > 0)
+
+    if (e.key === 'Enter') {
+      if (e.shiftKey) {
+        // Shift + Enter: sempre quebra de linha padrão do textarea (nunca envia)
+        return
+      }
+
+      if (isMobileDevice) {
+        // No celular/tablet touch: Enter pula linha, envio fica pelo botão
+        return
+      }
+
+      // No desktop: Enter (sem Shift) envia a mensagem
       e.preventDefault()
       handleSendMessage()
     }
@@ -477,11 +507,11 @@ export const NineChatWidget: React.FC = () => {
                 e.preventDefault()
                 handleSendMessage()
               }}
-              className="flex items-center gap-2"
+              className="flex items-end gap-2"
             >
-              <input
-                ref={inputRef}
-                type="text"
+              <textarea
+                ref={textareaRef}
+                rows={1}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -492,14 +522,14 @@ export const NineChatWidget: React.FC = () => {
                     ? 'Envie sua mensagem para a equipe... ☕'
                     : 'Pergunte à Nine sobre o CoffeeCast... ☕'
                 }
-                className="flex-1 px-4 py-2.5 text-sm bg-white border border-[#4B1E3F]/20 rounded-xl text-[#4B1E3F] placeholder:text-[#4B1E3F]/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-all disabled:opacity-60"
+                className="flex-1 px-4 py-2.5 text-sm bg-white border border-[#4B1E3F]/20 rounded-xl text-[#4B1E3F] placeholder:text-[#4B1E3F]/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-all disabled:opacity-60 resize-none max-h-32 min-h-[42px] leading-relaxed"
               />
 
               <button
                 type="submit"
                 disabled={!inputValue.trim() || isLoading}
                 aria-label="Enviar mensagem"
-                className="w-10 h-10 rounded-xl bg-[#4B1E3F] text-[#FAF8F5] border border-[#D4AF37] flex items-center justify-center shrink-0 hover:bg-[#36142D] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                className="w-10 h-10 rounded-xl bg-[#4B1E3F] text-[#FAF8F5] border border-[#D4AF37] flex items-center justify-center shrink-0 hover:bg-[#36142D] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm mb-0.5"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin text-[#D4AF37]" />
@@ -509,17 +539,16 @@ export const NineChatWidget: React.FC = () => {
               </button>
             </form>
 
-            <div className="mt-1.5 flex items-center justify-between text-[10px] text-[#4B1E3F]/60 px-1">
-              <span>
-                {isHumanoMode
-                  ? 'Atendimento humanizado CoffeeCast'
-                  : 'Respostas geradas por IA da Nine'}
+            <div className="mt-1.5 flex flex-wrap items-center justify-between gap-1 text-[10px] text-[#4B1E3F]/60 px-1">
+              <span className="hidden sm:inline text-[#4B1E3F]/75">
+                Enter para enviar · Shift+Enter para nova linha
               </span>
+              <span className="sm:hidden text-[#4B1E3F]/75">Toque no botão para enviar</span>
               <a
                 href="https://instagram.com/coffeecast4.0"
                 target="_blank"
                 rel="noreferrer"
-                className="hover:text-[#4B1E3F] underline flex items-center gap-0.5"
+                className="hover:text-[#4B1E3F] underline flex items-center gap-0.5 ml-auto"
               >
                 <span>@coffeecast4.0</span>
                 <ExternalLink className="w-2.5 h-2.5" />
