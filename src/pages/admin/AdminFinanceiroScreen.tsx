@@ -332,71 +332,6 @@ export default function AdminFinanceiroScreen() {
         </Button>
       </div>
 
-      {/* Gráfico Visual de Gastos por Categoria (Barras Responsivas sem cortar legendas) */}
-      <div className="bg-white border border-vinho/10 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-vinho/10 pb-3">
-          <div>
-            <h3 className="font-serif text-base sm:text-lg font-bold text-vinho">
-              Distribuição Financeira por Categoria
-            </h3>
-            <p className="text-xs text-vinho/65">Visualização de custos acumulados do projeto</p>
-          </div>
-          <span className="text-xs font-bold text-vinho">
-            Total: {formatCurrencyBRL(totalQuitado + totalAberto)}
-          </span>
-        </div>
-
-        <div className="space-y-3 pt-1">
-          {Object.entries(tipoLabels).map(([key, label]) => {
-            const val = transacoes
-              .filter((t) => t.tipo === key)
-              .reduce((acc, curr) => acc + (curr.valor || 0), 0)
-            const totalGeral = totalQuitado + totalAberto
-            const pct = totalGeral > 0 ? (val / totalGeral) * 100 : 0
-            const colorsMap: Record<string, string> = {
-              gravacao: '#4B1E3F',
-              edicao: '#D4AF37',
-              equipamento: '#5F2650',
-              marketing: '#C88E9B',
-              outros: '#853C73',
-              participacao_convidado: '#10B981',
-              entrevista: '#059669',
-              monetizacao_youtube: '#EF4444',
-              monetizacao_instagram: '#E1306C',
-              monetizacao_tiktok: '#1E293B',
-              monetizacao: '#047857',
-            }
-            const barColor = colorsMap[key] || '#4B1E3F'
-
-            return (
-              <div key={key} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-medium text-vinho gap-2">
-                  <span className="flex items-center gap-2 truncate">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: barColor }}
-                    />
-                    <span className="truncate">{label}</span>
-                  </span>
-                  <span className="font-bold shrink-0">
-                    {formatCurrencyBRL(val)}{' '}
-                    <span className="text-vinho/60 font-normal">({pct.toFixed(0)}%)</span>
-                  </span>
-                </div>
-                <div className="w-full bg-vinho/5 h-2.5 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${pct}%`,
-                      backgroundColor: barColor,
-                    }}
-                  />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
       {/* Cards de Resumo Integrados: Receitas (Horas/Entradas), Despesas e Saldo */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {/* Receitas (Entradas / Pacotes de Horas) */}
@@ -867,6 +802,72 @@ export default function AdminFinanceiroScreen() {
             </TableBody>
           </Table>
         )}
+      </div>
+
+      {/* Gráfico Visual de Gastos por Categoria (Posicionado no final de tudo da página) */}
+      <div className="bg-white border border-vinho/10 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-vinho/10 pb-3">
+          <div>
+            <h3 className="font-serif text-base sm:text-lg font-bold text-vinho">
+              Distribuição Financeira por Categoria
+            </h3>
+            <p className="text-xs text-vinho/65">Visualização de custos acumulados do projeto</p>
+          </div>
+          <span className="text-xs font-bold text-vinho">
+            Total: {formatCurrencyBRL(totalQuitado + totalAberto)}
+          </span>
+        </div>
+
+        <div className="space-y-3 pt-1">
+          {Object.entries(tipoLabels).map(([key, label]) => {
+            const val = transacoes
+              .filter((t) => t.tipo === key)
+              .reduce((acc, curr) => acc + (curr.valor || 0), 0)
+            const totalGeral = totalQuitado + totalAberto
+            const pct = totalGeral > 0 ? (val / totalGeral) * 100 : 0
+            const colorsMap: Record<string, string> = {
+              gravacao: '#4B1E3F',
+              edicao: '#D4AF37',
+              equipamento: '#5F2650',
+              marketing: '#C88E9B',
+              outros: '#853C73',
+              participacao_convidado: '#10B981',
+              entrevista: '#059669',
+              monetizacao_youtube: '#EF4444',
+              monetizacao_instagram: '#E1306C',
+              monetizacao_tiktok: '#1E293B',
+              monetizacao: '#047857',
+            }
+            const barColor = colorsMap[key] || '#4B1E3F'
+
+            return (
+              <div key={key} className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-medium text-vinho gap-2">
+                  <span className="flex items-center gap-2 truncate">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: barColor }}
+                    />
+                    <span className="truncate">{label}</span>
+                  </span>
+                  <span className="font-bold shrink-0">
+                    {formatCurrencyBRL(val)}{' '}
+                    <span className="text-vinho/60 font-normal">({pct.toFixed(0)}%)</span>
+                  </span>
+                </div>
+                <div className="w-full bg-vinho/5 h-2.5 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: barColor,
+                    }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {/* Modal de Criação / Edição de Transação */}
