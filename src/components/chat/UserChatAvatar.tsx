@@ -89,13 +89,19 @@ export const UserChatAvatar: React.FC<UserAvatarProps> = ({
   let avatarUrl = ''
   if (avatar && userRecord) {
     avatarUrl = getFileUrl(userRecord, avatar)
-  } else if (avatar && (avatar.startsWith('http') || avatar.startsWith('/'))) {
+  } else if (
+    avatar &&
+    (avatar.startsWith('http') ||
+      avatar.startsWith('/') ||
+      avatar.startsWith('blob:') ||
+      avatar.startsWith('data:'))
+  ) {
     avatarUrl = avatar
   }
 
   return (
     <div
-      className={`rounded-full bg-gradient-to-br from-vinho via-[#3d1332] to-[#240b1e] border-2 border-dourado/60 text-dourado font-serif font-black flex items-center justify-center shrink-0 overflow-hidden shadow-xs select-none ${sizeClasses} ${className}`}
+      className={`rounded-full bg-gradient-to-br from-[#4B1E3F] via-[#3d1332] to-[#240b1e] border-2 border-[#D4AF37]/60 text-[#D4AF37] font-serif font-black flex items-center justify-center shrink-0 overflow-hidden shadow-xs select-none ${sizeClasses} ${className}`}
     >
       {avatarUrl ? (
         <img
@@ -106,6 +112,70 @@ export const UserChatAvatar: React.FC<UserAvatarProps> = ({
         />
       ) : (
         <span>{getInitials(name)}</span>
+      )}
+    </div>
+  )
+}
+
+interface GroupChatAvatarProps {
+  name?: string
+  foto?: string
+  conversaRecord?: any
+  size?: 'sm' | 'md' | 'lg' | 'xl'
+  className?: string
+}
+
+export const GroupChatAvatar: React.FC<GroupChatAvatarProps> = ({
+  name,
+  foto,
+  conversaRecord,
+  size = 'md',
+  className = '',
+}) => {
+  const getGroupInitials = (n?: string) => {
+    if (!n) return 'GP'
+    const clean = n.trim()
+    const parts = clean.split(/\s+/).filter(Boolean)
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase()
+    }
+    return (parts[0][0] + parts[1][0]).toUpperCase()
+  }
+
+  const sizeClasses = {
+    sm: 'w-8 h-8 text-[11px]',
+    md: 'w-10 h-10 text-xs',
+    lg: 'w-12 h-12 text-sm',
+    xl: 'w-20 h-20 text-xl',
+  }[size]
+
+  let fotoUrl = ''
+  if (foto && conversaRecord) {
+    fotoUrl = getFileUrl(conversaRecord, foto)
+  } else if (
+    foto &&
+    (foto.startsWith('http') ||
+      foto.startsWith('/') ||
+      foto.startsWith('blob:') ||
+      foto.startsWith('data:'))
+  ) {
+    fotoUrl = foto
+  }
+
+  return (
+    <div
+      className={`rounded-full bg-gradient-to-br from-[#4B1E3F] via-[#3d1332] to-[#240b1e] border-2 border-[#D4AF37] text-[#D4AF37] font-serif font-black flex items-center justify-center shrink-0 overflow-hidden shadow-sm select-none ${sizeClasses} ${className}`}
+      title={name || 'Grupo'}
+    >
+      {fotoUrl ? (
+        <img
+          src={fotoUrl}
+          alt={name || 'Foto do Grupo'}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <span className="tracking-wider">{getGroupInitials(name)}</span>
       )}
     </div>
   )

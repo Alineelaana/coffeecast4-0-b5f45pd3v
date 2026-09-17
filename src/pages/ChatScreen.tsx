@@ -11,6 +11,7 @@ import type {
 } from '@/types/database'
 import {
   UserChatAvatar,
+  GroupChatAvatar,
   UserRoleBadge,
   UserStatusIndicator,
 } from '@/components/chat/UserChatAvatar'
@@ -52,7 +53,13 @@ import {
   Clock,
   ChevronDown,
   Smile,
+  Camera,
+  Trash2,
+  Settings,
+  Edit,
+  UserCheck,
 } from 'lucide-react'
+import { getFileUrl } from '@/lib/formatters'
 import { toast } from 'sonner'
 import { formatDateBR } from '@/lib/formatters'
 import { EmojiStickerPicker } from '@/components/chat/EmojiStickerPicker'
@@ -106,7 +113,22 @@ export default function ChatScreen() {
   const [groupName, setGroupName] = useState('')
   const [groupDescription, setGroupDescription] = useState('')
   const [selectedGroupUserIds, setSelectedGroupUserIds] = useState<string[]>([])
+  const [groupFotoFile, setGroupFotoFile] = useState<File | null>(null)
+  const [groupFotoPreview, setGroupFotoPreview] = useState<string | null>(null)
+  const groupFotoInputRef = useRef<HTMLInputElement>(null)
   const [creatingChat, setCreatingChat] = useState(false)
+
+  // Modal de Detalhes / Edição de Grupo
+  const [editGroupModalOpen, setEditGroupModalOpen] = useState(false)
+  const [editGroupName, setEditGroupName] = useState('')
+  const [editGroupDesc, setEditGroupDesc] = useState('')
+  const [editGroupFotoFile, setEditGroupFotoFile] = useState<File | null>(null)
+  const [editGroupFotoPreview, setEditGroupFotoPreview] = useState<string | null>(null)
+  const [editGroupRemoveFoto, setEditGroupRemoveFoto] = useState(false)
+  const [editGroupParticipants, setEditGroupParticipants] = useState<any[]>([])
+  const [loadingEditGroupParticipants, setLoadingEditGroupParticipants] = useState(false)
+  const [savingGroupEdit, setSavingGroupEdit] = useState(false)
+  const editGroupFotoInputRef = useRef<HTMLInputElement>(null)
 
   // Mobile toggle de histórico vs lista
   const [mobileShowChat, setMobileShowChat] = useState(false)
@@ -167,6 +189,10 @@ export default function ChatScreen() {
 
         const part = myConvData.participacoes.find((p) => p.conversa === conv.id)
         const unread = await ChatService.getUnreadCount(conv.id, user.id, part?.ultima_leitura)
+
+        if (conv.tipo === 'grupo' && conv.foto) {
+          displayAvatar = getFileUrl(conv, conv.foto)
+        }
 
         convList.push({
           ...conv,
@@ -410,6 +436,143 @@ export default function ChatScreen() {
     }
   }
 
+  // Manipulação de upload de foto na criação do grupo
+  const handleGroupFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione uma imagem válida (PNG, JPG, WEBP).')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('A imagem do grupo deve ter no máximo 5MB.')
+      return
+    }
+
+    setGroupFotoFile(file)
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      setGroupFotoPreview(ev.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveCreatedGroupFoto = () => {
+    setGroupFotoFile(null)
+    setGroupFotoPreview(null)
+    if (groupFotoInputRef.current) {
+      groupFotoInputRef.current.value = ''
+    }
+  }
+
+  // Manipulação de foto no modal de edição de grupo
+  const handleEditGroupFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione uma imagem válida (PNG, JPG, WEBP).')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('A foto deve ter no máximo 5MB.')
+      return
+    }
+
+    setEditGroupFotoFile(file)
+    setEditGroupRemoveFoto(false)
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      setEditGroupFotoPreview(ev.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveEditGroupFoto = () => {
+    setEditGroupFotoFile(null)
+    setEditGroupFotoPreview(null)
+    setEditGroupRemoveFoto(true)
+    if (editGroupFotoInputRef.current) {
+      editGroupFotoInputRef.current.value = ''
+    }
+    toast.info('Foto removida da pré-visualização. Clique em "Salvar Alterações" para confirmar.')
+  }
+
+  // Abrir modal de edição/detalhes do grupo ativo
+  const handleOpenEditGroupModal = async () => {
+    if (!activeConversation || activeConversation.tipo !== 'grupo') return
+
+    setEditGroupName(activeConversation.nome || '')
+    setEditGroupDesc(activeConversation.descricao || '')
+    setEditGroupFotoFile(null)
+    setEditGroupRemoveFoto(false)
+
+    if (activeConversation.foto) {
+      const url = getFileUrl(activeConversation, activeConversation.foto)
+      setEditGroupFotoPreview(url)
+    } else {
+      setEditGroupFotoPreview(null)
+    }
+
+    setEditGroupModalOpen(true)
+    try {
+      setLoadingEditGroupParticipants(true)
+      const parts = await ChatService.getConversationParticipants(activeConversation.id)
+      setEditGroupParticipants(parts)
+    } catch (err) {
+      console.warn('Erro ao carregar participantes do grupo:', err)
+    } finally {
+      setLoadingEditGroupParticipants(false)
+    }
+  }
+
+  // Salvar alterações do grupo
+  const handleSaveGroupEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!activeConversation) return
+    const trimmedName = editGroupName.trim()
+    if (!trimmedName) {
+      toast.error('O nome do grupo não pode estar em branco.')
+      return
+    }
+
+    try {
+      setSavingGroupEdit(true)
+      const updated = await ChatService.updateGroup(activeConversation.id, {
+        nome: trimmedName,
+        descricao: editGroupDesc.trim(),
+        fotoFile: editGroupFotoFile,
+        removeFoto: editGroupRemoveFoto,
+      })
+
+      toast.success('Foto e dados do grupo atualizados com sucesso!')
+      setEditGroupModalOpen(false)
+
+      const updatedDisplayAvatar = updated.foto ? getFileUrl(updated, updated.foto) : undefined
+
+      const updatedMeta: ConversationWithMeta = {
+        ...activeConversation,
+        ...updated,
+        displayName: updated.nome || trimmedName,
+        displayAvatar: updatedDisplayAvatar,
+        descricao: updated.descricao || '',
+        foto: updated.foto || '',
+      }
+
+      setActiveConversation(updatedMeta)
+      setConversations((prev) => prev.map((c) => (c.id === updated.id ? updatedMeta : c)))
+      await loadData(true)
+    } catch (err: any) {
+      console.error('Erro ao atualizar grupo:', err)
+      toast.error(err.message || 'Falha ao atualizar o grupo.')
+    } finally {
+      setSavingGroupEdit(false)
+    }
+  }
+
   // Criar grupo
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -428,17 +591,21 @@ export default function ChatScreen() {
         groupName.trim(),
         groupDescription.trim(),
         selectedGroupUserIds,
+        groupFotoFile,
       )
       toast.success(`Grupo "${groupName}" criado com sucesso!`)
       setNewGroupModalOpen(false)
       setGroupName('')
       setGroupDescription('')
       setSelectedGroupUserIds([])
+      setGroupFotoFile(null)
+      setGroupFotoPreview(null)
       await loadData(false)
       setActiveTab('grupo')
       const withMeta: ConversationWithMeta = {
         ...newGroup,
         displayName: newGroup.nome || 'Grupo',
+        displayAvatar: newGroup.foto ? getFileUrl(newGroup, newGroup.foto) : undefined,
         unreadCount: 0,
       }
       selectConversation(withMeta)
@@ -816,15 +983,12 @@ export default function ChatScreen() {
                           <Globe2 className="w-6 h-6" />
                         </div>
                       ) : conv.tipo === 'grupo' ? (
-                        <div
-                          className={`w-11 h-11 rounded-full flex items-center justify-center border-2 ${
-                            isSelected
-                              ? 'bg-dourado text-vinho border-white'
-                              : 'bg-[#4A154B] text-dourado border-dourado/60'
-                          }`}
-                        >
-                          <Users className="w-5 h-5" />
-                        </div>
+                        <GroupChatAvatar
+                          name={conv.displayName}
+                          foto={conv.foto}
+                          conversaRecord={conv}
+                          size="md"
+                        />
                       ) : (
                         <UserChatAvatar
                           name={conv.displayName}
@@ -958,9 +1122,19 @@ export default function ChatScreen() {
                         <Globe2 className="w-5 h-5" />
                       </div>
                     ) : activeConversation.tipo === 'grupo' ? (
-                      <div className="w-10 h-10 rounded-full bg-[#4A154B] text-dourado flex items-center justify-center border-2 border-dourado">
-                        <Users className="w-5 h-5" />
-                      </div>
+                      <button
+                        type="button"
+                        onClick={handleOpenEditGroupModal}
+                        className="rounded-full ring-2 ring-transparent hover:ring-dourado transition-all focus:outline-hidden"
+                        title="Ver e editar dados do grupo"
+                      >
+                        <GroupChatAvatar
+                          name={activeConversation.displayName}
+                          foto={activeConversation.foto}
+                          conversaRecord={activeConversation}
+                          size="md"
+                        />
+                      </button>
                     ) : (
                       <UserChatAvatar
                         name={activeConversation.displayName}
@@ -1001,12 +1175,25 @@ export default function ChatScreen() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  {activeConversation.tipo === 'grupo' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleOpenEditGroupModal}
+                      className="border-vinho/20 text-vinho hover:bg-vinho/5 text-xs rounded-xl px-2.5 h-8 flex items-center gap-1.5"
+                      title="Editar foto e informações do grupo"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-dourado-dark" />
+                      <span className="hidden sm:inline">Dados do Grupo</span>
+                    </Button>
+                  )}
+
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => loadMessages(activeConversation.id)}
-                    className="text-xs text-vinho hover:bg-vinho/5 p-2 h-9 w-9 rounded-xl"
+                    className="text-xs text-vinho hover:bg-vinho/5 p-2 h-8 w-8 rounded-xl"
                     title="Recarregar histórico"
                   >
                     <RefreshCw className="w-4 h-4" />
@@ -1366,6 +1553,72 @@ export default function ChatScreen() {
           </DialogHeader>
 
           <form onSubmit={handleCreateGroup} className="space-y-4 pt-2">
+            {/* UPLOAD DA FOTO DO GRUPO */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 p-3 bg-white rounded-2xl border border-vinho/10">
+              <div className="relative group shrink-0">
+                <GroupChatAvatar
+                  name={groupName || 'Novo Grupo'}
+                  foto={groupFotoPreview || undefined}
+                  size="xl"
+                  className="ring-2 ring-dourado/50"
+                />
+
+                <label
+                  htmlFor="group-foto-upload"
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-semibold cursor-pointer rounded-full"
+                  title="Escolher foto do grupo"
+                >
+                  <Camera className="w-5 h-5 text-dourado mb-0.5" />
+                  <span>Foto</span>
+                </label>
+              </div>
+
+              <div className="flex-1 text-center sm:text-left space-y-1.5">
+                <div className="flex items-center justify-center sm:justify-start gap-2">
+                  <Label className="text-xs font-bold text-vinho">Foto do Grupo</Label>
+                  <span className="text-[10px] text-vinho/50">(Opcional)</span>
+                </div>
+                <p className="text-[11px] text-vinho/70">
+                  PNG, JPG ou WEBP até 5MB. Sem foto, usa o avatar elegante padrão com iniciais do
+                  grupo em vinho e dourado.
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-0.5">
+                  <input
+                    ref={groupFotoInputRef}
+                    id="group-foto-upload"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleGroupFotoChange}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => groupFotoInputRef.current?.click()}
+                    className="text-xs h-7 border-vinho/20 text-vinho hover:bg-vinho/5 rounded-lg px-2.5 flex items-center gap-1"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-dourado-dark" />
+                    <span>{groupFotoFile ? 'Trocar Foto' : 'Escolher Foto'}</span>
+                  </Button>
+
+                  {groupFotoFile && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveCreatedGroupFoto}
+                      className="text-xs h-7 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg px-2 flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remover</span>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-1">
               <Label className="text-xs font-bold text-vinho">Nome do Grupo *</Label>
               <Input
@@ -1483,6 +1736,212 @@ export default function ChatScreen() {
                 )}
               </Button>
             </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: DETALHES E EDIÇÃO DE GRUPO (FOTO, NOME, DESCRIÇÃO, PARTICIPANTES) */}
+      <Dialog open={editGroupModalOpen} onOpenChange={setEditGroupModalOpen}>
+        <DialogContent className="sm:max-w-lg bg-[#FAF8F5] border-2 border-dourado/40 rounded-3xl p-6">
+          <DialogHeader className="border-b border-vinho/10 pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <DialogTitle className="font-serif font-bold text-lg text-vinho flex items-center gap-2">
+                <Settings className="w-5 h-5 text-dourado-dark" />
+                Dados do Grupo
+              </DialogTitle>
+              <Badge className="bg-dourado text-vinho font-bold text-[10px]">Grupo</Badge>
+            </div>
+            <p className="text-xs text-vinho/60 mt-0.5">
+              Personalize a foto de perfil do grupo e mantenha o nome e descrição atualizados.
+            </p>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveGroupEdit} className="space-y-4 pt-2">
+            {/* ÁREA DA FOTO DO GRUPO COM PREVIEW E AÇÕES */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 p-3.5 bg-white rounded-2xl border border-vinho/10 shadow-2xs">
+              <div className="relative group shrink-0">
+                <GroupChatAvatar
+                  name={editGroupName || activeConversation?.displayName}
+                  foto={
+                    editGroupRemoveFoto
+                      ? undefined
+                      : editGroupFotoPreview || activeConversation?.foto
+                  }
+                  conversaRecord={activeConversation}
+                  size="xl"
+                  className="ring-2 ring-dourado/60 shadow-md"
+                />
+
+                <label
+                  htmlFor="edit-group-foto-upload"
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-semibold cursor-pointer rounded-full"
+                  title="Alterar foto do grupo"
+                >
+                  <Camera className="w-5 h-5 text-dourado mb-0.5" />
+                  <span>Alterar</span>
+                </label>
+              </div>
+
+              <div className="flex-1 text-center sm:text-left space-y-1.5">
+                <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                  <span className="font-bold text-xs text-vinho">Foto de Perfil do Grupo</span>
+                </div>
+                <p className="text-[11px] text-vinho/60 leading-tight">
+                  Formatos aceitos: PNG, JPG ou WEBP de até 5MB. Sem foto, exibe o monograma
+                  institucional #4B1E3F e #D4AF37.
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                  <input
+                    ref={editGroupFotoInputRef}
+                    id="edit-group-foto-upload"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleEditGroupFotoChange}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => editGroupFotoInputRef.current?.click()}
+                    className="text-xs h-7 border-vinho/20 text-vinho hover:bg-vinho/5 rounded-lg px-2.5 flex items-center gap-1"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-dourado-dark" />
+                    <span>
+                      {editGroupFotoFile || (activeConversation?.foto && !editGroupRemoveFoto)
+                        ? 'Trocar Foto'
+                        : 'Enviar Foto'}
+                    </span>
+                  </Button>
+
+                  {(editGroupFotoFile ||
+                    (activeConversation?.foto && !editGroupRemoveFoto) ||
+                    editGroupFotoPreview) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveEditGroupFoto}
+                      className="text-xs h-7 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg px-2 flex items-center gap-1"
+                      title="Remover foto do grupo"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remover Foto</span>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* CAMPOS DE TEXTO: NOME E DESCRIÇÃO */}
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-vinho">Nome do Grupo *</Label>
+              <Input
+                required
+                value={editGroupName}
+                onChange={(e) => setEditGroupName(e.target.value)}
+                placeholder="Ex.: Produção Episódio #15"
+                className="bg-white border-vinho/20 text-xs sm:text-sm rounded-xl focus-visible:ring-dourado"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-vinho">Descrição do Grupo</Label>
+              <Input
+                value={editGroupDesc}
+                onChange={(e) => setEditGroupDesc(e.target.value)}
+                placeholder="Objetivo ou tópico do grupo..."
+                className="bg-white border-vinho/20 text-xs sm:text-sm rounded-xl focus-visible:ring-dourado"
+              />
+            </div>
+
+            {/* LISTAGEM DOS INTEGRANTES DO GRUPO */}
+            <div className="space-y-1.5 pt-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-vinho flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5 text-dourado-dark" />
+                  Integrantes do Grupo ({editGroupParticipants.length})
+                </span>
+                <span className="text-[10px] text-vinho/50">Somente membros visualizam o chat</span>
+              </div>
+
+              <div className="max-h-36 overflow-y-auto space-y-1 bg-white p-2 rounded-xl border border-vinho/10">
+                {loadingEditGroupParticipants ? (
+                  <div className="p-3 text-center text-xs text-vinho/60 flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-dourado-dark" />
+                    <span>Carregando integrantes...</span>
+                  </div>
+                ) : editGroupParticipants.length === 0 ? (
+                  <p className="text-[11px] text-vinho/50 p-2 text-center">
+                    Nenhum outro participante listado.
+                  </p>
+                ) : (
+                  editGroupParticipants.map((p) => {
+                    const u = p.expand?.user
+                    const isGroupAdmin =
+                      p.is_admin || activeConversation?.criador === (u?.id || p.user)
+                    return (
+                      <div
+                        key={p.id}
+                        className="p-1.5 rounded-lg bg-marfim/40 border border-vinho/5 flex items-center justify-between text-xs"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <UserChatAvatar
+                            name={u?.name}
+                            avatar={u?.avatar}
+                            userRecord={u}
+                            size="sm"
+                          />
+                          <div className="truncate">
+                            <span className="font-semibold text-vinho block truncate text-[11px]">
+                              {u?.name || 'Membro'}
+                            </span>
+                            <span className="text-[10px] text-vinho/50 truncate block">
+                              {u?.email}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          {isGroupAdmin && (
+                            <Badge className="bg-dourado text-vinho text-[9px] px-1.5 py-0 font-bold">
+                              Admin
+                            </Badge>
+                          )}
+                          <UserRoleBadge role={u?.role || 'prata'} size="sm" />
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+
+            <DialogFooter className="pt-2 border-t border-vinho/10 flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditGroupModalOpen(false)}
+                className="text-xs border-vinho/20 rounded-xl"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={savingGroupEdit || !editGroupName.trim()}
+                className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold rounded-xl px-4"
+              >
+                {savingGroupEdit ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5 text-dourado" />
+                    Salvando...
+                  </>
+                ) : (
+                  'Salvar Alterações'
+                )}
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

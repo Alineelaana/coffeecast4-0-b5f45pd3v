@@ -440,6 +440,7 @@ export interface ChatConversaRecord {
   tipo: ChatConversaTipo
   nome?: string
   descricao?: string
+  foto?: string
   criador?: string
   private_pair?: string
   ultima_mensagem?: string
@@ -626,6 +627,7 @@ export interface ChatOverviewItem {
   tipo: ChatConversaTipo
   nome: string
   descricao?: string
+  foto?: string
   criador?: {
     id: string
     name: string

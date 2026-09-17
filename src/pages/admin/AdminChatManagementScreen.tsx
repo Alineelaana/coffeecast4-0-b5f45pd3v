@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { ChatService } from '@/services/chat'
 import type { ChatOverviewItem, ChatMensagemRecord } from '@/types/database'
-import { UserChatAvatar, UserRoleBadge } from '@/components/chat/UserChatAvatar'
+import { UserChatAvatar, GroupChatAvatar, UserRoleBadge } from '@/components/chat/UserChatAvatar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -321,13 +321,22 @@ export default function AdminChatManagementScreen() {
                   {/* Nome e Tipo */}
                   <TableCell className="align-middle">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-vinho/10 text-vinho flex items-center justify-center shrink-0">
+                      <div className="shrink-0">
                         {conv.tipo === 'geral' ? (
-                          <Globe2 className="w-4 h-4 text-dourado-dark" />
+                          <div className="w-8 h-8 rounded-full bg-vinho text-dourado flex items-center justify-center border border-dourado/60">
+                            <Globe2 className="w-4 h-4 text-dourado-dark" />
+                          </div>
                         ) : conv.tipo === 'grupo' ? (
-                          <Users className="w-4 h-4 text-vinho" />
+                          <GroupChatAvatar
+                            name={conv.nome}
+                            foto={conv.foto}
+                            conversaRecord={conv}
+                            size="sm"
+                          />
                         ) : (
-                          <MessageSquare className="w-4 h-4 text-dourado-dark" />
+                          <div className="w-8 h-8 rounded-full bg-vinho/10 text-vinho flex items-center justify-center border border-vinho/20">
+                            <MessageSquare className="w-4 h-4 text-dourado-dark" />
+                          </div>
                         )}
                       </div>
                       <div className="min-w-0 max-w-[200px]">
@@ -462,10 +471,23 @@ export default function AdminChatManagementScreen() {
         <DialogContent className="sm:max-w-3xl bg-[#FAF8F5] border-2 border-dourado/40 rounded-3xl p-6 max-h-[85vh] flex flex-col">
           <DialogHeader className="border-b border-vinho/10 pb-3 shrink-0">
             <div className="flex items-center justify-between gap-3">
-              <DialogTitle className="font-serif font-bold text-lg text-vinho flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-dourado-dark" />
-                Histórico: {selectedConversa?.nome}
-              </DialogTitle>
+              <div className="flex items-center gap-2.5">
+                {selectedConversa?.tipo === 'grupo' ? (
+                  <GroupChatAvatar
+                    name={selectedConversa.nome}
+                    foto={selectedConversa.foto}
+                    conversaRecord={selectedConversa}
+                    size="md"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-vinho/10 text-vinho flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-dourado-dark" />
+                  </div>
+                )}
+                <DialogTitle className="font-serif font-bold text-lg text-vinho">
+                  Histórico: {selectedConversa?.nome}
+                </DialogTitle>
+              </div>
               <Badge className="bg-dourado text-vinho font-bold text-[10px]">
                 {selectedConversa?.tipo?.toUpperCase()}
               </Badge>

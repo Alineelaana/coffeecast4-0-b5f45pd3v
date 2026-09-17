@@ -134,12 +134,13 @@ export class ChatService {
   }
 
   /**
-   * Cria novo grupo com nome e participantes selecionados
+   * Cria novo grupo com nome, descrição, foto opcional e participantes selecionados
    */
   static async createGroupChat(
     nome: string,
     descricao: string,
     participantIds: string[],
+    fotoFile?: File | null,
   ): Promise<ChatConversaRecord> {
     const res = await pb.send<{
       success: boolean
@@ -147,12 +148,61 @@ export class ChatService {
     }>('/backend/v1/chat/group/create', {
       method: 'POST',
       body: {
-        nome,
-        descricao,
+        nome: nome.trim(),
+        descricao: descricao.trim(),
         participant_ids: participantIds,
       },
     })
-    return res.conversa
+
+    const grupoCriado = res.conversa
+    if (fotoFile && grupoCriado?.id) {
+      try {
+        const formData = new FormData()
+        formData.append('foto', fotoFile)
+        const updated = await pb
+          .collection('chat_conversas')
+          .update<ChatConversaRecord>(grupoCriado.id, formData)
+        return updated
+      } catch (errFoto) {
+        console.warn('Grupo criado, porém falha no upload da foto:', errFoto)
+      }
+    }
+
+    return grupoCriado
+  }
+
+  /**
+   * Atualiza detalhes do grupo (nome, descrição e/ou foto)
+   * Preserva todos os demais dados existentes
+   */
+  static async updateGroup(
+    conversaId: string,
+    data: {
+      nome?: string
+      descricao?: string
+      fotoFile?: File | null
+      removeFoto?: boolean
+    },
+  ): Promise<ChatConversaRecord> {
+    if (data.fotoFile || data.removeFoto) {
+      const formData = new FormData()
+      if (data.nome !== undefined) formData.append('nome', data.nome.trim())
+      if (data.descricao !== undefined) formData.append('descricao', data.descricao.trim())
+
+      if (data.fotoFile) {
+        formData.append('foto', data.fotoFile)
+      } else if (data.removeFoto) {
+        formData.append('foto', '')
+      }
+
+      return await pb.collection('chat_conversas').update<ChatConversaRecord>(conversaId, formData)
+    }
+
+    const payload: Record<string, any> = {}
+    if (data.nome !== undefined) payload.nome = data.nome.trim()
+    if (data.descricao !== undefined) payload.descricao = data.descricao.trim()
+
+    return await pb.collection('chat_conversas').update<ChatConversaRecord>(conversaId, payload)
   }
 
   /**

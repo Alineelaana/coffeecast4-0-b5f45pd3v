@@ -579,6 +579,7 @@ routerAdd(
                 ? c.getString('nome') || 'Grupo sem nome'
                 : participantes.map((p) => p.name).join(' & ') || 'Conversa Privada',
           descricao: c.getString('descricao') || '',
+          foto: c.getString('foto') || '',
           criador: userMap[c.getString('criador')] || null,
           participantes: participantes,
           total_mensagens: totalMensagens,
