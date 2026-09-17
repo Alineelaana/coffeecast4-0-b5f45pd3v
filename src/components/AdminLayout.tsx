@@ -25,11 +25,13 @@ import {
   Shield,
   ShieldCheck,
   UserCheck,
+  User,
   Bot,
   Store,
   ChevronDown,
   Sparkles,
 } from 'lucide-react'
+import { getFileUrl } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useStorefront } from '@/context/StorefrontContext'
@@ -490,26 +492,50 @@ export default function AdminLayout() {
           )}
         </nav>
 
-        {/* Rodapé da Sidebar com Usuário Logado e Logout */}
+        {/* Rodapé da Sidebar com Usuário Logado, Meu Perfil e Logout */}
         <div className="p-4 border-t border-vinho-light/40 bg-vinho-dark/60">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-full bg-dourado/20 border border-dourado/60 flex items-center justify-center text-dourado font-bold text-xs uppercase">
-              {user?.name ? user.name.slice(0, 2) : 'AL'}
+          <NavLink
+            to="/perfil"
+            className="flex items-center gap-3 mb-3 p-1.5 -mx-1.5 rounded-xl hover:bg-vinho-light/40 transition-colors group"
+            title="Acessar Meu Perfil"
+          >
+            <div className="w-9 h-9 rounded-full bg-dourado/20 border border-dourado/60 flex items-center justify-center text-dourado font-bold text-xs uppercase overflow-hidden shrink-0">
+              {user?.avatar ? (
+                <img
+                  src={getFileUrl(user, user.avatar)}
+                  alt={user.name || 'Avatar'}
+                  className="w-full h-full object-cover"
+                />
+              ) : user?.name ? (
+                user.name.slice(0, 2)
+              ) : (
+                'CC'
+              )}
             </div>
-            <div className="overflow-hidden">
-              <p className="text-xs font-bold text-white truncate">{user?.name || 'Aline Lana'}</p>
+            <div className="overflow-hidden flex-1 text-left">
+              <p className="text-xs font-bold text-white truncate group-hover:text-dourado transition-colors">
+                {user?.name || 'Usuário'}
+              </p>
               <div className="flex items-center gap-1">
                 <Shield className="w-3 h-3 text-dourado shrink-0" />
                 <span className="text-[10px] text-dourado-light truncate">{roleLabel}</span>
               </div>
             </div>
-          </div>
+          </NavLink>
 
-          {/* Link para Área de Membros + Site Público */}
+          {/* Links para Meu Perfil + Área de Membros + Site Público */}
           <div className="space-y-1.5 pt-2 border-t border-white/10">
             <NavLink
+              to="/perfil"
+              className="text-[11px] text-dourado-light hover:text-white flex items-center gap-1.5 transition-colors font-semibold py-1"
+            >
+              <User className="w-3.5 h-3.5 text-dourado" />
+              Meu Perfil & Senha
+            </NavLink>
+
+            <NavLink
               to="/membros"
-              className="text-[11px] text-dourado-light hover:text-white flex items-center gap-1.5 transition-colors font-medium py-1"
+              className="text-[11px] text-marfim/80 hover:text-white flex items-center gap-1.5 transition-colors font-medium py-1"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-dourado" />
               Acessar Área de Membros
@@ -723,17 +749,38 @@ export default function AdminLayout() {
             </nav>
 
             <div className="pt-4 border-t border-vinho-light/40 flex items-center justify-between">
-              <div className="flex flex-col truncate max-w-[140px]">
-                <span className="text-xs font-bold text-white truncate">
-                  {user?.name || 'Aline Lana'}
-                </span>
-                <span className="text-[10px] text-dourado-light truncate">{roleLabel}</span>
-              </div>
+              <NavLink
+                to="/perfil"
+                onClick={() => setMobileSidebarOpen(false)}
+                className="flex items-center gap-2 truncate max-w-[150px] p-1 rounded-lg hover:bg-white/5"
+                title="Meu Perfil"
+              >
+                <div className="w-8 h-8 rounded-full bg-dourado/20 border border-dourado/60 flex items-center justify-center text-dourado font-bold text-xs uppercase overflow-hidden shrink-0">
+                  {user?.avatar ? (
+                    <img
+                      src={getFileUrl(user, user.avatar)}
+                      alt={user.name || 'Avatar'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : user?.name ? (
+                    user.name.slice(0, 2)
+                  ) : (
+                    'CC'
+                  )}
+                </div>
+                <div className="flex flex-col truncate text-left">
+                  <span className="text-xs font-bold text-white truncate">
+                    {user?.name || 'Usuário'}
+                  </span>
+                  <span className="text-[10px] text-dourado-light truncate">Meu Perfil</span>
+                </div>
+              </NavLink>
+
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={handleLogout}
-                className="text-xs h-10 min-h-[44px] px-4 rounded-xl active:scale-95 flex items-center gap-1.5"
+                className="text-xs h-10 min-h-[44px] px-3.5 rounded-xl active:scale-95 flex items-center gap-1.5"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 Sair
@@ -824,17 +871,33 @@ export default function AdminLayout() {
 
             <div className="h-5 w-px bg-vinho/10" />
 
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-vinho text-dourado font-bold flex items-center justify-center text-xs">
-                {user?.name ? user.name[0] : 'A'}
+            <NavLink
+              to="/perfil"
+              className="flex items-center gap-2.5 p-1 -mr-1 rounded-full hover:bg-vinho/5 transition-all group"
+              title="Acessar Meu Perfil"
+            >
+              <div className="w-8 h-8 rounded-full bg-vinho text-dourado font-bold flex items-center justify-center text-xs overflow-hidden border border-dourado/60">
+                {user?.avatar ? (
+                  <img
+                    src={getFileUrl(user, user.avatar)}
+                    alt={user.name || 'Avatar'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : user?.name ? (
+                  user.name[0]
+                ) : (
+                  'C'
+                )}
               </div>
               <div className="text-right">
-                <p className="text-xs font-bold text-vinho leading-none">{user?.name}</p>
+                <p className="text-xs font-bold text-vinho leading-none group-hover:text-dourado-dark transition-colors">
+                  {user?.name}
+                </p>
                 <span className="text-[10px] text-dourado-dark font-semibold uppercase">
-                  {role}
+                  Meu Perfil
                 </span>
               </div>
-            </div>
+            </NavLink>
           </div>
         </header>
 

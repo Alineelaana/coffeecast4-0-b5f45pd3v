@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T17:31:20.640Z",
+  "generatedAt": "2026-09-17T17:50:22.151Z",
   "collections": [
     {
       "name": "users",
@@ -65,6 +65,12 @@
         },
         {
           "name": "origem",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "bio",
           "type": "text",
           "required": false,
           "system": false

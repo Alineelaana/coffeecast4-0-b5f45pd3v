@@ -11,6 +11,7 @@ export interface UserRecord {
   email: string
   name?: string
   avatar?: string
+  bio?: string
   role: UserRole
   ativo: boolean
   telefone?: string

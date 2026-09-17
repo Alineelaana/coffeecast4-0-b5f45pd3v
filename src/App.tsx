@@ -17,6 +17,7 @@ import StorefrontPage from '@/pages/StorefrontPage'
 import LoginScreen from '@/pages/LoginScreen'
 import ResetPasswordScreen from '@/pages/ResetPasswordScreen'
 import MembersScreen from '@/pages/MembersScreen'
+import PerfilScreen from '@/pages/PerfilScreen'
 import NotFound from '@/pages/NotFound'
 
 // Admin Layout & Screens
@@ -71,6 +72,16 @@ export default function App() {
             <Route path="/confirm-password-reset/:token" element={<ResetPasswordScreen />} />
             <Route path="/confirm-password-reset" element={<ResetPasswordScreen />} />
             <Route path="/_/*" element={<ResetPasswordScreen />} />
+
+            {/* Perfil do Usuário (Disponível para qualquer usuário autenticado: Master, ADM, Gerencial, Ouro e Prata) */}
+            <Route
+              path="/perfil"
+              element={
+                <ProtectedRoute requireMembersOnly>
+                  <PerfilScreen />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Área de Membros (Disponível para Master, Gerencial, Ouro e Prata) */}
             <Route

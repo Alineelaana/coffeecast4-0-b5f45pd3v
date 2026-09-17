@@ -73,13 +73,25 @@ export const MembersAreaModal: React.FC<MembersAreaModalProps> = ({ open, onOpen
               Você já está autenticado como <strong>{user.name || user.email}</strong> (Categoria:{' '}
               <span className="uppercase font-bold text-dourado-dark">{user.role}</span>).
             </div>
-            <Button
-              onClick={handleGoToMembers}
-              className="w-full bg-vinho hover:bg-vinho-light text-white font-bold py-2.5 rounded-xl shadow-md text-xs flex items-center justify-center gap-2"
-            >
-              <Sparkles className="w-4 h-4 text-dourado" />
-              Acessar Área de Membros Agora
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={handleGoToMembers}
+                className="w-full bg-vinho hover:bg-vinho-light text-white font-bold py-2.5 rounded-xl shadow-md text-xs flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 text-dourado" />
+                Acessar Área de Membros Agora
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  onOpenChange(false)
+                  navigate('/perfil')
+                }}
+                className="w-full border-dourado/60 text-vinho hover:bg-dourado/15 font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2"
+              >
+                <span>Acessar Meu Perfil & Senha</span>
+              </Button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 pt-1">

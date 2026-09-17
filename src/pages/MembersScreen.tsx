@@ -23,9 +23,10 @@ import {
   ArrowLeft,
   ChevronRight,
   Headphones,
+  User,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { formatDateBR, extractYouTubeId } from '@/lib/formatters'
+import { formatDateBR, extractYouTubeId, getFileUrl } from '@/lib/formatters'
 
 export default function MembersScreen() {
   const { user, role, logout, isMaster, isGerencial } = useAuth()
@@ -125,26 +126,54 @@ export default function MembersScreen() {
               <Link to="/admin">
                 <Button
                   size="sm"
-                  className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-full px-3.5 shadow-sm hidden sm:inline-flex items-center gap-1.5"
+                  variant="outline"
+                  className="border-dourado/60 text-dourado-light hover:bg-vinho-light bg-transparent font-bold text-xs rounded-full px-3 shadow-sm hidden sm:inline-flex items-center gap-1.5"
                 >
-                  <Shield className="w-3.5 h-3.5" />
-                  Ir ao Painel Admin
+                  <Shield className="w-3.5 h-3.5 text-dourado" />
+                  Painel Admin
                 </Button>
               </Link>
             )}
 
+            {/* Botão Meu Perfil visível no cabeçalho */}
+            <Link to="/perfil">
+              <Button
+                size="sm"
+                className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-full px-3.5 shadow-sm inline-flex items-center gap-1.5"
+              >
+                <User className="w-3.5 h-3.5 text-vinho" />
+                Meu Perfil
+              </Button>
+            </Link>
+
             <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-3">
-              <div className="w-8 h-8 rounded-full bg-dourado/20 border border-dourado text-dourado font-bold flex items-center justify-center text-xs uppercase">
-                {user?.name ? user.name.slice(0, 2) : 'MB'}
-              </div>
-              <div className="text-right">
-                <p className="text-xs font-bold text-white leading-tight">
-                  {user?.name || user?.email}
-                </p>
-                <p className="text-[10px] text-dourado-light uppercase tracking-wider font-semibold">
-                  {role?.toUpperCase()}
-                </p>
-              </div>
+              <Link
+                to="/perfil"
+                className="flex items-center gap-2 hover:opacity-90 transition-opacity"
+                title="Acessar meu perfil"
+              >
+                <div className="w-8 h-8 rounded-full bg-dourado/20 border border-dourado text-dourado font-bold flex items-center justify-center text-xs uppercase overflow-hidden">
+                  {user?.avatar ? (
+                    <img
+                      src={getFileUrl(user, user.avatar)}
+                      alt={user.name || 'Avatar'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : user?.name ? (
+                    user.name.slice(0, 2)
+                  ) : (
+                    'MB'
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-white leading-tight">
+                    {user?.name || user?.email}
+                  </p>
+                  <p className="text-[10px] text-dourado-light uppercase tracking-wider font-semibold">
+                    {role?.toUpperCase()}
+                  </p>
+                </div>
+              </Link>
             </div>
 
             <Button
@@ -193,22 +222,26 @@ export default function MembersScreen() {
               <p className="text-xs text-marfim/80">
                 E-mail autenticado: <strong className="text-white">{user?.email}</strong>
               </p>
-              {isMaster || isGerencial ? (
-                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs text-dourado-light">
-                  <span>Acesso administrativo ativo</span>
+              <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs text-dourado-light">
+                <Link
+                  to="/perfil"
+                  className="font-bold text-dourado hover:text-white inline-flex items-center gap-1.5"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  Editar Meu Perfil & Senha
+                </Link>
+
+                {isMaster || isGerencial ? (
                   <Link
                     to="/admin"
                     className="font-bold underline hover:text-white inline-flex items-center gap-1"
                   >
                     Painel <ChevronRight className="w-3 h-3" />
                   </Link>
-                </div>
-              ) : (
-                <div className="pt-2 border-t border-white/10 text-[11px] text-marfim/70">
-                  Acesso exclusivo à Área de Membros. Novos benefícios e módulos serão liberados em
-                  breve!
-                </div>
-              )}
+                ) : (
+                  <span className="text-[10px] text-marfim/60">Ativo</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

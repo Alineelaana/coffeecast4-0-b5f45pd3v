@@ -33,8 +33,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return {
       id: rec.id,
       email: rec.email || '',
-      name: (rec as unknown as { name?: string }).name || 'Administrador',
+      name: (rec as unknown as { name?: string }).name || 'Membro CoffeeCast',
       avatar: (rec as unknown as { avatar?: string }).avatar,
+      bio: (rec as unknown as { bio?: string }).bio || '',
+      telefone: (rec as unknown as { telefone?: string }).telefone || '',
+      origem: (rec as unknown as { origem?: string }).origem || '',
       role: ((rec as unknown as { role?: string }).role as UserRole) || 'prata',
       ativo: Boolean((rec as unknown as { ativo?: boolean }).ativo ?? true),
       adm_permissions: (rec as unknown as { adm_permissions?: any }).adm_permissions || null,
