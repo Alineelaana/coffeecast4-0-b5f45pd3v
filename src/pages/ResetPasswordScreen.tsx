@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams, useParams, Link } from 'react-router-dom'
 import pb from '@/lib/pocketbase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,8 @@ import officialLogo from '@/assets/sem-nome-1350-x-1080-px-1-c4c50.png'
 
 export default function ResetPasswordScreen() {
   const [searchParams] = useSearchParams()
-  const token = searchParams.get('token') || ''
+  const routeParams = useParams<{ token?: string }>()
+  const token = (searchParams.get('token') || routeParams.token || '').trim()
   const navigate = useNavigate()
 
   const [password, setPassword] = useState('')

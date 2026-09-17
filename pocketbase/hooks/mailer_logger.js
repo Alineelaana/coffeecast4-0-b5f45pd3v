@@ -1,6 +1,6 @@
 // PocketBase hook para auditoria e garantia de interpolação perfeita nos envios de e-mail.
 // Garante que links de ação de autenticação ({ACTION_URL}) e tokens estejam sempre
-// 100% resolvidos, válidos e clicáveis antes do disparo final pelo transportador SMTP.
+// 100% resolvidos, válidos e direcionando para as rotas públicas do site CoffeeCast 4.0.
 
 onMailerSend((e) => {
   try {
@@ -10,6 +10,57 @@ onMailerSend((e) => {
     const from = msg.from || {}
     let html = msg.html || ''
     let text = msg.text || ''
+
+    // Determina a URL base pública do site
+    let siteUrl = $os.getenv('SITE_URL') || ''
+    if (!siteUrl) {
+      siteUrl = 'https://inicio-do-projeto-df3d5.goskip.app'
+    }
+    if (siteUrl.endsWith('/')) {
+      siteUrl = siteUrl.slice(0, -1)
+    }
+
+    // Se houver qualquer URL interna do PocketBase (/_/#/auth/...) no HTML ou texto,
+    // substitui para apontar para a rota pública do site
+    // Exemplo: https://.../_/#/auth/confirm-password-reset/<token> -> https://.../redefinir-senha?token=<token>
+    if (html.indexOf('/_/#/auth/confirm-password-reset/') !== -1) {
+      html = html.replace(
+        /https?:\/\/[^\s"'<>]+\/_#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
+        siteUrl + '/redefinir-senha?token=$1',
+      )
+      html = html.replace(
+        /https?:\/\/[^\s"'<>]+\/_\/#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
+        siteUrl + '/redefinir-senha?token=$1',
+      )
+      msg.html = html
+    }
+    if (text.indexOf('/_/#/auth/confirm-password-reset/') !== -1) {
+      text = text.replace(
+        /https?:\/\/[^\s"'<>]+\/_#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
+        siteUrl + '/redefinir-senha?token=$1',
+      )
+      text = text.replace(
+        /https?:\/\/[^\s"'<>]+\/_\/#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
+        siteUrl + '/redefinir-senha?token=$1',
+      )
+      msg.text = text
+    }
+
+    // Substituição análoga para verificação de e-mail e troca de e-mail
+    if (html.indexOf('/_/#/auth/confirm-verification/') !== -1) {
+      html = html.replace(
+        /https?:\/\/[^\s"'<>]+\/_\/#\/auth\/confirm-verification\/([a-zA-Z0-9_\-\.]+)/g,
+        siteUrl + '/redefinir-senha?token=$1&action=verify',
+      )
+      msg.html = html
+    }
+    if (html.indexOf('/_/#/auth/confirm-email-change/') !== -1) {
+      html = html.replace(
+        /https?:\/\/[^\s"'<>]+\/_\/#\/auth\/confirm-email-change\/([a-zA-Z0-9_\-\.]+)/g,
+        siteUrl + '/redefinir-senha?token=$1&action=email-change',
+      )
+      msg.html = html
+    }
 
     // Mascara e-mails de destinatário para auditoria segura nos logs
     const recipients = Array.isArray(to)
@@ -53,10 +104,11 @@ onMailerSend((e) => {
         const u = urlMatches[i]
         if (
           u.indexOf('token=') !== -1 ||
+          u.indexOf('/redefinir-senha') !== -1 ||
+          u.indexOf('/reset-password') !== -1 ||
           u.indexOf('confirm-password-reset') !== -1 ||
           u.indexOf('confirm-verification') !== -1 ||
-          u.indexOf('confirm-email-change') !== -1 ||
-          u.indexOf('/auth/') !== -1
+          u.indexOf('confirm-email-change') !== -1
         ) {
           actionUrl = u
           break
@@ -68,17 +120,19 @@ onMailerSend((e) => {
         actionUrl = urlMatches[0]
       }
 
-      if (actionUrl) {
-        // Remove barras duplicadas eventuais antes do hash ou token se houver
-        html = html.split('{ACTION_URL}').join(actionUrl)
-        msg.html = html
-        if (text) {
-          text = text.split('{ACTION_URL}').join(actionUrl)
-          msg.text = text
-        }
-        rawPlaceholderLeft =
-          html.indexOf('{ACTION_URL}') !== -1 || text.indexOf('{ACTION_URL}') !== -1
+      // Se mesmo assim não achou URL, usa fallback com rota do site público
+      if (!actionUrl) {
+        actionUrl = siteUrl + '/redefinir-senha'
       }
+
+      html = html.split('{ACTION_URL}').join(actionUrl)
+      msg.html = html
+      if (text) {
+        text = text.split('{ACTION_URL}').join(actionUrl)
+        msg.text = text
+      }
+      rawPlaceholderLeft =
+        html.indexOf('{ACTION_URL}') !== -1 || text.indexOf('{ACTION_URL}') !== -1
     }
 
     // Extrai atributos href encontrados para auditoria sem expor tokens completos

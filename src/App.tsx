@@ -49,6 +49,9 @@ export default function App() {
           <Route path="/politica/:slug" element={<PoliticaScreen />} />
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/reset-password" element={<ResetPasswordScreen />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordScreen />} />
+          <Route path="/redefinir-senha" element={<ResetPasswordScreen />} />
+          <Route path="/redefinir-senha/:token" element={<ResetPasswordScreen />} />
 
           {/* Área de Membros (Disponível para Master, Gerencial, Ouro e Prata) */}
           <Route
