@@ -35,6 +35,10 @@ import {
   Building,
   Eye,
   Instagram,
+  Copy,
+  Check,
+  Share2,
+  Sparkles,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
@@ -42,6 +46,22 @@ import { useAuth } from '@/context/AuthContext'
 export default function AdminDepoimentosScreen() {
   const { isMaster, isGerencial } = useAuth()
   const [activeTab, setActiveTab] = useState<'publicados' | 'recebidos'>('publicados')
+  const [copiedLink, setCopiedLink] = useState(false)
+
+  const publicTestimonialUrl =
+    typeof window !== 'undefined' ? `${window.location.origin}/depoimento` : '/depoimento'
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(publicTestimonialUrl)
+      setCopiedLink(true)
+      toast.success('Link do formulário copiado com sucesso! Pronto para enviar ao convidado.')
+      setTimeout(() => setCopiedLink(false), 3000)
+    } catch (err) {
+      console.error('Falha ao copiar:', err)
+      toast.error('Não foi possível copiar automaticamente. Selecione e copie o link.')
+    }
+  }
 
   // Depoimentos publicados (coleção 'depoimentos')
   const [depoimentos, setDepoimentos] = useState<DepoimentoRecord[]>([])
@@ -344,6 +364,71 @@ export default function AdminDepoimentosScreen() {
             Novo Depoimento
           </Button>
         )}
+      </div>
+
+      {/* Card de Divulgação: Copiar Link do Formulário para Convidados */}
+      <div className="bg-gradient-to-r from-vinho via-[#4B1E3F] to-[#36142d] text-marfim rounded-2xl p-4 sm:p-5 border-2 border-dourado/40 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-dourado/10 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1 max-w-xl">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-dourado/20 border border-dourado/40 text-dourado text-[11px] font-bold">
+                <Share2 className="w-3 h-3 text-dourado" />
+                Divulgue o formulário
+              </span>
+              <span className="text-[11px] text-marfim/70">Página dedicada para convidados</span>
+            </div>
+            <h3 className="font-serif text-base sm:text-lg font-bold text-white">
+              Link direto para o convidado deixar seu depoimento
+            </h3>
+            <p className="text-xs text-marfim/80 leading-relaxed font-light">
+              Envie este link para quem já participou de um episódio no CoffeeCast 4.0. Ele abre uma
+              página acolhedora e exclusiva onde o convidado preenche seu depoimento, anexa a foto e
+              autoriza a exibição.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto shrink-0">
+            {/* Input do link em somente-leitura */}
+            <div className="bg-black/30 border border-dourado/30 rounded-xl px-3 py-2 flex items-center gap-2 min-w-0 md:max-w-xs">
+              <span className="text-xs font-mono text-dourado-light truncate select-all">
+                {publicTestimonialUrl}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={handleCopyLink}
+                className="flex-1 sm:flex-none bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-xl px-4 py-2 min-h-[40px] shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+              >
+                {copiedLink ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    <span>Copiado!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copiar link</span>
+                  </>
+                )}
+              </Button>
+
+              <a
+                href={publicTestimonialUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-marfim hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 min-h-[40px] transition-colors cursor-pointer"
+                title="Abrir página pública em nova aba"
+              >
+                <span>Abrir</span>
+                <ExternalLink className="w-3.5 h-3.5 text-dourado" />
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Tabs: Publicados no Site / Recebidos do Site */}

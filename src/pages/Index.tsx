@@ -132,6 +132,21 @@ export default function Index() {
     }
   }
 
+  // Rolar suavemente até o elemento caso venha de outra rota com hash na URL (ex: /#integrantes)
+  useEffect(() => {
+    const hash = window.location.hash
+    if (hash) {
+      const elementId = hash.replace('#', '')
+      const timeoutId = setTimeout(() => {
+        const el = document.getElementById(elementId)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 150)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [])
+
   // Carregar dados dinâmicos do PocketBase
   useEffect(() => {
     async function fetchData() {

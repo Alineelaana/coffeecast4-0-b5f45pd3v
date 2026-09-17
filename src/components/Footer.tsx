@@ -131,39 +131,50 @@ export const Footer: React.FC<FooterProps> = ({
             </h4>
             <ul className="space-y-2.5 text-sm text-marfim/80">
               <li>
-                <a href="#inicio" className="hover:text-dourado transition-colors">
+                <Link to="/#inicio" className="hover:text-dourado transition-colors">
                   Início
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#integrantes" className="hover:text-dourado transition-colors">
+                <Link to="/#integrantes" className="hover:text-dourado transition-colors">
                   Nossas Integrantes
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#episodios" className="hover:text-dourado transition-colors">
+                <Link to="/#episodios" className="hover:text-dourado transition-colors">
                   Episódios & YouTube
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#depoimentos" className="hover:text-dourado transition-colors">
+                <Link to="/#depoimentos" className="hover:text-dourado transition-colors">
                   Depoimentos de Convidados
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#participar" className="hover:text-dourado transition-colors">
+                <Link
+                  to="/depoimento"
+                  className="hover:text-dourado transition-colors font-medium text-dourado-light flex items-center gap-1.5"
+                >
+                  <span>Deixe seu Depoimento</span>
+                  <span className="text-[10px] bg-dourado/20 text-dourado px-1.5 py-0.2 rounded font-bold">
+                    Novo
+                  </span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/#participar" className="hover:text-dourado transition-colors">
                   Quero Participar do Podcast
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#momentos" className="hover:text-dourado transition-colors">
+                <Link to="/#momentos" className="hover:text-dourado transition-colors">
                   Nossos Momentos
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#missao" className="hover:text-dourado transition-colors">
+                <Link to="/#missao" className="hover:text-dourado transition-colors">
                   Missão, Visão & Valores
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

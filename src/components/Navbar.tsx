@@ -28,26 +28,41 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
   }, [])
 
   const navLinks = [
-    { label: 'Início', href: '#inicio' },
-    { label: 'Integrantes', href: '#integrantes' },
-    { label: 'Episódios', href: '#episodios' },
-    { label: 'Depoimentos', href: '#depoimentos' },
-    { label: 'Participar', href: '#participar' },
-    { label: 'Contato', href: '#contato' },
-    { label: 'Nossos Momentos', href: '#momentos' },
-    { label: 'Missão & Valores', href: '#missao' },
+    { label: 'Início', href: '/#inicio', isRoute: false },
+    { label: 'Integrantes', href: '/#integrantes', isRoute: false },
+    { label: 'Episódios', href: '/#episodios', isRoute: false },
+    { label: 'Depoimentos', href: '/#depoimentos', isRoute: false },
+    { label: 'Deixe seu depoimento', href: '/depoimento', isRoute: true },
+    { label: 'Participar', href: '/#participar', isRoute: false },
+    { label: 'Contato', href: '/#contato', isRoute: false },
+    { label: 'Nossos Momentos', href: '/#momentos', isRoute: false },
+    { label: 'Missão & Valores', href: '/#missao', isRoute: false },
   ]
 
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+    isRoute: boolean,
+  ) => {
     setMobileMenuOpen(false)
-    if (location.pathname !== '/') {
-      return // deixe navegar normalmente para /#secao
+    if (isRoute) {
+      return // Navegação de rota padrão via React Router Link
     }
-    e.preventDefault()
-    const target = document.querySelector(href)
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth' })
+
+    const hash = href.includes('#') ? href.split('#')[1] : ''
+    if (location.pathname === '/') {
+      e.preventDefault()
+      if (hash) {
+        const target = document.getElementById(hash)
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' })
+          window.history.pushState(null, '', `/#${hash}`)
+        }
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
     }
+    // Se não estiver em '/', deixa o <Link to={href}> navegar para /#hash; o scroll de carregamento na Index cuidará do hash
   }
 
   return (
@@ -72,14 +87,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
           {/* Desktop Navigation Links (exibidos a partir de telas médias/grandes lg) */}
           <nav className="hidden lg:flex items-center gap-3.5 xl:gap-5 2xl:gap-6 shrink">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.label}
-                href={location.pathname === '/' ? link.href : `/${link.href}`}
-                onClick={(e) => handleNavClick(e, link.href)}
-                className="text-xs xl:text-sm font-medium transition-colors text-marfim/90 hover:text-dourado relative py-1 whitespace-nowrap"
+                to={link.href}
+                onClick={(e) => handleNavClick(e, link.href, link.isRoute)}
+                className={`text-xs xl:text-sm font-medium transition-colors relative py-1 whitespace-nowrap ${
+                  link.isRoute && location.pathname === link.href
+                    ? 'text-dourado font-bold'
+                    : 'text-marfim/90 hover:text-dourado'
+                }`}
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -170,15 +189,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
         <div className="lg:hidden bg-vinho-dark border-b-2 border-dourado/60 text-marfim px-5 py-5 shadow-2xl animate-fade-in-down max-h-[calc(100vh-6rem)] overflow-y-auto">
           <div className="flex flex-col space-y-1">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.label}
-                href={location.pathname === '/' ? link.href : `/${link.href}`}
-                onClick={(e) => handleNavClick(e, link.href)}
-                className="text-base font-medium py-3 px-3 rounded-xl border-b border-vinho-light/30 hover:text-dourado hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between min-h-[44px]"
+                to={link.href}
+                onClick={(e) => handleNavClick(e, link.href, link.isRoute)}
+                className={`text-base font-medium py-3 px-3 rounded-xl border-b border-vinho-light/30 hover:text-dourado hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between min-h-[44px] ${
+                  link.isRoute && location.pathname === link.href
+                    ? 'text-dourado bg-white/5 font-bold'
+                    : ''
+                }`}
               >
                 <span>{link.label}</span>
                 <span className="text-dourado/60 text-xs">›</span>
-              </a>
+              </Link>
             ))}
 
             <div className="pt-4 flex flex-col gap-2.5">
