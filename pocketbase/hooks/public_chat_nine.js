@@ -27,6 +27,7 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
 
     const isGlobalAuto = globalConfig ? globalConfig.getBool('atendimento_automatico') : true
     const customPrompt = globalConfig ? globalConfig.getString('prompt_sistema') || '' : ''
+    const customPromptLivre = globalConfig ? globalConfig.getString('prompt_livre') || '' : ''
     const legacyKnowledge = globalConfig ? globalConfig.getString('base_conhecimento') || '' : ''
 
     // Buscar ou criar o registro da conversa na coleção nine_conversas
@@ -226,10 +227,18 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       '• Guia do Convidado (/convidado): Orientações completas de preparação, cronograma do estúdio, dicas de vestimenta (dress code) e café especial.\n' +
       '• Formulário do Roteiro (/roteiro): Formulário detalhado que o(a) convidado(a) confirmado(a) preenche antes da gravação (biografia, empresa, temas para enfatizar, fotos e autorização de imagem).\n' +
       '• Deixar Depoimento (/depoimento): Espaço para ouvintes e convidados registrarem seu relato sobre a transformação que o CoffeeCast causou.\n' +
-      '• Novos episódios: Todo sábado às 10h no canal oficial do YouTube.\n' +
-      '• Redes Sociais: Instagram @coffeecast4.0.\n' +
+      '• Novos episódios: Todo sábado às 10h no canal oficial do YouTube (@coffeecast4.0).\n' +
+      '• Redes Sociais: Instagram oficial @coffeecast4.0.\n' +
       '• Contato Comercial & Produção: Aline Lana pelo WhatsApp (31) 99129-7619.'
     dynamicContextParts.push(pagesText)
+
+    // 6. Prompt Livre Adicional da Base de Conhecimento (se configurado)
+    if (customPromptLivre && customPromptLivre.trim().length > 0) {
+      dynamicContextParts.push(
+        '### INSTRUÇÕES E ORIENTAÇÕES ADICIONAIS DA BASE DE CONHECIMENTO (PROMPT LIVRE):\n' +
+          customPromptLivre.trim(),
+      )
+    }
 
     // Juntar todo o bloco de dados do banco
     const dynamicContextBlock = dynamicContextParts.join('\n\n')

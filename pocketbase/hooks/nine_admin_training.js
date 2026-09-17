@@ -25,15 +25,6 @@ routerAdd(
         body = {}
       }
 
-      const promptSistema = (body.prompt_sistema || '').trim()
-      const observacoes = (body.observacoes || '').trim()
-      const atendimentoAutomatico =
-        typeof body.atendimento_automatico === 'boolean' ? body.atendimento_automatico : true
-
-      if (!promptSistema) {
-        return e.badRequestError('O prompt de personalidade e regras da Nine não pode ficar vazio.')
-      }
-
       // Buscar registro existente ou criar novo
       let configRecord = null
       try {
@@ -49,10 +40,48 @@ routerAdd(
         configRecord.set('chave', 'global')
       }
 
-      configRecord.set('prompt_sistema', promptSistema)
-      configRecord.set('atendimento_automatico', atendimentoAutomatico)
-      if (observacoes !== undefined) {
-        configRecord.set('observacoes', observacoes)
+      // prompt_sistema: se fornecido no body, valida e atualiza
+      let promptSistema = configRecord.getString('prompt_sistema') || ''
+      if (body.prompt_sistema !== undefined) {
+        const pTrimmed = String(body.prompt_sistema || '').trim()
+        if (!pTrimmed) {
+          return e.badRequestError(
+            'O prompt de personalidade e regras da Nine não pode ficar vazio.',
+          )
+        }
+        if (pTrimmed.length > 100000) {
+          return e.badRequestError(
+            'O prompt de personalidade não pode ultrapassar 100.000 caracteres.',
+          )
+        }
+        promptSistema = pTrimmed
+        configRecord.set('prompt_sistema', promptSistema)
+      } else if (!promptSistema) {
+        return e.badRequestError('O prompt de personalidade e regras da Nine não pode ficar vazio.')
+      }
+
+      // prompt_livre: campo editável na Base de Conhecimento (instruções livres adicionais)
+      // Pode ficar vazio ou ter até 100.000 caracteres
+      if (body.prompt_livre !== undefined) {
+        const rawLivre = String(body.prompt_livre || '').trim()
+        if (rawLivre.length > 100000) {
+          return e.badRequestError(
+            'O prompt livre da Base de Conhecimento não pode ultrapassar 100.000 caracteres.',
+          )
+        }
+        configRecord.set('prompt_livre', rawLivre)
+      }
+
+      // atendimento_automatico: se fornecido
+      if (body.atendimento_automatico !== undefined) {
+        const atendimentoAutomatico =
+          typeof body.atendimento_automatico === 'boolean' ? body.atendimento_automatico : true
+        configRecord.set('atendimento_automatico', atendimentoAutomatico)
+      }
+
+      // observacoes: se fornecido
+      if (body.observacoes !== undefined) {
+        configRecord.set('observacoes', String(body.observacoes || '').trim())
       }
 
       $app.save(configRecord)
@@ -82,6 +111,7 @@ routerAdd(
           chave: configRecord.getString('chave'),
           atendimento_automatico: configRecord.getBool('atendimento_automatico'),
           prompt_sistema: configRecord.getString('prompt_sistema'),
+          prompt_livre: configRecord.getString('prompt_livre'),
           observacoes: configRecord.getString('observacoes'),
           updated: configRecord.getString('updated'),
         },

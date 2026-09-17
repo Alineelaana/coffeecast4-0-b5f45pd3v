@@ -70,9 +70,11 @@ export default function AdminNineScreen() {
   const [configId, setConfigId] = useState<string>('')
   const [atendimentoAutomatico, setAtendimentoAutomatico] = useState<boolean>(true)
   const [promptSistema, setPromptSistema] = useState<string>('')
+  const [promptLivre, setPromptLivre] = useState<string>('')
   const [observacoes, setObservacoes] = useState<string>('')
   const [loadingConfig, setLoadingConfig] = useState<boolean>(true)
   const [savingConfig, setSavingConfig] = useState<boolean>(false)
+  const [savingPromptLivre, setSavingPromptLivre] = useState<boolean>(false)
 
   // ==========================================
   // ESTADO: CONVERSAS & ATENDIMENTO
@@ -134,6 +136,7 @@ export default function AdminNineScreen() {
         setConfigId(cfg.id)
         setAtendimentoAutomatico(cfg.atendimento_automatico ?? true)
         setPromptSistema(cfg.prompt_sistema || '')
+        setPromptLivre(cfg.prompt_livre || '')
         setObservacoes(cfg.observacoes || '')
       }
     } catch (err) {
@@ -169,6 +172,7 @@ export default function AdminNineScreen() {
               : String(fieldErr)
           const fieldNamesMap: Record<string, string> = {
             prompt_sistema: 'Prompt do sistema',
+            prompt_livre: 'Prompt livre da Base de Conhecimento',
             atendimento_automatico: 'Atendimento automático',
             observacoes: 'Observações',
             chave: 'Identificador',
@@ -241,6 +245,9 @@ export default function AdminNineScreen() {
         if (successData.record?.prompt_sistema !== undefined) {
           setPromptSistema(successData.record.prompt_sistema)
         }
+        if (successData.record?.prompt_livre !== undefined) {
+          setPromptLivre(successData.record.prompt_livre)
+        }
         if (successData.record?.atendimento_automatico !== undefined) {
           setAtendimentoAutomatico(successData.record.atendimento_automatico)
         }
@@ -291,6 +298,7 @@ export default function AdminNineScreen() {
           if (updatedRecord.id) setConfigId(updatedRecord.id)
           if (updatedRecord.prompt_sistema !== undefined)
             setPromptSistema(updatedRecord.prompt_sistema)
+          if (updatedRecord.prompt_livre !== undefined) setPromptLivre(updatedRecord.prompt_livre)
           if (updatedRecord.atendimento_automatico !== undefined)
             setAtendimentoAutomatico(updatedRecord.atendimento_automatico)
           if (updatedRecord.observacoes !== undefined) setObservacoes(updatedRecord.observacoes)
@@ -309,6 +317,138 @@ export default function AdminNineScreen() {
       toast.error(`Falha ao salvar: ${userFriendlyMessage}`)
     } finally {
       setSavingConfig(false)
+    }
+  }
+
+  // Salvar Prompt Livre da Base de Conhecimento
+  const handleSavePromptLivre = async () => {
+    setSavingPromptLivre(true)
+    const livreTrimmed = promptLivre.trim()
+
+    // Helper para extrair mensagem amigável e detalhada de erro do PocketBase ou API
+    const parseDetailedError = (errorObj: any): string => {
+      if (!errorObj) return 'Falha ao salvar o prompt livre da Base de Conhecimento.'
+      const errData = errorObj.data?.data || errorObj.response?.data || errorObj.data || {}
+      if (typeof errData === 'object' && Object.keys(errData).length > 0) {
+        const fieldMsgs: string[] = []
+        for (const [field, fieldErr] of Object.entries(errData)) {
+          const msg =
+            typeof fieldErr === 'object' && fieldErr !== null && 'message' in (fieldErr as any)
+              ? (fieldErr as any).message
+              : String(fieldErr)
+          const fieldNamesMap: Record<string, string> = {
+            prompt_livre: 'Prompt livre da Base de Conhecimento',
+            prompt_sistema: 'Prompt do sistema',
+            atendimento_automatico: 'Atendimento automático',
+            observacoes: 'Observações',
+          }
+          const label = fieldNamesMap[field] || field
+          fieldMsgs.push(`${label}: ${msg}`)
+        }
+        if (fieldMsgs.length > 0) return fieldMsgs.join(' | ')
+      }
+      return (
+        errorObj.message ||
+        errorObj.error ||
+        (typeof errorObj === 'string'
+          ? errorObj
+          : 'Falha ao salvar o prompt livre da Base de Conhecimento.')
+      )
+    }
+
+    try {
+      const baseUrl = import.meta.env.VITE_POCKETBASE_URL || ''
+      const token = pb.authStore.token
+
+      if (!token) {
+        toast.error('Sessão expirada. Faça login novamente para salvar.')
+        return
+      }
+
+      let saveError: string | null = null
+      let successData: any = null
+
+      try {
+        const res = await fetch(`${baseUrl}/backend/v1/nine/admin/config`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token,
+          },
+          body: JSON.stringify({
+            prompt_livre: livreTrimmed,
+          }),
+        })
+
+        if (res.ok) {
+          successData = await res.json().catch(() => ({}))
+        } else {
+          const errPayload = await res.json().catch(() => ({}))
+          saveError =
+            errPayload?.error ||
+            errPayload?.message ||
+            (res.status === 403
+              ? 'Permissão negada. Apenas administradores Master e Gerencial podem salvar.'
+              : `Erro ${res.status} ao salvar no servidor.`)
+        }
+      } catch (fetchErr: any) {
+        saveError = fetchErr?.message || 'Falha de comunicação com o servidor.'
+      }
+
+      if (successData) {
+        if (successData.record?.id) setConfigId(successData.record.id)
+        if (successData.record?.prompt_livre !== undefined) {
+          setPromptLivre(successData.record.prompt_livre)
+        }
+        toast.success(
+          livreTrimmed
+            ? 'Prompt livre da Base de Conhecimento salvo com sucesso e ativo para a Nine!'
+            : 'Prompt livre limpo com sucesso.',
+        )
+        return
+      }
+
+      // Fallback direto via SDK
+      console.warn('Endpoint oficial falhou (' + saveError + '), tentando gravação direta...')
+      let updatedRecord: any = null
+      if (configId) {
+        updatedRecord = await pb.collection('nine_config').update(configId, {
+          prompt_livre: livreTrimmed,
+        })
+      } else {
+        const existing = await pb
+          .collection('nine_config')
+          .getFirstListItem('chave="global"')
+          .catch(() => null)
+        if (existing) {
+          setConfigId(existing.id)
+          updatedRecord = await pb.collection('nine_config').update(existing.id, {
+            prompt_livre: livreTrimmed,
+          })
+        } else {
+          updatedRecord = await pb.collection('nine_config').create({
+            chave: 'global',
+            prompt_livre: livreTrimmed,
+          })
+          setConfigId(updatedRecord.id)
+        }
+      }
+
+      if (updatedRecord && updatedRecord.prompt_livre !== undefined) {
+        setPromptLivre(updatedRecord.prompt_livre)
+      }
+
+      toast.success(
+        livreTrimmed
+          ? 'Prompt livre da Base de Conhecimento salvo com sucesso no banco!'
+          : 'Prompt livre limpo com sucesso.',
+      )
+    } catch (err: any) {
+      console.error('Erro ao salvar prompt livre:', err)
+      const msg = parseDetailedError(err)
+      toast.error(`Falha ao salvar prompt livre: ${msg}`)
+    } finally {
+      setSavingPromptLivre(false)
     }
   }
 
@@ -1263,10 +1403,11 @@ export default function AdminNineScreen() {
                   </Badge>
                 </h3>
                 <p className="text-xs text-vinho/70 mt-0.5 leading-relaxed">
-                  Adicione perguntas frequentes, informações institucionais e novas orientações. A
-                  Nine consulta esta lista e as tabelas de <strong>episódios</strong>,{' '}
-                  <strong>integrantes</strong> e <strong>agenda</strong> automaticamente no banco a
-                  cada pergunta do visitante, sem precisar alterar código ou prompt.
+                  Adicione perguntas frequentes, informações institucionais, orientações e utilize o
+                  novo espaço de <strong>Prompt Livre</strong> abaixo para instruções contextuais
+                  adicionais. A Nine consulta toda esta base e as tabelas de{' '}
+                  <strong>episódios</strong>, <strong>integrantes</strong> e <strong>agenda</strong>{' '}
+                  automaticamente a cada resposta.
                 </p>
               </div>
             </div>
@@ -1279,6 +1420,100 @@ export default function AdminNineScreen() {
               <span>Adicionar Informação</span>
             </Button>
           </div>
+
+          {/* =========================================================================
+              ESPAÇO DE PROMPT LIVRE DA BASE DE CONHECIMENTO
+             ========================================================================= */}
+          <Card className="border-vinho/15 shadow-xs overflow-hidden bg-white">
+            <CardHeader className="bg-gradient-to-r from-[#FAF8F5] via-marfim to-[#FAF8F5] border-b border-vinho/10 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-vinho/10 text-vinho flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-dourado" />
+                    </div>
+                    <CardTitle className="font-serif font-bold text-base text-vinho flex items-center gap-2">
+                      <span>Espaço para Prompt Livre da Base de Conhecimento</span>
+                      <Badge className="bg-dourado/20 text-vinho border border-dourado/40 text-[10px] font-semibold">
+                        Instruções Extras
+                      </Badge>
+                    </CardTitle>
+                  </div>
+                  <CardDescription className="text-xs text-vinho/70">
+                    Insira aqui um prompt adicional livre com instruções, direcionamentos, novidades
+                    ou informações complementares para a Nine. Este campo é consultado no contexto
+                    de cada resposta do chat, permanecendo totalmente separado do Prompt Master de
+                    Personalidade.
+                  </CardDescription>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge
+                    variant="outline"
+                    className="text-[11px] text-vinho/70 border-vinho/20 bg-white"
+                  >
+                    {promptLivre.length.toLocaleString('pt-BR')} / 100.000 caracteres
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-5 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-vinho flex items-center justify-between">
+                  <span>Conteúdo do Prompt Livre:</span>
+                  <span className="text-[11px] text-vinho/50 font-normal">
+                    Pode ficar em branco se não houver instruções extras no momento
+                  </span>
+                </label>
+                <Textarea
+                  value={promptLivre}
+                  onChange={(e) => setPromptLivre(e.target.value)}
+                  maxLength={100000}
+                  rows={8}
+                  disabled={loadingConfig}
+                  placeholder="Cole ou digite aqui seu prompt adicional livre (ex: novos avisos, regras pontuais de campanhas, instruções de atendimento específicas de feiras ou eventos, etc.)..."
+                  className="font-mono text-xs leading-relaxed bg-[#FAF8F5] border-vinho/20 focus:border-dourado rounded-xl resize-y"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-vinho/10 text-xs">
+                <p className="text-vinho/60 text-[11px]">
+                  💡 <strong>Dica:</strong> Este texto entra como bloco oficial no contexto
+                  inteligente da Nine junto com os episódios e a lista de perguntas abaixo.
+                </p>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto">
+                  {promptLivre.trim().length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPromptLivre('')}
+                      disabled={savingPromptLivre || loadingConfig}
+                      className="text-xs h-9 border-vinho/20 text-vinho hover:bg-vinho/5"
+                    >
+                      Limpar
+                    </Button>
+                  )}
+
+                  <Button
+                    type="button"
+                    onClick={handleSavePromptLivre}
+                    disabled={savingPromptLivre || loadingConfig}
+                    className="h-9 px-5 bg-vinho text-white hover:bg-vinho-light font-bold text-xs rounded-xl flex items-center gap-2 shadow-xs active:scale-95 transition-all"
+                  >
+                    {savingPromptLivre ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-dourado" />
+                    ) : (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-dourado" />
+                    )}
+                    <span>Salvar Prompt Livre</span>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Filtros e Busca */}
           <div className="bg-white p-4 rounded-2xl border border-vinho/10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">

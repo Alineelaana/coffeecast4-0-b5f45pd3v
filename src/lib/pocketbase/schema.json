@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T15:59:28.382Z",
+  "generatedAt": "2026-09-17T16:08:22.891Z",
   "collections": [
     {
       "name": "users",
@@ -1112,6 +1112,12 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "prompt_livre",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": ["CREATE UNIQUE INDEX idx_nine_config_chave ON nine_config (chave)"]

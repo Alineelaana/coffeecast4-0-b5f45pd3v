@@ -237,6 +237,7 @@ export interface NineConfigRecord {
   chave: string
   atendimento_automatico: boolean
   prompt_sistema: string
+  prompt_livre?: string
   base_conhecimento: string
   observacoes?: string
   created: string
