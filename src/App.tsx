@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/context/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { CookieBanner } from '@/components/CookieBanner'
+import { NineChatWidget } from '@/components/NineChatWidget'
 import { Toaster } from 'sonner'
 
 // Public Pages
@@ -164,6 +165,9 @@ export default function App() {
           {/* Rota 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+
+        {/* Chat com a Nine (Assistente Virtual Pública do CoffeeCast 4.0) */}
+        <NineChatWidget />
 
         {/* Banner de Cookies & Privacidade LGPD (público) */}
         <CookieBanner />
