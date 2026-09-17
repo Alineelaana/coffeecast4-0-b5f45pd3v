@@ -144,7 +144,7 @@ export default function AdminNineScreen() {
     }
   }
 
-  // Salvar Configuração / Prompt de Personalidade
+  // Salvar Configuração / Prompt de Personalidade via Endpoint Dedicado ou Fallback direto
   const handleSaveConfig = async () => {
     if (!promptSistema.trim()) {
       toast.error('O prompt de personalidade e regras da Nine não pode ficar vazio.')
@@ -153,24 +153,65 @@ export default function AdminNineScreen() {
 
     setSavingConfig(true)
     try {
-      const payload = {
-        chave: 'global',
-        atendimento_automatico: atendimentoAutomatico,
-        prompt_sistema: promptSistema,
-        observacoes: observacoes,
-      }
+      const baseUrl = import.meta.env.VITE_POCKETBASE_URL || ''
+      const res = await fetch(`${baseUrl}/backend/v1/nine/admin/config`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: pb.authStore.token,
+        },
+        body: JSON.stringify({
+          atendimento_automatico: atendimentoAutomatico,
+          prompt_sistema: promptSistema.trim(),
+          observacoes: observacoes.trim(),
+        }),
+      })
 
-      if (configId) {
-        await pb.collection('nine_config').update(configId, payload)
+      if (res.ok) {
+        const data = await res.json()
+        if (data?.record?.id) {
+          setConfigId(data.record.id)
+        }
+        toast.success('Prompt de personalidade e regras da Nine salvos com sucesso!')
       } else {
-        const created = await pb.collection('nine_config').create(payload)
-        setConfigId(created.id)
-      }
+        // Fallback direto via SDK do PocketBase
+        const payload = {
+          chave: 'global',
+          atendimento_automatico: atendimentoAutomatico,
+          prompt_sistema: promptSistema.trim(),
+          observacoes: observacoes.trim(),
+        }
 
-      toast.success('Prompt de personalidade e regras da Nine salvos com sucesso!')
-    } catch (err) {
+        if (configId) {
+          await pb.collection('nine_config').update(configId, payload)
+        } else {
+          const created = await pb.collection('nine_config').create(payload)
+          setConfigId(created.id)
+        }
+
+        toast.success('Prompt de personalidade e regras da Nine salvos com sucesso!')
+      }
+    } catch (err: any) {
       console.error('Erro ao salvar treinamento da Nine:', err)
-      toast.error('Falha ao salvar o prompt de treinamento.')
+      // Tentar fallback secundário se endpoint de hook falhar na rede
+      try {
+        const payload = {
+          chave: 'global',
+          atendimento_automatico: atendimentoAutomatico,
+          prompt_sistema: promptSistema.trim(),
+          observacoes: observacoes.trim(),
+        }
+        if (configId) {
+          await pb.collection('nine_config').update(configId, payload)
+        } else {
+          const created = await pb.collection('nine_config').create(payload)
+          setConfigId(created.id)
+        }
+        toast.success('Prompt de personalidade e regras da Nine salvos com sucesso!')
+      } catch (fallbackErr: any) {
+        console.error('Falha no fallback de salvamento:', fallbackErr)
+        toast.error(fallbackErr?.message || 'Falha ao salvar o prompt de treinamento.')
+      }
     } finally {
       setSavingConfig(false)
     }
@@ -180,18 +221,48 @@ export default function AdminNineScreen() {
   const handleToggleAutoService = async (checked: boolean) => {
     setAtendimentoAutomatico(checked)
     try {
-      if (configId) {
+      const baseUrl = import.meta.env.VITE_POCKETBASE_URL || ''
+      const res = await fetch(`${baseUrl}/backend/v1/nine/admin/config`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: pb.authStore.token,
+        },
+        body: JSON.stringify({
+          atendimento_automatico: checked,
+          prompt_sistema: promptSistema.trim() || 'Nine Assistente Virtual',
+          observacoes: observacoes.trim(),
+        }),
+      })
+
+      if (!res.ok && configId) {
         await pb.collection('nine_config').update(configId, {
           atendimento_automatico: checked,
         })
-        toast.success(
-          checked
-            ? 'Atendimento automático da Nine ATIVADO em tempo real.'
-            : 'Atendimento automático da Nine DESLIGADO. As conversas agora aguardam revisão humana.',
-        )
       }
+
+      toast.success(
+        checked
+          ? 'Atendimento automático da Nine ATIVADO em tempo real.'
+          : 'Atendimento automático da Nine DESLIGADO. As conversas agora aguardam revisão humana.',
+      )
     } catch (err) {
       console.error('Erro ao atualizar modo de atendimento geral:', err)
+      try {
+        if (configId) {
+          await pb.collection('nine_config').update(configId, {
+            atendimento_automatico: checked,
+          })
+          toast.success(
+            checked
+              ? 'Atendimento automático da Nine ATIVADO em tempo real.'
+              : 'Atendimento automático da Nine DESLIGADO.',
+          )
+          return
+        }
+      } catch {
+        /* intentionally ignored */
+      }
       toast.error('Falha ao alternar atendimento automático.')
       setAtendimentoAutomatico(!checked)
     }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T15:24:41.806Z",
+  "generatedAt": "2026-09-17T15:36:31.891Z",
   "collections": [
     {
       "name": "users",
@@ -1062,17 +1062,17 @@
       "name": "nine_config",
       "type": "base",
       "apiRules": {
-        "list": "@request.auth.id != \"\"",
-        "view": "@request.auth.id != \"\"",
-        "create": "@request.auth.id != \"\"",
-        "update": "@request.auth.id != \"\"",
-        "delete": "@request.auth.id != \"\""
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\""
       },
       "fields": [
         {
           "name": "chave",
           "type": "text",
-          "required": true,
+          "required": false,
           "system": false
         },
         {
