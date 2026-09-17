@@ -33,6 +33,7 @@ import {
   ChevronDown,
   Sparkles,
   Activity,
+  BookOpen,
 } from 'lucide-react'
 import { getFileUrl } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
@@ -58,6 +59,7 @@ export default function AdminLayout() {
     '/admin/politicas',
     '/admin/usuarios',
     '/admin/chat/gestao',
+    '/admin/documentacao',
   ].some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`))
 
   const [masterSubmenuOpen, setMasterSubmenuOpen] = useState(true)
@@ -368,6 +370,14 @@ export default function AdminLayout() {
       label: 'Políticas do Site',
       path: '/admin/politicas',
       icon: ShieldAlert,
+      exact: false,
+    },
+    {
+      key: 'documentacao',
+      label: 'Documentação',
+      path: '/admin/documentacao',
+      icon: BookOpen,
+      badge: 'Guia',
       exact: false,
     },
   ]

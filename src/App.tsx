@@ -43,6 +43,7 @@ import AdminNotificacoesScreen from '@/pages/admin/AdminNotificacoesScreen'
 import AdminRoteirosScreen from '@/pages/admin/AdminRoteirosScreen'
 import AdminNineScreen from '@/pages/admin/AdminNineScreen'
 import AdminChatManagementScreen from '@/pages/admin/AdminChatManagementScreen'
+import DocumentacaoScreen from '@/pages/DocumentacaoScreen'
 
 export default function App() {
   return (
@@ -104,6 +105,16 @@ export default function App() {
                   <div className="min-h-screen bg-[#FAF8F5] p-3 sm:p-6 lg:p-8 flex flex-col">
                     <ChatScreen />
                   </div>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Documentação do Sistema (Acessível para qualquer usuário autenticado) */}
+            <Route
+              path="/documentacao"
+              element={
+                <ProtectedRoute requireMembersOnly>
+                  <DocumentacaoScreen />
                 </ProtectedRoute>
               }
             />
@@ -298,6 +309,14 @@ export default function App() {
                 element={
                   <ProtectedRoute requireMaster>
                     <AdminUsuariosScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="documentacao"
+                element={
+                  <ProtectedRoute>
+                    <DocumentacaoScreen />
                   </ProtectedRoute>
                 }
               />
