@@ -53,6 +53,12 @@ export default function App() {
           <Route path="/redefinir-senha" element={<ResetPasswordScreen />} />
           <Route path="/redefinir-senha/:token" element={<ResetPasswordScreen />} />
 
+          {/* Fallback de compatibilidade caso e-mails antigos ou links do PocketBase cheguem sem hash ou em sub-rotas */}
+          <Route path="/_/#/auth/confirm-password-reset/:token" element={<ResetPasswordScreen />} />
+          <Route path="/auth/confirm-password-reset/:token" element={<ResetPasswordScreen />} />
+          <Route path="/auth/confirm-password-reset" element={<ResetPasswordScreen />} />
+          <Route path="/_/*" element={<ResetPasswordScreen />} />
+
           {/* Área de Membros (Disponível para Master, Gerencial, Ouro e Prata) */}
           <Route
             path="/membros"

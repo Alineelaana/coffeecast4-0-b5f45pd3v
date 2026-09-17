@@ -22,47 +22,48 @@ onMailerSend((e) => {
     }
 
     // Se houver qualquer URL interna do PocketBase (/_/#/auth/...) no HTML ou texto,
-    // substitui para apontar para a rota pública do site
+    // ou se contiver o domínio backend interno, substitui para apontar para a rota pública do site.
+    // Trata todas as variações de padrão de URL de autenticação:
     // Exemplo: https://.../_/#/auth/confirm-password-reset/<token> -> https://.../redefinir-senha?token=<token>
-    if (html.indexOf('/_/#/auth/confirm-password-reset/') !== -1) {
-      html = html.replace(
-        /https?:\/\/[^\s"'<>]+\/_#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
-        siteUrl + '/redefinir-senha?token=$1',
-      )
-      html = html.replace(
-        /https?:\/\/[^\s"'<>]+\/_\/#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
-        siteUrl + '/redefinir-senha?token=$1',
-      )
-      msg.html = html
-    }
-    if (text.indexOf('/_/#/auth/confirm-password-reset/') !== -1) {
-      text = text.replace(
-        /https?:\/\/[^\s"'<>]+\/_#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
-        siteUrl + '/redefinir-senha?token=$1',
-      )
-      text = text.replace(
-        /https?:\/\/[^\s"'<>]+\/_\/#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
-        siteUrl + '/redefinir-senha?token=$1',
-      )
-      msg.text = text
-    }
+    html = html.replace(
+      /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
+      siteUrl + '/redefinir-senha?token=$1',
+    )
+    text = text.replace(
+      /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
+      siteUrl + '/redefinir-senha?token=$1',
+    )
 
     // Substituição análoga para verificação de e-mail e troca de e-mail
-    if (html.indexOf('/_/#/auth/confirm-verification/') !== -1) {
-      html = html.replace(
-        /https?:\/\/[^\s"'<>]+\/_\/#\/auth\/confirm-verification\/([a-zA-Z0-9_\-\.]+)/g,
-        siteUrl + '/redefinir-senha?token=$1&action=verify',
-      )
-      msg.html = html
-    }
-    if (html.indexOf('/_/#/auth/confirm-email-change/') !== -1) {
-      html = html.replace(
-        /https?:\/\/[^\s"'<>]+\/_\/#\/auth\/confirm-email-change\/([a-zA-Z0-9_\-\.]+)/g,
-        siteUrl + '/redefinir-senha?token=$1&action=email-change',
-      )
-      msg.html = html
-    }
+    html = html.replace(
+      /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-verification\/([a-zA-Z0-9_\-\.]+)/g,
+      siteUrl + '/redefinir-senha?token=$1&action=verify',
+    )
+    text = text.replace(
+      /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-verification\/([a-zA-Z0-9_\-\.]+)/g,
+      siteUrl + '/redefinir-senha?token=$1&action=verify',
+    )
+    html = html.replace(
+      /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-email-change\/([a-zA-Z0-9_\-\.]+)/g,
+      siteUrl + '/redefinir-senha?token=$1&action=email-change',
+    )
+    text = text.replace(
+      /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-email-change\/([a-zA-Z0-9_\-\.]+)/g,
+      siteUrl + '/redefinir-senha?token=$1&action=email-change',
+    )
 
+    // Se o backend tiver interpolado com o domínio interno .internal.goskip.dev apontando para /redefinir-senha,
+    // corrige para o siteUrl público
+    html = html.replace(
+      /https?:\/\/[a-zA-Z0-9\-\.]+\.internal\.goskip\.dev\/redefinir-senha/g,
+      siteUrl + '/redefinir-senha',
+    )
+    text = text.replace(
+      /https?:\/\/[a-zA-Z0-9\-\.]+\.internal\.goskip\.dev\/redefinir-senha/g,
+      siteUrl + '/redefinir-senha',
+    )
+    msg.html = html
+    msg.text = text
     // Mascara e-mails de destinatário para auditoria segura nos logs
     const recipients = Array.isArray(to)
       ? to.map((addr) => {
@@ -136,21 +137,26 @@ onMailerSend((e) => {
         html.indexOf('{ACTION_URL}') !== -1 || text.indexOf('{ACTION_URL}') !== -1
     }
 
-    // Extrai atributos href encontrados para auditoria sem expor tokens completos
+    // Extrai URLs de link encontradas para auditoria clara no log
     const hrefs = (html.match(/href="([^"]*)"/gi) || []).map((h) => {
       return h.replace(/(token=|\/)([a-zA-Z0-9_\-\.]{15,})/g, '$1[PROTECTED_TOKEN]')
     })
+
+    const sampleUrl =
+      urlMatches.length > 0
+        ? urlMatches[0].replace(/(token=|\/)([a-zA-Z0-9_\-\.]{15,})/g, '$1[PROTECTED_TOKEN]')
+        : ''
 
     console.log(
       '[CoffeeCast Mailer] Tentativa de envio interceptada:',
       JSON.stringify({
         subject: subject,
         recipients: recipients,
-        sender: sender,
         hasResolvedUrl: hasHttpUrl,
         urlCount: urlMatches.length,
         rawPlaceholderRemaining: rawPlaceholderLeft,
-        detectedHrefs: hrefs,
+        linkSample: sampleUrl,
+        hrefs: hrefs,
       }),
     )
   } catch (err) {

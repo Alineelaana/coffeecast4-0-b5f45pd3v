@@ -11,7 +11,39 @@ import officialLogo from '@/assets/sem-nome-1350-x-1080-px-1-c4c50.png'
 export default function ResetPasswordScreen() {
   const [searchParams] = useSearchParams()
   const routeParams = useParams<{ token?: string }>()
-  const token = (searchParams.get('token') || routeParams.token || '').trim()
+
+  // Extrai o token com suporte abrangente a:
+  // 1. Query parameter: ?token=...
+  // 2. Route param: /redefinir-senha/:token ou /auth/confirm-password-reset/:token
+  // 3. Pathname da URL (ex.: se a rota for /_/* ou /auth/confirm-password-reset/*)
+  // 4. Fallback de hash URL (ex.: se o navegador recebeu /#token=... ou /#/.../:token)
+  const resolveToken = (): string => {
+    const fromQuery = searchParams.get('token')
+    if (fromQuery && fromQuery.trim()) return fromQuery.trim()
+
+    if (routeParams.token && routeParams.token.trim()) return routeParams.token.trim()
+
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname
+      const matchPath = pathname.match(/confirm-password-reset\/([a-zA-Z0-9_\-.]+)/)
+      if (matchPath && matchPath[1]) return matchPath[1].trim()
+
+      if (window.location.hash) {
+        const hash = window.location.hash
+        // Formato #token=xyz
+        const matchParam = hash.match(/[?&#]token=([a-zA-Z0-9_\-.]+)/)
+        if (matchParam && matchParam[1]) return matchParam[1].trim()
+
+        // Formato #/auth/confirm-password-reset/xyz
+        const matchSegment = hash.match(/confirm-password-reset\/([a-zA-Z0-9_\-.]+)/)
+        if (matchSegment && matchSegment[1]) return matchSegment[1].trim()
+      }
+    }
+
+    return ''
+  }
+
+  const token = resolveToken()
   const navigate = useNavigate()
 
   const [password, setPassword] = useState('')

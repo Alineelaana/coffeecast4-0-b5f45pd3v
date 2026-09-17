@@ -365,10 +365,21 @@ export default function Index() {
     }
   }
 
-  // Rolar suavemente até o elemento caso venha de outra rota com hash na URL (ex: /#integrantes)
+  // Rolar suavemente até o elemento caso venha de outra rota com hash na URL (ex: /#integrantes).
+  // Se o hash contiver rota de autenticação de e-mail antigo (ex.: #/auth/confirm-password-reset/<token>),
+  // redireciona de imediato para a tela de redefinição de senha /redefinir-senha?token=<token>.
   useEffect(() => {
     const hash = window.location.hash
     if (hash) {
+      if (hash.includes('confirm-password-reset')) {
+        const match = hash.match(/confirm-password-reset\/([a-zA-Z0-9_\-.]+)/)
+        const token = match && match[1] ? match[1] : ''
+        if (token) {
+          window.location.replace(`/redefinir-senha?token=${encodeURIComponent(token)}`)
+          return
+        }
+      }
+
       const elementId = hash.replace('#', '')
       const timeoutId = setTimeout(() => {
         const el = document.getElementById(elementId)
