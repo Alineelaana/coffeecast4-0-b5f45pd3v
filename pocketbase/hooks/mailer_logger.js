@@ -1,4 +1,4 @@
-// Hook do PocketBase para auditoria e garantia de interpolação perfeita nos envios de e-mail.
+// PocketBase hook para auditoria e garantia de interpolação perfeita nos envios de e-mail.
 // Garante que links de ação de autenticação ({ACTION_URL}) e tokens estejam sempre
 // 100% resolvidos, válidos e clicáveis antes do disparo final pelo transportador SMTP.
 
