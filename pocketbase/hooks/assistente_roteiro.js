@@ -15,7 +15,6 @@ routerAdd(
 
       const body = e.requestInfo().body || {}
       const roteiroId = (body.roteiro_id || '').trim()
-
       if (!roteiroId) {
         return e.badRequestError('ID do roteiro é obrigatório')
       }

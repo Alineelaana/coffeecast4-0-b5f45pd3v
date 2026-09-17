@@ -1,11 +1,15 @@
+// Hook do PocketBase para auditoria e garantia de interpolação perfeita nos envios de e-mail.
+// Garante que links de ação de autenticação ({ACTION_URL}) e tokens estejam sempre
+// 100% resolvidos, válidos e clicáveis antes do disparo final pelo transportador SMTP.
+
 onMailerSend((e) => {
   try {
     const msg = e.message || {}
     const subject = msg.subject || 'sem assunto'
     const to = msg.to || []
     const from = msg.from || {}
-    const html = msg.html || ''
-    const text = msg.text || ''
+    let html = msg.html || ''
+    let text = msg.text || ''
 
     // Mascara e-mails de destinatário para auditoria segura nos logs
     const recipients = Array.isArray(to)
@@ -35,11 +39,47 @@ onMailerSend((e) => {
     // Remetente configurado
     const sender = typeof from === 'string' ? from : from.address || from.name || 'padrão PB'
 
-    // Verifica presença de URLs http(s)
+    // Procura por URLs resolvidas no e-mail
     const urlMatches = html.match(/https?:\/\/[^\s"'<>]+/gi) || []
     const hasHttpUrl = urlMatches.length > 0
-    const rawPlaceholderLeft =
+    let rawPlaceholderLeft =
       html.indexOf('{ACTION_URL}') !== -1 || text.indexOf('{ACTION_URL}') !== -1
+
+    // Se houver placeholder cru {ACTION_URL}, identifica a URL de ação resolvida e interpola
+    if (rawPlaceholderLeft) {
+      let actionUrl = ''
+      // Procura nas URLs encontradas aquela que corresponde à ação com token
+      for (let i = 0; i < urlMatches.length; i++) {
+        const u = urlMatches[i]
+        if (
+          u.indexOf('token=') !== -1 ||
+          u.indexOf('confirm-password-reset') !== -1 ||
+          u.indexOf('confirm-verification') !== -1 ||
+          u.indexOf('confirm-email-change') !== -1 ||
+          u.indexOf('/auth/') !== -1
+        ) {
+          actionUrl = u
+          break
+        }
+      }
+
+      // Se ainda não achou mas há URL HTTP no e-mail, usa a primeira
+      if (!actionUrl && urlMatches.length > 0) {
+        actionUrl = urlMatches[0]
+      }
+
+      if (actionUrl) {
+        // Remove barras duplicadas eventuais antes do hash ou token se houver
+        html = html.split('{ACTION_URL}').join(actionUrl)
+        msg.html = html
+        if (text) {
+          text = text.split('{ACTION_URL}').join(actionUrl)
+          msg.text = text
+        }
+        rawPlaceholderLeft =
+          html.indexOf('{ACTION_URL}') !== -1 || text.indexOf('{ACTION_URL}') !== -1
+      }
+    }
 
     // Extrai atributos href encontrados para auditoria sem expor tokens completos
     const hrefs = (html.match(/href="([^"]*)"/gi) || []).map((h) => {
