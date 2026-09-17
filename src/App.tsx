@@ -28,6 +28,7 @@ import AdminConteudoScreen from '@/pages/admin/AdminConteudoScreen'
 import AdminDominioScreen from '@/pages/admin/AdminDominioScreen'
 import AdminPoliticasScreen from '@/pages/admin/AdminPoliticasScreen'
 import AdminUsuariosScreen from '@/pages/admin/AdminUsuariosScreen'
+import AdminNotificacoesScreen from '@/pages/admin/AdminNotificacoesScreen'
 
 export default function App() {
   return (
@@ -63,6 +64,7 @@ export default function App() {
             <Route index element={<DashboardScreen />} />
 
             {/* Gestão Operacional permitida para Master e Gerencial */}
+            <Route path="notificacoes" element={<AdminNotificacoesScreen />} />
             <Route path="contatos" element={<AdminContatosScreen />} />
             <Route path="financeiro" element={<AdminFinanceiroScreen />} />
             <Route path="horas" element={<AdminControleHorasScreen />} />
@@ -111,14 +113,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="depoimentos"
-              element={
-                <ProtectedRoute requireMaster>
-                  <AdminDepoimentosScreen />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="depoimentos" element={<AdminDepoimentosScreen />} />
             <Route
               path="momentos"
               element={

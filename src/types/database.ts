@@ -45,6 +45,22 @@ export interface DepoimentoRecord {
   updated: string
 }
 
+export type DepoimentoConvidadoStatus = 'pendente' | 'aprovada' | 'oculta'
+
+export interface DepoimentoConvidadoRecord {
+  id: string
+  nome: string
+  empresa?: string
+  instagram: string
+  texto: string
+  foto: string
+  autoriza_publicacao: boolean
+  status: DepoimentoConvidadoStatus
+  visualizado?: boolean
+  created: string
+  updated: string
+}
+
 export interface MomentoRecord {
   id: string
   legenda?: string

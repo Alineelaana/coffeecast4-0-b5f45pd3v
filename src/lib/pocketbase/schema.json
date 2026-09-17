@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T00:16:58.279Z",
+  "generatedAt": "2026-09-17T01:09:44.959Z",
   "collections": [
     {
       "name": "users",
@@ -176,9 +176,9 @@
       "apiRules": {
         "list": "",
         "view": "",
-        "create": "@request.auth.role = \"master\"",
-        "update": "@request.auth.role = \"master\"",
-        "delete": "@request.auth.role = \"master\""
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\""
       },
       "fields": [
         {
@@ -772,6 +772,86 @@
       "indexes": [
         "CREATE INDEX idx_horas_compradas_data ON horas_compradas (data)",
         "CREATE INDEX idx_horas_compradas_situacao ON horas_compradas (situacao)"
+      ]
+    },
+    {
+      "name": "depoimentos_convidados",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "create": "",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\""
+      },
+      "fields": [
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "empresa",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "instagram",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "texto",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "foto",
+          "type": "file",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "autoriza_publicacao",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["pendente", "aprovada", "oculta"]
+        },
+        {
+          "name": "visualizado",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_dep_conv_status ON depoimentos_convidados (status)",
+        "CREATE INDEX idx_dep_conv_created ON depoimentos_convidados (created)"
       ]
     }
   ]

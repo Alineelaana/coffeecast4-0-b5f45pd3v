@@ -9,6 +9,7 @@ import { EpisodesCarousel } from '@/components/EpisodesCarousel'
 import { MomentsCarousel } from '@/components/MomentsCarousel'
 import { TestimonialsCarousel } from '@/components/TestimonialsCarousel'
 import { ParticipationForm } from '@/components/ParticipationForm'
+import { GuestTestimonialForm } from '@/components/GuestTestimonialForm'
 import { MembersAreaModal } from '@/components/MembersAreaModal'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -561,6 +562,9 @@ export default function Index() {
           <MomentsCarousel momentos={momentos} />
         </div>
       </section>
+
+      {/* SEÇÃO PÚBLICA: DEIXE SEU DEPOIMENTO (ACIMA DE MISSÃO, VISÃO & VALORES) */}
+      <GuestTestimonialForm />
 
       {/* SEÇÃO 9: MISSÃO, VISÃO & VALORES (ÚLTIMA SEÇÃO DE CONTEÚDO, LOGO ACIMA DO RODAPÉ) */}
       <section id="missao" className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-t border-vinho/10">

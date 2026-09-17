@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import pb from '@/lib/pocketbase/client'
 import officialLogo from '@/assets/sem-nome-1350-x-1080-px-1-c4c50.png'
 import {
   LayoutDashboard,
+  Bell,
   Tv,
   Users2,
   MessageSquareQuote,
@@ -32,6 +34,63 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
+
+  // Carrega e atualiza badge de pendências (novos contatos + novos depoimentos)
+  const fetchUnreadCount = async () => {
+    try {
+      const [depList, contList] = await Promise.all([
+        pb
+          .collection('depoimentos_convidados')
+          .getFullList({
+            filter: 'status = "pendente" || visualizado = false',
+            fields: 'id',
+          })
+          .catch(() => []),
+        pb
+          .collection('contatos')
+          .getFullList({
+            filter: 'status = "novo"',
+            fields: 'id',
+          })
+          .catch(() => []),
+      ])
+
+      setUnreadNotificationsCount(depList.length + contList.length)
+    } catch (e) {
+      console.error('Erro ao buscar notificações não lidas:', e)
+    }
+  }
+
+  React.useEffect(() => {
+    fetchUnreadCount()
+
+    let unsubDep: (() => void) | undefined
+    let unsubCont: (() => void) | undefined
+
+    pb.collection('depoimentos_convidados')
+      .subscribe('*', () => {
+        fetchUnreadCount()
+      })
+      .then((unsub) => {
+        unsubDep = unsub
+      })
+      .catch(() => {})
+
+    pb.collection('contatos')
+      .subscribe('*', () => {
+        fetchUnreadCount()
+      })
+      .then((unsub) => {
+        unsubCont = unsub
+      })
+      .catch(() => {})
+
+    return () => {
+      if (unsubDep) unsubDep()
+      if (unsubCont) unsubCont()
+    }
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -49,6 +108,13 @@ export default function AdminLayout() {
       path: '/admin',
       icon: LayoutDashboard,
       exact: true,
+      masterOnly: false,
+    },
+    {
+      label: 'Notificações',
+      path: '/admin/notificacoes',
+      icon: Bell,
+      badgeCount: unreadNotificationsCount,
       masterOnly: false,
     },
     ...(isMaster
@@ -82,13 +148,6 @@ export default function AdminLayout() {
             masterOnly: true,
           },
           {
-            label: 'Depoimentos',
-            path: '/admin/depoimentos',
-            icon: MessageSquareQuote,
-            badge: 'Master',
-            masterOnly: true,
-          },
-          {
             label: 'Nossos Momentos',
             path: '/admin/momentos',
             icon: Camera,
@@ -97,6 +156,12 @@ export default function AdminLayout() {
           },
         ]
       : []),
+    {
+      label: 'Depoimentos',
+      path: '/admin/depoimentos',
+      icon: MessageSquareQuote,
+      masterOnly: false,
+    },
     {
       label: 'Contatos & Leads',
       path: '/admin/contatos',
@@ -213,21 +278,34 @@ export default function AdminLayout() {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-dourado' : 'text-marfim/70'}`} />
+                  <div className="relative">
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-dourado' : 'text-marfim/70'}`} />
+                    {item.badgeCount && item.badgeCount > 0 ? (
+                      <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                    ) : null}
+                  </div>
                   <span>{item.label}</span>
                 </div>
 
-                {item.badge && (
-                  <Badge
-                    className={`text-[9px] px-1.5 py-0.5 rounded ${
-                      isActive
-                        ? 'bg-dourado text-vinho font-bold'
-                        : 'bg-vinho-dark/80 text-dourado-light border border-dourado/30'
-                    }`}
-                  >
-                    {item.badge}
-                  </Badge>
-                )}
+                <div className="flex items-center gap-1.5">
+                  {item.badgeCount !== undefined && item.badgeCount > 0 && (
+                    <Badge className="bg-amber-500 text-white font-bold text-[10px] px-1.5 py-0 rounded-full shadow-xs">
+                      {item.badgeCount}
+                    </Badge>
+                  )}
+
+                  {item.badge && (
+                    <Badge
+                      className={`text-[9px] px-1.5 py-0.5 rounded ${
+                        isActive
+                          ? 'bg-dourado text-vinho font-bold'
+                          : 'bg-vinho-dark/80 text-dourado-light border border-dourado/30'
+                      }`}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </div>
               </NavLink>
             )
           })}
@@ -298,19 +376,31 @@ export default function AdminLayout() {
           />
         </NavLink>
 
-        <button
-          onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-vinho-light text-marfim hover:bg-vinho-light/80 active:scale-95 transition-all"
-          aria-label="Menu administrativo"
-        >
-          {mobileSidebarOpen ? (
-            <X className="w-5 h-5 text-dourado" />
-          ) : (
-            <Menu className="w-5 h-5 text-dourado" />
-          )}
-        </button>
-      </header>
+        <div className="flex items-center gap-2">
+          <NavLink
+            to="/admin/notificacoes"
+            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-vinho-light text-marfim relative active:scale-95 transition-all"
+            aria-label="Central de Notificações"
+          >
+            <Bell className="w-5 h-5 text-dourado" />
+            {unreadNotificationsCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-amber-400 rounded-full ring-2 ring-vinho" />
+            )}
+          </NavLink>
 
+          <button
+            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-vinho-light text-marfim hover:bg-vinho-light/80 active:scale-95 transition-all"
+            aria-label="Menu administrativo"
+          >
+            {mobileSidebarOpen ? (
+              <X className="w-5 h-5 text-dourado" />
+            ) : (
+              <Menu className="w-5 h-5 text-dourado" />
+            )}
+          </button>
+        </div>
+      </header>
       {/* DRAWER MOBILE DA SIDEBAR ESTILO APP */}
       {mobileSidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex">
@@ -364,6 +454,12 @@ export default function AdminLayout() {
                       <Icon className="w-4 h-4 text-dourado shrink-0" />
                       <span>{item.label}</span>
                     </div>
+
+                    {item.badgeCount !== undefined && item.badgeCount > 0 && (
+                      <Badge className="bg-amber-500 text-white font-bold text-[10px] px-2 py-0.5 rounded-full">
+                        {item.badgeCount}
+                      </Badge>
+                    )}
                   </NavLink>
                 )
               })}
@@ -403,6 +499,20 @@ export default function AdminLayout() {
           </div>
 
           <div className="flex items-center gap-3">
+            <NavLink
+              to="/admin/notificacoes"
+              className="text-xs text-vinho hover:text-dourado-dark flex items-center gap-1.5 transition-colors font-semibold bg-marfim border border-vinho/15 hover:border-dourado px-3 py-1.5 rounded-full relative"
+              title="Central de Notificações"
+            >
+              <Bell className="w-3.5 h-3.5 text-dourado-dark" />
+              <span>Notificações</span>
+              {unreadNotificationsCount > 0 && (
+                <Badge className="bg-amber-500 text-white font-bold text-[10px] px-1.5 py-0 rounded-full h-4 min-w-[16px] flex items-center justify-center">
+                  {unreadNotificationsCount}
+                </Badge>
+              )}
+            </NavLink>
+
             <NavLink
               to="/membros"
               className="text-xs text-vinho hover:text-dourado-dark flex items-center gap-1.5 transition-colors font-semibold bg-dourado/15 border border-dourado/30 px-3 py-1.5 rounded-full"
