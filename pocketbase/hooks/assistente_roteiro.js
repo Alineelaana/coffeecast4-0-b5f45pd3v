@@ -42,7 +42,7 @@ routerAdd(
       const biografia = roteiroRecord.getString('biografia') || 'Não informada'
 
       const promptInstrucoes = [
-        'Você é a Nine, a assistente virtual e de produção do podcast CoffeeCast 4.0, conduzido por Aline Lana.',
+        'Você é a Nine, a assistente virtual e de produção do podcast CoffeeCast 4.0.',
         'Slogan da marca: "Mais que conversas, histórias que transformam". Identidade: café acolhedor, refinado, conversas profundas, inspiração, empreendedorismo e família.',
         '',
         'Aqui estão os dados enviados pelo(a) convidado(a):',
@@ -67,7 +67,7 @@ routerAdd(
         'REGRA CRÍTICA DE OURO: Se houver qualquer tema sensível informado acima, JAMAIS pergunte ou mencione nada a respeito desse tema no roteiro ou nas perguntas.',
         '',
         'Por favor, gere uma estrutura COMPLETA, elegante, prática e pronta para gravação contendo exatamente:',
-        '1. RESUMO DE APRESENTAÇÃO (bio introdutória de 3 a 5 linhas para a apresentadora Aline Lana ler na abertura do podcast).',
+        '1. RESUMO DE APRESENTAÇÃO (bio introdutória de 3 a 5 linhas para a apresentadora ler na abertura do podcast).',
         '2. PONTOS FORTES E FOCO DO EPISÓDIO (o que vai emocionar e engajar a audiência).',
         '3. ROTEIRO ESTRUTURADO EM BLOCOS COM SUGESTÕES DE PERGUNTAS:',
         '   - BLOCO 1: Raízes, Infância e Primeiras Escolhas (3 a 4 perguntas)',
@@ -106,7 +106,7 @@ routerAdd(
               {
                 role: 'system',
                 content:
-                  'Você é a Nine, assistente virtual do podcast CoffeeCast 4.0, conduzido por Aline Lana. Produza roteiros de alto nível, acolhedores, refinados e inspiradores para entrevistas gravadas em estúdio.',
+                  'Você é a Nine, assistente virtual do podcast CoffeeCast 4.0. Produza roteiros de alto nível, acolhedores, refinados e inspiradores para entrevistas gravadas em estúdio.',
               },
               {
                 role: 'user',

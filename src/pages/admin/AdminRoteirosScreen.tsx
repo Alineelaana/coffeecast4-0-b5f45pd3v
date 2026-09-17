@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import nineProfileImg from '@/assets/chatgpt-image-17-de-set.de-2026-115658-201e0.png'
 import {
   FileText,
   Sparkles,
@@ -697,17 +698,17 @@ export default function AdminRoteirosScreen() {
             {/* Cabeçalho de Apresentação da Nine */}
             <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 pb-6 border-b border-vinho/10">
               <div className="flex items-start sm:items-center gap-4">
-                {/* Avatar / Ícone harmonizado da Nine (vinho/dourado) */}
+                {/* Avatar / Foto oficial da Nine na identidade CoffeeCast 4.0 */}
                 <div className="relative shrink-0">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-vinho via-[#4B1E3F] to-vinho-dark border-2 border-dourado shadow-md flex items-center justify-center text-marfim relative overflow-hidden">
-                    <div className="absolute inset-0 bg-dourado/10 mix-blend-overlay" />
-                    <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-dourado drop-shadow-sm" />
-                    <span className="absolute bottom-1 right-1.5 font-serif font-black text-[11px] text-dourado-light tracking-wider">
-                      4.0
-                    </span>
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-vinho via-[#4B1E3F] to-vinho-dark border-2 border-dourado shadow-md relative overflow-hidden p-0.5">
+                    <img
+                      src={nineProfileImg}
+                      alt="Nine — Assistente Virtual CoffeeCast 4.0"
+                      className="w-full h-full object-cover rounded-[14px]"
+                    />
                   </div>
                   <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-dourado border-2 border-white flex items-center justify-center text-vinho shadow-xs">
-                    <Heart className="w-3 h-3 fill-vinho text-vinho" />
+                    <Sparkles className="w-3 h-3 text-vinho fill-vinho" />
                   </div>
                 </div>
 
@@ -727,9 +728,9 @@ export default function AdminRoteirosScreen() {
                       "Olá! Eu sou a Nine, sua assistente virtual."
                     </strong>{' '}
                     Estou aqui para acolher com carinho as respostas do convidado e estruturar um
-                    roteiro marcante para o episódio: com bio de abertura para a apresentadora Aline
-                    Lana, destaque dos pontos fortes e perguntas organizadas em blocos, sempre
-                    respeitando com rigor os temas sensíveis.
+                    roteiro marcante para o episódio: com bio de abertura para a apresentadora,
+                    destaque dos pontos fortes e perguntas organizadas em blocos, sempre respeitando
+                    com rigor os temas sensíveis.
                   </p>
                 </div>
               </div>
@@ -1205,7 +1206,7 @@ export default function AdminRoteirosScreen() {
                     <div className="space-y-0.5">
                       <h4 className="font-serif font-bold text-base text-vinho flex items-center gap-2">
                         <FileText className="w-4 h-4 text-dourado" /> Roteiro Final do Episódio
-                        (Aline Lana & Produção)
+                        (Apresentadora & Produção)
                       </h4>
                       <p className="text-[11px] text-vinho/70">
                         Escreva ou anexe aqui o roteiro pronto alinhado para a gravação no estúdio.
