@@ -94,6 +94,97 @@ function MemberBio({ biografia }: { biografia?: string }) {
   )
 }
 
+interface MissionCardProps {
+  title: string
+  text: string
+  isQuoted?: boolean
+  icon: React.ReactNode
+  iconContainerClass: string
+}
+
+function MissionCard({
+  title,
+  text,
+  isQuoted = false,
+  icon,
+  iconContainerClass,
+}: MissionCardProps) {
+  const [expanded, setExpanded] = useState(false)
+  const [canClamp, setCanClamp] = useState(false)
+  const textRef = React.useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    const el = textRef.current
+    if (!el) return
+
+    const checkOverflow = () => {
+      if (!expanded) {
+        // Se a altura real do texto for maior do que a exibida (line-clamp-3)
+        const isOverflowing = el.scrollHeight > el.clientHeight + 1
+        setCanClamp(isOverflowing)
+      }
+    }
+
+    const rafId = requestAnimationFrame(checkOverflow)
+    window.addEventListener('resize', checkOverflow)
+    return () => {
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', checkOverflow)
+    }
+  }, [text, expanded])
+
+  const formattedText = isQuoted ? `"${text}"` : text
+
+  return (
+    <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group h-full">
+      <div className="space-y-3">
+        {/* Cabeçalho compacto: ícone + título alinhados */}
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${iconContainerClass}`}
+          >
+            {icon}
+          </div>
+          <h3 className="font-serif text-base sm:text-lg font-bold text-vinho leading-tight">
+            {title}
+          </h3>
+        </div>
+
+        {/* Texto compacto com line-clamp-3 padronizado */}
+        <p
+          ref={textRef}
+          className={`text-xs sm:text-sm text-vinho/80 leading-relaxed font-light transition-all duration-300 ${
+            expanded ? 'whitespace-normal' : 'line-clamp-3'
+          }`}
+        >
+          {formattedText}
+        </p>
+      </div>
+
+      {/* Botão Ler mais / Ler menos - reservado na base para manter alinhamento uniforme */}
+      <div className="pt-3 mt-1 border-t border-vinho/10 flex items-center min-h-[34px]">
+        {canClamp || expanded ? (
+          <button
+            type="button"
+            onClick={() => setExpanded((prev) => !prev)}
+            aria-expanded={expanded}
+            className="inline-flex items-center gap-1 font-serif text-xs font-semibold text-vinho hover:text-dourado-dark transition-colors duration-200 cursor-pointer focus:outline-hidden focus-visible:ring-1 focus-visible:ring-dourado rounded-sm px-1 py-0.5 group/btn"
+          >
+            <span>{expanded ? 'Ler menos' : 'Ler mais'}</span>
+            {expanded ? (
+              <ChevronUp className="w-3.5 h-3.5 text-dourado group-hover/btn:text-dourado-dark transition-transform" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5 text-dourado group-hover/btn:text-dourado-dark transition-transform" />
+            )}
+          </button>
+        ) : (
+          <span className="text-[11px] text-vinho/40 italic font-light">Completo</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // Fotos padrão de alta qualidade para as integrantes caso ainda não tenham foto no PocketBase
 const fallbackIntegrantesPhotos = [
   'https://img.usecurling.com/ppl/512?gender=female&seed=101',
@@ -582,13 +673,16 @@ export default function Index() {
       <GuestTestimonialForm />
 
       {/* SEÇÃO 9: MISSÃO, VISÃO & VALORES (ÚLTIMA SEÇÃO DE CONTEÚDO, LOGO ACIMA DO RODAPÉ) */}
-      <section id="missao" className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-t border-vinho/10">
-        <div className="max-w-6xl mx-auto space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs uppercase font-bold tracking-widest text-dourado-dark bg-dourado/10 px-3.5 py-1 rounded-full border border-dourado/30">
+      <section
+        id="missao"
+        className="py-14 sm:py-16 px-4 sm:px-6 lg:px-8 bg-white border-t border-vinho/10"
+      >
+        <div className="max-w-5xl mx-auto space-y-8 sm:space-y-10">
+          <div className="text-center max-w-xl mx-auto space-y-2">
+            <span className="text-[11px] uppercase font-bold tracking-widest text-dourado-dark bg-dourado/10 px-3 py-0.5 rounded-full border border-dourado/30">
               Nossa Essência
             </span>
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-vinho">
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-vinho">
               Missão, Visão & Valores
             </h2>
             <p className="text-xs sm:text-sm text-vinho/70">
@@ -596,39 +690,33 @@ export default function Index() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 items-stretch">
             {/* Missão */}
-            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-5 sm:p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-3 sm:space-y-4 group">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-vinho/10 text-vinho flex items-center justify-center group-hover:bg-vinho group-hover:text-dourado transition-colors">
-                <Compass className="w-5 h-5 sm:w-6 sm:h-6" />
-              </div>
-              <h3 className="font-serif text-lg sm:text-xl font-bold text-vinho">Nossa Missão</h3>
-              <p className="text-xs sm:text-sm text-vinho/80 leading-relaxed font-light">
-                "{missaoText}"
-              </p>
-            </div>
+            <MissionCard
+              title="Nossa Missão"
+              text={missaoText}
+              isQuoted={true}
+              icon={<Compass className="w-4 h-4 sm:w-5 sm:h-5" />}
+              iconContainerClass="bg-vinho/10 text-vinho group-hover:bg-vinho group-hover:text-dourado"
+            />
 
             {/* Visão */}
-            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-5 sm:p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-3 sm:space-y-4 group">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-dourado/15 text-dourado-dark flex items-center justify-center group-hover:bg-dourado group-hover:text-vinho transition-colors">
-                <Eye className="w-5 h-5 sm:w-6 sm:h-6" />
-              </div>
-              <h3 className="font-serif text-lg sm:text-xl font-bold text-vinho">Nossa Visão</h3>
-              <p className="text-xs sm:text-sm text-vinho/80 leading-relaxed font-light">
-                "{visaoText}"
-              </p>
-            </div>
+            <MissionCard
+              title="Nossa Visão"
+              text={visaoText}
+              isQuoted={true}
+              icon={<Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
+              iconContainerClass="bg-dourado/15 text-dourado-dark group-hover:bg-dourado group-hover:text-vinho"
+            />
 
             {/* Valores */}
-            <div className="bg-marfim border border-vinho/15 hover:border-dourado rounded-2xl p-5 sm:p-7 shadow-sm hover:shadow-md transition-all flex flex-col space-y-3 sm:space-y-4 group">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-rose-brand/30 text-vinho flex items-center justify-center group-hover:bg-vinho group-hover:text-dourado transition-colors">
-                <Award className="w-5 h-5 sm:w-6 sm:h-6" />
-              </div>
-              <h3 className="font-serif text-lg sm:text-xl font-bold text-vinho">Nossos Valores</h3>
-              <p className="text-xs sm:text-sm text-vinho/80 leading-relaxed font-light">
-                {valoresText}
-              </p>
-            </div>
+            <MissionCard
+              title="Nossos Valores"
+              text={valoresText}
+              isQuoted={false}
+              icon={<Award className="w-4 h-4 sm:w-5 sm:h-5" />}
+              iconContainerClass="bg-rose-brand/30 text-vinho group-hover:bg-vinho group-hover:text-dourado"
+            />
           </div>
         </div>
       </section>
