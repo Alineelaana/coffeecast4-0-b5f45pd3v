@@ -25,6 +25,7 @@ import {
   Shield,
   ShieldCheck,
   UserCheck,
+  Bot,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -35,6 +36,7 @@ export default function AdminLayout() {
   const location = useLocation()
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
+  const [ninePendingCount, setNinePendingCount] = useState(0)
 
   // Carrega e atualiza badge de pendências (novos roteiros + novos contatos + novos depoimentos)
   const fetchUnreadCount = async () => {
@@ -69,8 +71,36 @@ export default function AdminLayout() {
     }
   }
 
+  // Carrega badge de conversas da Nine aguardando resposta humana
+  const fetchNinePendingCount = async () => {
+    try {
+      const nineList = await pb
+        .collection('nine_conversas')
+        .getFullList({
+          filter: 'modo_atendimento = "aguardando_humano"',
+          fields: 'id',
+        })
+        .catch(() => [])
+
+      setNinePendingCount(nineList.length)
+    } catch (e) {
+      console.error('Erro ao buscar pendências da Nine:', e)
+    }
+  }
+
   React.useEffect(() => {
     fetchUnreadCount()
+    fetchNinePendingCount()
+
+    let unsubNine: (() => void) | undefined
+    pb.collection('nine_conversas')
+      .subscribe('*', () => {
+        fetchNinePendingCount()
+      })
+      .then((unsub) => {
+        unsubNine = unsub
+      })
+      .catch(() => {})
 
     let unsubRot: (() => void) | undefined
     let unsubDep: (() => void) | undefined
@@ -107,6 +137,7 @@ export default function AdminLayout() {
       if (unsubRot) unsubRot()
       if (unsubDep) unsubDep()
       if (unsubCont) unsubCont()
+      if (unsubNine) unsubNine()
     }
   }, [])
 
@@ -133,6 +164,14 @@ export default function AdminLayout() {
       path: '/admin/notificacoes',
       icon: Bell,
       badgeCount: unreadNotificationsCount,
+      masterOnly: false,
+    },
+    {
+      label: 'Nine Assistente Virtual',
+      path: '/admin/nine',
+      icon: Bot,
+      badgeCount: ninePendingCount,
+      highlight: true,
       masterOnly: false,
     },
     ...(isMaster

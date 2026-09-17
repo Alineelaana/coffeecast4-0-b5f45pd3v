@@ -229,3 +229,40 @@ export interface RoteiroConvidadoRecord {
   created: string
   updated: string
 }
+
+export type NineModoAtendimento = 'automatico' | 'aguardando_humano' | 'humano_respondendo'
+
+export interface NineConfigRecord {
+  id: string
+  chave: string
+  atendimento_automatico: boolean
+  prompt_sistema: string
+  base_conhecimento: string
+  observacoes?: string
+  created: string
+  updated: string
+}
+
+export interface NineConversaRecord {
+  id: string
+  conversation_id: string
+  visitante_nome?: string
+  modo_atendimento: NineModoAtendimento
+  ultima_mensagem?: string
+  ultimo_remetente?: 'visitante' | 'nine' | 'humano'
+  data_ultima_mensagem?: string
+  total_mensagens?: number
+  atendente_humano_nome?: string
+  created: string
+  updated: string
+}
+
+export interface NineMensagemRecord {
+  id: string
+  conversation_id: string
+  remetente: 'visitante' | 'nine' | 'humano'
+  remetente_nome?: string
+  conteudo: string
+  created: string
+  updated: string
+}

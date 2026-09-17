@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T15:00:07.028Z",
+  "generatedAt": "2026-09-17T15:06:15.934Z",
   "collections": [
     {
       "name": "users",
@@ -1056,6 +1056,202 @@
       "indexes": [
         "CREATE INDEX idx_roteiros_status ON roteiros_convidados (status)",
         "CREATE INDEX idx_roteiros_created ON roteiros_convidados (created)"
+      ]
+    },
+    {
+      "name": "nine_config",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != \"\"",
+        "view": "@request.auth.id != \"\"",
+        "create": "@request.auth.id != \"\"",
+        "update": "@request.auth.id != \"\"",
+        "delete": "@request.auth.id != \"\""
+      },
+      "fields": [
+        {
+          "name": "chave",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "atendimento_automatico",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "prompt_sistema",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "base_conhecimento",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "observacoes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE UNIQUE INDEX idx_nine_config_chave ON nine_config (chave)"]
+    },
+    {
+      "name": "nine_conversas",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != \"\"",
+        "view": "@request.auth.id != \"\"",
+        "create": null,
+        "update": "@request.auth.id != \"\"",
+        "delete": "@request.auth.id != \"\""
+      },
+      "fields": [
+        {
+          "name": "conversation_id",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "visitante_nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "modo_atendimento",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["automatico", "aguardando_humano", "humano_respondendo"]
+        },
+        {
+          "name": "ultima_mensagem",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ultimo_remetente",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["visitante", "nine", "humano"]
+        },
+        {
+          "name": "data_ultima_mensagem",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "total_mensagens",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "atendente_humano_nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX idx_nine_conversas_cid ON nine_conversas (conversation_id)",
+        "CREATE INDEX idx_nine_conversas_modo ON nine_conversas (modo_atendimento)",
+        "CREATE INDEX idx_nine_conversas_data ON nine_conversas (data_ultima_mensagem)"
+      ]
+    },
+    {
+      "name": "nine_mensagens",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != \"\"",
+        "view": "@request.auth.id != \"\"",
+        "create": null,
+        "update": "@request.auth.id != \"\"",
+        "delete": "@request.auth.id != \"\""
+      },
+      "fields": [
+        {
+          "name": "conversation_id",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "remetente",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["visitante", "nine", "humano"]
+        },
+        {
+          "name": "remetente_nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "conteudo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_nine_msg_cid ON nine_mensagens (conversation_id)",
+        "CREATE INDEX idx_nine_msg_created ON nine_mensagens (created)"
       ]
     }
   ]

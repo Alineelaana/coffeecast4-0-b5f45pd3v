@@ -35,6 +35,7 @@ import AdminPoliticasScreen from '@/pages/admin/AdminPoliticasScreen'
 import AdminUsuariosScreen from '@/pages/admin/AdminUsuariosScreen'
 import AdminNotificacoesScreen from '@/pages/admin/AdminNotificacoesScreen'
 import AdminRoteirosScreen from '@/pages/admin/AdminRoteirosScreen'
+import AdminNineScreen from '@/pages/admin/AdminNineScreen'
 
 export default function App() {
   return (
@@ -86,6 +87,7 @@ export default function App() {
 
             {/* Gestão Operacional permitida para Master e Gerencial */}
             <Route path="notificacoes" element={<AdminNotificacoesScreen />} />
+            <Route path="nine" element={<AdminNineScreen />} />
             <Route path="roteiros" element={<AdminRoteirosScreen />} />
             <Route path="contatos" element={<AdminContatosScreen />} />
             <Route path="financeiro" element={<AdminFinanceiroScreen />} />
