@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/context/AuthContext'
+import { StorefrontProvider } from '@/context/StorefrontContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { CookieBanner } from '@/components/CookieBanner'
 import { NineChatWidget } from '@/components/NineChatWidget'
@@ -12,6 +13,7 @@ import ConvidadoScreen from '@/pages/ConvidadoScreen'
 import DepoimentoScreen from '@/pages/DepoimentoScreen'
 import RoteiroScreen from '@/pages/RoteiroScreen'
 import PoliticaScreen from '@/pages/PoliticaScreen'
+import StorefrontPage from '@/pages/StorefrontPage'
 import LoginScreen from '@/pages/LoginScreen'
 import ResetPasswordScreen from '@/pages/ResetPasswordScreen'
 import MembersScreen from '@/pages/MembersScreen'
@@ -31,6 +33,7 @@ import AdminControleHorasScreen from '@/pages/admin/AdminControleHorasScreen'
 import AdminConvitesScreen from '@/pages/admin/AdminConvitesScreen'
 import AdminConteudoScreen from '@/pages/admin/AdminConteudoScreen'
 import AdminDominioScreen from '@/pages/admin/AdminDominioScreen'
+import AdminStorefrontScreen from '@/pages/admin/AdminStorefrontScreen'
 import AdminPoliticasScreen from '@/pages/admin/AdminPoliticasScreen'
 import AdminUsuariosScreen from '@/pages/admin/AdminUsuariosScreen'
 import AdminNotificacoesScreen from '@/pages/admin/AdminNotificacoesScreen'
@@ -40,62 +43,69 @@ import AdminNineScreen from '@/pages/admin/AdminNineScreen'
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Rotas Públicas */}
-          <Route path="/" element={<Index />} />
-          <Route path="/convidado" element={<ConvidadoScreen />} />
-          <Route path="/roteiro" element={<RoteiroScreen />} />
-          <Route path="/depoimento" element={<DepoimentoScreen />} />
-          <Route path="/privacidade" element={<Navigate to="/politica/privacidade" replace />} />
-          <Route path="/politica/:slug" element={<PoliticaScreen />} />
-          <Route path="/login" element={<LoginScreen />} />
-          <Route path="/reset-password" element={<ResetPasswordScreen />} />
-          <Route path="/reset-password/:token" element={<ResetPasswordScreen />} />
-          <Route path="/redefinir-senha" element={<ResetPasswordScreen />} />
-          <Route path="/redefinir-senha/:token" element={<ResetPasswordScreen />} />
+      <StorefrontProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Rotas Públicas */}
+            <Route path="/" element={<Index />} />
+            <Route path="/loja/:slug/*" element={<StorefrontPage />} />
+            <Route path="/loja/:slug" element={<StorefrontPage />} />
+            <Route path="/convidado" element={<ConvidadoScreen />} />
+            <Route path="/roteiro" element={<RoteiroScreen />} />
+            <Route path="/depoimento" element={<DepoimentoScreen />} />
+            <Route path="/privacidade" element={<Navigate to="/politica/privacidade" replace />} />
+            <Route path="/politica/:slug" element={<PoliticaScreen />} />
+            <Route path="/login" element={<LoginScreen />} />
+            <Route path="/reset-password" element={<ResetPasswordScreen />} />
+            <Route path="/reset-password/:token" element={<ResetPasswordScreen />} />
+            <Route path="/redefinir-senha" element={<ResetPasswordScreen />} />
+            <Route path="/redefinir-senha/:token" element={<ResetPasswordScreen />} />
 
-          {/* Fallback de compatibilidade caso e-mails antigos ou links do PocketBase cheguem sem hash ou em sub-rotas */}
-          <Route path="/_/#/auth/confirm-password-reset/:token" element={<ResetPasswordScreen />} />
-          <Route path="/auth/confirm-password-reset/:token" element={<ResetPasswordScreen />} />
-          <Route path="/auth/confirm-password-reset" element={<ResetPasswordScreen />} />
-          <Route path="/confirm-password-reset/:token" element={<ResetPasswordScreen />} />
-          <Route path="/confirm-password-reset" element={<ResetPasswordScreen />} />
-          <Route path="/_/*" element={<ResetPasswordScreen />} />
+            {/* Fallback de compatibilidade caso e-mails antigos ou links do PocketBase cheguem sem hash ou em sub-rotas */}
+            <Route
+              path="/_/#/auth/confirm-password-reset/:token"
+              element={<ResetPasswordScreen />}
+            />
+            <Route path="/auth/confirm-password-reset/:token" element={<ResetPasswordScreen />} />
+            <Route path="/auth/confirm-password-reset" element={<ResetPasswordScreen />} />
+            <Route path="/confirm-password-reset/:token" element={<ResetPasswordScreen />} />
+            <Route path="/confirm-password-reset" element={<ResetPasswordScreen />} />
+            <Route path="/_/*" element={<ResetPasswordScreen />} />
 
-          {/* Área de Membros (Disponível para Master, Gerencial, Ouro e Prata) */}
-          <Route
-            path="/membros"
-            element={
-              <ProtectedRoute requireMembersOnly>
-                <MembersScreen />
-              </ProtectedRoute>
-            }
-          />
+            {/* Área de Membros (Disponível para Master, Gerencial, Ouro e Prata) */}
+            <Route
+              path="/membros"
+              element={
+                <ProtectedRoute requireMembersOnly>
+                  <MembersScreen />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Rotas Administrativas Protegidas (Master e Gerencial) */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            {/* Visão Geral (Disponível para Master e Gerencial) */}
-            <Route index element={<DashboardScreen />} />
+            {/* Rotas Administrativas Protegidas (Master e Gerencial) */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              {/* Visão Geral (Disponível para Master e Gerencial) */}
+              <Route index element={<DashboardScreen />} />
 
-            {/* Gestão Operacional permitida para Master e Gerencial */}
-            <Route path="notificacoes" element={<AdminNotificacoesScreen />} />
-            <Route path="nine" element={<AdminNineScreen />} />
-            <Route path="roteiros" element={<AdminRoteirosScreen />} />
-            <Route path="contatos" element={<AdminContatosScreen />} />
-            <Route path="financeiro" element={<AdminFinanceiroScreen />} />
-            <Route path="horas" element={<AdminControleHorasScreen />} />
-            <Route path="agenda" element={<AdminAgendaScreen />} />
-            <Route path="convites" element={<AdminConvitesScreen />} />
+              {/* Gestão Operacional permitida para Master e Gerencial */}
+              <Route path="notificacoes" element={<AdminNotificacoesScreen />} />
+              <Route path="nine" element={<AdminNineScreen />} />
+              <Route path="roteiros" element={<AdminRoteirosScreen />} />
+              <Route path="contatos" element={<AdminContatosScreen />} />
+              <Route path="financeiro" element={<AdminFinanceiroScreen />} />
+              <Route path="horas" element={<AdminControleHorasScreen />} />
+              <Route path="agenda" element={<AdminAgendaScreen />} />
+              <Route path="convites" element={<AdminConvitesScreen />} />
 
-            {/* Rotas Restritas Exclusivamente ao Superadministrador Master:
+              {/* Rotas Restritas Exclusivamente ao Superadministrador Master:
+                - Storefront Multi-Loja (storefront)
                 - Editar Site (conteudo)
                 - Domínio do Site (dominio)
                 - Episódios (episodios)
@@ -105,75 +115,84 @@ export default function App() {
                 - Políticas do Site
                 - Usuários & Permissões
             */}
-            <Route
-              path="conteudo"
-              element={
-                <ProtectedRoute requireMaster>
-                  <AdminConteudoScreen />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="dominio"
-              element={
-                <ProtectedRoute requireMaster>
-                  <AdminDominioScreen />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="episodios"
-              element={
-                <ProtectedRoute requireMaster>
-                  <AdminEpisodesScreen />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="integrantes"
-              element={
-                <ProtectedRoute requireMaster>
-                  <AdminIntegrantesScreen />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="depoimentos" element={<AdminDepoimentosScreen />} />
-            <Route
-              path="momentos"
-              element={
-                <ProtectedRoute requireMaster>
-                  <AdminMomentosScreen />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="politicas"
-              element={
-                <ProtectedRoute requireMaster>
-                  <AdminPoliticasScreen />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="usuarios"
-              element={
-                <ProtectedRoute requireMaster>
-                  <AdminUsuariosScreen />
-                </ProtectedRoute>
-              }
-            />
-          </Route>
+              <Route
+                path="storefront"
+                element={
+                  <ProtectedRoute requireMaster>
+                    <AdminStorefrontScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="conteudo"
+                element={
+                  <ProtectedRoute requireMaster>
+                    <AdminConteudoScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="dominio"
+                element={
+                  <ProtectedRoute requireMaster>
+                    <AdminDominioScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="episodios"
+                element={
+                  <ProtectedRoute requireMaster>
+                    <AdminEpisodesScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="integrantes"
+                element={
+                  <ProtectedRoute requireMaster>
+                    <AdminIntegrantesScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="depoimentos" element={<AdminDepoimentosScreen />} />
+              <Route
+                path="momentos"
+                element={
+                  <ProtectedRoute requireMaster>
+                    <AdminMomentosScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="politicas"
+                element={
+                  <ProtectedRoute requireMaster>
+                    <AdminPoliticasScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="usuarios"
+                element={
+                  <ProtectedRoute requireMaster>
+                    <AdminUsuariosScreen />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
 
-          {/* Rota 404 */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            {/* Rota 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
 
-        {/* Chat com a Nine (Assistente Virtual Pública do CoffeeCast 4.0) */}
-        <NineChatWidget />
+          {/* Chat com a Nine (Assistente Virtual Pública do CoffeeCast 4.0) */}
+          <NineChatWidget />
 
-        {/* Banner de Cookies & Privacidade LGPD (público) */}
-        <CookieBanner />
-      </BrowserRouter>
+          {/* Banner de Cookies & Privacidade LGPD (público) */}
+          <CookieBanner />
+        </BrowserRouter>
+      </StorefrontProvider>
 
       {/* Notificações Toaster elegantes */}
       <Toaster position="top-right" richColors closeButton />

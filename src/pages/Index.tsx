@@ -342,7 +342,11 @@ const fallbackDepoimentosPhotos = [
   'https://img.usecurling.com/ppl/256?gender=female&seed=204',
 ]
 
+import { resolveStoreFromEnvironment } from '@/lib/storeResolver'
+import StorefrontPage from '@/pages/StorefrontPage'
+
 export default function Index() {
+  const [isStoreDomain, setIsStoreDomain] = useState<boolean | null>(null)
   const [episodios, setEpisodios] = useState<EpisodioRecord[]>([])
   const [integrantes, setIntegrantes] = useState<IntegranteRecord[]>([])
   const [depoimentos, setDepoimentos] = useState<DepoimentoRecord[]>([])
@@ -404,8 +408,31 @@ export default function Index() {
     }
   }, [])
 
+  // Resolução de loja caso o domínio seja customizado
+  useEffect(() => {
+    let active = true
+    async function checkDomain() {
+      const res = await resolveStoreFromEnvironment(
+        window.location.pathname,
+        window.location.hostname,
+      )
+      if (active) {
+        if (res.source === 'domain' && res.store) {
+          setIsStoreDomain(true)
+        } else {
+          setIsStoreDomain(false)
+        }
+      }
+    }
+    checkDomain()
+    return () => {
+      active = false
+    }
+  }, [])
+
   // Carregar dados dinâmicos do PocketBase
   useEffect(() => {
+    if (isStoreDomain) return // Se for loja por domínio próprio, não precisa carregar dados do CoffeeCast
     async function fetchData() {
       try {
         const [epList, intList, depList, momList, contList] = await Promise.all([
@@ -551,6 +578,10 @@ export default function Index() {
     facebook: conteudo.social_facebook,
     instagram: conteudo.social_instagram,
     linkedin: conteudo.social_linkedin,
+  }
+
+  if (isStoreDomain === true) {
+    return <StorefrontPage />
   }
 
   return (

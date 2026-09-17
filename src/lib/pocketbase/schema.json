@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T16:11:16.616Z",
+  "generatedAt": "2026-09-17T16:22:30.700Z",
   "collections": [
     {
       "name": "users",
@@ -1327,6 +1327,535 @@
         "CREATE INDEX idx_nine_conhecimento_tipo ON nine_conhecimento (tipo)",
         "CREATE INDEX idx_nine_conhecimento_ativo ON nine_conhecimento (ativo)",
         "CREATE INDEX idx_nine_conhecimento_ordem ON nine_conhecimento (ordem)"
+      ]
+    },
+    {
+      "name": "stores",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.role = \"master\"",
+        "update": "@request.auth.role = \"master\"",
+        "delete": "@request.auth.role = \"master\""
+      },
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "domain",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["active", "inactive"]
+        },
+        {
+          "name": "tagline",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "color_primary",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "color_secondary",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "color_background",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "color_surface",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "color_accent",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "logo_url",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "hero_url",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "favicon_url",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "font_display",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "font_body",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "whatsapp_contato",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "instagram",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "email_contato",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "youtube_canal",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "hero_title",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "hero_subtitle",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "hero_tagline_words",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "hero_phrase",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "mission_text",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "vision_text",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "values_text",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "manifesto_text",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "company_name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "sections_toggles",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX idx_stores_slug ON stores (slug)",
+        "CREATE INDEX idx_stores_domain ON stores (domain)",
+        "CREATE INDEX idx_stores_status ON stores (status)"
+      ]
+    },
+    {
+      "name": "store_members",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.role = \"master\"",
+        "update": "@request.auth.role = \"master\"",
+        "delete": "@request.auth.role = \"master\""
+      },
+      "fields": [
+        {
+          "name": "store",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "stores"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "role",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "bio",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "photo_url",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "instagram",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "order",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_store_members_store ON store_members (store)",
+        "CREATE INDEX idx_store_members_order ON store_members (order)"
+      ]
+    },
+    {
+      "name": "store_episodes",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.role = \"master\"",
+        "update": "@request.auth.role = \"master\"",
+        "delete": "@request.auth.role = \"master\""
+      },
+      "fields": [
+        {
+          "name": "store",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "stores"
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "youtube_url",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "publish_date",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "cover_url",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "order",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["published", "draft"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_store_episodes_store ON store_episodes (store)",
+        "CREATE INDEX idx_store_episodes_order ON store_episodes (order)"
+      ]
+    },
+    {
+      "name": "store_banners",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.role = \"master\"",
+        "update": "@request.auth.role = \"master\"",
+        "delete": "@request.auth.role = \"master\""
+      },
+      "fields": [
+        {
+          "name": "store",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "stores"
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "image_url",
+          "type": "file",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "link_url",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "position",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["hero", "inline"]
+        },
+        {
+          "name": "active",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "order",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_store_banners_store ON store_banners (store)",
+        "CREATE INDEX idx_store_banners_order ON store_banners (order)"
+      ]
+    },
+    {
+      "name": "store_testimonials",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "",
+        "update": "@request.auth.role = \"master\"",
+        "delete": "@request.auth.role = \"master\""
+      },
+      "fields": [
+        {
+          "name": "store",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "stores"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "role",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "instagram",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "message",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "photo_url",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "video_url",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "approved",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "order",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_store_testim_store ON store_testimonials (store)",
+        "CREATE INDEX idx_store_testim_approved ON store_testimonials (approved)"
       ]
     }
   ]

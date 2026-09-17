@@ -26,12 +26,15 @@ import {
   ShieldCheck,
   UserCheck,
   Bot,
+  Store,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useStorefront } from '@/context/StorefrontContext'
 
 export default function AdminLayout() {
   const { user, logout, role, isMaster } = useAuth()
+  const { stores, activeStore, activeStoreId, setActiveStoreId } = useStorefront()
   const navigate = useNavigate()
   const location = useLocation()
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
@@ -176,6 +179,14 @@ export default function AdminLayout() {
     },
     ...(isMaster
       ? [
+          {
+            label: 'Storefront',
+            path: '/admin/storefront',
+            icon: Store,
+            badge: 'Multi-Loja',
+            highlight: true,
+            masterOnly: true,
+          },
           {
             label: 'Editar Site',
             path: '/admin/conteudo',
@@ -560,6 +571,39 @@ export default function AdminLayout() {
               Gerencie todas as facetas e conteúdos do CoffeeCast 4.0
             </p>
           </div>
+
+          {/* SELETOR GLOBAL DE LOJA (VISÍVEL APENAS PARA MASTER) */}
+          {isMaster && stores.length > 0 && (
+            <div className="flex items-center gap-2 bg-marfim/80 border border-vinho/15 px-3 py-1.5 rounded-2xl shadow-2xs">
+              <Store className="w-4 h-4 text-dourado-dark shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase font-bold text-vinho/60 tracking-wider">
+                  Loja Ativa
+                </span>
+                <select
+                  value={activeStoreId || ''}
+                  onChange={(e) => setActiveStoreId(e.target.value || null)}
+                  className="bg-transparent text-xs font-bold text-vinho focus:outline-none cursor-pointer max-w-[190px] truncate"
+                  title="Selecione a loja para alternar o contexto de trabalho"
+                >
+                  {stores.map((s) => (
+                    <option key={s.id} value={s.id} className="text-vinho bg-white">
+                      {s.name} ({s.status === 'active' ? 'Ativa' : 'Inativa'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {activeStore && (
+                <NavLink
+                  to="/admin/storefront"
+                  className="text-[11px] text-dourado-dark hover:underline font-bold ml-1"
+                  title="Abrir Storefront da loja ativa"
+                >
+                  Gerenciar
+                </NavLink>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             <NavLink

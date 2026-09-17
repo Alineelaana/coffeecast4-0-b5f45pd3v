@@ -281,3 +281,118 @@ export interface NineConhecimentoRecord {
   created: string
   updated: string
 }
+
+// ==========================================
+// STOREFRONT (PLATAFORMA MULTI-LOJAS)
+// ==========================================
+
+export interface StoreSectionsToggles {
+  integrantes?: boolean
+  episodios?: boolean
+  depoimentos?: boolean
+  banners_inline?: boolean
+  missao?: boolean
+  manifesto?: boolean
+  contato?: boolean
+  momentos?: boolean
+}
+
+export interface StoreRecord {
+  id: string
+  name: string
+  slug: string
+  domain?: string
+  status: 'active' | 'inactive'
+  tagline?: string
+  description?: string
+  color_primary?: string
+  color_secondary?: string
+  color_background?: string
+  color_surface?: string
+  color_accent?: string
+  logo_url?: string
+  hero_url?: string
+  favicon_url?: string
+  font_display?: string
+  font_body?: string
+  whatsapp_contato?: string
+  instagram?: string
+  email_contato?: string
+  youtube_canal?: string
+  hero_title?: string
+  hero_subtitle?: string
+  hero_tagline_words?: string
+  hero_phrase?: string
+  mission_text?: string
+  vision_text?: string
+  values_text?: string
+  manifesto_text?: string
+  company_name?: string
+  sections_toggles?: StoreSectionsToggles
+  created: string
+  updated: string
+}
+
+export interface StoreWithCounts extends StoreRecord {
+  counts?: {
+    members: number
+    episodes: number
+    banners: number
+    testimonials: number
+  }
+}
+
+export interface StoreMemberRecord {
+  id: string
+  store: string
+  name: string
+  role?: string
+  bio?: string
+  photo_url?: string
+  instagram?: string
+  order?: number
+  created: string
+  updated: string
+}
+
+export interface StoreEpisodeRecord {
+  id: string
+  store: string
+  title: string
+  description?: string
+  youtube_url: string
+  publish_date?: string
+  cover_url?: string
+  order?: number
+  status?: 'published' | 'draft'
+  created: string
+  updated: string
+}
+
+export interface StoreBannerRecord {
+  id: string
+  store: string
+  title: string
+  image_url: string
+  link_url?: string
+  position: 'hero' | 'inline'
+  active?: boolean
+  order?: number
+  created: string
+  updated: string
+}
+
+export interface StoreTestimonialRecord {
+  id: string
+  store: string
+  name: string
+  role?: string
+  instagram?: string
+  message: string
+  photo_url?: string
+  video_url?: string
+  approved?: boolean
+  order?: number
+  created: string
+  updated: string
+}
