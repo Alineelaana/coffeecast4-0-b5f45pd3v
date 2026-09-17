@@ -46,22 +46,24 @@ function ManifestoSection() {
     <section
       id="manifesto"
       aria-label="Manifesto Coffee Cast 4.0"
-      className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 bg-marfim border-t border-vinho/10 relative overflow-hidden"
+      className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#36142d] via-[#4B1E3F] to-[#2A0F23] text-marfim border-t border-dourado/20 relative overflow-hidden"
     >
-      {/* Detalhes sutis decorativos de fundo */}
-      <div className="absolute top-0 right-1/4 w-72 h-72 bg-dourado/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-rose-brand/20 rounded-full blur-3xl pointer-events-none" />
+      {/* Detalhes sutis decorativos de glow e brilho dourado e rosé */}
+      <div className="absolute top-1/4 -right-12 w-96 h-96 bg-dourado/12 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-12 -left-12 w-96 h-96 bg-[#c88e9b]/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-36 bg-dourado/10 rounded-full blur-2xl pointer-events-none" />
 
       <div className="max-w-3xl mx-auto relative z-10">
-        <div className="bg-white/80 backdrop-blur-xs border border-dourado/30 hover:border-dourado/60 rounded-3xl p-6 sm:p-10 md:p-12 shadow-sm transition-all">
+        {/* Container em tom vinho nobre com borda dourada e glow refinado */}
+        <div className="bg-[#301127]/90 backdrop-blur-md border border-dourado/40 hover:border-dourado/70 rounded-3xl p-6 sm:p-10 md:p-12 shadow-[0_12px_40px_rgba(0,0,0,0.35),0_0_30px_rgba(212,175,55,0.08)] transition-all">
           {/* Cabeçalho do Manifesto */}
           <div className="text-center space-y-3 mb-6 sm:mb-8">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-dourado/15 border border-dourado/40 text-[#4B1E3F] text-xs font-semibold">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-dourado/15 border border-dourado/40 text-dourado text-xs font-semibold shadow-xs">
               <Sparkles className="w-3.5 h-3.5 text-dourado shrink-0" />
               <span>Nossa Voz & Propósito</span>
             </div>
 
-            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#4B1E3F] tracking-wide sm:tracking-wider uppercase">
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-wide sm:tracking-wider uppercase text-[#D4AF37] drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
               MANIFESTO COFFEE CAST 4.0
             </h2>
 
@@ -76,7 +78,7 @@ function ManifestoSection() {
           {/* Texto do Manifesto */}
           <div className="relative">
             {/* Bloco compacto inicial (sempre visível: ~4-6 linhas terminando em "...Uma história.") */}
-            <div className="text-center text-[#4B1E3F]/90 leading-relaxed font-light text-sm sm:text-base space-y-4">
+            <div className="text-center text-[#FAF8F5]/90 leading-relaxed font-light text-sm sm:text-base space-y-4">
               <p>A gente acredita que toda grande transformação pode começar com uma conversa.</p>
               <p className="space-y-1">
                 <span className="block">Uma mesa.</span>
@@ -97,7 +99,7 @@ function ManifestoSection() {
               }`}
             >
               <div className="overflow-hidden">
-                <div className="text-center text-[#4B1E3F]/90 leading-relaxed font-light text-sm sm:text-base space-y-4 pt-1">
+                <div className="text-center text-[#FAF8F5]/90 leading-relaxed font-light text-sm sm:text-base space-y-4 pt-1">
                   <p className="space-y-1">
                     <span className="block">A gente acredita no poder de parar para ouvir.</span>
                     <span className="block">De falar sem precisar parecer perfeito.</span>
@@ -130,15 +132,15 @@ function ManifestoSection() {
 
                   <p>Criamos espaços para conversas que acolhem, despertam e transformam.</p>
 
-                  <p className="font-medium text-[#4B1E3F]">
+                  <p className="font-medium text-[#FAF8F5]">
                     Porque aqui o café pode esfriar, mas o papo nunca!
                   </p>
 
-                  <div className="pt-3 pb-1 border-t border-vinho/10 max-w-md mx-auto">
-                    <p className="font-serif italic font-bold text-base sm:text-lg text-[#4B1E3F] tracking-wide mb-1">
+                  <div className="pt-4 pb-1 border-t border-dourado/25 max-w-md mx-auto">
+                    <p className="font-serif italic font-bold text-base sm:text-lg text-dourado tracking-wide mb-1">
                       Coffee Cast 4.0
                     </p>
-                    <p className="text-xs sm:text-sm text-[#4B1E3F]/80 italic">
+                    <p className="text-xs sm:text-sm text-[#FAF8F5]/80 italic">
                       Conversas que acolhem. Conexões que inspiram. Transformações que permanecem.
                     </p>
                   </div>
@@ -146,29 +148,29 @@ function ManifestoSection() {
               </div>
             </div>
 
-            {/* Fade gradiente sutil sobre a base quando recolhido */}
+            {/* Fade gradiente sutil sobre a base quando recolhido em harmonia com o fundo escuro */}
             {!expanded && (
               <div
                 aria-hidden="true"
-                className="pointer-events-none h-6 bg-gradient-to-t from-white/90 to-transparent -mt-3"
+                className="pointer-events-none h-8 bg-gradient-to-t from-[#301127] via-[#301127]/60 to-transparent -mt-5"
               />
             )}
           </div>
 
-          {/* Botão Ler mais / Ler menos padronizado com chevron */}
-          <div className="pt-4 mt-2 border-t border-vinho/10 flex justify-center items-center">
+          {/* Botão Ler mais / Ler menos padronizado com chevron em dourado/marfim sobre fundo escuro */}
+          <div className="pt-4 mt-2 border-t border-dourado/20 flex justify-center items-center">
             <button
               type="button"
               onClick={() => setExpanded((prev) => !prev)}
               aria-expanded={expanded}
               aria-controls="manifesto-full-text"
-              className="inline-flex items-center gap-1.5 font-serif text-xs sm:text-sm font-semibold text-[#4B1E3F] hover:text-dourado-dark transition-colors duration-200 cursor-pointer focus:outline-hidden focus-visible:ring-1 focus-visible:ring-dourado rounded-full px-3 py-1 group/btn"
+              className="inline-flex items-center gap-1.5 font-serif text-xs sm:text-sm font-semibold text-dourado hover:text-[#FFF2B2] border border-dourado/30 hover:border-dourado/60 bg-dourado/10 hover:bg-dourado/20 transition-all duration-200 cursor-pointer focus:outline-hidden focus-visible:ring-1 focus-visible:ring-dourado rounded-full px-4 py-1.5 group/btn shadow-xs min-h-[38px]"
             >
               <span>{expanded ? 'Ler menos' : 'Ler mais'}</span>
               {expanded ? (
-                <ChevronUp className="w-4 h-4 text-[#D4AF37] group-hover/btn:text-dourado-dark transition-transform" />
+                <ChevronUp className="w-4 h-4 text-dourado group-hover/btn:text-[#FFF2B2] transition-transform" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-[#D4AF37] group-hover/btn:text-dourado-dark transition-transform" />
+                <ChevronDown className="w-4 h-4 text-dourado group-hover/btn:text-[#FFF2B2] transition-transform" />
               )}
             </button>
           </div>
