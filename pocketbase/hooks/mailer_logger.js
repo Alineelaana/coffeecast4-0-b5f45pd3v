@@ -1,7 +1,7 @@
-// PocketBase hook para auditoria e garantia de interpolação perfeita nos envios de e-mail.
-// Garante que links de ação de autenticação ({ACTION_URL}) e tokens estejam sempre
-// 100% resolvidos, válidos e direcionando para as rotas públicas do site CoffeeCast 4.0.
-// Produção - CoffeeCast 4.0
+// PocketBase hook para auditoria e garantia absoluta de URLs canônicas públicas
+// nos e-mails transacionais do CoffeeCast 4.0.
+// Converte qualquer resquício de domínio interno, hash antigo (/_\/#/...) ou rota PocketBase
+// para a rota pública definitiva: https://inicio-do-projeto-df3d5.goskip.app/redefinir-senha?token=<token>
 
 onMailerSend((e) => {
   try {
@@ -12,252 +12,152 @@ onMailerSend((e) => {
     let html = msg.html || ''
     let text = msg.text || ''
 
-    // Determina a URL base pública do site
-    let siteUrl = $os.getenv('SITE_URL') || ''
-    if (!siteUrl) {
-      siteUrl = 'https://inicio-do-projeto-df3d5.goskip.app'
-    }
-    if (siteUrl.endsWith('/')) {
-      siteUrl = siteUrl.slice(0, -1)
-    }
+    // URL Canônica Pública Oficial
+    const CANONICAL_SITE_URL = 'https://inicio-do-projeto-df3d5.goskip.app'
+    const CANONICAL_RESET_PREFIX = CANONICAL_SITE_URL + '/redefinir-senha'
 
-    // PASSO 1: Reescreve URLs internas com hash ou rotas do PocketBase para a rota canônica pública
-    html = html.replace(
-      /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
-      siteUrl + '/redefinir-senha?token=$1',
-    )
-    text = text.replace(
-      /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
-      siteUrl + '/redefinir-senha?token=$1',
+    // Investigação e auditoria do valor da variável de ambiente SITE_URL
+    const rawEnvSiteUrl = $os.getenv('SITE_URL') || ''
+    console.log(
+      '[CoffeeCast Mailer] SITE_URL em runtime:',
+      rawEnvSiteUrl ? rawEnvSiteUrl : '<VAZIO/NÃO_DEFINIDO>',
     )
 
-    // Substituição análoga para verificação de e-mail e troca de e-mail
-    html = html.replace(
-      /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-verification\/([a-zA-Z0-9_\-\.]+)/g,
-      siteUrl + '/redefinir-senha?token=$1&action=verify',
-    )
-    text = text.replace(
-      /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-verification\/([a-zA-Z0-9_\-\.]+)/g,
-      siteUrl + '/redefinir-senha?token=$1&action=verify',
-    )
-    html = html.replace(
-      /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-email-change\/([a-zA-Z0-9_\-\.]+)/g,
-      siteUrl + '/redefinir-senha?token=$1&action=email-change',
-    )
-    text = text.replace(
-      /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-email-change\/([a-zA-Z0-9_\-\.]+)/g,
-      siteUrl + '/redefinir-senha?token=$1&action=email-change',
-    )
+    // Função de reescrita de segurança direta:
+    // Qualquer URL que aponte para .internal.goskip.dev, ou contenha /_/, ou confirm-password-reset,
+    // ou seja relativa (/redefinir-senha...) é canonicamente convertida para a URL pública.
+    const sanitizeUrl = function (rawUrl) {
+      if (!rawUrl) return rawUrl
 
-    // PASSO 2: Corrige domínios internos .internal.goskip.dev
-    html = html.replace(
-      /https?:\/\/[a-zA-Z0-9\-\.]+\.internal\.goskip\.dev(?:\/api\/collections\/users\/[^\s"'<>]*)?\/redefinir-senha/g,
-      siteUrl + '/redefinir-senha',
-    )
-    text = text.replace(
-      /https?:\/\/[a-zA-Z0-9\-\.]+\.internal\.goskip\.dev(?:\/api\/collections\/users\/[^\s"'<>]*)?\/redefinir-senha/g,
-      siteUrl + '/redefinir-senha',
-    )
-    html = html.replace(
-      /https?:\/\/[a-zA-Z0-9\-\.]+\.internal\.goskip\.dev\/redefinir-senha/g,
-      siteUrl + '/redefinir-senha',
-    )
-    text = text.replace(
-      /https?:\/\/[a-zA-Z0-9\-\.]+\.internal\.goskip\.dev\/redefinir-senha/g,
-      siteUrl + '/redefinir-senha',
-    )
-
-    // PASSO 3: Normaliza entidades HTML (&amp;) em query params
-    html = html.replace(
-      /redefinir-senha\?token=([a-zA-Z0-9_\-\.]+)&amp;/g,
-      'redefinir-senha?token=$1&',
-    )
-    text = text.replace(
-      /redefinir-senha\?token=([a-zA-Z0-9_\-\.]+)&amp;/g,
-      'redefinir-senha?token=$1&',
-    )
-
-    // PASSO 4: Prefixação de URLs relativas que comecem ou terminem em '/redefinir-senha?token=...'
-    // Trata href="/redefinir-senha?token=..." ou texto "/redefinir-senha?token=..."
-    html = html.replace(
-      /(href=["'])(\/redefinir-senha(?:\?[^\s"'>]*)?)(["'])/g,
-      '$1' + siteUrl + '$2$3',
-    )
-    text = text.replace(/(^|[\s"'(])(\/redefinir-senha\?[^\s"'>)]+)/g, '$1' + siteUrl + '$2')
-
-    // PASSO 5 (REFORÇO): Passe final de normalização robusto
-    // Qualquer URL ainda presente que contenha 'confirm-password-reset', 'confirm-verification', 'confirm-email-change' ou '/_/'
-    // e que NÃO comece com siteUrl + '/redefinir-senha' deve ser substituída pela URL canônica.
-    const normalizeLegacyUrl = function (url) {
-      if (!url) return url
-      const canonicalPrefix = siteUrl + '/redefinir-senha'
-      if (url.startsWith(canonicalPrefix)) {
-        return url
+      // Se já for a URL pública canônica com token, não precisa de reescrita complexa
+      if (rawUrl.startsWith(CANONICAL_RESET_PREFIX + '?token=')) {
+        return rawUrl.replace(/&amp;/g, '&')
       }
 
-      const hasLegacyKeyword =
-        url.indexOf('confirm-password-reset') !== -1 ||
-        url.indexOf('confirm-verification') !== -1 ||
-        url.indexOf('confirm-email-change') !== -1 ||
-        url.indexOf('/_/') !== -1
+      const isLegacyOrInternal =
+        rawUrl.indexOf('.internal.goskip.dev') !== -1 ||
+        rawUrl.indexOf('confirm-password-reset') !== -1 ||
+        rawUrl.indexOf('confirm-verification') !== -1 ||
+        rawUrl.indexOf('confirm-email-change') !== -1 ||
+        rawUrl.indexOf('/_/') !== -1 ||
+        rawUrl.indexOf('{ACTION_URL}') !== -1
 
-      if (!hasLegacyKeyword) {
-        return url
+      if (!isLegacyOrInternal) {
+        return rawUrl
       }
 
-      // Determina a ação
+      // Extrai a ação específica caso não seja reset de senha padrão
       let actionSuffix = ''
-      if (url.indexOf('action=email-change') !== -1 || url.indexOf('confirm-email-change') !== -1) {
-        actionSuffix = '&action=email-change'
-      } else if (
-        url.indexOf('action=verify') !== -1 ||
-        url.indexOf('confirm-verification') !== -1
-      ) {
+      if (rawUrl.indexOf('confirm-verification') !== -1 || rawUrl.indexOf('action=verify') !== -1) {
         actionSuffix = '&action=verify'
+      } else if (
+        rawUrl.indexOf('confirm-email-change') !== -1 ||
+        rawUrl.indexOf('action=email-change') !== -1
+      ) {
+        actionSuffix = '&action=email-change'
       }
 
       // Extrai o token
       let token = ''
       const tokenMatch =
-        url.match(/[?&#]token=([a-zA-Z0-9_\-\.]+)/) ||
-        url.match(/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/) ||
-        url.match(/confirm-verification\/([a-zA-Z0-9_\-\.]+)/) ||
-        url.match(/confirm-email-change\/([a-zA-Z0-9_\-\.]+)/) ||
-        url.match(/\/([a-zA-Z0-9_\-\.]{20,})/)
+        rawUrl.match(/[?&#]token=([a-zA-Z0-9_\-.]+)/) ||
+        rawUrl.match(/confirm-(?:password-reset|verification|email-change)\/([a-zA-Z0-9_\-.]+)/) ||
+        rawUrl.match(/\/([a-zA-Z0-9_\-.]{20,})/)
 
       if (tokenMatch && tokenMatch[1]) {
         token = tokenMatch[1]
       }
 
       if (token) {
-        return siteUrl + '/redefinir-senha?token=' + token + actionSuffix
+        return CANONICAL_RESET_PREFIX + '?token=' + token + actionSuffix
       }
-      return url
+
+      return rawUrl
     }
 
-    // Aplica o passe final no HTML e no texto para qualquer URL encontrada
-    html = html.replace(/https?:\/\/[^\s"'<>]+/gi, (matchedUrl) => {
-      return normalizeLegacyUrl(matchedUrl)
-    })
-    text = text.replace(/https?:\/\/[^\s"'<>]+/gi, (matchedUrl) => {
-      return normalizeLegacyUrl(matchedUrl)
-    })
+    // 1. Substituição de qualquer URL HTTP/HTTPS no HTML e no texto
+    html = html.replace(/https?:\/\/[^\s"'<>]+/gi, (m) => sanitizeUrl(m))
+    text = text.replace(/https?:\/\/[^\s"'<>]+/gi, (m) => sanitizeUrl(m))
 
-    // PASSO 6: Verificação de placeholder remanescente {ACTION_URL}
-    let urlMatches = html.match(/https?:\/\/[^\s"'<>]+/gi) || []
-    let rawPlaceholderLeft =
-      html.indexOf('{ACTION_URL}') !== -1 || text.indexOf('{ACTION_URL}') !== -1
+    // 2. Normalização de hrefs relativos (ex.: href="/redefinir-senha?token=...")
+    html = html.replace(
+      /(href=["'])(\/redefinir-senha(?:\?[^\s"'>]*)?)(["'])/g,
+      '$1' + CANONICAL_SITE_URL + '$2$3',
+    )
+    text = text.replace(
+      /(^|[\s"'(])(\/redefinir-senha\?[^\s"'>)]+)/g,
+      '$1' + CANONICAL_SITE_URL + '$2',
+    )
 
-    if (rawPlaceholderLeft) {
-      let actionUrl = ''
-      for (let i = 0; i < urlMatches.length; i++) {
-        const u = urlMatches[i]
-        if (
-          u.indexOf('token=') !== -1 ||
-          u.indexOf('/redefinir-senha') !== -1 ||
-          u.indexOf('/reset-password') !== -1 ||
-          u.indexOf('confirm-password-reset') !== -1 ||
-          u.indexOf('confirm-verification') !== -1 ||
-          u.indexOf('confirm-email-change') !== -1
-        ) {
-          actionUrl = u
-          break
-        }
-      }
+    // 3. Normalização de entidades &amp; em links
+    html = html.replace(/(redefinir-senha\?token=[a-zA-Z0-9_\-.]+)&amp;/g, '$1&')
+    text = text.replace(/(redefinir-senha\?token=[a-zA-Z0-9_\-.]+)&amp;/g, '$1&')
 
-      if (!actionUrl && urlMatches.length > 0) {
-        actionUrl = urlMatches[0]
-      }
-
-      if (!actionUrl) {
-        actionUrl = siteUrl + '/redefinir-senha'
-      }
-
-      html = html.split('{ACTION_URL}').join(actionUrl)
-      if (text) {
-        text = text.split('{ACTION_URL}').join(actionUrl)
-      }
-      urlMatches = html.match(/https?:\/\/[^\s"'<>]+/gi) || []
-      rawPlaceholderLeft =
-        html.indexOf('{ACTION_URL}') !== -1 || text.indexOf('{ACTION_URL}') !== -1
+    // 4. Salvaguarda final para placeholder {ACTION_URL} se ainda restar por qualquer motivo
+    if (html.indexOf('{ACTION_URL}') !== -1 || text.indexOf('{ACTION_URL}') !== -1) {
+      const fallbackUrl = CANONICAL_RESET_PREFIX
+      html = html.split('{ACTION_URL}').join(fallbackUrl)
+      text = text.split('{ACTION_URL}').join(fallbackUrl)
     }
 
     msg.html = html
     msg.text = text
 
-    // Extrai o primeiro link de ação completo com o token mascarado para auditoria explícita
+    // Extrai URLs do corpo para verificação e log
+    const allUrls = html.match(/https?:\/\/[^\s"'<>]+/gi) || []
     let finalActionUrlMasked = ''
-    for (let i = 0; i < urlMatches.length; i++) {
-      const u = urlMatches[i]
+    for (let i = 0; i < allUrls.length; i++) {
+      const u = allUrls[i]
       if (u.indexOf('/redefinir-senha') !== -1 || u.indexOf('token=') !== -1) {
-        finalActionUrlMasked = u.replace(/(token=)([a-zA-Z0-9_\-\.]+)/g, '$1[PROTECTED_TOKEN]')
+        finalActionUrlMasked = u.replace(/(token=)([a-zA-Z0-9_\-.]+)/g, '$1[PROTECTED_TOKEN]')
         break
       }
     }
-    if (!finalActionUrlMasked && urlMatches.length > 0) {
-      finalActionUrlMasked = urlMatches[0].replace(
-        /(token=)([a-zA-Z0-9_\-\.]+)/g,
+    if (!finalActionUrlMasked && allUrls.length > 0) {
+      finalActionUrlMasked = allUrls[0].replace(
+        /(token=)([a-zA-Z0-9_\-.]+)/g,
         '$1[PROTECTED_TOKEN]',
       )
     }
 
-    // Mascara e-mails de destinatário para auditoria segura nos logs
+    // Destinatário mascarado
     const recipients = Array.isArray(to)
       ? to.map((addr) => {
-          if (typeof addr === 'string') {
-            const parts = addr.split('@')
-            if (parts.length === 2) {
-              const u = parts[0]
-              const masked = u.length > 2 ? u.slice(0, 2) + '***' : u + '***'
-              return masked + '@' + parts[1]
-            }
-            return addr
+          const raw = typeof addr === 'string' ? addr : (addr && addr.address) || ''
+          const parts = raw.split('@')
+          if (parts.length === 2) {
+            const u = parts[0]
+            const masked = u.length > 2 ? u.slice(0, 2) + '***' : u + '***'
+            return masked + '@' + parts[1]
           }
-          if (addr && addr.address) {
-            const parts = String(addr.address).split('@')
-            if (parts.length === 2) {
-              const u = parts[0]
-              const masked = u.length > 2 ? u.slice(0, 2) + '***' : u + '***'
-              return masked + '@' + parts[1]
-            }
-            return addr.address
-          }
-          return 'destinatário_desconhecido'
+          return raw || 'destinatário'
         })
       : []
 
-    // Remetente configurado
-    const sender = typeof from === 'string' ? from : from.address || from.name || 'padrão PB'
+    const sender =
+      typeof from === 'string' ? from : (from && (from.address || from.name)) || 'padrão PB'
 
-    // Extrai URLs de link encontradas para auditoria clara no log
-    const hrefs = (html.match(/href="([^"]*)"/gi) || []).map((h) => {
-      return h.replace(/(token=|\/)([a-zA-Z0-9_\-\.]{15,})/g, '$1[PROTECTED_TOKEN]')
-    })
-
+    // LOGS EM LINHAS PRÓPRIAS E COMPLETAS (NÃO TRUNCADAS):
+    console.log('[CoffeeCast Mailer] --- DISPARO DE E-MAIL DETECTADO ---')
+    console.log('[CoffeeCast Mailer] Assunto:', subject)
+    console.log('[CoffeeCast Mailer] Destinatário:', recipients.join(', '))
+    console.log('[CoffeeCast Mailer] Remetente:', sender)
     console.log(
-      '[CoffeeCast Mailer] Tentativa de envio interceptada:',
-      JSON.stringify({
-        subject: subject,
-        sender: sender,
-        recipients: recipients,
-        hasResolvedUrl: urlMatches.length > 0,
-        urlCount: urlMatches.length,
-        rawPlaceholderRemaining: rawPlaceholderLeft,
-        finalActionUrl: finalActionUrlMasked,
-        hrefs: hrefs,
-      }),
+      '[CoffeeCast Mailer] URL final de ação:',
+      finalActionUrlMasked || '<NENHUMA_URL_ENCONTRADA>',
     )
+    console.log('[CoffeeCast Mailer] Total de URLs no e-mail:', allUrls.length)
   } catch (err) {
-    console.log('[CoffeeCast Mailer] Erro ao auditar mensagem pré-envio:', err)
+    console.log('[CoffeeCast Mailer] Erro no processamento de onMailerSend:', err)
   }
 
   try {
     e.next()
     console.log(
-      '[CoffeeCast Mailer] onMailerSend despachado com sucesso para o transportador do PocketBase.',
+      '[CoffeeCast Mailer] onMailerSend concluído com sucesso e entregue ao transportador.',
     )
   } catch (sendErr) {
-    console.log('[CoffeeCast Mailer] Falha no transportador do mailer ao enviar e-mail:', sendErr)
+    console.log('[CoffeeCast Mailer] Falha no transportador do mailer:', sendErr)
     throw sendErr
   }
 })
