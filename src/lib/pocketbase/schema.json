@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T15:36:31.891Z",
+  "generatedAt": "2026-09-17T15:39:52.291Z",
   "collections": [
     {
       "name": "users",
@@ -1062,11 +1062,11 @@
       "name": "nine_config",
       "type": "base",
       "apiRules": {
-        "list": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
-        "view": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
-        "create": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
-        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\"",
-        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\""
+        "list": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\")",
+        "view": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\")",
+        "create": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\")",
+        "update": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\")",
+        "delete": "@request.auth.id != \"\" && (@request.auth.role = \"master\" || @request.auth.role = \"gerencial\")"
       },
       "fields": [
         {

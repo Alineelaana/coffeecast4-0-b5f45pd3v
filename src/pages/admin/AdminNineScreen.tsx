@@ -152,66 +152,146 @@ export default function AdminNineScreen() {
     }
 
     setSavingConfig(true)
+    const promptTrimmed = promptSistema.trim()
+    const obsTrimmed = observacoes.trim()
+
+    // Helper para extrair mensagem amigável e detalhada de erro do PocketBase ou API
+    const parseDetailedError = (errorObj: any): string => {
+      if (!errorObj) return 'Falha ao salvar o prompt de treinamento.'
+      // Se tiver data.data ou response.data (validações por campo do PocketBase)
+      const errData = errorObj.data?.data || errorObj.response?.data || errorObj.data || {}
+      if (typeof errData === 'object' && Object.keys(errData).length > 0) {
+        const fieldMsgs: string[] = []
+        for (const [field, fieldErr] of Object.entries(errData)) {
+          const msg =
+            typeof fieldErr === 'object' && fieldErr !== null && 'message' in (fieldErr as any)
+              ? (fieldErr as any).message
+              : String(fieldErr)
+          const fieldNamesMap: Record<string, string> = {
+            prompt_sistema: 'Prompt do sistema',
+            atendimento_automatico: 'Atendimento automático',
+            observacoes: 'Observações',
+            chave: 'Identificador',
+            base_conhecimento: 'Base de conhecimento',
+          }
+          const label = fieldNamesMap[field] || field
+          fieldMsgs.push(`${label}: ${msg}`)
+        }
+        if (fieldMsgs.length > 0) {
+          return fieldMsgs.join(' | ')
+        }
+      }
+      return (
+        errorObj.message ||
+        errorObj.error ||
+        (typeof errorObj === 'string' ? errorObj : 'Falha ao salvar o prompt de treinamento.')
+      )
+    }
+
     try {
-      const baseUrl = import.meta.env.VITE_POCKETBASE_URL || ''
-      const res = await fetch(`${baseUrl}/backend/v1/nine/admin/config`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: pb.authStore.token,
-        },
-        body: JSON.stringify({
-          atendimento_automatico: atendimentoAutomatico,
-          prompt_sistema: promptSistema.trim(),
-          observacoes: observacoes.trim(),
-        }),
-      })
+      let savedSuccessfully = false
+      let endpointErrorDetail: string | null = null
 
-      if (res.ok) {
-        const data = await res.json()
-        if (data?.record?.id) {
-          setConfigId(data.record.id)
-        }
-        toast.success('Prompt de personalidade e regras da Nine salvos com sucesso!')
-      } else {
-        // Fallback direto via SDK do PocketBase
-        const payload = {
-          chave: 'global',
-          atendimento_automatico: atendimentoAutomatico,
-          prompt_sistema: promptSistema.trim(),
-          observacoes: observacoes.trim(),
-        }
-
-        if (configId) {
-          await pb.collection('nine_config').update(configId, payload)
-        } else {
-          const created = await pb.collection('nine_config').create(payload)
-          setConfigId(created.id)
-        }
-
-        toast.success('Prompt de personalidade e regras da Nine salvos com sucesso!')
-      }
-    } catch (err: any) {
-      console.error('Erro ao salvar treinamento da Nine:', err)
-      // Tentar fallback secundário se endpoint de hook falhar na rede
+      // 1. Tentar salvar pelo endpoint administrativo oficial (/backend/v1/nine/admin/config)
       try {
-        const payload = {
-          chave: 'global',
-          atendimento_automatico: atendimentoAutomatico,
-          prompt_sistema: promptSistema.trim(),
-          observacoes: observacoes.trim(),
-        }
-        if (configId) {
-          await pb.collection('nine_config').update(configId, payload)
+        const baseUrl = import.meta.env.VITE_POCKETBASE_URL || ''
+        const token = pb.authStore.token
+        const res = await fetch(`${baseUrl}/backend/v1/nine/admin/config`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: token } : {}),
+          },
+          body: JSON.stringify({
+            atendimento_automatico: atendimentoAutomatico,
+            prompt_sistema: promptTrimmed,
+            observacoes: obsTrimmed,
+          }),
+        })
+
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}))
+          if (data?.record?.id) {
+            setConfigId(data.record.id)
+          }
+          if (data?.record?.prompt_sistema !== undefined) {
+            setPromptSistema(data.record.prompt_sistema)
+          }
+          if (data?.record?.atendimento_automatico !== undefined) {
+            setAtendimentoAutomatico(data.record.atendimento_automatico)
+          }
+          if (data?.record?.observacoes !== undefined) {
+            setObservacoes(data.record.observacoes)
+          }
+          savedSuccessfully = true
+          toast.success('Prompt de treinamento da Nine salvo e sincronizado com sucesso!')
         } else {
-          const created = await pb.collection('nine_config').create(payload)
-          setConfigId(created.id)
+          const errPayload = await res.json().catch(() => ({}))
+          endpointErrorDetail =
+            errPayload?.error || errPayload?.message || `Erro ${res.status} no servidor`
+          console.warn(
+            'Endpoint administrativo retornou erro, tentando fallback direto:',
+            endpointErrorDetail,
+          )
         }
-        toast.success('Prompt de personalidade e regras da Nine salvos com sucesso!')
-      } catch (fallbackErr: any) {
-        console.error('Falha no fallback de salvamento:', fallbackErr)
-        toast.error(fallbackErr?.message || 'Falha ao salvar o prompt de treinamento.')
+      } catch (endpointErr: any) {
+        console.warn(
+          'Falha na requisição ao endpoint administrativo, tentando fallback:',
+          endpointErr,
+        )
+        endpointErrorDetail = endpointErr?.message || null
       }
+
+      // 2. Se o endpoint falhou, tentar o fallback direto pelo SDK do PocketBase
+      if (!savedSuccessfully) {
+        const payload: Record<string, any> = {
+          atendimento_automatico: atendimentoAutomatico,
+          prompt_sistema: promptTrimmed,
+          observacoes: obsTrimmed,
+        }
+
+        let updatedRecord: any = null
+        if (configId) {
+          updatedRecord = await pb.collection('nine_config').update(configId, payload)
+        } else {
+          // Tentar localizar registro existente antes de criar para não violar UNIQUE(chave)
+          try {
+            const existing = await pb.collection('nine_config').getFirstListItem('chave="global"')
+            if (existing) {
+              setConfigId(existing.id)
+              updatedRecord = await pb.collection('nine_config').update(existing.id, payload)
+            } else {
+              updatedRecord = await pb.collection('nine_config').create({
+                chave: 'global',
+                ...payload,
+              })
+              setConfigId(updatedRecord.id)
+            }
+          } catch {
+            updatedRecord = await pb.collection('nine_config').create({
+              chave: 'global',
+              ...payload,
+            })
+            setConfigId(updatedRecord.id)
+          }
+        }
+
+        if (updatedRecord) {
+          if (updatedRecord.id) setConfigId(updatedRecord.id)
+          if (updatedRecord.prompt_sistema !== undefined)
+            setPromptSistema(updatedRecord.prompt_sistema)
+          if (updatedRecord.atendimento_automatico !== undefined)
+            setAtendimentoAutomatico(updatedRecord.atendimento_automatico)
+          if (updatedRecord.observacoes !== undefined) setObservacoes(updatedRecord.observacoes)
+        }
+
+        savedSuccessfully = true
+        toast.success('Prompt de treinamento da Nine salvo com sucesso!')
+      }
+    } catch (fallbackErr: any) {
+      console.error('Falha completa ao salvar treinamento da Nine:', fallbackErr)
+      const userFriendlyMessage = parseDetailedError(fallbackErr)
+      toast.error(`Falha ao salvar: ${userFriendlyMessage}`)
     } finally {
       setSavingConfig(false)
     }
@@ -222,23 +302,46 @@ export default function AdminNineScreen() {
     setAtendimentoAutomatico(checked)
     try {
       const baseUrl = import.meta.env.VITE_POCKETBASE_URL || ''
-      const res = await fetch(`${baseUrl}/backend/v1/nine/admin/config`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: pb.authStore.token,
-        },
-        body: JSON.stringify({
-          atendimento_automatico: checked,
-          prompt_sistema: promptSistema.trim() || 'Nine Assistente Virtual',
-          observacoes: observacoes.trim(),
-        }),
-      })
+      const token = pb.authStore.token
+      let ok = false
 
-      if (!res.ok && configId) {
-        await pb.collection('nine_config').update(configId, {
-          atendimento_automatico: checked,
+      try {
+        const res = await fetch(`${baseUrl}/backend/v1/nine/admin/config`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: token } : {}),
+          },
+          body: JSON.stringify({
+            atendimento_automatico: checked,
+            prompt_sistema: promptSistema.trim() || 'Nine Assistente Virtual',
+            observacoes: observacoes.trim(),
+          }),
         })
+        if (res.ok) {
+          ok = true
+        }
+      } catch {
+        ok = false
+      }
+
+      if (!ok) {
+        if (configId) {
+          await pb.collection('nine_config').update(configId, {
+            atendimento_automatico: checked,
+          })
+        } else {
+          const existing = await pb
+            .collection('nine_config')
+            .getFirstListItem('chave="global"')
+            .catch(() => null)
+          if (existing) {
+            setConfigId(existing.id)
+            await pb.collection('nine_config').update(existing.id, {
+              atendimento_automatico: checked,
+            })
+          }
+        }
       }
 
       toast.success(
@@ -246,24 +349,11 @@ export default function AdminNineScreen() {
           ? 'Atendimento automático da Nine ATIVADO em tempo real.'
           : 'Atendimento automático da Nine DESLIGADO. As conversas agora aguardam revisão humana.',
       )
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao atualizar modo de atendimento geral:', err)
-      try {
-        if (configId) {
-          await pb.collection('nine_config').update(configId, {
-            atendimento_automatico: checked,
-          })
-          toast.success(
-            checked
-              ? 'Atendimento automático da Nine ATIVADO em tempo real.'
-              : 'Atendimento automático da Nine DESLIGADO.',
-          )
-          return
-        }
-      } catch {
-        /* intentionally ignored */
-      }
-      toast.error('Falha ao alternar atendimento automático.')
+      toast.error(
+        'Falha ao alternar atendimento automático: ' + (err?.message || 'erro inesperado'),
+      )
       setAtendimentoAutomatico(!checked)
     }
   }
