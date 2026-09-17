@@ -112,14 +112,41 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
           userId = visitante.id
         }
       } catch (visitanteLookupErr) {
-        console.log('Aviso: lookup de visitante@app.local falhou:', visitanteLookupErr)
+        console.log(
+          'Aviso: lookup de visitante@app.local falhou, tentando auto-criação:',
+          visitanteLookupErr,
+        )
       }
-    }
 
-    if (!userId) {
-      return e.json(503, {
-        error: 'Serviço de atendimento temporariamente indisponível.',
-      })
+      // Auto-cura: se o usuário visitante não foi encontrado, tenta criar dinamicamente
+      if (!userId) {
+        try {
+          const usersCol = $app.findCollectionByNameOrId('users')
+          const rec = new Record(usersCol)
+          rec.setEmail('visitante@app.local')
+          rec.setPassword($security.randomString(28))
+          rec.setVerified(true)
+          rec.set('name', 'Visitante CoffeeCast')
+          rec.set('role', 'prata')
+          rec.set('ativo', true)
+          $app.save(rec)
+          userId = rec.id
+        } catch (createVisitorErr) {
+          console.log('Erro ao auto-criar visitante@app.local no hook:', createVisitorErr)
+        }
+      }
+
+      // Fallback final: se ainda não houver userId, busca qualquer usuário do sistema para vincular a chamada
+      if (!userId) {
+        try {
+          const fallbackUsers = $app.findRecordsByFilter('users', 'ativo = true', 'created', 1, 0)
+          if (fallbackUsers && fallbackUsers.length > 0) {
+            userId = fallbackUsers[0].id
+          }
+        } catch (fbUserErr) {
+          console.log('Erro ao buscar fallback user para Nine:', fbUserErr)
+        }
+      }
     }
 
     // =========================================================================
@@ -293,8 +320,8 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       '\n\n[MENSAGEM DO VISITANTE]\n' +
       rawMessage
 
-    // 1. Tentar executar via $ai.agent("nine-chat")
-    if (typeof $ai !== 'undefined' && $ai.agent) {
+    // 1. Tentar executar via $ai.agent("nine-chat") se tiver userId válido
+    if (userId && typeof $ai !== 'undefined' && $ai.agent) {
       try {
         const agentResult = $ai.agent('nine-chat').chat({
           user_id: userId,
@@ -313,7 +340,7 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       }
     }
 
-    // 2. Fallback via $ai.chat usando fullPromptWithContext
+    // 2. Fallback via $ai.chat usando fullPromptWithContext (independente de userId)
     if (!responseContent && typeof $ai !== 'undefined' && typeof $ai.chat === 'function') {
       try {
         const chatRes = $ai.chat({
