@@ -51,9 +51,17 @@ import {
   Coffee,
   Clock,
   ChevronDown,
+  Smile,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDateBR } from '@/lib/formatters'
+import { EmojiStickerPicker } from '@/components/chat/EmojiStickerPicker'
+import { ChatStickerMessage } from '@/components/chat/ChatStickerMessage'
+import {
+  isStickerMessage,
+  STICKER_PREFIX,
+  getStickerPreviewLabel,
+} from '@/components/chat/stickers'
 
 interface ConversationWithMeta extends ChatConversaRecord {
   displayName: string
@@ -79,6 +87,7 @@ export default function ChatScreen() {
 
   // Mensagem em digitação
   const [inputMessage, setInputMessage] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   // Status do próprio usuário autenticado
   const [myStatus, setMyStatus] = useState<'online' | 'offline' | 'em_pausa'>('online')
@@ -441,11 +450,53 @@ export default function ChatScreen() {
     }
   }
 
+  const handleInsertEmoji = (emoji: string) => {
+    const el = textareaRef.current
+    if (!el) {
+      setInputMessage((prev) => prev + emoji)
+      return
+    }
+
+    const start = el.selectionStart ?? inputMessage.length
+    const end = el.selectionEnd ?? inputMessage.length
+    const before = inputMessage.substring(0, start)
+    const after = inputMessage.substring(end)
+    const nextVal = `${before}${emoji}${after}`
+    setInputMessage(nextVal)
+
+    setTimeout(() => {
+      el.focus()
+      const newPos = start + emoji.length
+      el.setSelectionRange(newPos, newPos)
+    }, 10)
+  }
+
+  const handleSendSticker = async (stickerId: string) => {
+    setPickerOpen(false)
+    if (!activeConversation || !user || sending) return
+    const stickerText = `${STICKER_PREFIX}${stickerId}`
+
+    try {
+      setSending(true)
+      const created = await ChatService.sendMessage(activeConversation.id, user.id, stickerText)
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === created.id)) return prev
+        return [...prev, created]
+      })
+      setTimeout(scrollToBottom, 60)
+    } catch (err) {
+      console.error(err)
+      toast.error('Erro ao enviar figurinha.')
+    } finally {
+      setSending(false)
+    }
+  }
+
   // Enviar mensagem
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !activeConversation || !user || sending) return
-    const textToSend = inputMessage.trim()
-    setInputMessage('')
+  const handleSendMessage = async (textCustom?: string) => {
+    const textToSend = (textCustom || inputMessage).trim()
+    if (!textToSend || !activeConversation || !user || sending) return
+    if (!textCustom) setInputMessage('')
     setSending(true)
 
     try {
@@ -459,7 +510,7 @@ export default function ChatScreen() {
     } catch (err) {
       console.error(err)
       toast.error('Erro ao enviar mensagem.')
-      setInputMessage(textToSend)
+      if (!textCustom) setInputMessage(textToSend)
     } finally {
       setSending(false)
       textareaRef.current?.focus()
@@ -868,7 +919,9 @@ export default function ChatScreen() {
                             isSelected ? 'text-marfim/80' : 'text-vinho/60'
                           }`}
                         >
-                          {conv.ultima_mensagem || 'Inicie a conversa...'}
+                          {conv.ultima_mensagem
+                            ? getStickerPreviewLabel(conv.ultima_mensagem)
+                            : 'Inicie a conversa...'}
                         </p>
                       </div>
                     </div>
@@ -1004,32 +1057,53 @@ export default function ChatScreen() {
 
                         <div
                           className={`max-w-[85%] sm:max-w-[70%] rounded-2xl p-3.5 shadow-sm space-y-1.5 ${
-                            isMine
-                              ? 'bg-vinho text-white rounded-br-xs'
-                              : 'bg-white text-vinho border border-vinho/10 rounded-bl-xs'
+                            isStickerMessage(msg.texto)
+                              ? isMine
+                                ? 'bg-transparent shadow-none p-1'
+                                : 'bg-transparent shadow-none p-1'
+                              : isMine
+                                ? 'bg-vinho text-white rounded-br-xs'
+                                : 'bg-white text-vinho border border-vinho/10 rounded-bl-xs'
                           }`}
                         >
-                          {/* Cabeçalho do balão: nome e selo */}
-                          <div className="flex items-center justify-between gap-2 border-b pb-1 border-current/15">
-                            <span
-                              className={`text-[11px] font-bold truncate ${
-                                isMine ? 'text-dourado-light' : 'text-vinho'
-                              }`}
-                            >
-                              {isMine ? 'Você' : remetenteName}
-                            </span>
-                            <UserRoleBadge role={remetenteRole} size="sm" />
-                          </div>
+                          {/* Cabeçalho do balão: nome e selo (apenas se não for sticker) */}
+                          {!isStickerMessage(msg.texto) && (
+                            <div className="flex items-center justify-between gap-2 border-b pb-1 border-current/15">
+                              <span
+                                className={`text-[11px] font-bold truncate ${
+                                  isMine ? 'text-dourado-light' : 'text-vinho'
+                                }`}
+                              >
+                                {isMine ? 'Você' : remetenteName}
+                              </span>
+                              <UserRoleBadge role={remetenteRole} size="sm" />
+                            </div>
+                          )}
 
-                          {/* Conteúdo da mensagem */}
-                          <p className="text-xs sm:text-sm whitespace-pre-wrap break-words leading-relaxed">
-                            {msg.texto}
-                          </p>
+                          {/* Conteúdo da mensagem: texto normal ou Figurinha grande */}
+                          {isStickerMessage(msg.texto) ? (
+                            <div className="flex flex-col items-center">
+                              {!isMine && (
+                                <span className="text-[10px] font-bold text-vinho/70 mb-1 self-start">
+                                  {remetenteName}:
+                                </span>
+                              )}
+                              <ChatStickerMessage content={msg.texto} size={108} />
+                            </div>
+                          ) : (
+                            <p className="text-xs sm:text-sm whitespace-pre-wrap break-words leading-relaxed">
+                              {msg.texto}
+                            </p>
+                          )}
 
                           {/* Horário */}
                           <div
                             className={`flex items-center justify-end gap-1 text-[10px] ${
-                              isMine ? 'text-white/60' : 'text-vinho/50'
+                              isStickerMessage(msg.texto)
+                                ? 'text-vinho/60 pr-1'
+                                : isMine
+                                  ? 'text-white/60'
+                                  : 'text-vinho/50'
                             }`}
                           >
                             <span>
@@ -1049,33 +1123,59 @@ export default function ChatScreen() {
               </div>
 
               {/* CAMPO DE DIGITAÇÃO E ENVIO */}
-              <div className="p-3 sm:p-4 bg-white border-t border-vinho/10 shrink-0">
-                <div className="flex items-end gap-2 max-w-5xl mx-auto">
-                  <div className="flex-1 relative bg-marfim/70 border border-vinho/15 rounded-2xl focus-within:border-dourado focus-within:ring-1 focus-within:ring-dourado transition-all">
-                    <Textarea
-                      ref={textareaRef}
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Digite sua mensagem... (Enter envia, Shift+Enter quebra linha)"
-                      rows={1}
-                      className="w-full bg-transparent border-0 focus-visible:ring-0 resize-none p-3 text-xs sm:text-sm max-h-32 text-vinho placeholder:text-vinho/45"
-                    />
-                  </div>
+              <div className="p-3 sm:p-4 bg-white border-t border-vinho/10 shrink-0 relative">
+                <div className="relative max-w-5xl mx-auto">
+                  {/* Popover de Emojis e Figurinhas */}
+                  <EmojiStickerPicker
+                    isOpen={pickerOpen}
+                    onClose={() => setPickerOpen(false)}
+                    onSelectEmoji={handleInsertEmoji}
+                    onSelectSticker={handleSendSticker}
+                    align="left"
+                  />
 
-                  <Button
-                    type="button"
-                    onClick={handleSendMessage}
-                    disabled={!inputMessage.trim() || sending}
-                    className="min-h-[44px] min-w-[44px] bg-vinho hover:bg-vinho-light text-white rounded-2xl px-4 flex items-center justify-center active:scale-95 transition-all shadow-md shrink-0"
-                    title="Enviar mensagem"
-                  >
-                    {sending ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-dourado" />
-                    ) : (
-                      <Send className="w-4 h-4 text-dourado" />
-                    )}
-                  </Button>
+                  <div className="flex items-end gap-2">
+                    {/* Botão de Emojis e Figurinhas à esquerda do campo (estilo WhatsApp) */}
+                    <button
+                      type="button"
+                      onClick={() => setPickerOpen((prev) => !prev)}
+                      aria-label={pickerOpen ? 'Fechar emojis' : 'Abrir emojis e figurinhas'}
+                      title="Emojis e Figurinhas"
+                      className={`min-h-[44px] min-w-[44px] rounded-2xl flex items-center justify-center shrink-0 border transition-all active:scale-95 ${
+                        pickerOpen
+                          ? 'bg-vinho text-dourado border-dourado shadow-xs'
+                          : 'bg-marfim/70 text-vinho/70 hover:text-vinho hover:bg-marfim border-vinho/15 hover:border-dourado'
+                      }`}
+                    >
+                      <Smile className="w-5 h-5 text-dourado-dark" />
+                    </button>
+
+                    <div className="flex-1 relative bg-marfim/70 border border-vinho/15 rounded-2xl focus-within:border-dourado focus-within:ring-1 focus-within:ring-dourado transition-all">
+                      <Textarea
+                        ref={textareaRef}
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Digite sua mensagem... (Enter envia, Shift+Enter quebra linha)"
+                        rows={1}
+                        className="w-full bg-transparent border-0 focus-visible:ring-0 resize-none p-3 text-xs sm:text-sm max-h-32 text-vinho placeholder:text-vinho/45"
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={() => handleSendMessage()}
+                      disabled={!inputMessage.trim() || sending}
+                      className="min-h-[44px] min-w-[44px] bg-vinho hover:bg-vinho-light text-white rounded-2xl px-4 flex items-center justify-center active:scale-95 transition-all shadow-md shrink-0"
+                      title="Enviar mensagem"
+                    >
+                      {sending ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-dourado" />
+                      ) : (
+                        <Send className="w-4 h-4 text-dourado" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-vinho/50 mt-1.5 px-1 max-w-5xl mx-auto">
                   <span>Pressione Enter para enviar, Shift+Enter para nova linha</span>

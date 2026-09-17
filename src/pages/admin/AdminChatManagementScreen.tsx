@@ -34,6 +34,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDateBR } from '@/lib/formatters'
+import { ChatStickerMessage } from '@/components/chat/ChatStickerMessage'
+import { isStickerMessage, getStickerPreviewLabel } from '@/components/chat/stickers'
 
 export default function AdminChatManagementScreen() {
   const { isMaster } = useAuth()
@@ -397,8 +399,8 @@ export default function AdminChatManagementScreen() {
                   <TableCell className="align-middle">
                     {conv.ultima_mensagem ? (
                       <div className="max-w-xs">
-                        <p className="text-xs text-vinho line-clamp-1">
-                          {conv.ultima_mensagem.texto}
+                        <p className="text-xs text-vinho line-clamp-1 font-medium">
+                          {getStickerPreviewLabel(conv.ultima_mensagem.texto)}
                         </p>
                         <div className="flex items-center gap-1.5 text-[10px] text-vinho/50 mt-0.5">
                           <span>{conv.ultima_mensagem.remetente_nome}</span>
@@ -512,9 +514,15 @@ export default function AdminChatManagementScreen() {
                             })}
                           </span>
                         </div>
-                        <p className="text-xs text-vinho/85 whitespace-pre-wrap break-words leading-relaxed">
-                          {m.texto}
-                        </p>
+                        {isStickerMessage(m.texto) ? (
+                          <div className="pt-1 pb-1">
+                            <ChatStickerMessage content={m.texto} size={84} />
+                          </div>
+                        ) : (
+                          <p className="text-xs text-vinho/85 whitespace-pre-wrap break-words leading-relaxed">
+                            {m.texto}
+                          </p>
+                        )}
                       </div>
                     </div>
 

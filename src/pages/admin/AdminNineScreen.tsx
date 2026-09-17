@@ -55,6 +55,8 @@ import {
 } from '@/types/database'
 import { toast } from 'sonner'
 import { formatDateBR } from '@/lib/formatters'
+import { ChatStickerMessage } from '@/components/chat/ChatStickerMessage'
+import { isStickerMessage, getStickerPreviewLabel } from '@/components/chat/stickers'
 
 export default function AdminNineScreen() {
   const { user } = useAuth()
@@ -1112,7 +1114,9 @@ export default function AdminNineScreen() {
                           {conv.ultimo_remetente === 'humano' && (
                             <span className="font-semibold text-blue-700">Equipe: </span>
                           )}
-                          {conv.ultima_mensagem || 'Conversa iniciada'}
+                          {conv.ultima_mensagem
+                            ? getStickerPreviewLabel(conv.ultima_mensagem)
+                            : 'Conversa iniciada'}
                         </p>
 
                         {/* Badges de Modo */}
@@ -1303,14 +1307,20 @@ export default function AdminNineScreen() {
 
                             <div
                               className={`p-3.5 rounded-2xl text-xs leading-relaxed shadow-xs break-words ${
-                                isVisitante
-                                  ? 'bg-[#F4EFEA] text-[#4B1E3F] rounded-tl-xs border border-vinho/10'
-                                  : isNine
-                                    ? 'bg-white text-vinho rounded-tr-xs border border-[#D4AF37]/50 shadow-sm'
-                                    : 'bg-blue-600 text-white rounded-tr-xs border border-blue-700 shadow-sm'
+                                isStickerMessage(msg.conteudo)
+                                  ? 'bg-transparent shadow-none p-1'
+                                  : isVisitante
+                                    ? 'bg-[#F4EFEA] text-[#4B1E3F] rounded-tl-xs border border-vinho/10'
+                                    : isNine
+                                      ? 'bg-white text-vinho rounded-tr-xs border border-[#D4AF37]/50 shadow-sm'
+                                      : 'bg-blue-600 text-white rounded-tr-xs border border-blue-700 shadow-sm'
                               }`}
                             >
-                              <p className="whitespace-pre-wrap">{msg.conteudo}</p>
+                              {isStickerMessage(msg.conteudo) ? (
+                                <ChatStickerMessage content={msg.conteudo} size={84} />
+                              ) : (
+                                <p className="whitespace-pre-wrap">{msg.conteudo}</p>
+                              )}
                             </div>
                           </div>
                         )

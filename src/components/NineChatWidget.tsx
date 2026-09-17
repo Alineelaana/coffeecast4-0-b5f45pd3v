@@ -10,9 +10,13 @@ import {
   ExternalLink,
   Headphones,
   Bot,
+  Smile,
 } from 'lucide-react'
 import { NineAvatar } from '@/components/NineAvatar'
 import { cn } from '@/lib/utils'
+import { EmojiStickerPicker } from '@/components/chat/EmojiStickerPicker'
+import { ChatStickerMessage } from '@/components/chat/ChatStickerMessage'
+import { isStickerMessage, STICKER_PREFIX } from '@/components/chat/stickers'
 
 interface ChatMessage {
   id: string
@@ -51,6 +55,7 @@ export const NineChatWidget: React.FC = () => {
   const [cookieBannerActive, setCookieBannerActive] = useState(false)
   const [hasUnreadNotice, setHasUnreadNotice] = useState(true)
   const [modoAtendimento, setModoAtendimento] = useState<string>('automatico')
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -163,6 +168,34 @@ export const NineChatWidget: React.FC = () => {
   // Não renderizar de forma alguma na área administrativa
   if (location.pathname.startsWith('/admin')) {
     return null
+  }
+
+  const handleInsertEmoji = (emoji: string) => {
+    const el = textareaRef.current
+    if (!el) {
+      setInputValue((prev) => prev + emoji)
+      return
+    }
+
+    const start = el.selectionStart ?? inputValue.length
+    const end = el.selectionEnd ?? inputValue.length
+    const before = inputValue.substring(0, start)
+    const after = inputValue.substring(end)
+    const nextVal = `${before}${emoji}${after}`
+    setInputValue(nextVal)
+
+    // Reposiciona cursor logo após o emoji inserido
+    setTimeout(() => {
+      el.focus()
+      const newPos = start + emoji.length
+      el.setSelectionRange(newPos, newPos)
+    }, 10)
+  }
+
+  const handleSendSticker = (stickerId: string) => {
+    setPickerOpen(false)
+    const stickerText = `${STICKER_PREFIX}${stickerId}`
+    handleSendMessage(stickerText)
   }
 
   const handleSendMessage = async (textToSend?: string) => {
@@ -438,26 +471,42 @@ export const NineChatWidget: React.FC = () => {
                     className={cn(
                       'rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm transition-all break-words',
                       isUser
-                        ? 'bg-[#4B1E3F] text-[#FAF8F5] rounded-br-sm border border-[#4B1E3F]'
+                        ? isStickerMessage(msg.content)
+                          ? 'bg-transparent shadow-none p-1'
+                          : 'bg-[#4B1E3F] text-[#FAF8F5] rounded-br-sm border border-[#4B1E3F]'
                         : isHumano
-                          ? 'bg-[#3A1430] text-white rounded-bl-sm border border-[#D4AF37]/60'
-                          : 'bg-white text-[#4B1E3F] border border-[#D4AF37]/30 rounded-bl-sm',
+                          ? isStickerMessage(msg.content)
+                            ? 'bg-transparent shadow-none p-1'
+                            : 'bg-[#3A1430] text-white rounded-bl-sm border border-[#D4AF37]/60'
+                          : isStickerMessage(msg.content)
+                            ? 'bg-transparent shadow-none p-1'
+                            : 'bg-white text-[#4B1E3F] border border-[#D4AF37]/30 rounded-bl-sm',
                     )}
                   >
-                    {isHumano && (
+                    {isHumano && !isStickerMessage(msg.content) && (
                       <span className="block text-[10px] font-bold text-[#D4AF37] mb-1">
                         {msg.senderName || 'Equipe CoffeeCast'}:
                       </span>
                     )}
-                    <p className="whitespace-pre-wrap font-sans">{msg.content}</p>
+                    {isStickerMessage(msg.content) ? (
+                      <div className="flex flex-col items-center">
+                        <ChatStickerMessage content={msg.content} size={108} />
+                      </div>
+                    ) : (
+                      <p className="whitespace-pre-wrap font-sans">{msg.content}</p>
+                    )}
                     <span
                       className={cn(
                         'block text-[10px] mt-1 font-light',
-                        isUser
-                          ? 'text-[#FAF8F5]/60 text-right'
-                          : isHumano
-                            ? 'text-white/60 text-left'
-                            : 'text-[#4B1E3F]/50 text-left',
+                        isStickerMessage(msg.content)
+                          ? isUser
+                            ? 'text-[#4B1E3F]/70 text-right pr-2'
+                            : 'text-[#4B1E3F]/70 text-left pl-2'
+                          : isUser
+                            ? 'text-[#FAF8F5]/60 text-right'
+                            : isHumano
+                              ? 'text-white/60 text-left'
+                              : 'text-[#4B1E3F]/50 text-left',
                       )}
                     >
                       {msg.timestamp}
@@ -501,29 +550,58 @@ export const NineChatWidget: React.FC = () => {
           </div>
 
           {/* Campo de Entrada e Envio */}
-          <div className="p-3 bg-[#FAF8F5] border-t border-[#D4AF37]/30 shrink-0">
+          <div className="p-3 bg-[#FAF8F5] border-t border-[#D4AF37]/30 shrink-0 relative">
+            {/* Popover de Emojis e Figurinhas */}
+            <EmojiStickerPicker
+              isOpen={pickerOpen}
+              onClose={() => setPickerOpen(false)}
+              onSelectEmoji={handleInsertEmoji}
+              onSelectSticker={handleSendSticker}
+              align="left"
+            />
+
             <form
               onSubmit={(e) => {
                 e.preventDefault()
                 handleSendMessage()
               }}
-              className="flex items-end gap-2"
+              className="flex items-end gap-1.5 sm:gap-2"
             >
-              <textarea
-                ref={textareaRef}
-                rows={1}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={isLoading}
-                maxLength={1500}
-                placeholder={
-                  isHumanoMode
-                    ? 'Envie sua mensagem para a equipe... ☕'
-                    : 'Pergunte à Nine sobre o CoffeeCast... ☕'
+              {/* Botão de Emojis e Figurinhas à esquerda do campo (estilo WhatsApp) */}
+              <button
+                type="button"
+                onClick={() => setPickerOpen((prev) => !prev)}
+                aria-label={
+                  pickerOpen ? 'Fechar seletor de emojis' : 'Abrir seletor de emojis e figurinhas'
                 }
-                className="flex-1 px-4 py-2.5 text-sm bg-white border border-[#4B1E3F]/20 rounded-xl text-[#4B1E3F] placeholder:text-[#4B1E3F]/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-all disabled:opacity-60 resize-none max-h-32 min-h-[42px] leading-relaxed"
-              />
+                title="Emojis e Figurinhas"
+                className={cn(
+                  'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all mb-0.5 active:scale-95 shadow-xs',
+                  pickerOpen
+                    ? 'bg-[#4B1E3F] text-[#D4AF37] border-[#D4AF37]'
+                    : 'bg-white text-[#4B1E3F]/75 hover:text-[#4B1E3F] hover:bg-[#FAF8F5] border-[#4B1E3F]/20 hover:border-[#D4AF37]',
+                )}
+              >
+                <Smile className="w-5 h-5 text-[#D4AF37]" />
+              </button>
+
+              <div className="flex-1 relative">
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isLoading}
+                  maxLength={1500}
+                  placeholder={
+                    isHumanoMode
+                      ? 'Envie sua mensagem para a equipe... ☕'
+                      : 'Pergunte à Nine sobre o CoffeeCast... ☕'
+                  }
+                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-[#4B1E3F]/20 rounded-xl text-[#4B1E3F] placeholder:text-[#4B1E3F]/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-all disabled:opacity-60 resize-none max-h-32 min-h-[42px] leading-relaxed"
+                />
+              </div>
 
               <button
                 type="submit"
