@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, Trash2, ArrowUp, ArrowDown, Camera } from 'lucide-react'
+import { Plus, Trash2, ArrowUp, ArrowDown, Camera, Edit } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function AdminMomentosScreen() {
@@ -14,6 +14,7 @@ export default function AdminMomentosScreen() {
   const [loading, setLoading] = useState(true)
 
   const [modalOpen, setModalOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<MomentoRecord | null>(null)
   const [legenda, setLegenda] = useState('')
   const [ordem, setOrdem] = useState('1')
   const [imagemFile, setImagemFile] = useState<File | null>(null)
@@ -39,15 +40,24 @@ export default function AdminMomentosScreen() {
   }, [])
 
   const handleOpenCreate = () => {
+    setEditingItem(null)
     setLegenda('')
     setOrdem(String(momentos.length + 1))
     setImagemFile(null)
     setModalOpen(true)
   }
 
+  const handleOpenEdit = (item: MomentoRecord) => {
+    setEditingItem(item)
+    setLegenda(item.legenda || '')
+    setOrdem(item.ordem !== undefined && item.ordem !== null ? String(item.ordem) : '1')
+    setImagemFile(null)
+    setModalOpen(true)
+  }
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!imagemFile) {
+    if (!editingItem && !imagemFile) {
       toast.error('Selecione uma imagem para o carrossel.')
       return
     }
@@ -56,16 +66,23 @@ export default function AdminMomentosScreen() {
     try {
       const formData = new FormData()
       formData.append('legenda', legenda.trim())
-      formData.append('ordem', ordem)
-      formData.append('imagem', imagemFile)
+      formData.append('ordem', String(parseInt(ordem, 10) || 1))
+      if (imagemFile) {
+        formData.append('imagem', imagemFile)
+      }
 
-      await pb.collection('momentos').create(formData)
-      toast.success('Momento adicionado com sucesso!')
+      if (editingItem) {
+        await pb.collection('momentos').update(editingItem.id, formData)
+        toast.success('Momento atualizado com sucesso!')
+      } else {
+        await pb.collection('momentos').create(formData)
+        toast.success('Momento adicionado com sucesso!')
+      }
       setModalOpen(false)
       loadMomentos()
     } catch (err) {
       console.error(err)
-      toast.error('Erro ao cadastrar momento.')
+      toast.error('Erro ao salvar momento.')
     } finally {
       setSaving(false)
     }
@@ -193,15 +210,27 @@ export default function AdminMomentosScreen() {
                       </Button>
                     </div>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(item.id)}
-                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      title="Excluir foto"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenEdit(item)}
+                        className="h-7 px-2 text-xs text-vinho/70 hover:text-vinho hover:bg-vinho/10 flex items-center gap-1"
+                        title="Editar momento"
+                      >
+                        <Edit className="w-3.5 h-3.5 text-dourado-dark" />
+                        <span>Editar</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(item.id)}
+                        className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        title="Excluir foto"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -214,20 +243,35 @@ export default function AdminMomentosScreen() {
         <DialogContent className="w-[94vw] max-w-md max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho">
-              Adicionar Foto aos Momentos
+              {editingItem ? 'Editar Foto dos Momentos' : 'Adicionar Foto aos Momentos'}
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSave} className="space-y-4 pt-2">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-vinho">Arquivo da Imagem *</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-vinho">
+                  Arquivo da Imagem {editingItem ? '(Opcional)' : '*'}
+                </Label>
+                {editingItem && (
+                  <span className="text-[10px] text-emerald-800 font-semibold bg-emerald-100/70 border border-emerald-300 px-2 py-0.5 rounded-full">
+                    Deixe vazio para manter a foto atual
+                  </span>
+                )}
+              </div>
               <Input
                 type="file"
                 accept="image/*"
-                required
+                required={!editingItem}
                 onChange={(e) => setImagemFile(e.target.files?.[0] || null)}
                 className="bg-white border-vinho/20 text-xs"
               />
+              {editingItem && editingItem.imagem && !imagemFile && (
+                <p className="text-[11px] text-vinho/65">
+                  Foto atual preservada:{' '}
+                  <code className="text-vinho font-mono">{editingItem.imagem}</code>
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">

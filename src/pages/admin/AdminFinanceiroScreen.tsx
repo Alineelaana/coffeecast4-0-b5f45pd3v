@@ -120,14 +120,14 @@ export default function AdminFinanceiroScreen() {
 
   const handleOpenEdit = (t: TransacaoRecord) => {
     setEditingItem(t)
-    setDescricao(t.descricao)
+    setDescricao(t.descricao || '')
     setTipoMovimentacao(t.tipo_movimentacao || 'despesa')
-    setTipo(t.tipo)
-    setValor(String(t.valor))
+    setTipo(t.tipo || 'outros')
+    setValor(t.valor !== undefined && t.valor !== null ? String(t.valor) : '')
     setDataVencimento(toInputDate(t.data_vencimento))
-    setSituacao(t.situacao)
+    setSituacao(t.situacao || 'em_aberto')
 
-    // Preenche com o que já foi salvo ou deixa vazio
+    // Preenche com o que já foi salvo ou deixa vazio, preservando dados
     const initialDiv: Record<string, string> = {}
     nomesIntegrantes.forEach((nome) => {
       const v = t.divisao_integrantes?.[nome]

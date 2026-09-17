@@ -145,10 +145,14 @@ export default function AdminControleHorasScreen() {
   const handleOpenEdit = (item: HorasCompradasRecord) => {
     setEditingItem(item)
     setDataCompra(toInputDate(item.data))
-    setQuantidadeHoras(String(item.quantidade_horas))
-    setDescricao(item.descricao)
-    setSituacao(item.situacao)
-    setValor(item.valor ? String(item.valor) : '')
+    setQuantidadeHoras(
+      item.quantidade_horas !== undefined && item.quantidade_horas !== null
+        ? String(item.quantidade_horas)
+        : '',
+    )
+    setDescricao(item.descricao || '')
+    setSituacao(item.situacao || 'paga')
+    setValor(item.valor !== undefined && item.valor !== null ? String(item.valor) : '')
     setObservacoes(item.observacoes || '')
     setModalOpen(true)
   }

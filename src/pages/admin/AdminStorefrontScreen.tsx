@@ -290,7 +290,34 @@ export default function AdminStorefrontScreen() {
   }
 
   const handleOpenEditStore = (s: StoreWithCounts) => {
-    setEditingStore({ ...s })
+    // Clona garantindo que nenhum campo existente se perca
+    setEditingStore({
+      ...s,
+      name: s.name || '',
+      slug: s.slug || '',
+      domain: s.domain || '',
+      tagline: s.tagline || '',
+      description: s.description || '',
+      company_name: s.company_name || '',
+      color_primary: s.color_primary || '#4A0E17',
+      color_secondary: s.color_secondary || '#D4AF37',
+      color_background: s.color_background || '#FAF8F5',
+      color_surface: s.color_surface || '#2D050B',
+      color_accent: s.color_accent || '#E5C158',
+      hero_title: s.hero_title || '',
+      hero_subtitle: s.hero_subtitle || '',
+      hero_tagline_words: s.hero_tagline_words || '',
+      hero_phrase: s.hero_phrase || '',
+      mission_text: s.mission_text || '',
+      vision_text: s.vision_text || '',
+      values_text: s.values_text || '',
+      manifesto_text: s.manifesto_text || '',
+      whatsapp_contato: s.whatsapp_contato || '',
+      instagram: s.instagram || '',
+      email_contato: s.email_contato || '',
+      youtube_canal: s.youtube_canal || '',
+      sections_toggles: s.sections_toggles || {},
+    })
     setLogoFile(null)
     setHeroFile(null)
     setEditTab('geral')
@@ -304,8 +331,8 @@ export default function AdminStorefrontScreen() {
     setIsSavingEdit(true)
     try {
       const formData = new FormData()
-      formData.append('name', editingStore.name.trim())
-      formData.append('slug', generateSlug(editingStore.slug))
+      formData.append('name', (editingStore.name || '').trim())
+      formData.append('slug', generateSlug(editingStore.slug || ''))
 
       let cleanDomain = (editingStore.domain || '').trim().toLowerCase()
       if (cleanDomain.startsWith('http://') || cleanDomain.startsWith('https://')) {
@@ -339,6 +366,7 @@ export default function AdminStorefrontScreen() {
       formData.append('company_name', editingStore.company_name || '')
       formData.append('sections_toggles', JSON.stringify(editingStore.sections_toggles || {}))
 
+      // Preservação de arquivos: só anexa se houver um novo arquivo selecionado
       if (logoFile) {
         formData.append('logo_url', logoFile)
       }
@@ -414,11 +442,11 @@ export default function AdminStorefrontScreen() {
   const handleOpenMemberModal = (member?: StoreMemberRecord) => {
     if (member) {
       setEditingMember(member)
-      setMName(member.name)
+      setMName(member.name || '')
       setMRole(member.role || '')
       setMBio(member.bio || '')
       setMInstagram(member.instagram || '')
-      setMOrder(member.order || 1)
+      setMOrder(member.order !== undefined && member.order !== null ? member.order : 1)
     } else {
       setEditingMember(null)
       setMName('')
@@ -490,12 +518,12 @@ export default function AdminStorefrontScreen() {
   const handleOpenEpisodeModal = (ep?: StoreEpisodeRecord) => {
     if (ep) {
       setEditingEpisode(ep)
-      setEpTitle(ep.title)
+      setEpTitle(ep.title || '')
       setEpDescription(ep.description || '')
-      setEpYoutubeUrl(ep.youtube_url)
+      setEpYoutubeUrl(ep.youtube_url || '')
       setEpDate(ep.publish_date ? ep.publish_date.split(' ')[0] : '')
       setEpStatus(ep.status || 'published')
-      setEpOrder(ep.order || 1)
+      setEpOrder(ep.order !== undefined && ep.order !== null ? ep.order : 1)
     } else {
       setEditingEpisode(null)
       setEpTitle('')
@@ -569,11 +597,11 @@ export default function AdminStorefrontScreen() {
   const handleOpenBannerModal = (b?: StoreBannerRecord) => {
     if (b) {
       setEditingBanner(b)
-      setBTitle(b.title)
+      setBTitle(b.title || '')
       setBLinkUrl(b.link_url || '')
       setBPosition(b.position || 'hero')
       setBActive(b.active !== false)
-      setBOrder(b.order || 1)
+      setBOrder(b.order !== undefined && b.order !== null ? b.order : 1)
     } else {
       setEditingBanner(null)
       setBTitle('')
@@ -649,12 +677,12 @@ export default function AdminStorefrontScreen() {
   const handleOpenTestimonialModal = (t?: StoreTestimonialRecord) => {
     if (t) {
       setEditingTestimonial(t)
-      setTName(t.name)
+      setTName(t.name || '')
       setTRole(t.role || '')
       setTInstagram(t.instagram || '')
-      setTMessage(t.message)
+      setTMessage(t.message || '')
       setTApproved(t.approved !== false)
-      setTOrder(t.order || 1)
+      setTOrder(t.order !== undefined && t.order !== null ? t.order : 1)
     } else {
       setEditingTestimonial(null)
       setTName('')

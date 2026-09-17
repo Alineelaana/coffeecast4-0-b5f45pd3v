@@ -77,9 +77,10 @@ export default function AdminUsuariosScreen() {
   }
 
   const handleOpenEdit = (user: UserRecord) => {
+    // Preserva todos os campos atuais do usuário ao abrir o formulário de edição
     setEditingUser(user)
-    setEditName(user.name || '')
-    setEditEmail(user.email || '')
+    setEditName(user.name ?? '')
+    setEditEmail(user.email ?? '')
     setEditRole(user.role || 'prata')
     setEditAtivo(user.ativo !== false)
     setEditPassword('')
@@ -597,23 +598,28 @@ export default function AdminUsuariosScreen() {
 
               {/* Campo Nova Senha Opcional */}
               <div className="space-y-1.5 p-3 bg-dourado/10 border border-dourado/30 rounded-xl">
-                <div className="flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-dourado-dark" />
-                  <Label htmlFor="edit-pass" className="text-xs font-bold text-vinho">
-                    Alterar Senha (Opcional)
-                  </Label>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Key className="w-3.5 h-3.5 text-dourado-dark" />
+                    <Label htmlFor="edit-pass" className="text-xs font-bold text-vinho">
+                      Nova Senha (Opcional)
+                    </Label>
+                  </div>
+                  <span className="text-[10px] text-emerald-800 font-semibold bg-emerald-100/70 border border-emerald-300 px-2 py-0.5 rounded-full">
+                    Deixe em branco = Mantém a senha atual
+                  </span>
                 </div>
                 <Input
                   id="edit-pass"
                   type="password"
-                  placeholder="Deixe em branco para manter a senha atual"
+                  placeholder="Deixe vazio para manter a senha já existente"
                   value={editPassword}
                   onChange={(e) => setEditPassword(e.target.value)}
                   className="bg-white border-vinho/20 text-sm"
                 />
                 <p className="text-[10px] text-vinho/70">
-                  Ao digitar uma nova senha (mínimo de 8 caracteres), ela será atualizada
-                  imediatamente no sistema.
+                  A senha atual NÃO é apagada nem alterada se este campo permanecer vazio. Digite
+                  apenas se desejar redefinir (mínimo de 8 caracteres).
                 </p>
               </div>
 

@@ -211,10 +211,10 @@ export default function AdminDepoimentosScreen() {
 
   const handleOpenEdit = (item: DepoimentoRecord) => {
     setEditingItem(item)
-    setNome(item.nome)
-    setTexto(item.texto)
+    setNome(item.nome || '')
+    setTexto(item.texto || '')
     setDeNossaAutoridade(Boolean(item.de_nossa_autoridade))
-    setOrdem(String(item.ordem || 1))
+    setOrdem(item.ordem !== undefined && item.ordem !== null ? String(item.ordem) : '1')
     setInstagram(item.instagram || '')
     setLinkEpisodio(item.link_episodio || '')
     setFotoFile(null)
@@ -1321,13 +1321,25 @@ export default function AdminDepoimentosScreen() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-vinho">Foto do Convidado</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-vinho">
+                  Foto do Convidado {editingItem ? '(Opcional)' : ''}
+                </Label>
+                {editingItem && (
+                  <span className="text-[10px] text-emerald-800 font-semibold bg-emerald-100/70 border border-emerald-300 px-2 py-0.5 rounded-full">
+                    Deixe vazio para manter a foto atual
+                  </span>
+                )}
+              </div>
               <Input
                 type="file"
                 accept="image/*"
                 onChange={(e) => setFotoFile(e.target.files?.[0] || null)}
                 className="bg-white border-vinho/20 text-xs"
               />
+              {editingItem && editingItem.foto && !fotoFile && (
+                <p className="text-[11px] text-vinho/65">Foto atual preservada no registro.</p>
+              )}
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">

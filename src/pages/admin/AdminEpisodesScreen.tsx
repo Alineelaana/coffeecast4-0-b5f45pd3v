@@ -61,8 +61,8 @@ export default function AdminEpisodesScreen() {
 
   const handleOpenEdit = (ep: EpisodioRecord) => {
     setEditingEp(ep)
-    setNumero(String(ep.numero))
-    setTitulo(ep.titulo)
+    setNumero(ep.numero !== undefined && ep.numero !== null ? String(ep.numero) : '1')
+    setTitulo(ep.titulo || '')
     setYoutubeUrl(ep.youtube_url || '')
     setModalOpen(true)
   }

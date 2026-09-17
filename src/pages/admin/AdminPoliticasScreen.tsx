@@ -31,8 +31,8 @@ export default function AdminPoliticasScreen() {
       setPoliticas(map)
 
       if (map[activeTab]) {
-        setTitulo(map[activeTab].titulo)
-        setConteudo(map[activeTab].conteudo)
+        setTitulo(map[activeTab].titulo || '')
+        setConteudo(map[activeTab].conteudo || '')
       }
     } catch (err) {
       console.error(err)
@@ -50,8 +50,8 @@ export default function AdminPoliticasScreen() {
     const slug = val as 'privacidade' | 'cookies' | 'termos'
     setActiveTab(slug)
     if (politicas[slug]) {
-      setTitulo(politicas[slug].titulo)
-      setConteudo(politicas[slug].conteudo)
+      setTitulo(politicas[slug].titulo || '')
+      setConteudo(politicas[slug].conteudo || '')
     } else {
       setTitulo(
         slug === 'privacidade'

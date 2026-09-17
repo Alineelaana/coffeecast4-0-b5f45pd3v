@@ -712,12 +712,12 @@ export default function AdminNineScreen() {
 
   const handleOpenEditModal = (item: NineConhecimentoRecord) => {
     setEditingItem(item)
-    setFormTipo(item.tipo)
-    setFormTitulo(item.titulo)
-    setFormConteudo(item.conteudo)
+    setFormTipo(item.tipo || 'faq')
+    setFormTitulo(item.titulo || '')
+    setFormConteudo(item.conteudo || '')
     setFormCategoria(item.categoria || '')
-    setFormAtivo(item.ativo)
-    setFormOrdem(item.ordem || 0)
+    setFormAtivo(item.ativo !== false)
+    setFormOrdem(item.ordem !== undefined && item.ordem !== null ? item.ordem : 0)
     setModalOpen(true)
   }
 

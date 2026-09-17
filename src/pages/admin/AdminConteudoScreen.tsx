@@ -91,8 +91,8 @@ export default function AdminConteudoScreen() {
 
   const handleOpenEdit = (c: ConteudoSiteRecord) => {
     setEditingItem(c)
-    setChave(c.chave)
-    setValor(c.valor)
+    setChave(c.chave || '')
+    setValor(c.valor || '')
     setModalOpen(true)
   }
 

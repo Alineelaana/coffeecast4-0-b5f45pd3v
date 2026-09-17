@@ -65,9 +65,9 @@ export default function AdminIntegrantesScreen() {
 
   const handleOpenEdit = (item: IntegranteRecord) => {
     setEditingItem(item)
-    setNome(item.nome)
-    setBiografia(item.biografia)
-    setOrdem(String(item.ordem || 1))
+    setNome(item.nome || '')
+    setBiografia(item.biografia || '')
+    setOrdem(item.ordem !== undefined && item.ordem !== null ? String(item.ordem) : '1')
     setInstagram(item.instagram || '')
     setLinkEpisodio(item.link_episodio || '')
     setFotoFile(null)
@@ -412,7 +412,16 @@ export default function AdminIntegrantesScreen() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-vinho">Foto Oficial</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-vinho">
+                  Foto Oficial {editingItem ? '(Opcional)' : ''}
+                </Label>
+                {editingItem && (
+                  <span className="text-[10px] text-emerald-800 font-semibold bg-emerald-100/70 border border-emerald-300 px-2 py-0.5 rounded-full">
+                    Deixe em branco para manter a foto atual
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <Input
                   type="file"
@@ -421,6 +430,9 @@ export default function AdminIntegrantesScreen() {
                   className="bg-white border-vinho/20 text-xs"
                 />
               </div>
+              {editingItem && editingItem.foto && !fotoFile && (
+                <p className="text-[11px] text-vinho/65">Foto atual preservada no registro.</p>
+              )}
               <p className="text-[10px] text-vinho/60">
                 Formatos JPG ou PNG (recomendado proporção quadrada ou retrato).
               </p>
