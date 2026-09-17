@@ -34,6 +34,7 @@ import {
   Sparkles,
   Activity,
   BookOpen,
+  HelpCircle,
 } from 'lucide-react'
 import { getFileUrl } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
@@ -377,7 +378,15 @@ export default function AdminLayout() {
       label: 'Documentação',
       path: '/admin/documentacao',
       icon: BookOpen,
-      badge: 'Guia',
+      badge: 'Dossiê',
+      exact: false,
+    },
+    {
+      key: 'guia_ajuda',
+      label: 'Guia de Ajuda',
+      path: '/admin/guia-ajuda',
+      icon: HelpCircle,
+      badge: 'Ajuda',
       exact: false,
     },
   ]
@@ -613,6 +622,14 @@ export default function AdminLayout() {
             </NavLink>
 
             <NavLink
+              to="/admin/guia-ajuda"
+              className="text-[11px] text-dourado-light hover:text-white flex items-center gap-1.5 transition-colors font-medium py-1"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-dourado" />
+              Guia de Ajuda
+            </NavLink>
+
+            <NavLink
               to="/membros"
               className="text-[11px] text-marfim/80 hover:text-white flex items-center gap-1.5 transition-colors font-medium py-1"
             >
@@ -661,6 +678,15 @@ export default function AdminLayout() {
         </NavLink>
 
         <div className="flex items-center gap-2">
+          <NavLink
+            to="/admin/guia-ajuda"
+            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-vinho-light text-dourado active:scale-95 transition-all"
+            aria-label="Guia de Ajuda do Sistema"
+            title="Guia de Ajuda & Primeiro Acesso"
+          >
+            <HelpCircle className="w-5 h-5 text-dourado" />
+          </NavLink>
+
           <NavLink
             to="/admin/notificacoes"
             className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-vinho-light text-marfim relative active:scale-95 transition-all"
@@ -916,6 +942,20 @@ export default function AdminLayout() {
           )}
 
           <div className="flex items-center gap-3">
+            {/* BOTÃO GUIA DE AJUDA & PRIMEIRO ACESSO NO CABEÇALHO (PARA TODOS OS USUÁRIOS) */}
+            <NavLink
+              to="/admin/guia-ajuda"
+              className="text-xs text-vinho hover:text-dourado-dark flex items-center gap-1.5 transition-all font-bold bg-[#D4AF37]/20 border border-[#D4AF37]/50 hover:bg-[#D4AF37]/30 hover:border-[#D4AF37] px-3.5 py-1.5 rounded-full shadow-2xs group"
+              title="Guia de Ajuda & Primeiro Acesso: saiba onde clicar e para que serve cada aba e botão"
+              aria-label="Abrir Guia de Ajuda do Sistema"
+            >
+              <HelpCircle className="w-4 h-4 text-[#D4AF37] group-hover:scale-110 transition-transform" />
+              <span className="text-vinho font-bold">Ajuda</span>
+              <span className="hidden lg:inline text-[10px] text-vinho/70 font-normal">
+                (Primeiro Acesso)
+              </span>
+            </NavLink>
+
             <NavLink
               to="/admin/notificacoes"
               className="text-xs text-vinho hover:text-dourado-dark flex items-center gap-1.5 transition-colors font-semibold bg-marfim border border-vinho/15 hover:border-dourado px-3 py-1.5 rounded-full relative"

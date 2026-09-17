@@ -25,6 +25,7 @@ import {
   Headphones,
   User,
   MessageSquare,
+  HelpCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDateBR, extractYouTubeId, getFileUrl } from '@/lib/formatters'
@@ -188,6 +189,19 @@ export default function MembersScreen() {
                     {chatUnreadCount}
                   </Badge>
                 )}
+              </Button>
+            </Link>
+
+            {/* Botão de Ajuda / Primeiro Acesso no cabeçalho da Área de Membros */}
+            <Link to="/guia-ajuda">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-dourado/60 text-dourado-light hover:bg-vinho-light bg-transparent font-bold text-xs rounded-full px-3 inline-flex items-center gap-1.5 shadow-2xs"
+                title="Guia de Ajuda & Primeiro Acesso"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-dourado" />
+                <span className="hidden sm:inline">Ajuda</span>
               </Button>
             </Link>
 

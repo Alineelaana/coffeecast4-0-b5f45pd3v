@@ -18,6 +18,7 @@ import {
   Compass,
   ChevronRight,
   ChevronDown,
+  HelpCircle,
 } from 'lucide-react'
 import { HeaderNavbarLogo } from '@/components/HeaderNavbarLogo'
 import { Button } from '@/components/ui/button'
@@ -167,6 +168,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
       isRoute: false,
       description: 'Propósito do CoffeeCast',
       icon: Compass,
+    },
+    {
+      label: 'Guia de Ajuda',
+      href: '/guia-ajuda',
+      isRoute: true,
+      description: 'Primeiro acesso, abas e botões',
+      icon: HelpCircle,
     },
   ]
 

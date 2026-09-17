@@ -32,6 +32,7 @@
    - 3.13 Chat Interno em Tempo Real (Privado, Grupos e Geral)
    - 3.14 Auditoria do Sistema & Monitoramento Antifraude
    - 3.15 Meu Perfil & Segurança de Acesso
+   - 3.16 Guia de Ajuda & Primeiro Acesso (`/guia-ajuda`)
 4. [Abas Exclusivas do Nível Master](#4-abas-exclusivas-do-nível-master)
    - 4.1 Storefront (Multi-Lojas Ilimitadas com Identidade Própria)
    - 4.2 Domínio do Site & Configurações de DNS
@@ -211,6 +212,15 @@ Central de comando da inteligência artificial:
 ### 3.15 Meu Perfil & Segurança de Acesso
 
 - Atualização de foto de perfil, telefone, biografia e credenciais de acesso com revalidação de senha atual.
+
+### 3.16 Guia de Ajuda & Primeiro Acesso (`/guia-ajuda`)
+
+- **Walkthrough Interativo e Autoexplicativo:** Guia detalhado passo a passo orientado ao primeiro acesso do usuário.
+- **Mapeamento Completo de Cada Aba e Botão:** Explica exatamente onde clicar e para que serve cada recurso das áreas operacionais e do submenu Master.
+- **Filtragem por Perfil de Usuário:** O usuário pode alternar a visualização para ver apenas os módulos pertinentes ao seu nível (Master, ADM, Gerencial, Ouro, Prata) ou visualizar o guia completo com distinção visual de recursos exclusivos.
+- **Botão Sempre Acessível no Cabeçalho:** Ícone e botão dourado "Ajuda" permanentemente visível na barra superior do painel administrativo e atalho na Área de Membros para uso a qualquer momento.
+- **Exportação & Impressão:** Botão "Imprimir / Salvar PDF" integrado para leitura offline ou treinamento presencial de equipe.
+- **Manutenção Centralizada de Conteúdo:** O conteúdo é alimentado pelo módulo `src/data/guiaAjudaData.ts`, garantindo que qualquer nova tela, botão ou alteração no sistema seja refletida automaticamente no guia em um único ponto.
 
 ---
 

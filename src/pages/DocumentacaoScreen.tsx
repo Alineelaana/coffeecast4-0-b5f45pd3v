@@ -29,6 +29,7 @@ import {
   Download,
   Building2,
   Zap,
+  HelpCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -809,6 +810,25 @@ export default function DocumentacaoScreen() {
                 Trilha imutável de logs de todas as ações de usuários, comparador visual de
                 alterações (antes/depois), monitoramento de comportamento suspeito, central de
                 regras de alerta e exportação completa para planilha CSV.
+              </p>
+            </div>
+
+            {/* Guia de Ajuda & Primeiro Acesso */}
+            <div className="border-2 border-[#D4AF37]/50 rounded-2xl p-5 bg-[#D4AF37]/5 space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="font-serif font-bold text-sm text-[#4B1E3F] flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4 text-[#D4AF37]" />
+                  Guia de Ajuda & Primeiro Acesso
+                </h4>
+                <Badge className="bg-[#D4AF37] text-[#4B1E3F] font-bold text-[10px]">
+                  /guia-ajuda
+                </Badge>
+              </div>
+              <p className="text-[#4B1E3F]/80 leading-relaxed">
+                Manual interativo e autoexplicativo voltado a novos e recorrentes usuários. Explica
+                onde clicar e para que serve cada aba do menu lateral e cada botão das principais
+                telas, com filtros por perfil (Master, ADM, Gerencial, Ouro e Prata), botão
+                "Imprimir / Salvar PDF" e atalho permanente no cabeçalho superior do sistema.
               </p>
             </div>
           </div>

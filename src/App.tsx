@@ -44,6 +44,7 @@ import AdminRoteirosScreen from '@/pages/admin/AdminRoteirosScreen'
 import AdminNineScreen from '@/pages/admin/AdminNineScreen'
 import AdminChatManagementScreen from '@/pages/admin/AdminChatManagementScreen'
 import DocumentacaoScreen from '@/pages/DocumentacaoScreen'
+import GuiaAjudaScreen from '@/pages/GuiaAjudaScreen'
 
 export default function App() {
   return (
@@ -118,6 +119,18 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Guia de Ajuda & Primeiro Acesso (Acessível a TODOS os usuários autenticados: Master, ADM, Gerencial, Ouro e Prata) */}
+            <Route
+              path="/guia-ajuda"
+              element={
+                <ProtectedRoute requireMembersOnly>
+                  <GuiaAjudaScreen />
+                </ProtectedRoute>
+              }
+            />
+            {/* Rota amigável de compatibilidade /ajuda */}
+            <Route path="/ajuda" element={<Navigate to="/guia-ajuda" replace />} />
 
             {/* Rotas Administrativas Protegidas (Master e Gerencial) */}
             <Route
@@ -320,6 +333,15 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="guia-ajuda"
+                element={
+                  <ProtectedRoute>
+                    <GuiaAjudaScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="ajuda" element={<Navigate to="/admin/guia-ajuda" replace />} />
             </Route>
 
             {/* Rota 404 */}
