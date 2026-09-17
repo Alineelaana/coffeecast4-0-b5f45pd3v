@@ -1,6 +1,7 @@
 // PocketBase hook para auditoria e garantia de interpolação perfeita nos envios de e-mail.
 // Garante que links de ação de autenticação ({ACTION_URL}) e tokens estejam sempre
 // 100% resolvidos, válidos e direcionando para as rotas públicas do site CoffeeCast 4.0.
+// Produção - CoffeeCast 4.0
 
 onMailerSend((e) => {
   try {
