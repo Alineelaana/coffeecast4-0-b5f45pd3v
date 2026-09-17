@@ -32,7 +32,8 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CoffeeCastLogo } from '@/components/CoffeeCastLogo'
+import officialLogo from '@/assets/sem-nome-1350-x-1080-px-1-c4c50.png'
+import bannerImg from '@/assets/whatsapp-image-2026-09-14-at-22.43.57-19091.jpeg'
 import { useAuth } from '@/context/AuthContext'
 
 export default function DocumentacaoScreen() {
@@ -58,14 +59,27 @@ export default function DocumentacaoScreen() {
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
-              to="/admin"
-              className="font-serif font-bold text-sm sm:text-base text-[#4B1E3F] hover:opacity-80 transition-opacity flex items-center gap-2"
+              to="/"
+              className="group flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 rounded-lg p-0.5"
+              title="Ir para o site CoffeeCast 4.0"
             >
-              <span className="w-2 h-2 rounded-full bg-[#D4AF37]" />
-              Painel Administrativo
+              <img
+                src={officialLogo}
+                alt="CoffeeCast 4.0"
+                className="h-9 sm:h-10 w-auto object-contain drop-shadow-[0_2px_6px_rgba(212,175,55,0.25)] transition-transform duration-200 group-hover:scale-105"
+              />
             </Link>
             <span className="text-[#4B1E3F]/30">/</span>
-            <span className="text-xs font-semibold text-[#4B1E3F]/70">Documentação do Sistema</span>
+            <Link
+              to="/admin"
+              className="font-serif font-bold text-xs sm:text-sm text-[#4B1E3F] hover:text-[#D4AF37] transition-colors"
+            >
+              Painel Admin
+            </Link>
+            <span className="text-[#4B1E3F]/30 hidden sm:inline">/</span>
+            <span className="text-xs font-semibold text-[#4B1E3F]/70 hidden sm:inline">
+              Documentação Oficial
+            </span>
           </div>
 
           <div className="flex items-center gap-2.5">
@@ -101,8 +115,27 @@ export default function DocumentacaoScreen() {
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#C88E9B]/10 rounded-full blur-2xl pointer-events-none print:hidden" />
 
           <div className="relative z-10 flex flex-col items-center text-center space-y-6">
-            <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-[#D4AF37]/40 shadow-inner print:border-[#4B1E3F]/20">
-              <CoffeeCastLogo variant="gold" className="w-20 h-20 sm:w-24 sm:h-24 mx-auto" />
+            {/* Banner oficial wide com a arte do CoffeeCast 4.0 */}
+            <div className="w-full max-w-2xl mx-auto rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-2xl bg-[#1b0816] print:border-[#4B1E3F]/30">
+              <img
+                src={bannerImg}
+                alt="CoffeeCast 4.0 - Mais que conversas, histórias que transformam"
+                className="w-full h-auto object-contain block"
+              />
+            </div>
+
+            {/* Logo Oficial quadrada com wordmark em destaque luxuoso */}
+            <div className="flex flex-col items-center">
+              <div className="relative group">
+                <div className="absolute -inset-2 bg-gradient-to-r from-[#D4AF37]/40 via-amber-300/30 to-[#D4AF37]/40 rounded-3xl blur-md transition-all group-hover:blur-lg print:hidden" />
+                <div className="relative p-4 sm:p-5 bg-[#2B0E23]/90 print:bg-transparent rounded-2xl border-2 border-[#D4AF37]/60 shadow-2xl backdrop-blur-md print:border-[#4B1E3F]/30 print:shadow-none flex items-center justify-center">
+                  <img
+                    src={officialLogo}
+                    alt="CoffeeCast 4.0 — Logo Oficial"
+                    className="h-24 sm:h-32 md:h-36 w-auto max-w-[260px] sm:max-w-[320px] object-contain drop-shadow-[0_4px_16px_rgba(212,175,55,0.4)] transition-transform duration-300 group-hover:scale-[1.03]"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/50 text-[#D4AF37] print:text-[#4B1E3F] text-xs font-bold uppercase tracking-widest shadow-2xs">
@@ -1166,9 +1199,32 @@ export default function DocumentacaoScreen() {
         </section>
       </main>
 
-      {/* RODAPÉ SIMPLES */}
-      <footer className="text-center py-8 text-xs text-[#4B1E3F]/60 print:hidden border-t border-[#4B1E3F]/10 mt-12">
-        <p>© {new Date().getFullYear()} CoffeeCast 4.0 — Documentação Oficial do Sistema.</p>
+      {/* RODAPÉ COM LOGO OFICIAL */}
+      <footer className="py-10 text-xs text-[#4B1E3F]/70 print:hidden border-t border-[#4B1E3F]/10 mt-12 bg-white/60 backdrop-blur-sm">
+        <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/"
+              className="group flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 rounded-lg"
+              title="CoffeeCast 4.0"
+            >
+              <img
+                src={officialLogo}
+                alt="CoffeeCast 4.0"
+                className="h-10 w-auto object-contain drop-shadow-[0_2px_8px_rgba(212,175,55,0.25)] transition-transform duration-200 group-hover:scale-105"
+              />
+            </Link>
+            <div>
+              <p className="font-serif font-bold text-[#4B1E3F]">CoffeeCast 4.0 Pro</p>
+              <p className="text-[11px] text-[#4B1E3F]/60">Histórias que transformam</p>
+            </div>
+          </div>
+
+          <div className="text-center sm:text-right text-[11px] text-[#4B1E3F]/60 space-y-0.5">
+            <p>© {new Date().getFullYear()} CoffeeCast 4.0 — Documentação Oficial do Sistema.</p>
+            <p>Mantida institucionalmente por SAF TECNOLOGIA E GESTAO LTDA</p>
+          </div>
+        </div>
       </footer>
     </div>
   )
