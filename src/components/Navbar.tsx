@@ -18,7 +18,6 @@ import {
   Compass,
   ChevronRight,
   ChevronDown,
-  User,
 } from 'lucide-react'
 import { HeaderNavbarLogo } from '@/components/HeaderNavbarLogo'
 import { Button } from '@/components/ui/button'
@@ -250,30 +249,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
               <span>Área do Convidado</span>
             </Link>
 
-            {/* 2. Meu Perfil ou Área de Membros — Visível no cabeçalho */}
+            {/* 2. Botão Área de Membros (o acesso a Meu Perfil fica exclusivamente dentro da Área de Membros) */}
             {user ? (
-              <div className="flex items-center gap-1 sm:gap-2">
-                <Link
-                  to="/perfil"
-                  onClick={() => setMenuOpen(false)}
-                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/60 text-white bg-vinho/90 hover:bg-vinho hover:border-dourado whitespace-nowrap shadow-xs active:scale-95"
-                  title="Acessar Meu Perfil"
-                >
-                  <User className="w-3.5 h-3.5 text-dourado shrink-0" />
-                  <span className="hidden xs:inline">Meu Perfil</span>
-                  <span className="xs:hidden">Perfil</span>
-                </Link>
-
-                <Link
-                  to="/membros"
-                  onClick={() => setMenuOpen(false)}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/40 text-dourado-light bg-vinho/60 hover:bg-vinho hover:border-dourado whitespace-nowrap shadow-xs"
-                  title="Acessar Área de Membros"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-dourado shrink-0" />
-                  <span>Área de Membros</span>
-                </Link>
-              </div>
+              <Link
+                to="/membros"
+                onClick={() => setMenuOpen(false)}
+                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/60 text-dourado-light bg-vinho/80 hover:bg-vinho hover:border-dourado whitespace-nowrap shadow-xs active:scale-95"
+                title="Acessar Área de Membros"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-dourado shrink-0" />
+                <span className="hidden xs:inline">Área de Membros</span>
+                <span className="xs:hidden">Membros</span>
+              </Link>
             ) : (
               <button
                 type="button"
@@ -402,33 +389,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
                     })}
                   </div>
 
-                  {/* Barra inferior de acessos rápidos (Meu Perfil + Área de Membros + Área Administrativa) */}
-                  <div className="mt-3 pt-3 border-t border-vinho/10 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {/* Barra inferior de acessos rápidos (Área de Membros + Área Administrativa) */}
+                  <div className="mt-3 pt-3 border-t border-vinho/10 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {user ? (
-                      <>
-                        <Link
-                          to="/perfil"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-vinho text-marfim border border-dourado/60 text-xs font-bold hover:bg-vinho-dark transition-all"
-                        >
-                          <User className="w-3.5 h-3.5 text-dourado" />
-                          <span>Meu Perfil</span>
-                        </Link>
-
-                        <Link
-                          to="/membros"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-vinho/90 text-marfim border border-dourado/30 text-xs font-semibold hover:bg-vinho-dark transition-all"
-                        >
-                          <Sparkles className="w-3.5 h-3.5 text-dourado" />
-                          <span>Área de Membros</span>
-                        </Link>
-                      </>
+                      <Link
+                        to="/membros"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-vinho text-marfim border border-dourado/50 text-xs font-semibold hover:bg-vinho-dark transition-all"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-dourado" />
+                        <span>Área de Membros</span>
+                      </Link>
                     ) : (
                       <button
                         type="button"
                         onClick={handleMembersClick}
-                        className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-vinho text-marfim border border-dourado/40 text-xs font-semibold hover:bg-vinho-dark transition-all cursor-pointer sm:col-span-2"
+                        className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-vinho text-marfim border border-dourado/40 text-xs font-semibold hover:bg-vinho-dark transition-all cursor-pointer"
                       >
                         <Lock className="w-3.5 h-3.5 text-dourado" />
                         <span>Área de Membros</span>
@@ -438,7 +414,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
                     <Link
                       to={isAdmin ? '/admin' : '/login'}
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-dourado text-vinho border border-dourado-dark/30 text-xs font-bold hover:bg-dourado-dark transition-all shadow-xs"
+                      className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-dourado text-vinho border border-dourado-dark/30 text-xs font-bold hover:bg-dourado-dark transition-all shadow-xs"
                     >
                       <ShieldCheck className="w-3.5 h-3.5" />
                       <span>{isAdmin ? 'Painel Admin' : 'Área Administrativa'}</span>
