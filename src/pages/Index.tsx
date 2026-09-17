@@ -38,6 +38,146 @@ import {
 import bannerComercialImg from '@/assets/chatgpt-image-15-de-set.de-2026-135749-7d01c.png'
 import { openExternalUrl, formatExternalUrl } from '@/lib/openUrl'
 
+function ManifestoSection() {
+  const [expanded, setExpanded] = useState(false)
+  const fullContentRef = React.useRef<HTMLDivElement>(null)
+
+  return (
+    <section
+      id="manifesto"
+      aria-label="Manifesto Coffee Cast 4.0"
+      className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 bg-marfim border-t border-vinho/10 relative overflow-hidden"
+    >
+      {/* Detalhes sutis decorativos de fundo */}
+      <div className="absolute top-0 right-1/4 w-72 h-72 bg-dourado/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-rose-brand/20 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="max-w-3xl mx-auto relative z-10">
+        <div className="bg-white/80 backdrop-blur-xs border border-dourado/30 hover:border-dourado/60 rounded-3xl p-6 sm:p-10 md:p-12 shadow-sm transition-all">
+          {/* Cabeçalho do Manifesto */}
+          <div className="text-center space-y-3 mb-6 sm:mb-8">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-dourado/15 border border-dourado/40 text-[#4B1E3F] text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-dourado shrink-0" />
+              <span>Nossa Voz & Propósito</span>
+            </div>
+
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#4B1E3F] tracking-wide sm:tracking-wider uppercase">
+              MANIFESTO COFFEE CAST 4.0
+            </h2>
+
+            {/* Ornamento dourado elegante com estrela central */}
+            <div className="flex items-center justify-center gap-3 pt-1">
+              <span className="h-px w-12 sm:w-20 bg-gradient-to-r from-transparent to-[#D4AF37]" />
+              <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+              <span className="h-px w-12 sm:w-20 bg-gradient-to-l from-transparent to-[#D4AF37]" />
+            </div>
+          </div>
+
+          {/* Texto do Manifesto */}
+          <div className="relative">
+            {/* Bloco compacto inicial (sempre visível: ~4-6 linhas terminando em "...Uma história.") */}
+            <div className="text-center text-[#4B1E3F]/90 leading-relaxed font-light text-sm sm:text-base space-y-4">
+              <p>A gente acredita que toda grande transformação pode começar com uma conversa.</p>
+              <p className="space-y-1">
+                <span className="block">Uma mesa.</span>
+                <span className="block">Um café.</span>
+                <span className="block">Uma pergunta.</span>
+                <span className="block">Uma história.</span>
+              </p>
+            </div>
+
+            {/* Bloco expansível suave com o restante do manifesto exato */}
+            <div
+              id="manifesto-full-text"
+              ref={fullContentRef}
+              className={`grid transition-[grid-template-rows,opacity] duration-500 ease-in-out ${
+                expanded
+                  ? 'grid-rows-[1fr] opacity-100 mt-4'
+                  : 'grid-rows-[0fr] opacity-0 mt-0 pointer-events-none'
+              }`}
+            >
+              <div className="overflow-hidden">
+                <div className="text-center text-[#4B1E3F]/90 leading-relaxed font-light text-sm sm:text-base space-y-4 pt-1">
+                  <p className="space-y-1">
+                    <span className="block">A gente acredita no poder de parar para ouvir.</span>
+                    <span className="block">De falar sem precisar parecer perfeito.</span>
+                    <span className="block">De compartilhar experiências.</span>
+                    <span className="block">
+                      De descobrir que aquilo que parecia ser só nosso também atravessa outras
+                      pessoas.
+                    </span>
+                  </p>
+
+                  <p className="space-y-1">
+                    <span className="block">Aqui cabem a força e a vulnerabilidade.</span>
+                    <span className="block">O salto alto e o moletom.</span>
+                    <span className="block">O autocuidado e o caos.</span>
+                    <span className="block">A conquista e o recomeço.</span>
+                    <span className="block">A dúvida e a descoberta.</span>
+                  </p>
+
+                  <p>
+                    Ser humano é ser múltiplo. Conversar é permitir que novas possibilidades
+                    apareçam.
+                  </p>
+
+                  <p className="space-y-1">
+                    <span className="block">Somos encontro.</span>
+                    <span className="block">Somos conexão.</span>
+                    <span className="block">Somos inspiração.</span>
+                    <span className="block">Somos movimento.</span>
+                  </p>
+
+                  <p>Criamos espaços para conversas que acolhem, despertam e transformam.</p>
+
+                  <p className="font-medium text-[#4B1E3F]">
+                    Porque aqui o café pode esfriar, mas o papo nunca!
+                  </p>
+
+                  <div className="pt-3 pb-1 border-t border-vinho/10 max-w-md mx-auto">
+                    <p className="font-serif italic font-bold text-base sm:text-lg text-[#4B1E3F] tracking-wide mb-1">
+                      Coffee Cast 4.0
+                    </p>
+                    <p className="text-xs sm:text-sm text-[#4B1E3F]/80 italic">
+                      Conversas que acolhem. Conexões que inspiram. Transformações que permanecem.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Fade gradiente sutil sobre a base quando recolhido */}
+            {!expanded && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none h-6 bg-gradient-to-t from-white/90 to-transparent -mt-3"
+              />
+            )}
+          </div>
+
+          {/* Botão Ler mais / Ler menos padronizado com chevron */}
+          <div className="pt-4 mt-2 border-t border-vinho/10 flex justify-center items-center">
+            <button
+              type="button"
+              onClick={() => setExpanded((prev) => !prev)}
+              aria-expanded={expanded}
+              aria-controls="manifesto-full-text"
+              className="inline-flex items-center gap-1.5 font-serif text-xs sm:text-sm font-semibold text-[#4B1E3F] hover:text-dourado-dark transition-colors duration-200 cursor-pointer focus:outline-hidden focus-visible:ring-1 focus-visible:ring-dourado rounded-full px-3 py-1 group/btn"
+            >
+              <span>{expanded ? 'Ler menos' : 'Ler mais'}</span>
+              {expanded ? (
+                <ChevronUp className="w-4 h-4 text-[#D4AF37] group-hover/btn:text-dourado-dark transition-transform" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-[#D4AF37] group-hover/btn:text-dourado-dark transition-transform" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function MemberBio({ biografia }: { biografia?: string }) {
   const [expanded, setExpanded] = useState(false)
   const [canClamp, setCanClamp] = useState(false)
@@ -671,6 +811,9 @@ export default function Index() {
 
       {/* SEÇÃO PÚBLICA: DEIXE SEU DEPOIMENTO (ACIMA DE MISSÃO, VISÃO & VALORES) */}
       <GuestTestimonialForm />
+
+      {/* SEÇÃO: MANIFESTO COFFEE CAST 4.0 (EXATAMENTE LOGO ACIMA DE MISSÃO, VISÃO & VALORES) */}
+      <ManifestoSection />
 
       {/* SEÇÃO 9: MISSÃO, VISÃO & VALORES (ÚLTIMA SEÇÃO DE CONTEÚDO, LOGO ACIMA DO RODAPÉ) */}
       <section
