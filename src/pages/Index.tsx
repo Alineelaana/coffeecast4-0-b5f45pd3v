@@ -63,8 +63,8 @@ function ManifestoSection() {
               <span>Nossa Voz & Propósito</span>
             </div>
 
-            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-wide sm:tracking-wider uppercase text-[#D4AF37] drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
-              MANIFESTO COFFEE CAST 4.0
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-wide text-[#D4AF37] drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
+              Manifesto Coffee Cast 4.0
             </h2>
 
             {/* Ornamento dourado elegante com estrela central */}
