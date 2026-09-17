@@ -39,6 +39,8 @@ import {
   Check,
   Share2,
   Sparkles,
+  Download,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
@@ -118,6 +120,76 @@ export default function AdminDepoimentosScreen() {
   const [selectedRecebido, setSelectedRecebido] = useState<DepoimentoConvidadoRecord | null>(null)
   const [modalRecebidoOpen, setModalRecebidoOpen] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+  const [downloadingPhotoId, setDownloadingPhotoId] = useState<string | null>(null)
+
+  // Função para baixar a foto do convidado em resolução original
+  const handleDownloadPhoto = async (
+    record: { id: string; collectionId?: string; collectionName?: string },
+    filename: string,
+    guestName: string,
+  ) => {
+    if (!filename) return
+
+    const downloadKey = `${record.id}_${filename}`
+    try {
+      setDownloadingPhotoId(downloadKey)
+
+      // Obter URL original sem thumbnail
+      const fileUrl = getFileUrl(record, filename)
+      if (!fileUrl) {
+        throw new Error('URL da foto indisponível')
+      }
+
+      const response = await fetch(fileUrl)
+      if (!response.ok) {
+        throw new Error(`Falha no download HTTP ${response.status}`)
+      }
+
+      const blob = await response.blob()
+
+      // Determinar extensão correta
+      let extension = ''
+      const matchExt = filename.match(/\.([a-zA-Z0-9]+)(?:\?.*)?$/)
+      if (matchExt && matchExt[1]) {
+        extension = `.${matchExt[1].toLowerCase()}`
+      } else if (blob.type.includes('png')) {
+        extension = '.png'
+      } else if (blob.type.includes('webp')) {
+        extension = '.webp'
+      } else {
+        extension = '.jpg'
+      }
+
+      // Gerar slug amigável do convidado
+      const safeGuestSlug =
+        guestName
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '') || 'convidado'
+
+      const downloadFileName = `depoimento-${safeGuestSlug}${extension}`
+
+      // Criar link temporário e disparar download
+      const blobUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = downloadFileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(blobUrl)
+
+      toast.success(`Foto de ${guestName} baixada com sucesso!`)
+    } catch (err) {
+      console.error('Erro ao baixar foto:', err)
+      toast.error('Não foi possível baixar a foto — tente novamente.')
+    } finally {
+      setDownloadingPhotoId(null)
+    }
+  }
 
   // Controle de linhas expandidas para "Ler mais / Ler menos"
   const [expandedTextIds, setExpandedTextIds] = useState<Record<string, boolean>>({})
@@ -667,6 +739,22 @@ export default function AdminDepoimentosScreen() {
                       </div>
 
                       <div className="flex items-center gap-1">
+                        {item.foto && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={downloadingPhotoId === `${item.id}_${item.foto}`}
+                            onClick={() => handleDownloadPhoto(item, item.foto!, item.nome)}
+                            className="h-9 w-9 p-0 text-dourado-dark hover:text-vinho hover:bg-vinho/5 min-h-[36px]"
+                            title="Baixar foto do convidado"
+                          >
+                            {downloadingPhotoId === `${item.id}_${item.foto}` ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-dourado-dark" />
+                            ) : (
+                              <Download className="w-4 h-4" />
+                            )}
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -686,15 +774,41 @@ export default function AdminDepoimentosScreen() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      {item.de_nossa_autoridade ? (
-                        <Badge className="bg-vinho text-dourado text-[10px] font-semibold">
-                          Visão da Produção
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-[10px] text-vinho border-vinho/20">
-                          Depoimento do Convidado
-                        </Badge>
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        {item.de_nossa_autoridade ? (
+                          <Badge className="bg-vinho text-dourado text-[10px] font-semibold">
+                            Visão da Produção
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] text-vinho border-vinho/20"
+                          >
+                            Depoimento do Convidado
+                          </Badge>
+                        )}
+                      </div>
+
+                      {item.foto && (
+                        <button
+                          type="button"
+                          disabled={downloadingPhotoId === `${item.id}_${item.foto}`}
+                          onClick={() => handleDownloadPhoto(item, item.foto!, item.nome)}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-dourado-dark hover:text-vinho transition-colors cursor-pointer"
+                        >
+                          {downloadingPhotoId === `${item.id}_${item.foto}` ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <span>Baixando...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-3 h-3" />
+                              <span>Baixar foto</span>
+                            </>
+                          )}
+                        </button>
                       )}
                     </div>
 
@@ -837,12 +951,29 @@ export default function AdminDepoimentosScreen() {
                             </button>
                           )}
                         </TableCell>
-                        <TableCell className="text-right space-x-1">
+                        <TableCell className="text-right space-x-1 whitespace-nowrap">
+                          {item.foto && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={downloadingPhotoId === `${item.id}_${item.foto}`}
+                              onClick={() => handleDownloadPhoto(item, item.foto!, item.nome)}
+                              className="h-8 w-8 p-0 text-dourado-dark hover:text-vinho hover:bg-vinho/10"
+                              title="Baixar foto do convidado"
+                            >
+                              {downloadingPhotoId === `${item.id}_${item.foto}` ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-dourado-dark" />
+                              ) : (
+                                <Download className="w-3.5 h-3.5" />
+                              )}
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleOpenEdit(item)}
                             className="h-8 w-8 p-0 text-vinho/70 hover:text-vinho hover:bg-vinho/10"
+                            title="Editar depoimento"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </Button>
@@ -851,6 +982,7 @@ export default function AdminDepoimentosScreen() {
                             size="sm"
                             onClick={() => handleDelete(item.id, item.nome)}
                             className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            title="Excluir depoimento"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -963,11 +1095,28 @@ export default function AdminDepoimentosScreen() {
                       </div>
 
                       <div className="flex items-center gap-1">
+                        {item.foto && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={downloadingPhotoId === `${item.id}_${item.foto}`}
+                            onClick={() => handleDownloadPhoto(item, item.foto, item.nome)}
+                            className="h-9 w-9 p-0 text-dourado-dark hover:text-vinho hover:bg-vinho/5 min-h-[36px]"
+                            title="Baixar foto do convidado"
+                          >
+                            {downloadingPhotoId === `${item.id}_${item.foto}` ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-dourado-dark" />
+                            ) : (
+                              <Download className="w-4 h-4" />
+                            )}
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleOpenRecebidoDetails(item)}
                           className="h-9 w-9 p-0 text-vinho/70 hover:text-vinho min-h-[36px]"
+                          title="Ver detalhes"
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
@@ -976,6 +1125,7 @@ export default function AdminDepoimentosScreen() {
                           size="sm"
                           onClick={() => handleDeleteRecebido(item.id, item.nome)}
                           className="h-9 w-9 p-0 text-red-500 hover:text-red-700 min-h-[36px]"
+                          title="Excluir envio"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -1030,26 +1180,51 @@ export default function AdminDepoimentosScreen() {
                     </div>
 
                     {/* Botões rápidos de aprovação no card mobile */}
-                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-vinho/5">
-                      <Button
-                        size="sm"
-                        disabled={actionLoading || item.status === 'aprovada'}
-                        onClick={() => handleAprovarEPublicar(item)}
-                        className="bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] h-9 rounded-xl flex items-center justify-center gap-1.5"
-                      >
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        <span>Aprovar</span>
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={actionLoading || item.status === 'oculta'}
-                        onClick={() => handleManterOculta(item)}
-                        className="border-vinho/20 text-vinho text-[11px] h-9 rounded-xl flex items-center justify-center gap-1.5"
-                      >
-                        <EyeOff className="w-3.5 h-3.5" />
-                        <span>Ocultar</span>
-                      </Button>
+                    <div className="space-y-2 pt-1 border-t border-vinho/5">
+                      {item.foto && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={downloadingPhotoId === `${item.id}_${item.foto}`}
+                          onClick={() => handleDownloadPhoto(item, item.foto, item.nome)}
+                          className="w-full border-dourado/40 text-dourado-dark hover:bg-dourado/10 text-[11px] h-8 rounded-xl flex items-center justify-center gap-1.5 font-medium"
+                        >
+                          {downloadingPhotoId === `${item.id}_${item.foto}` ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Baixando foto original...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Baixar Foto do Convidado</span>
+                            </>
+                          )}
+                        </Button>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          size="sm"
+                          disabled={actionLoading || item.status === 'aprovada'}
+                          onClick={() => handleAprovarEPublicar(item)}
+                          className="bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] h-9 rounded-xl flex items-center justify-center gap-1.5"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          <span>Aprovar</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={actionLoading || item.status === 'oculta'}
+                          onClick={() => handleManterOculta(item)}
+                          className="border-vinho/20 text-vinho text-[11px] h-9 rounded-xl flex items-center justify-center gap-1.5"
+                        >
+                          <EyeOff className="w-3.5 h-3.5" />
+                          <span>Ocultar</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )
@@ -1165,6 +1340,23 @@ export default function AdminDepoimentosScreen() {
                           )}
                         </TableCell>
                         <TableCell className="text-right space-x-1.5 whitespace-nowrap">
+                          {item.foto && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={downloadingPhotoId === `${item.id}_${item.foto}`}
+                              onClick={() => handleDownloadPhoto(item, item.foto, item.nome)}
+                              className="h-8 w-8 p-0 text-dourado-dark hover:text-vinho hover:bg-vinho/10"
+                              title="Baixar foto do convidado"
+                            >
+                              {downloadingPhotoId === `${item.id}_${item.foto}` ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-dourado-dark" />
+                              ) : (
+                                <Download className="w-3.5 h-3.5" />
+                              )}
+                            </Button>
+                          )}
+
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1372,13 +1564,15 @@ export default function AdminDepoimentosScreen() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     {selectedRecebido.foto ? (
-                      <img
-                        src={getFileUrl(selectedRecebido, selectedRecebido.foto)}
-                        alt={selectedRecebido.nome}
-                        className="w-14 h-14 rounded-full object-cover border-2 border-dourado shadow-sm"
-                      />
+                      <div className="relative group">
+                        <img
+                          src={getFileUrl(selectedRecebido, selectedRecebido.foto)}
+                          alt={selectedRecebido.nome}
+                          className="w-16 h-16 rounded-2xl object-cover border-2 border-dourado shadow-sm"
+                        />
+                      </div>
                     ) : (
-                      <div className="w-14 h-14 rounded-full bg-vinho/10 text-vinho font-bold flex items-center justify-center text-base">
+                      <div className="w-16 h-16 rounded-2xl bg-vinho/10 text-vinho font-bold flex items-center justify-center text-base">
                         {selectedRecebido.nome.slice(0, 2).toUpperCase()}
                       </div>
                     )}
@@ -1396,6 +1590,35 @@ export default function AdminDepoimentosScreen() {
                           ? selectedRecebido.instagram
                           : `@${selectedRecebido.instagram}`}
                       </p>
+                      {selectedRecebido.foto && (
+                        <button
+                          type="button"
+                          disabled={
+                            downloadingPhotoId === `${selectedRecebido.id}_${selectedRecebido.foto}`
+                          }
+                          onClick={() =>
+                            handleDownloadPhoto(
+                              selectedRecebido,
+                              selectedRecebido.foto,
+                              selectedRecebido.nome,
+                            )
+                          }
+                          className="inline-flex items-center gap-1.5 text-xs text-dourado-dark hover:text-vinho font-bold mt-1.5 underline decoration-dourado/50 hover:decoration-vinho cursor-pointer"
+                        >
+                          {downloadingPhotoId ===
+                          `${selectedRecebido.id}_${selectedRecebido.foto}` ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Baixando foto...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Baixar Foto em Alta Resolução</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -1462,6 +1685,32 @@ export default function AdminDepoimentosScreen() {
                 </Button>
 
                 <div className="flex items-center gap-2">
+                  {selectedRecebido.foto && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      disabled={
+                        downloadingPhotoId === `${selectedRecebido.id}_${selectedRecebido.foto}`
+                      }
+                      onClick={() =>
+                        handleDownloadPhoto(
+                          selectedRecebido,
+                          selectedRecebido.foto,
+                          selectedRecebido.nome,
+                        )
+                      }
+                      className="border-dourado/40 text-dourado-dark hover:bg-dourado/10 text-xs min-h-[44px] flex-1 sm:flex-none"
+                    >
+                      {downloadingPhotoId === `${selectedRecebido.id}_${selectedRecebido.foto}` ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5 mr-1" />
+                      )}
+                      Baixar Foto
+                    </Button>
+                  )}
+
                   <Button
                     size="sm"
                     variant="outline"
@@ -1472,7 +1721,6 @@ export default function AdminDepoimentosScreen() {
                     <EyeOff className="w-3.5 h-3.5 mr-1" />
                     Manter Oculta
                   </Button>
-
                   <Button
                     size="sm"
                     disabled={actionLoading || selectedRecebido.status === 'aprovada'}
