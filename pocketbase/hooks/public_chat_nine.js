@@ -19,7 +19,7 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       conversationId = 'conv_' + $security.randomString(20)
     }
 
-    // Carregar configuração global da Nine (atendimento_automatico, prompt_sistema, base_conhecimento)
+    // Carregar configuração global da Nine (atendimento_automatico, prompt_sistema)
     let globalConfig = null
     try {
       globalConfig = $app.findFirstRecordByData('nine_config', 'chave', 'global')
@@ -27,7 +27,7 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
 
     const isGlobalAuto = globalConfig ? globalConfig.getBool('atendimento_automatico') : true
     const customPrompt = globalConfig ? globalConfig.getString('prompt_sistema') || '' : ''
-    const customKnowledge = globalConfig ? globalConfig.getString('base_conhecimento') || '' : ''
+    const legacyKnowledge = globalConfig ? globalConfig.getString('base_conhecimento') || '' : ''
 
     // Buscar ou criar o registro da conversa na coleção nine_conversas
     let conversaRecord = null
@@ -60,8 +60,6 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       conversaRecord.set('ultimo_remetente', 'visitante')
       conversaRecord.set('data_ultima_mensagem', new Date().toISOString())
       conversaRecord.set('total_mensagens', currentTotal + 1)
-      // Se modo for humano_respondendo ou aguardando_humano, mantém para o humano
-      // Se global estiver desligado e estiver em automatico, muda para aguardando_humano
       if (!isGlobalAuto && conversaRecord.getString('modo_atendimento') === 'automatico') {
         conversaRecord.set('modo_atendimento', 'aguardando_humano')
       }
@@ -82,14 +80,12 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
 
     const currentMode = conversaRecord.getString('modo_atendimento')
 
-    // SE MODO FOR HUMANO (humano_respondendo ou aguardando_humano) OU ATENDIMENTO AUTOMÁTICO GLOBAL DESLIGADO:
-    // A Nine NÃO gera resposta de IA nessa conversa.
+    // SE MODO FOR HUMANO OU ATENDIMENTO AUTOMÁTICO GLOBAL DESLIGADO:
     if (
       !isGlobalAuto ||
       currentMode === 'humano_respondendo' ||
       currentMode === 'aguardando_humano'
     ) {
-      // Se estava aguardando ou assumido por humano, responder avisando gentilmente
       const humanNotice =
         'Sua mensagem foi recebida com sucesso! Um integrante da nossa equipe assumiu este atendimento e responderá em instantes por aqui. ☕'
 
@@ -125,41 +121,152 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       })
     }
 
-    let responseContent = ''
-    let returnedMessageId = ''
-    let citations = []
-    let modeUsed = 'none'
+    // =========================================================================
+    // CONTEXTO DINÂMICO CONSULTADO EM TEMPO REAL NO BANCO DE DADOS
+    // A Nine consulta episódios, integrantes, agenda, base de conhecimento e conteúdo
+    // =========================================================================
+    let dynamicContextParts = []
 
-    // Montar instruções completas combinando o prompt base do treinamento e a base de conhecimento
-    let combinedSystemPrompt =
+    // 1. Entradas Ativas da Base de Conhecimento (nine_conhecimento)
+    try {
+      const knowledgeRecords = $app.findRecordsByFilter(
+        'nine_conhecimento',
+        'ativo = true',
+        'ordem,created',
+        50,
+        0,
+      )
+      if (knowledgeRecords && knowledgeRecords.length > 0) {
+        let kbText = '### BASE DE CONHECIMENTO OFICIAL (PERGUNTAS, RESPOSTAS E ORIENTAÇÕES):\n'
+        for (let i = 0; i < knowledgeRecords.length; i++) {
+          const rec = knowledgeRecords[i]
+          const tipo = rec.getString('tipo')
+          const titulo = rec.getString('titulo')
+          const conteudo = rec.getString('conteudo')
+          const categoria = rec.getString('categoria')
+          kbText += `• [${tipo.toUpperCase()}${categoria ? ' - ' + categoria : ''}] ${titulo}\n  ${conteudo}\n`
+        }
+        dynamicContextParts.push(kbText)
+      }
+    } catch (kbErr) {
+      console.log('Aviso ao carregar nine_conhecimento:', kbErr)
+    }
+
+    // Se ainda houver algo legado em nine_config e não duplicado
+    if (legacyKnowledge && dynamicContextParts.length === 0) {
+      dynamicContextParts.push('### BASE DE CONHECIMENTO COMPLEMENTAR:\n' + legacyKnowledge)
+    }
+
+    // 2. Episódios Lançados (episodios - mais recentes primeiro)
+    try {
+      const epRecords = $app.findRecordsByFilter('episodios', '', '-numero', 12, 0)
+      if (epRecords && epRecords.length > 0) {
+        let epText = '### ÚLTIMOS EPISÓDIOS LANÇADOS NO YOUTUBE (TODOS AOS SÁBADOS ÀS 10H):\n'
+        for (let i = 0; i < epRecords.length; i++) {
+          const ep = epRecords[i]
+          const num = ep.getInt('numero')
+          const tit = ep.getString('titulo')
+          const url = ep.getString('youtube_url')
+          epText += `• EP #${num}: "${tit}" | Link: ${url}\n`
+        }
+        dynamicContextParts.push(epText)
+      }
+    } catch (epErr) {
+      console.log('Aviso ao carregar episodios para Nine:', epErr)
+    }
+
+    // 3. Integrantes do Podcast (integrantes)
+    try {
+      const intRecords = $app.findRecordsByFilter('integrantes', '', 'ordem', 10, 0)
+      if (intRecords && intRecords.length > 0) {
+        let intText = '### EQUIPE E INTEGRANTES OFICIAIS DO COFFEECAST 4.0:\n'
+        for (let i = 0; i < intRecords.length; i++) {
+          const it = intRecords[i]
+          const nome = it.getString('nome')
+          const insta = it.getString('instagram')
+          const bio = it.getString('biografia')
+          const epLink = it.getString('link_episodio')
+          intText += `• ${nome} (${insta || 'Instagram oficial'}): ${bio ? bio.slice(0, 220) : ''}${epLink ? ' | Episódio de apresentação: ' + epLink : ''}\n`
+        }
+        dynamicContextParts.push(intText)
+      }
+    } catch (intErr) {
+      console.log('Aviso ao carregar integrantes para Nine:', intErr)
+    }
+
+    // 4. Agenda e Próximas Gravações / Postagens (agenda)
+    try {
+      const agendaRecords = $app.findRecordsByFilter(
+        'agenda',
+        '',
+        '-data_postagem,-data_gravacao',
+        6,
+        0,
+      )
+      if (agendaRecords && agendaRecords.length > 0) {
+        let agText = '### AGENDA DE GRAVAÇÕES E PRÓXIMAS POSTAGENS:\n'
+        for (let i = 0; i < agendaRecords.length; i++) {
+          const ag = agendaRecords[i]
+          const titulo = ag.getString('titulo')
+          const convidado = ag.getString('nome_convidado')
+          const postagem = ag.getString('data_postagem')
+          const empresa = ag.getString('empresa')
+          agText += `• ${titulo}${convidado ? ' | Convidado(a): ' + convidado : ''}${empresa ? ' (' + empresa + ')' : ''}${postagem ? ' | Previsão de postagem: ' + postagem.slice(0, 10) : ''}\n`
+        }
+        dynamicContextParts.push(agText)
+      }
+    } catch (agErr) {
+      console.log('Aviso ao carregar agenda para Nine:', agErr)
+    }
+
+    // 5. Páginas e Canais Relevantes do Site
+    let pagesText =
+      '### PÁGINAS E ROTAS DO SITE COFFEECAST 4.0:\n' +
+      '• Página Inicial (/): Episódios, integrantes, fotos, depoimentos e formulário de inscrição de convidados.\n' +
+      '• Guia do Convidado (/convidado): Orientações completas de preparação, cronograma do estúdio, dicas de vestimenta (dress code) e café especial.\n' +
+      '• Formulário do Roteiro (/roteiro): Formulário detalhado que o(a) convidado(a) confirmado(a) preenche antes da gravação (biografia, empresa, temas para enfatizar, fotos e autorização de imagem).\n' +
+      '• Deixar Depoimento (/depoimento): Espaço para ouvintes e convidados registrarem seu relato sobre a transformação que o CoffeeCast causou.\n' +
+      '• Novos episódios: Todo sábado às 10h no canal oficial do YouTube.\n' +
+      '• Redes Sociais: Instagram @coffeecast4.0.\n' +
+      '• Contato Comercial & Produção: Aline Lana pelo WhatsApp (31) 99129-7619.'
+    dynamicContextParts.push(pagesText)
+
+    // Juntar todo o bloco de dados do banco
+    const dynamicContextBlock = dynamicContextParts.join('\n\n')
+
+    // System prompt base focado na personalidade, comportamento e regras
+    const systemPromptBase =
       customPrompt ||
       'Você é a Nine, a assistente virtual oficial do podcast CoffeeCast 4.0 ("Mais que conversas, histórias que transformam").\n\n' +
         'Sua personalidade:\n' +
         '- Calorosa, acolhedora, feminina, elegante, prestativa e amigável (adora usar metáforas de café ☕).\n' +
         '- Comunica-se SEMPRE em Português do Brasil.\n' +
-        '- Dá respostas concisas, claras, objetivas e gentis (evite textos excessivamente longos ou cansativos).\n\n' +
-        'Conhecimentos fundamentais sobre o CoffeeCast 4.0:\n' +
-        '1. Equipe / Integrantes do Podcast:\n' +
-        '   - Aline Lana: Apresentadora e empresária (@alineelaana), apaixonada por viagens, conexões e histórias que transformam.\n' +
-        '   - Dayana Ribas: Integrante (@dayanaribas_), advogada licenciada, estudante de psicanálise e mãe.\n' +
-        '   - Rosi Lima: Integrante (@rosiii.lima), educadora e gestora por experiência, movida por pessoas e ideias.\n' +
-        '   - Flávia Franco: Integrante (@flaviaaffranco), psicoterapeuta sistêmica e consultora estratégica de cultura e desenvolvimento humano.\n\n' +
-        '2. Canais e Links do Site:\n' +
-        '   - Como participar como convidado(a) ou enviar história: formulário na home ou /roteiro.\n' +
-        '   - Roteiro do Convidado: página /roteiro.\n' +
-        '   - Deixar um depoimento: página /depoimento.\n' +
-        '   - Área do Convidado: página /convidado.\n' +
-        '   - Novos episódios: todo sábado às 10h no canal oficial do YouTube.\n' +
-        '   - Redes Sociais: Instagram @coffeecast4.0.\n\n' +
-        '3. Contato e Produção:\n' +
-        '   - Aline Lana pelo WhatsApp: (31) 99129-7619 ou formulário do site.\n\n' +
-        'REGRA CRÍTICA DE OURO:\n' +
-        '- Se não souber com certeza, oriente a falar com a produção por WhatsApp (31) 99129-7619.'
+        '- Dá respostas concisas, claras, objetivas e gentis (evite textos excessivamente longos ou cansativos).\n' +
+        '- Formatação elegante: use listas e destaques apenas quando necessário.\n\n' +
+        'Regras de Atendimento:\n' +
+        '1. Utilize as informações da BASE DE DADOS ATUALIZADA em tempo real fornecida no contexto para responder sobre episódios, agenda, convidados, links e orientações.\n' +
+        '2. REGRA DE OURO: Se o visitante perguntar sobre algo que você NÃO encontrar na base de dados com certeza, NÃO invente dados! Diga educadamente que não possui esse detalhe e oriente com carinho a falar com a produção diretamente através de Aline Lana pelo WhatsApp (31) 99129-7619 ou pelo formulário de contato do site.'
 
-    if (customKnowledge) {
-      combinedSystemPrompt +=
-        '\n\nBASE DE CONHECIMENTO ADICIONAL FORNECIDA PELA EQUIPE:\n' + customKnowledge
-    }
+    // Montar a instrução unificada separando Personalidade e Contexto Dinâmico
+    const fullPromptWithContext =
+      systemPromptBase +
+      '\n\n==================================================\n' +
+      'DADOS ATUALIZADOS EM TEMPO REAL DO BANCO DE DADOS (CONSULTA DINÂMICA):\n' +
+      dynamicContextBlock +
+      '\n==================================================\n' +
+      'Instrução final: Responda ao visitante com base nesses dados sempre atualizados, mantendo seu tom acolhedor e carinhoso.'
+
+    let responseContent = ''
+    let returnedMessageId = ''
+    let citations = []
+    let modeUsed = 'none'
+
+    // Mensagem aprimorada para o agente nativo com o contexto dinâmico
+    const userMessageWithContext =
+      '[CONTEXTO ATUALIZADO DO BANCO DE DADOS]\n' +
+      dynamicContextBlock +
+      '\n\n[MENSAGEM DO VISITANTE]\n' +
+      rawMessage
 
     // 1. Tentar executar via $ai.agent("nine-chat")
     if (typeof $ai !== 'undefined' && $ai.agent) {
@@ -167,7 +274,7 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
         const agentResult = $ai.agent('nine-chat').chat({
           user_id: userId,
           conversation_id: null,
-          message: rawMessage,
+          message: userMessageWithContext,
         })
 
         if (agentResult && agentResult.content) {
@@ -181,7 +288,7 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       }
     }
 
-    // 2. Se agente nativo não responder, fallback via $ai.chat usando prompt treinado atualizado
+    // 2. Fallback via $ai.chat usando fullPromptWithContext
     if (!responseContent && typeof $ai !== 'undefined' && typeof $ai.chat === 'function') {
       try {
         const chatRes = $ai.chat({
@@ -189,7 +296,7 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
           messages: [
             {
               role: 'system',
-              content: combinedSystemPrompt,
+              content: fullPromptWithContext,
             },
             {
               role: 'user',
@@ -256,7 +363,6 @@ routerAdd('GET', '/backend/v1/nine/chat/messages', (e) => {
       return e.badRequestError('conversation_id é obrigatório.')
     }
 
-    // Obter conversa para checar modo de atendimento
     let modo = 'automatico'
     try {
       const conv = $app.findFirstRecordByData('nine_conversas', 'conversation_id', conversationId)
@@ -265,7 +371,6 @@ routerAdd('GET', '/backend/v1/nine/chat/messages', (e) => {
       }
     } catch (_) {}
 
-    // Buscar mensagens ordenadas cronologicamente
     let msgs = []
     try {
       const records = $app.findRecordsByFilter(

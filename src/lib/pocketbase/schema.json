@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T15:10:53.085Z",
+  "generatedAt": "2026-09-17T15:24:41.806Z",
   "collections": [
     {
       "name": "users",
@@ -1252,6 +1252,75 @@
       "indexes": [
         "CREATE INDEX idx_nine_msg_cid ON nine_mensagens (conversation_id)",
         "CREATE INDEX idx_nine_msg_created ON nine_mensagens (created)"
+      ]
+    },
+    {
+      "name": "nine_conhecimento",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != \"\"",
+        "view": "@request.auth.id != \"\"",
+        "create": "@request.auth.id != \"\"",
+        "update": "@request.auth.id != \"\"",
+        "delete": "@request.auth.id != \"\""
+      },
+      "fields": [
+        {
+          "name": "tipo",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["faq", "institucional", "orientacao"]
+        },
+        {
+          "name": "titulo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "conteudo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "categoria",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ativo",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ordem",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_nine_conhecimento_tipo ON nine_conhecimento (tipo)",
+        "CREATE INDEX idx_nine_conhecimento_ativo ON nine_conhecimento (ativo)",
+        "CREATE INDEX idx_nine_conhecimento_ordem ON nine_conhecimento (ordem)"
       ]
     }
   ]

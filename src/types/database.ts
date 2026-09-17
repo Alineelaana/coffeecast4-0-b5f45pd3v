@@ -266,3 +266,17 @@ export interface NineMensagemRecord {
   created: string
   updated: string
 }
+
+export type NineConhecimentoTipo = 'faq' | 'institucional' | 'orientacao'
+
+export interface NineConhecimentoRecord {
+  id: string
+  tipo: NineConhecimentoTipo
+  titulo: string
+  conteudo: string
+  categoria?: string
+  ativo: boolean
+  ordem?: number
+  created: string
+  updated: string
+}

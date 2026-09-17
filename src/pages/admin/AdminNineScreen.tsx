@@ -10,15 +10,22 @@ import {
   CheckCircle2,
   AlertCircle,
   MessageSquare,
-  Clock,
-  HelpCircle,
-  ShieldAlert,
-  ArrowRight,
   Headphones,
-  Sliders,
   Play,
   Pause,
-  ExternalLink,
+  Plus,
+  Edit2,
+  Trash2,
+  BookOpen,
+  Filter,
+  Check,
+  X,
+  FileQuestion,
+  Building2,
+  Compass,
+  Sliders,
+  Database,
+  Info,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,6 +34,14 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import pb from '@/lib/pocketbase/client'
 import { NineAvatar } from '@/components/NineAvatar'
 import { useAuth } from '@/context/AuthContext'
@@ -35,6 +50,8 @@ import {
   NineConversaRecord,
   NineMensagemRecord,
   NineModoAtendimento,
+  NineConhecimentoRecord,
+  NineConhecimentoTipo,
 } from '@/types/database'
 import { toast } from 'sonner'
 import { formatDateBR } from '@/lib/formatters'
@@ -42,19 +59,24 @@ import { formatDateBR } from '@/lib/formatters'
 export default function AdminNineScreen() {
   const { user } = useAuth()
 
-  // Tab atual
-  const [activeTab, setActiveTab] = useState<'conversas' | 'treinamento'>('conversas')
+  // Tab atual: 'conversas' | 'conhecimento' | 'treinamento'
+  const [activeTab, setActiveTab] = useState<'conversas' | 'conhecimento' | 'treinamento'>(
+    'conversas',
+  )
 
-  // Estado da Configuração / Treinamento
+  // ==========================================
+  // ESTADO: CONFIGURAÇÃO / TREINAMENTO (PROMPT)
+  // ==========================================
   const [configId, setConfigId] = useState<string>('')
   const [atendimentoAutomatico, setAtendimentoAutomatico] = useState<boolean>(true)
   const [promptSistema, setPromptSistema] = useState<string>('')
-  const [baseConhecimento, setBaseConhecimento] = useState<string>('')
   const [observacoes, setObservacoes] = useState<string>('')
   const [loadingConfig, setLoadingConfig] = useState<boolean>(true)
   const [savingConfig, setSavingConfig] = useState<boolean>(false)
 
-  // Estado das Conversas
+  // ==========================================
+  // ESTADO: CONVERSAS & ATENDIMENTO
+  // ==========================================
   const [conversas, setConversas] = useState<NineConversaRecord[]>([])
   const [loadingConversas, setLoadingConversas] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -68,14 +90,38 @@ export default function AdminNineScreen() {
   const [sendingReply, setSendingReply] = useState<boolean>(false)
   const [togglingMode, setTogglingMode] = useState<boolean>(false)
 
+  // ==========================================
+  // ESTADO: BASE DE CONHECIMENTO DA NINE (CRUD)
+  // ==========================================
+  const [conhecimentos, setConhecimentos] = useState<NineConhecimentoRecord[]>([])
+  const [loadingConhecimentos, setLoadingConhecimentos] = useState<boolean>(true)
+  const [searchConhecimento, setSearchConhecimento] = useState<string>('')
+  const [filtroTipoConhecimento, setFiltroTipoConhecimento] = useState<string>('todos')
+  const [filtroCategoriaConhecimento, setFiltroCategoriaConhecimento] = useState<string>('todas')
+
+  // Modal de Criação / Edição de Conhecimento
+  const [modalOpen, setModalOpen] = useState<boolean>(false)
+  const [savingConhecimento, setSavingConhecimento] = useState<boolean>(false)
+  const [editingItem, setEditingItem] = useState<NineConhecimentoRecord | null>(null)
+  const [formTipo, setFormTipo] = useState<NineConhecimentoTipo>('faq')
+  const [formTitulo, setFormTitulo] = useState<string>('')
+  const [formConteudo, setFormConteudo] = useState<string>('')
+  const [formCategoria, setFormCategoria] = useState<string>('')
+  const [formAtivo, setFormAtivo] = useState<boolean>(true)
+  const [formOrdem, setFormOrdem] = useState<number>(0)
+
+  // Modal de Exclusão
+  const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false)
+  const [itemToDelete, setItemToDelete] = useState<NineConhecimentoRecord | null>(null)
+  const [deletingConhecimento, setDeletingConhecimento] = useState<boolean>(false)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Rola mensagens ao fim
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // Carregar Configuração da Nine
+  // Carregar Configuração da Nine (Prompt e Chave de Atendimento)
   const fetchConfig = async () => {
     setLoadingConfig(true)
     try {
@@ -88,7 +134,6 @@ export default function AdminNineScreen() {
         setConfigId(cfg.id)
         setAtendimentoAutomatico(cfg.atendimento_automatico ?? true)
         setPromptSistema(cfg.prompt_sistema || '')
-        setBaseConhecimento(cfg.base_conhecimento || '')
         setObservacoes(cfg.observacoes || '')
       }
     } catch (err) {
@@ -99,10 +144,10 @@ export default function AdminNineScreen() {
     }
   }
 
-  // Salvar Configuração / Treinamento
+  // Salvar Configuração / Prompt de Personalidade
   const handleSaveConfig = async () => {
     if (!promptSistema.trim()) {
-      toast.error('O prompt/instruções de atendimento não podem ficar vazios.')
+      toast.error('O prompt de personalidade e regras da Nine não pode ficar vazio.')
       return
     }
 
@@ -112,7 +157,6 @@ export default function AdminNineScreen() {
         chave: 'global',
         atendimento_automatico: atendimentoAutomatico,
         prompt_sistema: promptSistema,
-        base_conhecimento: baseConhecimento,
         observacoes: observacoes,
       }
 
@@ -123,10 +167,10 @@ export default function AdminNineScreen() {
         setConfigId(created.id)
       }
 
-      toast.success('Treinamento e configurações da Nine salvos com sucesso!')
+      toast.success('Prompt de personalidade e regras da Nine salvos com sucesso!')
     } catch (err) {
       console.error('Erro ao salvar treinamento da Nine:', err)
-      toast.error('Falha ao salvar treinamento da Nine.')
+      toast.error('Falha ao salvar o prompt de treinamento.')
     } finally {
       setSavingConfig(false)
     }
@@ -149,7 +193,6 @@ export default function AdminNineScreen() {
     } catch (err) {
       console.error('Erro ao atualizar modo de atendimento geral:', err)
       toast.error('Falha ao alternar atendimento automático.')
-      // reverter
       setAtendimentoAutomatico(!checked)
     }
   }
@@ -163,7 +206,6 @@ export default function AdminNineScreen() {
       })
       setConversas(records)
 
-      // Se há conversa selecionada, atualiza seu status localmente
       if (selectedConversationId) {
         const stillExists = records.find((c) => c.conversation_id === selectedConversationId)
         if (!stillExists && records.length > 0) {
@@ -197,10 +239,27 @@ export default function AdminNineScreen() {
     }
   }
 
+  // Carregar Itens da Base de Conhecimento
+  const fetchConhecimentos = async () => {
+    setLoadingConhecimentos(true)
+    try {
+      const records = await pb.collection('nine_conhecimento').getFullList<NineConhecimentoRecord>({
+        sort: 'ordem,-created',
+      })
+      setConhecimentos(records)
+    } catch (err) {
+      console.error('Erro ao buscar base de conhecimento da Nine:', err)
+      toast.error('Não foi possível carregar as entradas da base de conhecimento.')
+    } finally {
+      setLoadingConhecimentos(false)
+    }
+  }
+
   // Initial Load
   useEffect(() => {
     fetchConfig()
     fetchConversas()
+    fetchConhecimentos()
   }, [])
 
   // Atualizar mensagens quando conversa selecionada mudar
@@ -215,7 +274,6 @@ export default function AdminNineScreen() {
   // Polling para novas mensagens na conversa aberta e novas conversas
   useEffect(() => {
     const interval = setInterval(() => {
-      // Recarrega lista de conversas de fundo
       pb.collection('nine_conversas')
         .getFullList<NineConversaRecord>({
           sort: '-data_ultima_mensagem,-created',
@@ -225,7 +283,6 @@ export default function AdminNineScreen() {
         })
         .catch(() => {})
 
-      // Recarrega mensagens da conversa atual
       if (selectedConversationId) {
         pb.collection('nine_mensagens')
           .getFullList<NineMensagemRecord>({
@@ -275,7 +332,6 @@ export default function AdminNineScreen() {
 
       setHumanReplyInput('')
       toast.success('Resposta humana enviada ao visitante!')
-      // Atualizar mensagens e conversas
       await fetchMensagens(selectedConversationId)
       await fetchConversas()
     } catch (err: any) {
@@ -286,7 +342,7 @@ export default function AdminNineScreen() {
     }
   }
 
-  // Alternar modo de atendimento da conversa atual (automatico <-> humano)
+  // Alternar modo de atendimento da conversa atual
   const handleToggleConversationMode = async (targetMode: NineModoAtendimento) => {
     if (!selectedConversationId || togglingMode) return
 
@@ -324,6 +380,105 @@ export default function AdminNineScreen() {
     }
   }
 
+  // ==========================================
+  // OPERAÇÕES DO CRUD DE BASE DE CONHECIMENTO
+  // ==========================================
+  const handleOpenCreateModal = () => {
+    setEditingItem(null)
+    setFormTipo('faq')
+    setFormTitulo('')
+    setFormConteudo('')
+    setFormCategoria('Episódios')
+    setFormAtivo(true)
+    setFormOrdem(conhecimentos.length + 1)
+    setModalOpen(true)
+  }
+
+  const handleOpenEditModal = (item: NineConhecimentoRecord) => {
+    setEditingItem(item)
+    setFormTipo(item.tipo)
+    setFormTitulo(item.titulo)
+    setFormConteudo(item.conteudo)
+    setFormCategoria(item.categoria || '')
+    setFormAtivo(item.ativo)
+    setFormOrdem(item.ordem || 0)
+    setModalOpen(true)
+  }
+
+  const handleSaveConhecimento = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!formTitulo.trim()) {
+      toast.error('Informe o título ou pergunta.')
+      return
+    }
+    if (!formConteudo.trim()) {
+      toast.error('Informe o conteúdo ou resposta.')
+      return
+    }
+
+    setSavingConhecimento(true)
+    try {
+      const payload = {
+        tipo: formTipo,
+        titulo: formTitulo.trim(),
+        conteudo: formConteudo.trim(),
+        categoria: formCategoria.trim() || undefined,
+        ativo: formAtivo,
+        ordem: Number(formOrdem) || 0,
+      }
+
+      if (editingItem) {
+        await pb.collection('nine_conhecimento').update(editingItem.id, payload)
+        toast.success('Entrada atualizada com sucesso na base da Nine!')
+      } else {
+        await pb.collection('nine_conhecimento').create(payload)
+        toast.success('Nova entrada adicionada à base de conhecimento da Nine!')
+      }
+
+      setModalOpen(false)
+      fetchConhecimentos()
+    } catch (err) {
+      console.error('Erro ao salvar entrada de conhecimento:', err)
+      toast.error('Falha ao salvar a entrada na base de conhecimento.')
+    } finally {
+      setSavingConhecimento(false)
+    }
+  }
+
+  const handleToggleAtivoConhecimento = async (item: NineConhecimentoRecord) => {
+    try {
+      const updated = !item.ativo
+      await pb.collection('nine_conhecimento').update(item.id, { ativo: updated })
+      setConhecimentos((prev) => prev.map((c) => (c.id === item.id ? { ...c, ativo: updated } : c)))
+      toast.success(
+        updated
+          ? `"${item.titulo}" agora está ATIVA para a Nine.`
+          : `"${item.titulo}" foi DESATIVADA e a Nine não a usará.`,
+      )
+    } catch (err) {
+      console.error('Erro ao alternar status do conhecimento:', err)
+      toast.error('Não foi possível alterar o status.')
+    }
+  }
+
+  const handleConfirmDeleteConhecimento = async () => {
+    if (!itemToDelete) return
+    setDeletingConhecimento(true)
+    try {
+      await pb.collection('nine_conhecimento').delete(itemToDelete.id)
+      toast.success('Entrada excluída com sucesso.')
+      setDeleteModalOpen(false)
+      setItemToDelete(null)
+      fetchConhecimentos()
+    } catch (err) {
+      console.error('Erro ao excluir conhecimento:', err)
+      toast.error('Falha ao excluir a entrada.')
+    } finally {
+      setDeletingConhecimento(false)
+    }
+  }
+
   // Filtragem das conversas
   const filteredConversas = useMemo(() => {
     return conversas.filter((conv) => {
@@ -339,6 +494,36 @@ export default function AdminNineScreen() {
     })
   }, [conversas, searchQuery, filtroModo])
 
+  // Categorias únicas existentes na base de conhecimento
+  const categoriasConhecimento = useMemo(() => {
+    const set = new Set<string>()
+    conhecimentos.forEach((c) => {
+      if (c.categoria && c.categoria.trim()) {
+        set.add(c.categoria.trim())
+      }
+    })
+    return Array.from(set)
+  }, [conhecimentos])
+
+  // Filtragem da Base de Conhecimento
+  const filteredConhecimentos = useMemo(() => {
+    return conhecimentos.filter((item) => {
+      const q = searchConhecimento.toLowerCase().trim()
+      const matchesSearch =
+        q === '' ||
+        item.titulo.toLowerCase().includes(q) ||
+        item.conteudo.toLowerCase().includes(q) ||
+        (item.categoria || '').toLowerCase().includes(q)
+
+      const matchesTipo = filtroTipoConhecimento === 'todos' || item.tipo === filtroTipoConhecimento
+
+      const matchesCat =
+        filtroCategoriaConhecimento === 'todas' || item.categoria === filtroCategoriaConhecimento
+
+      return matchesSearch && matchesTipo && matchesCat
+    })
+  }, [conhecimentos, searchConhecimento, filtroTipoConhecimento, filtroCategoriaConhecimento])
+
   // Contadores
   const countAguardando = useMemo(() => {
     return conversas.filter((c) => c.modo_atendimento === 'aguardando_humano').length
@@ -351,6 +536,10 @@ export default function AdminNineScreen() {
   const countAutomatico = useMemo(() => {
     return conversas.filter((c) => c.modo_atendimento === 'automatico').length
   }, [conversas])
+
+  const countAtivosConhecimento = useMemo(() => {
+    return conhecimentos.filter((c) => c.ativo).length
+  }, [conhecimentos])
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -389,8 +578,8 @@ export default function AdminNineScreen() {
               )}
             </div>
             <p className="text-xs text-vinho/70 mt-1">
-              Treine a Nine com instruções e base de conhecimento oficial, acompanhe conversas dos
-              visitantes e assuma atendimentos humanos quando desejar.
+              Gerencie a base de conhecimento dinâmica, personalize o tom de voz e regras no
+              treinamento e acompanhe os atendimentos em tempo real.
             </p>
           </div>
         </div>
@@ -411,10 +600,10 @@ export default function AdminNineScreen() {
         </div>
       </div>
 
-      {/* Tabs Principais: Conversas e Treinamento */}
+      {/* Tabs Principais: Conversas, Base de Conhecimento e Treinamento */}
       <Tabs
         value={activeTab}
-        onValueChange={(val) => setActiveTab(val as 'conversas' | 'treinamento')}
+        onValueChange={(val) => setActiveTab(val as 'conversas' | 'conhecimento' | 'treinamento')}
         className="w-full space-y-4"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-vinho/15 pb-2">
@@ -433,11 +622,22 @@ export default function AdminNineScreen() {
             </TabsTrigger>
 
             <TabsTrigger
+              value="conhecimento"
+              className="flex items-center gap-2 data-[state=active]:bg-vinho data-[state=active]:text-white font-semibold rounded-lg text-xs px-4 py-2"
+            >
+              <BookOpen className="w-4 h-4 text-dourado" />
+              <span>Base de Conhecimento da Nine</span>
+              <Badge className="bg-dourado/30 text-vinho font-bold text-[10px] px-1.5 py-0 rounded-full ml-1">
+                {countAtivosConhecimento}
+              </Badge>
+            </TabsTrigger>
+
+            <TabsTrigger
               value="treinamento"
               className="flex items-center gap-2 data-[state=active]:bg-vinho data-[state=active]:text-white font-semibold rounded-lg text-xs px-4 py-2"
             >
               <Sparkles className="w-4 h-4 text-dourado" />
-              <span>Treinamento da Nine</span>
+              <span>Personalidade & Regras</span>
             </TabsTrigger>
           </TabsList>
 
@@ -449,11 +649,12 @@ export default function AdminNineScreen() {
                 fetchConversas()
                 if (selectedConversationId) fetchMensagens(selectedConversationId)
                 fetchConfig()
+                fetchConhecimentos()
               }}
               className="h-8 text-xs border-vinho/20 hover:border-dourado hover:bg-vinho hover:text-white"
             >
               <RefreshCw className="w-3.5 h-3.5 mr-1 text-dourado" />
-              Atualizar Dados
+              Atualizar Tudo
             </Button>
           </div>
         </div>
@@ -869,11 +1070,265 @@ export default function AdminNineScreen() {
         </TabsContent>
 
         {/* =========================================================================
-            ABA 2: TREINAMENTO DA NINE
+            ABA 2: BASE DE CONHECIMENTO DA NINE (CRUD DINÂMICO)
+           ========================================================================= */}
+        <TabsContent value="conhecimento" className="mt-0 space-y-6">
+          {/* Card de Informação sobre Conexão em Tempo Real */}
+          <div className="bg-[#FAF8F5] border border-vinho/15 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-vinho text-dourado flex items-center justify-center shrink-0">
+                <Database className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-serif font-bold text-base text-vinho flex items-center gap-2">
+                  <span>Base Dinâmica de Conhecimento da Nine</span>
+                  <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px]">
+                    Sincronização em Tempo Real
+                  </Badge>
+                </h3>
+                <p className="text-xs text-vinho/70 mt-0.5 leading-relaxed">
+                  Adicione perguntas frequentes, informações institucionais e novas orientações. A
+                  Nine consulta esta lista e as tabelas de <strong>episódios</strong>,{' '}
+                  <strong>integrantes</strong> e <strong>agenda</strong> automaticamente no banco a
+                  cada pergunta do visitante, sem precisar alterar código ou prompt.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleOpenCreateModal}
+              className="bg-vinho text-white hover:bg-vinho-light font-bold text-xs h-10 px-5 rounded-xl flex items-center gap-2 shadow-sm shrink-0 active:scale-95"
+            >
+              <Plus className="w-4 h-4 text-dourado" />
+              <span>Adicionar Informação</span>
+            </Button>
+          </div>
+
+          {/* Filtros e Busca */}
+          <div className="bg-white p-4 rounded-2xl border border-vinho/10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-vinho/40" />
+              <Input
+                placeholder="Buscar por título, conteúdo ou categoria..."
+                value={searchConhecimento}
+                onChange={(e) => setSearchConhecimento(e.target.value)}
+                className="pl-9 h-9 text-xs bg-[#FAF8F5] border-vinho/20 rounded-xl focus:border-dourado"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              {/* Filtro por Tipo */}
+              <div className="flex items-center gap-1 bg-[#FAF8F5] p-1 rounded-xl border border-vinho/10">
+                <button
+                  type="button"
+                  onClick={() => setFiltroTipoConhecimento('todos')}
+                  className={`px-3 py-1 rounded-lg font-medium transition-colors ${
+                    filtroTipoConhecimento === 'todos'
+                      ? 'bg-vinho text-white font-bold'
+                      : 'text-vinho/70 hover:bg-vinho/5'
+                  }`}
+                >
+                  Todos ({conhecimentos.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFiltroTipoConhecimento('faq')}
+                  className={`px-3 py-1 rounded-lg font-medium flex items-center gap-1 transition-colors ${
+                    filtroTipoConhecimento === 'faq'
+                      ? 'bg-vinho text-white font-bold'
+                      : 'text-vinho/70 hover:bg-vinho/5'
+                  }`}
+                >
+                  <FileQuestion className="w-3.5 h-3.5 text-dourado" />
+                  FAQ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFiltroTipoConhecimento('institucional')}
+                  className={`px-3 py-1 rounded-lg font-medium flex items-center gap-1 transition-colors ${
+                    filtroTipoConhecimento === 'institucional'
+                      ? 'bg-vinho text-white font-bold'
+                      : 'text-vinho/70 hover:bg-vinho/5'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5 text-dourado" />
+                  Institucional
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFiltroTipoConhecimento('orientacao')}
+                  className={`px-3 py-1 rounded-lg font-medium flex items-center gap-1 transition-colors ${
+                    filtroTipoConhecimento === 'orientacao'
+                      ? 'bg-vinho text-white font-bold'
+                      : 'text-vinho/70 hover:bg-vinho/5'
+                  }`}
+                >
+                  <Compass className="w-3.5 h-3.5 text-dourado" />
+                  Orientação
+                </button>
+              </div>
+
+              {/* Filtro por Categoria se houver mais de uma */}
+              {categoriasConhecimento.length > 0 && (
+                <select
+                  value={filtroCategoriaConhecimento}
+                  onChange={(e) => setFiltroCategoriaConhecimento(e.target.value)}
+                  className="h-9 px-3 text-xs bg-[#FAF8F5] border border-vinho/20 rounded-xl text-vinho focus:outline-none focus:border-dourado"
+                >
+                  <option value="todas">Todas as Categorias</option>
+                  {categoriasConhecimento.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+
+          {/* Grid de Cards de Conhecimento */}
+          {loadingConhecimentos ? (
+            <div className="bg-white p-12 rounded-2xl border border-vinho/10 text-center text-xs text-vinho/60">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-dourado" />
+              Carregando base de conhecimento da Nine...
+            </div>
+          ) : filteredConhecimentos.length === 0 ? (
+            <div className="bg-white p-12 rounded-2xl border border-vinho/10 text-center space-y-3">
+              <BookOpen className="w-12 h-12 text-vinho/20 mx-auto" />
+              <h4 className="font-serif font-bold text-lg text-vinho">
+                Nenhuma entrada de conhecimento encontrada
+              </h4>
+              <p className="text-xs text-vinho/60 max-w-md mx-auto">
+                {searchConhecimento || filtroTipoConhecimento !== 'todos'
+                  ? 'Tente ajustar os filtros ou termo de busca acima.'
+                  : 'Comece adicionando perguntas, respostas ou orientações para a Nine.'}
+              </p>
+              <Button
+                onClick={handleOpenCreateModal}
+                className="bg-vinho text-white hover:bg-vinho-light font-semibold text-xs h-9 px-4 rounded-xl"
+              >
+                <Plus className="w-4 h-4 mr-1 text-dourado" />
+                Criar Primeira Entrada
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredConhecimentos.map((item) => {
+                const isFaq = item.tipo === 'faq'
+                const isInstitucional = item.tipo === 'institucional'
+                const isOrientacao = item.tipo === 'orientacao'
+
+                return (
+                  <Card
+                    key={item.id}
+                    className={`border transition-all duration-200 flex flex-col justify-between ${
+                      item.ativo
+                        ? 'border-vinho/15 bg-white shadow-xs hover:shadow-md hover:border-dourado/60'
+                        : 'border-dashed border-vinho/20 bg-[#FAF8F5]/50 opacity-60'
+                    }`}
+                  >
+                    <CardHeader className="pb-3 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {isFaq && (
+                            <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[10px] font-bold flex items-center gap-1">
+                              <FileQuestion className="w-3 h-3 text-purple-600" />
+                              Pergunta & Resposta
+                            </Badge>
+                          )}
+                          {isInstitucional && (
+                            <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-[10px] font-bold flex items-center gap-1">
+                              <Building2 className="w-3 h-3 text-blue-600" />
+                              Institucional
+                            </Badge>
+                          )}
+                          {isOrientacao && (
+                            <Badge className="bg-amber-100 text-amber-900 border-amber-200 text-[10px] font-bold flex items-center gap-1">
+                              <Compass className="w-3 h-3 text-amber-700" />
+                              Orientação
+                            </Badge>
+                          )}
+
+                          {item.categoria && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] text-vinho/70 border-vinho/20"
+                            >
+                              {item.categoria}
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Switch de Ativo / Inativo */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-medium text-vinho/60">
+                            {item.ativo ? 'Ativo' : 'Pausado'}
+                          </span>
+                          <Switch
+                            checked={item.ativo}
+                            onCheckedChange={() => handleToggleAtivoConhecimento(item)}
+                            className="data-[state=checked]:bg-emerald-600 scale-90"
+                            title={
+                              item.ativo
+                                ? 'Entrada disponível para a Nine consultar'
+                                : 'Entrada desativada (Nine não responderá com base nela)'
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <CardTitle className="font-serif font-bold text-base text-vinho leading-snug line-clamp-2">
+                        {item.titulo}
+                      </CardTitle>
+                    </CardHeader>
+
+                    <CardContent className="pb-3 flex-1">
+                      <p className="text-xs text-vinho/80 whitespace-pre-wrap leading-relaxed line-clamp-5">
+                        {item.conteudo}
+                      </p>
+                    </CardContent>
+
+                    <div className="p-4 pt-2 border-t border-vinho/10 flex items-center justify-between text-xs text-vinho/50 bg-[#FAF8F5]/40 rounded-b-xl">
+                      <span>Ordem: {item.ordem ?? 0}</span>
+
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenEditModal(item)}
+                          className="h-8 w-8 p-0 text-vinho hover:text-dourado-dark hover:bg-vinho/5 rounded-lg"
+                          title="Editar informação"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setItemToDelete(item)
+                            setDeleteModalOpen(true)
+                          }}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                          title="Excluir informação"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* =========================================================================
+            ABA 3: TREINAMENTO (PERSONALIDADE, COMPORTAMENTO E REGRAS)
            ========================================================================= */}
         <TabsContent value="treinamento" className="mt-0">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Coluna 1 & 2: Formulário de Treinamento */}
+            {/* Coluna 1 & 2: Formulário de Personalidade & Regras */}
             <div className="lg:col-span-2 space-y-6">
               <Card className="border-vinho/10 shadow-xs">
                 <CardHeader className="bg-[#FAF8F5]/60 border-b border-vinho/10 pb-4">
@@ -881,52 +1336,51 @@ export default function AdminNineScreen() {
                     <div>
                       <CardTitle className="font-serif text-lg text-vinho flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-dourado" />
-                        Instruções & Personalidade da Nine
+                        Personalidade, Comportamento e Regras da Nine
                       </CardTitle>
                       <CardDescription className="text-xs text-vinho/60 mt-0.5">
-                        Defina como a Nine deve se comportar, seu tom de voz, regras de ouro e
-                        respostas padrão.
+                        Defina o tom de voz acolhedor, etiqueta, conduta e as regras de ouro. As
+                        informações dinâmicas (episódios, convidados, links e agenda) são
+                        consultadas automaticamente no banco de dados.
                       </CardDescription>
                     </div>
 
-                    <Badge className="bg-vinho/10 text-vinho border border-vinho/20 text-xs">
-                      Prompt Principal
+                    <Badge className="bg-vinho/10 text-vinho border border-vinho/20 text-xs font-semibold">
+                      Prompt de Sistema
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
+                  {/* Banner Explicativo da Separação Prompt vs Base de Conhecimento */}
+                  <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3.5 flex items-start gap-3 text-xs text-amber-900 leading-relaxed">
+                    <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-amber-950">
+                        Base de Conhecimento Dinâmica Separada com Sucesso:
+                      </p>
+                      <p className="text-[11px] text-amber-800 mt-0.5">
+                        Você não precisa mais colar episódios ou datas neste campo! Use a nova aba{' '}
+                        <strong>"Base de Conhecimento da Nine"</strong> para adicionar e editar
+                        perguntas, respostas e orientações. Episódios e integrantes cadastrados no
+                        painel entram automaticamente na conversa da Nine.
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-vinho flex items-center justify-between">
-                      <span>Prompt de Atendimento do Agente (System Prompt):</span>
+                      <span>Prompt de Personalidade e Regras (System Prompt):</span>
                       <span className="text-[11px] text-vinho/50 font-normal">
-                        Dica: use metáforas de café e linguagem acolhedora
+                        Dica: tom acolhedor, linguagem feminina elegante e metáforas de café ☕
                       </span>
                     </label>
                     <Textarea
                       value={promptSistema}
                       onChange={(e) => setPromptSistema(e.target.value)}
-                      rows={14}
+                      rows={16}
                       disabled={loadingConfig}
-                      placeholder="Ex: Você é a Nine, assistente virtual oficial do CoffeeCast 4.0..."
+                      placeholder="Ex: Você é a Nine, assistente virtual oficial do podcast CoffeeCast 4.0..."
                       className="font-mono text-xs leading-relaxed bg-[#FAF8F5] border-vinho/20 focus:border-dourado rounded-xl resize-y"
-                    />
-                  </div>
-
-                  {/* Base de Conhecimento Extra */}
-                  <div className="space-y-1.5 pt-2 border-t border-vinho/10">
-                    <label className="text-xs font-bold text-vinho flex items-center justify-between">
-                      <span>Base de Conhecimento / Informações Extras:</span>
-                      <span className="text-[11px] text-vinho/50 font-normal">
-                        FAQs, horários, links de páginas, políticas e contatos
-                      </span>
-                    </label>
-                    <Textarea
-                      value={baseConhecimento}
-                      onChange={(e) => setBaseConhecimento(e.target.value)}
-                      rows={8}
-                      disabled={loadingConfig}
-                      placeholder="Adicione informações adicionais que a Nine deve saber responder (ex: tabela de horários, como funciona a gravação, contatos de WhatsApp, etc)..."
-                      className="text-xs leading-relaxed bg-[#FAF8F5] border-vinho/20 focus:border-dourado rounded-xl resize-y"
                     />
                   </div>
 
@@ -966,14 +1420,14 @@ export default function AdminNineScreen() {
                       ) : (
                         <CheckCircle2 className="w-4 h-4 text-dourado" />
                       )}
-                      <span>Salvar Treinamento</span>
+                      <span>Salvar Personalidade & Regras</span>
                     </Button>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Coluna 3: Painel Lateral com Dicas e Ferramentas */}
+            {/* Coluna 3: Painel Lateral com Dicas e Status */}
             <div className="space-y-6">
               {/* Card de Status da Nine */}
               <Card className="border-vinho/10 shadow-xs bg-[#FAF8F5]">
@@ -1001,9 +1455,16 @@ export default function AdminNineScreen() {
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between pb-2 border-b border-vinho/10">
-                    <span>Coleções Integradas:</span>
-                    <span className="font-semibold text-vinho text-right">
-                      Episódios, Integrantes, Depoimentos e Conteúdo
+                    <span>Base de Conhecimento:</span>
+                    <span className="font-semibold text-vinho">
+                      {countAtivosConhecimento} entradas ativas
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pb-2 border-b border-vinho/10">
+                    <span>Consulta ao Banco em Tempo Real:</span>
+                    <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      Episódios, Integrantes e Agenda
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -1020,28 +1481,25 @@ export default function AdminNineScreen() {
               <Card className="border-vinho/10 shadow-xs">
                 <CardHeader className="pb-3">
                   <CardTitle className="font-serif text-base text-vinho flex items-center gap-2">
-                    <HelpCircle className="w-4 h-4 text-dourado" />
-                    Como Ensinar a Nine
+                    <Compass className="w-4 h-4 text-dourado" />
+                    Como Funciona o Conhecimento
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-xs text-vinho/80 leading-relaxed">
                   <p>
-                    <strong className="text-vinho">1. Seja específico:</strong> Se mudar horários ou
-                    dias de gravação, registre na Base de Conhecimento com datas e formatos claros.
+                    <strong className="text-vinho">1. Prompt = Personalidade:</strong> Use o prompt
+                    apenas para definir como a Nine fala, acolhe, usa café como metáfora e trata os
+                    visitantes.
                   </p>
                   <p>
-                    <strong className="text-vinho">2. Mantenha o tom CoffeeCast:</strong> A Nine é
-                    calorosa, acolhedora e elegante. Estimule-a a usar analogias leves de café.
+                    <strong className="text-vinho">2. Dados que mudam = Banco de Dados:</strong>{' '}
+                    Lançou um novo episódio na aba Episódios? A Nine já saberá o título e link
+                    imediatamente.
                   </p>
                   <p>
-                    <strong className="text-vinho">3. Regra de Ouro:</strong> A Nine sempre deve
-                    orientar a falar com Aline Lana pelo WhatsApp (31) 99129-7619 quando não tiver
-                    certeza de algum dado.
-                  </p>
-                  <p>
-                    <strong className="text-vinho">4. Controle Humano:</strong> A qualquer momento,
-                    na aba "Conversas", você pode pausar as respostas da Nine em uma conversa e
-                    responder como humano.
+                    <strong className="text-vinho">3. Regra de Ouro:</strong> A Nine sempre orienta
+                    a falar com Aline Lana pelo WhatsApp (31) 99129-7619 se uma pergunta for sobre
+                    valores de patrocínio ou não estiver confirmada.
                   </p>
                 </CardContent>
               </Card>
@@ -1049,6 +1507,228 @@ export default function AdminNineScreen() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* =========================================================================
+          MODAL: ADICIONAR OU EDITAR ENTRADA DE CONHECIMENTO
+         ========================================================================= */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-[620px] bg-white border-vinho/20 rounded-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-serif font-bold text-xl text-vinho flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-dourado" />
+              <span>
+                {editingItem
+                  ? 'Editar Informação da Base de Conhecimento'
+                  : 'Adicionar Nova Informação para a Nine'}
+              </span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-vinho/70">
+              Cadastre perguntas e respostas, informações institucionais ou novas diretrizes. A Nine
+              terá acesso imediato.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveConhecimento} className="space-y-4 py-2">
+            {/* Tipo da Entrada */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-vinho">Tipo da Entrada *</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormTipo('faq')}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+                    formTipo === 'faq'
+                      ? 'bg-purple-50 border-purple-500 text-purple-900 shadow-xs'
+                      : 'border-vinho/15 hover:bg-vinho/5 text-vinho/70'
+                  }`}
+                >
+                  <FileQuestion className="w-4 h-4 text-purple-600" />
+                  <span>Pergunta & Resposta</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormTipo('institucional')}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+                    formTipo === 'institucional'
+                      ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-xs'
+                      : 'border-vinho/15 hover:bg-vinho/5 text-vinho/70'
+                  }`}
+                >
+                  <Building2 className="w-4 h-4 text-blue-600" />
+                  <span>Institucional</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormTipo('orientacao')}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+                    formTipo === 'orientacao'
+                      ? 'bg-amber-50 border-amber-500 text-amber-900 shadow-xs'
+                      : 'border-vinho/15 hover:bg-vinho/5 text-vinho/70'
+                  }`}
+                >
+                  <Compass className="w-4 h-4 text-amber-700" />
+                  <span>Orientação</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Título / Pergunta */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-vinho">
+                {formTipo === 'faq' ? 'Pergunta do Visitante *' : 'Título da Informação *'}
+              </label>
+              <Input
+                value={formTitulo}
+                onChange={(e) => setFormTitulo(e.target.value)}
+                placeholder={
+                  formTipo === 'faq'
+                    ? 'Ex: Novos episódios saem que dia e horário?'
+                    : 'Ex: Local de gravação e estrutura do estúdio'
+                }
+                className="text-xs bg-[#FAF8F5] border-vinho/20 rounded-xl focus:border-dourado"
+                required
+              />
+            </div>
+
+            {/* Conteúdo / Resposta */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-vinho">
+                {formTipo === 'faq'
+                  ? 'Resposta Oficial que a Nine deve dar *'
+                  : 'Conteúdo detalhado da Informação *'}
+              </label>
+              <Textarea
+                value={formConteudo}
+                onChange={(e) => setFormConteudo(e.target.value)}
+                rows={5}
+                placeholder={
+                  formTipo === 'faq'
+                    ? 'Ex: Os episódios do CoffeeCast 4.0 são lançados todos os sábados às 10h no canal oficial do YouTube.'
+                    : 'Ex: Detalhes, regras, links ou orientações que a Nine deve conhecer...'
+                }
+                className="text-xs bg-[#FAF8F5] border-vinho/20 rounded-xl focus:border-dourado resize-y leading-relaxed"
+                required
+              />
+            </div>
+
+            {/* Categoria e Ordem */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-vinho">Categoria / Tag</label>
+                <Input
+                  value={formCategoria}
+                  onChange={(e) => setFormCategoria(e.target.value)}
+                  placeholder="Ex: Episódios, Gravação, Patrocínio, Links..."
+                  className="text-xs bg-[#FAF8F5] border-vinho/20 rounded-xl"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-vinho">Ordem de Prioridade</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={formOrdem}
+                  onChange={(e) => setFormOrdem(Number(e.target.value))}
+                  className="text-xs bg-[#FAF8F5] border-vinho/20 rounded-xl"
+                />
+              </div>
+            </div>
+
+            {/* Ativo */}
+            <div className="flex items-center justify-between p-3 bg-[#FAF8F5] rounded-xl border border-vinho/15">
+              <div>
+                <p className="text-xs font-bold text-vinho">Disponível para a Nine</p>
+                <p className="text-[11px] text-vinho/60">
+                  Se desativada, a Nine não utilizará esta informação ao responder.
+                </p>
+              </div>
+              <Switch
+                checked={formAtivo}
+                onCheckedChange={setFormAtivo}
+                className="data-[state=checked]:bg-emerald-600"
+              />
+            </div>
+
+            <DialogFooter className="pt-3 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setModalOpen(false)}
+                className="text-xs border-vinho/20"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={savingConhecimento}
+                className="text-xs bg-vinho text-white hover:bg-vinho-light font-bold px-5 rounded-xl flex items-center gap-2"
+              >
+                {savingConhecimento ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-dourado" />
+                ) : (
+                  <Check className="w-4 h-4 text-dourado" />
+                )}
+                <span>{editingItem ? 'Salvar Alterações' : 'Adicionar à Nine'}</span>
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* =========================================================================
+          MODAL: CONFIRMAR EXCLUSÃO DE CONHECIMENTO
+         ========================================================================= */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="sm:max-w-[420px] bg-white border-vinho/20 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-serif font-bold text-lg text-vinho flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-red-600" />
+              <span>Excluir Entrada</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-vinho/70">
+              Tem certeza de que deseja excluir permanentemente esta informação da base de
+              conhecimento da Nine?
+            </DialogDescription>
+          </DialogHeader>
+
+          {itemToDelete && (
+            <div className="bg-[#FAF8F5] p-3 rounded-xl border border-vinho/10 my-2">
+              <p className="text-xs font-bold text-vinho">{itemToDelete.titulo}</p>
+              <p className="text-[11px] text-vinho/60 line-clamp-2 mt-1">{itemToDelete.conteudo}</p>
+            </div>
+          )}
+
+          <DialogFooter className="pt-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setDeleteModalOpen(false)
+                setItemToDelete(null)
+              }}
+              className="text-xs border-vinho/20"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              disabled={deletingConhecimento}
+              onClick={handleConfirmDeleteConhecimento}
+              className="text-xs bg-red-600 hover:bg-red-700 text-white font-bold px-4 rounded-xl flex items-center gap-1.5"
+            >
+              {deletingConhecimento ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              <span>Confirmar Exclusão</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
