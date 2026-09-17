@@ -75,8 +75,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-2 sm:gap-4">
-          {/* Logo oficial do cabeçalho público com fundo transparente - cabeçalho compacto */}
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
+          {/* Logo oficial clicável que leva ao início */}
           <Link
             to="/"
             className="group flex items-center shrink-0 transition-transform hover:opacity-95 focus:outline-none py-0.5"
@@ -85,135 +85,155 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
             <HeaderNavbarLogo className="h-12 sm:h-14 md:h-16 lg:h-[4.25rem] xl:h-[4.5rem] w-auto transition-all duration-200 group-hover:scale-[1.02]" />
           </Link>
 
-          {/* Desktop Navigation Links (exibidos a partir de telas médias/grandes lg) */}
-          <nav className="hidden lg:flex items-center gap-3.5 xl:gap-5 2xl:gap-6 shrink">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.href}
-                onClick={(e) => handleNavClick(e, link.href, link.isRoute)}
-                className={`text-xs xl:text-sm font-medium transition-colors relative py-1 whitespace-nowrap ${
-                  link.isRoute && location.pathname === link.href
-                    ? 'text-dourado font-bold'
-                    : 'text-marfim/90 hover:text-dourado'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          {/* Acessos diretos no cabeçalho + Botão de Menu para Desktop e Mobile */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 lg:gap-3 shrink-0">
+            {/* 1. Área do Convidado (visível a partir de sm; no mobile menor está no Menu) */}
+            <Link
+              to="/convidado"
+              className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/30 hover:border-dourado whitespace-nowrap ${
+                location.pathname === '/convidado'
+                  ? 'bg-dourado/20 text-dourado font-bold border-dourado'
+                  : 'text-marfim/90 hover:text-dourado hover:bg-vinho/60'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-dourado" />
+              <span>Área do Convidado</span>
+            </Link>
 
-          {/* Action Buttons */}
-          <div className="hidden md:flex items-center gap-2 shrink-0">
+            {/* 2. Área de Membros */}
             {user ? (
               <Link
                 to="/membros"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/50 text-dourado-light bg-vinho/80 hover:bg-vinho hover:border-dourado whitespace-nowrap"
+                className="hidden xs:inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/50 text-dourado-light bg-vinho/80 hover:bg-vinho hover:border-dourado whitespace-nowrap shadow-xs"
               >
                 <Sparkles className="w-3.5 h-3.5 text-dourado" />
-                Área de Membros
+                <span>Área de Membros</span>
               </Link>
             ) : (
               <button
                 onClick={onOpenMembersModal}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/40 text-marfim hover:bg-vinho/60 hover:border-dourado whitespace-nowrap cursor-pointer"
+                className="hidden xs:inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all border border-dourado/40 text-marfim hover:bg-vinho/60 hover:border-dourado whitespace-nowrap cursor-pointer"
               >
                 <Lock className="w-3.5 h-3.5 text-dourado" />
-                Área de Membros
+                <span>Área de Membros</span>
               </button>
             )}
 
+            {/* 3. Área Administrativa / Administração */}
             {isAdmin ? (
-              <Link to="/admin" className="shrink-0">
+              <Link to="/admin" className="hidden md:inline-flex shrink-0">
                 <Button
                   size="sm"
                   className="bg-dourado hover:bg-dourado-dark text-vinho font-bold shadow-sm transition-all text-xs rounded-full px-3.5 whitespace-nowrap"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 mr-1" />
-                  Painel Admin
+                  Área Administrativa
                 </Button>
               </Link>
             ) : (
-              <Link to="/login" className="shrink-0">
+              <Link to="/login" className="hidden md:inline-flex shrink-0">
                 <Button
                   size="sm"
                   variant="outline"
                   className="text-xs rounded-full px-3.5 font-medium transition-all border-dourado/60 text-dourado hover:bg-dourado/15 bg-transparent whitespace-nowrap"
                 >
                   <Sparkles className="w-3.5 h-3.5 mr-1 text-dourado" />
-                  Administração
+                  Área Administrativa
                 </Button>
               </Link>
             )}
-          </div>
 
-          {/* Mobile / Tablet menu button */}
-          <div className="flex lg:hidden items-center gap-2 shrink-0">
-            {/* Em telas sm e md, mostramos o botão da Área de Membros se não houver espaço completo para todos os botões */}
-            <div className="flex md:hidden items-center gap-1.5 shrink-0">
-              {user ? (
-                <Link
-                  to="/membros"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all border border-dourado/50 text-dourado-light bg-vinho/80 whitespace-nowrap"
-                >
-                  <Sparkles className="w-3 h-3 text-dourado" />
-                  Membros
-                </Link>
-              ) : (
-                <button
-                  onClick={onOpenMembersModal}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all border border-dourado/40 text-marfim bg-vinho/60 whitespace-nowrap"
-                >
-                  <Lock className="w-3 h-3 text-dourado" />
-                  Membros
-                </button>
-              )}
-            </div>
-
+            {/* 4. Botão de MENU (Desktop e Mobile) */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-colors text-marfim hover:bg-vinho/60 active:scale-95 shrink-0"
-              aria-label="Abrir menu de navegação"
+              onClick={() => setMobileMenuOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide transition-all bg-dourado hover:bg-dourado-dark text-vinho shadow-md hover:shadow-dourado/20 active:scale-95 cursor-pointer min-h-[38px] shrink-0"
+              aria-label="Abrir menu de páginas do site"
+              aria-expanded={mobileMenuOpen}
             >
-              {mobileMenuOpen ? (
-                <X className="w-7 h-7 text-dourado" />
-              ) : (
-                <Menu className="w-7 h-7" />
-              )}
+              <Menu className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-vinho stroke-[2.5]" />
+              <span className="font-bold">Menu</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile / Tablet Drawer */}
+      {/* Overlay Marfim em tela cheia (Desktop e Mobile) com links do site */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-vinho-dark border-b-2 border-dourado/60 text-marfim px-5 py-5 shadow-2xl animate-fade-in-down max-h-[calc(100vh-6rem)] overflow-y-auto">
-          <div className="flex flex-col space-y-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.href}
-                onClick={(e) => handleNavClick(e, link.href, link.isRoute)}
-                className={`text-base font-medium py-3 px-3 rounded-xl border-b border-vinho-light/30 hover:text-dourado hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between min-h-[44px] ${
-                  link.isRoute && location.pathname === link.href
-                    ? 'text-dourado bg-white/5 font-bold'
-                    : ''
-                }`}
-              >
-                <span>{link.label}</span>
-                <span className="text-dourado/60 text-xs">›</span>
-              </Link>
-            ))}
+        <div
+          className="fixed inset-0 z-[100] bg-marfim text-vinho overflow-y-auto animate-in fade-in duration-300 flex flex-col justify-between"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu principal de navegação"
+        >
+          {/* Top bar do overlay: Logo oficial + Botão Fechar dourado elegante */}
+          <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex items-center justify-between border-b border-dourado/30">
+            <Link
+              to="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center transition-transform hover:opacity-90"
+              aria-label="CoffeeCast 4.0 - Voltar ao início"
+            >
+              <HeaderNavbarLogo className="h-12 sm:h-14 md:h-16 w-auto" />
+            </Link>
 
-            <div className="pt-4 flex flex-col gap-2.5">
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full border border-vinho/20 hover:border-dourado text-vinho hover:text-dourado-dark bg-white/70 hover:bg-white shadow-xs transition-all active:scale-95 cursor-pointer text-xs sm:text-sm font-bold min-h-[44px]"
+              aria-label="Fechar menu"
+            >
+              <X className="w-5 h-5 text-vinho" />
+              <span>Fechar</span>
+            </button>
+          </div>
+
+          {/* Conteúdo central do menu com fade-in escalonado */}
+          <div className="max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex-1 flex flex-col justify-center">
+            <div className="text-center mb-6 sm:mb-8">
+              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-vinho/70 font-semibold bg-vinho/5 px-3.5 py-1 rounded-full border border-vinho/10 inline-block mb-2">
+                Navegação Completa
+              </span>
+              <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-vinho">
+                Páginas & Seções do Site
+              </h2>
+            </div>
+
+            {/* Grid elegante de links de navegação com transições */}
+            <nav className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5 max-w-2xl mx-auto w-full">
+              {navLinks.map((link, idx) => {
+                const isActive = link.isRoute && location.pathname === link.href
+                return (
+                  <Link
+                    key={link.label}
+                    to={link.href}
+                    onClick={(e) => handleNavClick(e, link.href, link.isRoute)}
+                    style={{ animationDelay: `${idx * 40}ms` }}
+                    className={`group flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 active:scale-[0.99] animate-in fade-in slide-in-from-bottom-2 ${
+                      isActive
+                        ? 'bg-dourado/20 border-dourado text-vinho font-bold shadow-xs'
+                        : 'bg-white/80 hover:bg-white border-vinho/10 hover:border-dourado text-vinho/90 hover:text-vinho hover:shadow-md'
+                    }`}
+                  >
+                    <span className="font-serif text-base sm:text-lg font-medium group-hover:translate-x-1 transition-transform">
+                      {link.label}
+                    </span>
+                    <span className="w-7 h-7 rounded-full bg-vinho/5 group-hover:bg-dourado/20 text-vinho/60 group-hover:text-vinho flex items-center justify-center text-sm transition-colors">
+                      ›
+                    </span>
+                  </Link>
+                )
+              })}
+            </nav>
+
+            {/* Botões de Acesso Rápido dentro do Overlay (Área de Membros + Área Administrativa) */}
+            <div className="mt-8 pt-6 border-t border-dourado/30 max-w-2xl mx-auto w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
               {user ? (
                 <Link
                   to="/membros"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-3 px-4 rounded-xl bg-vinho-light/60 border border-dourado/40 text-dourado-light text-sm font-semibold flex items-center justify-center gap-2 min-h-[44px] active:scale-[0.99] transition-transform"
+                  className="w-full py-3.5 px-4 rounded-xl bg-vinho text-marfim border border-dourado/50 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-vinho-dark transition-all active:scale-[0.99] shadow-sm min-h-[46px]"
                 >
                   <Sparkles className="w-4 h-4 text-dourado" />
-                  Área de Membros
+                  <span>Acessar Área de Membros</span>
                 </Link>
               ) : (
                 <button
@@ -221,10 +241,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
                     setMobileMenuOpen(false)
                     onOpenMembersModal?.()
                   }}
-                  className="w-full py-3 px-4 rounded-xl bg-vinho-light/60 border border-white/20 text-marfim text-sm font-semibold flex items-center justify-center gap-2 min-h-[44px] active:scale-[0.99] transition-transform"
+                  className="w-full py-3.5 px-4 rounded-xl bg-vinho text-marfim border border-dourado/50 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-vinho-dark transition-all active:scale-[0.99] shadow-sm cursor-pointer min-h-[46px]"
                 >
                   <Lock className="w-4 h-4 text-dourado" />
-                  Área de Membros
+                  <span>Área de Membros</span>
                 </button>
               )}
 
@@ -233,16 +253,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full"
               >
-                <Button className="w-full bg-dourado hover:bg-dourado-dark text-vinho font-bold text-sm rounded-xl py-3 min-h-[44px] active:scale-[0.99] transition-transform">
+                <Button className="w-full bg-dourado hover:bg-dourado-dark text-vinho font-bold text-sm rounded-xl py-3.5 min-h-[46px] active:scale-[0.99] transition-all shadow-sm">
                   <ShieldCheck className="w-4 h-4 mr-1.5" />
-                  {isAdmin
-                    ? 'Acessar Painel Admin'
-                    : user
-                      ? 'Área de Membros'
-                      : 'Acesso Administrativo'}
+                  {isAdmin ? 'Acessar Painel Admin' : 'Área Administrativa'}
                 </Button>
               </Link>
             </div>
+          </div>
+
+          {/* Rodapé informativo sutil dentro do overlay */}
+          <div className="py-4 text-center border-t border-vinho/10 bg-white/40">
+            <p className="text-xs text-vinho/60 font-light">
+              CoffeeCast 4.0 — Mais que conversas, histórias que transformam.
+            </p>
           </div>
         </div>
       )}
