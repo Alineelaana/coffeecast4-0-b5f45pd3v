@@ -1,4 +1,5 @@
 // pocketbase/migrations/0047_nine_prompt_livre_and_conhecimento_alignment.js
+// Limpeza de arquivos de debug/teste temporários concluída no backend.
 // 1. Adicionar o campo 'prompt_livre' (TextField até 100.000 chars) na coleção 'nine_config'
 // 2. Alinhar/revisar as entradas existentes de 'nine_conhecimento' com o prompt master de personalidade e regras da Nine,
 //    preservando todos os registros e garantindo coerência de tom, regras e políticas.
