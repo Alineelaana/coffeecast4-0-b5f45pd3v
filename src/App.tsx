@@ -2,6 +2,7 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/context/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { CookieBanner } from '@/components/CookieBanner'
 import { Toaster } from 'sonner'
 
 // Public Pages
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/convidado" element={<ConvidadoScreen />} />
           <Route path="/roteiro" element={<RoteiroScreen />} />
           <Route path="/depoimento" element={<DepoimentoScreen />} />
+          <Route path="/privacidade" element={<Navigate to="/politica/privacidade" replace />} />
           <Route path="/politica/:slug" element={<PoliticaScreen />} />
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/reset-password" element={<ResetPasswordScreen />} />
@@ -151,6 +153,9 @@ export default function App() {
           {/* Rota 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+
+        {/* Banner de Cookies & Privacidade LGPD (público) */}
+        <CookieBanner />
       </BrowserRouter>
 
       {/* Notificações Toaster elegantes */}
