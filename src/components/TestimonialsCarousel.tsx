@@ -1,6 +1,17 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Quote, Sparkles, Instagram, Play } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Quote,
+  Sparkles,
+  Instagram,
+  Play,
+  ChevronDown,
+  ChevronUp,
+  Maximize2,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { getFileUrl, parseInstagramHandle } from '@/lib/formatters'
 import { formatExternalUrl } from '@/lib/openUrl'
 import type { DepoimentoRecord } from '@/types/database'
@@ -28,6 +39,24 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
   const [scrollLeftState, setScrollLeftState] = useState(0)
+
+  // Estado para armazenar quais cards estão expandidos no próprio card
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({})
+  // Estado para abrir modal elegante de leitura completa
+  const [modalDepoimento, setModalDepoimento] = useState<{
+    dep: DepoimentoRecord
+    photoUrl: string
+    isHighlight: boolean
+    parsedInsta: { username: string; url: string } | null
+  } | null>(null)
+
+  const toggleExpand = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setExpandedCards((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }))
+  }
 
   // Verifica se o carrossel tem conteúdo além da largura visível e as direções possíveis de rolagem
   const checkScrollability = useCallback(() => {
@@ -219,9 +248,58 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
 
               {/* Conteúdo do depoimento */}
               <div className="space-y-3 flex-1 flex flex-col justify-between">
-                <p className="text-xs sm:text-sm text-vinho/85 italic leading-relaxed line-clamp-6">
-                  "{dep.texto}"
-                </p>
+                {(() => {
+                  const cardKey = dep.id || String(index)
+                  const isExpanded = Boolean(expandedCards[cardKey])
+                  const isLong = (dep.texto || '').length > 180
+
+                  return (
+                    <div className="space-y-1.5">
+                      <p
+                        className={`text-xs sm:text-sm text-vinho/85 italic leading-relaxed transition-all duration-300 ${
+                          isExpanded ? 'whitespace-pre-line' : 'line-clamp-6'
+                        }`}
+                      >
+                        "{dep.texto}"
+                      </p>
+
+                      {isLong && (
+                        <div className="flex items-center gap-2 pt-0.5">
+                          <button
+                            type="button"
+                            onClick={(e) => toggleExpand(cardKey, e)}
+                            className="inline-flex items-center gap-1 font-serif text-[11px] sm:text-xs font-bold text-vinho hover:text-dourado-dark transition-colors cursor-pointer py-0.5 focus:outline-hidden focus-visible:ring-1 focus-visible:ring-dourado rounded-sm"
+                          >
+                            <span>{isExpanded ? 'Ler menos' : 'Ler mais'}</span>
+                            {isExpanded ? (
+                              <ChevronUp className="w-3.5 h-3.5 text-dourado" />
+                            ) : (
+                              <ChevronDown className="w-3.5 h-3.5 text-dourado" />
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setModalDepoimento({
+                                dep,
+                                photoUrl,
+                                isHighlight,
+                                parsedInsta,
+                              })
+                            }}
+                            title="Ler em tela cheia"
+                            className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-vinho/60 hover:text-vinho transition-colors cursor-pointer ml-auto hover:underline"
+                          >
+                            <Maximize2 className="w-3 h-3 text-dourado" />
+                            <span>Ver completo</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
 
                 <div className="space-y-3 pt-1">
                   <div className="flex items-center justify-between">
@@ -258,6 +336,77 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
           )
         })}
       </div>
+
+      {/* Modal elegante para leitura completa do depoimento */}
+      <Dialog
+        open={Boolean(modalDepoimento)}
+        onOpenChange={(open) => {
+          if (!open) setModalDepoimento(null)
+        }}
+      >
+        <DialogContent className="w-[94vw] max-w-lg max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/60 text-vinho p-5 sm:p-7 rounded-2xl shadow-2xl">
+          {modalDepoimento && (
+            <div className="space-y-5">
+              <DialogHeader>
+                <div className="flex items-center gap-3.5">
+                  <div className="w-16 h-16 rounded-full p-0.5 bg-linear-to-tr from-dourado via-dourado-light to-dourado-dark shadow-md shrink-0 ring-2 ring-dourado/40">
+                    <img
+                      src={modalDepoimento.photoUrl}
+                      alt={modalDepoimento.dep.nome}
+                      className="w-full h-full rounded-full object-cover border-2 border-white shadow-inner bg-vinho/5"
+                    />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <DialogTitle className="font-serif text-xl sm:text-2xl font-bold text-vinho">
+                      {modalDepoimento.dep.nome}
+                    </DialogTitle>
+                    <span className="text-xs text-vinho/65 font-medium block mt-0.5">
+                      {modalDepoimento.isHighlight
+                        ? 'Convidada Homenageada (Visão da Equipe)'
+                        : 'Convidada do Podcast'}
+                    </span>
+                    {modalDepoimento.parsedInsta && (
+                      <a
+                        href={modalDepoimento.parsedInsta.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-dourado-dark hover:text-vinho transition-colors mt-1"
+                      >
+                        <Instagram className="w-3.5 h-3.5 text-dourado shrink-0" />
+                        <span>{modalDepoimento.parsedInsta.username}</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </DialogHeader>
+
+              {/* Corpo completo do depoimento */}
+              <div className="relative bg-white/80 p-5 rounded-2xl border border-vinho/10 shadow-xs">
+                <Quote className="w-8 h-8 text-dourado/40 absolute top-3 right-3 pointer-events-none" />
+                <p className="text-sm sm:text-base text-vinho/90 italic leading-relaxed whitespace-pre-line font-serif">
+                  "{modalDepoimento.dep.texto}"
+                </p>
+              </div>
+
+              {/* Botão de assistir ao episódio se disponível */}
+              {modalDepoimento.dep.link_episodio && modalDepoimento.dep.link_episodio.trim() && (
+                <div className="pt-1">
+                  <a
+                    href={formatExternalUrl(modalDepoimento.dep.link_episodio)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 w-full px-5 py-3 rounded-full text-xs sm:text-sm font-semibold text-vinho bg-linear-to-r from-dourado/25 via-dourado/35 to-dourado/25 hover:from-dourado/40 hover:to-dourado/50 border border-dourado hover:border-dourado-dark transition-all duration-200 no-underline shadow-sm min-h-[46px]"
+                  >
+                    <Play className="w-4 h-4 text-vinho fill-vinho/80" />
+                    <span>Assistir ao episódio completo no YouTube</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -119,6 +119,16 @@ export default function AdminDepoimentosScreen() {
   const [modalRecebidoOpen, setModalRecebidoOpen] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
 
+  // Controle de linhas expandidas para "Ler mais / Ler menos"
+  const [expandedTextIds, setExpandedTextIds] = useState<Record<string, boolean>>({})
+
+  const toggleExpandText = (id: string) => {
+    setExpandedTextIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }))
+  }
+
   // Carregar depoimentos oficiais do site
   const loadDepoimentos = async () => {
     try {
@@ -688,9 +698,24 @@ export default function AdminDepoimentosScreen() {
                       )}
                     </div>
 
-                    <p className="text-xs text-vinho/75 italic bg-marfim/60 p-3 rounded-xl border border-vinho/10 leading-relaxed">
-                      "{item.texto}"
-                    </p>
+                    <div className="bg-marfim/60 p-3 rounded-xl border border-vinho/10 space-y-1.5">
+                      <p
+                        className={`text-xs text-vinho/75 italic leading-relaxed ${
+                          expandedTextIds[item.id] ? 'whitespace-pre-line' : 'line-clamp-3'
+                        }`}
+                      >
+                        "{item.texto}"
+                      </p>
+                      {(item.texto || '').length > 120 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleExpandText(item.id)}
+                          className="text-[11px] font-bold text-vinho hover:text-dourado-dark transition-colors cursor-pointer"
+                        >
+                          {expandedTextIds[item.id] ? 'Ler menos' : 'Ler mais'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )
               })
@@ -794,8 +819,23 @@ export default function AdminDepoimentosScreen() {
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-xs text-vinho/75 max-w-md italic line-clamp-2">
-                          "{item.texto}"
+                        <TableCell className="text-xs text-vinho/75 max-w-md">
+                          <p
+                            className={`italic leading-relaxed ${
+                              expandedTextIds[item.id] ? 'whitespace-pre-line' : 'line-clamp-2'
+                            }`}
+                          >
+                            "{item.texto}"
+                          </p>
+                          {(item.texto || '').length > 100 && (
+                            <button
+                              type="button"
+                              onClick={() => toggleExpandText(item.id)}
+                              className="text-[10px] font-bold text-vinho hover:text-dourado-dark transition-colors cursor-pointer mt-0.5 inline-block"
+                            >
+                              {expandedTextIds[item.id] ? 'Ler menos' : 'Ler mais'}
+                            </button>
+                          )}
                         </TableCell>
                         <TableCell className="text-right space-x-1">
                           <Button
@@ -970,9 +1010,24 @@ export default function AdminDepoimentosScreen() {
                       </span>
                     </div>
 
-                    <p className="text-xs text-vinho/75 italic bg-marfim/60 p-3 rounded-xl border border-vinho/10 leading-relaxed line-clamp-3">
-                      "{item.texto}"
-                    </p>
+                    <div className="bg-marfim/60 p-3 rounded-xl border border-vinho/10 space-y-1.5">
+                      <p
+                        className={`text-xs text-vinho/75 italic leading-relaxed ${
+                          expandedTextIds[`rec_${item.id}`] ? 'whitespace-pre-line' : 'line-clamp-3'
+                        }`}
+                      >
+                        "{item.texto}"
+                      </p>
+                      {(item.texto || '').length > 120 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleExpandText(`rec_${item.id}`)}
+                          className="text-[11px] font-bold text-vinho hover:text-dourado-dark transition-colors cursor-pointer"
+                        >
+                          {expandedTextIds[`rec_${item.id}`] ? 'Ler menos' : 'Ler mais'}
+                        </button>
+                      )}
+                    </div>
 
                     {/* Botões rápidos de aprovação no card mobile */}
                     <div className="grid grid-cols-2 gap-2 pt-1 border-t border-vinho/5">
@@ -1089,8 +1144,25 @@ export default function AdminDepoimentosScreen() {
                         <TableCell className="text-[11px] text-vinho/60 whitespace-nowrap">
                           {formatDateBR(item.created)}
                         </TableCell>
-                        <TableCell className="text-xs text-vinho/75 max-w-xs italic line-clamp-2">
-                          "{item.texto}"
+                        <TableCell className="text-xs text-vinho/75 max-w-xs">
+                          <p
+                            className={`italic leading-relaxed ${
+                              expandedTextIds[`rec_${item.id}`]
+                                ? 'whitespace-pre-line'
+                                : 'line-clamp-2'
+                            }`}
+                          >
+                            "{item.texto}"
+                          </p>
+                          {(item.texto || '').length > 80 && (
+                            <button
+                              type="button"
+                              onClick={() => toggleExpandText(`rec_${item.id}`)}
+                              className="text-[10px] font-bold text-vinho hover:text-dourado-dark transition-colors cursor-pointer mt-0.5 inline-block"
+                            >
+                              {expandedTextIds[`rec_${item.id}`] ? 'Ler menos' : 'Ler mais'}
+                            </button>
+                          )}
                         </TableCell>
                         <TableCell className="text-right space-x-1.5 whitespace-nowrap">
                           <Button
