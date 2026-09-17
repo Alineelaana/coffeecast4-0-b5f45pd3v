@@ -42,7 +42,7 @@ routerAdd(
       const biografia = roteiroRecord.getString('biografia') || 'Não informada'
 
       const promptInstrucoes = [
-        'Você é o Roteirista e Assistente de Produção Sênior do podcast CoffeeCast 4.0, conduzido por Aline Lana.',
+        'Você é a Nine, a assistente virtual e de produção do podcast CoffeeCast 4.0, conduzido por Aline Lana.',
         'Slogan da marca: "Mais que conversas, histórias que transformam". Identidade: café acolhedor, refinado, conversas profundas, inspiração, empreendedorismo e família.',
         '',
         'Aqui estão os dados enviados pelo(a) convidado(a):',
@@ -106,7 +106,7 @@ routerAdd(
               {
                 role: 'system',
                 content:
-                  'Você é o Roteirista Oficial do podcast CoffeeCast 4.0. Produza roteiros de alto nível, acolhedores e inspiradores para entrevistas gravadas em estúdio.',
+                  'Você é a Nine, assistente virtual do podcast CoffeeCast 4.0, conduzido por Aline Lana. Produza roteiros de alto nível, acolhedores, refinados e inspiradores para entrevistas gravadas em estúdio.',
               },
               {
                 role: 'user',

@@ -78,7 +78,7 @@ export default function AdminRoteirosScreen() {
   const [savingRoteiro, setSavingRoteiro] = useState(false)
   const fileUploadRef = useRef<HTMLInputElement>(null)
 
-  // Assistente de IA
+  // Assistente Virtual Nine
   const [aiSelectedId, setAiSelectedId] = useState<string>('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiResultado, setAiResultado] = useState<string>('')
@@ -214,11 +214,11 @@ export default function AdminRoteirosScreen() {
     }
   }
 
-  // Gerar roteiro com Assistente IA
+  // Gerar roteiro com a Nine (Assistente Virtual)
   const handleGerarComIA = async (overrideId?: string) => {
     const targetId = overrideId || aiSelectedId
     if (!targetId) {
-      toast.error('Selecione um convidado para gerar a sugestão de roteiro.')
+      toast.error('Selecione um convidado para a Nine gerar a sugestão de roteiro.')
       return
     }
 
@@ -238,25 +238,25 @@ export default function AdminRoteirosScreen() {
 
       const data = await res.json()
       if (!res.ok) {
-        throw new Error(data.error || 'Falha ao processar sugestão com IA')
+        throw new Error(data.error || 'A Nine encontrou uma instabilidade ao gerar a sugestão.')
       }
 
       setAiResultado(data.roteiroSugerido)
       setAiAgenteUsado(data.agenteUsado)
-      toast.success('Sugestão de roteiro gerada com sucesso pela IA do CoffeeCast 4.0!')
+      toast.success('A Nine preparou uma sugestão de roteiro inspiradora para este episódio!')
     } catch (err: unknown) {
       console.error(err)
       const msg =
         err && typeof err === 'object' && 'message' in err
           ? String((err as { message: string }).message)
-          : 'Erro ao gerar roteiro com IA.'
+          : 'A Nine não pôde concluir a sugestão neste momento. Tente novamente em instantes.'
       toast.error(msg)
     } finally {
       setAiLoading(false)
     }
   }
 
-  // Salvar resultado da IA diretamente no registro do convidado
+  // Salvar resultado gerado pela Nine diretamente no registro do convidado
   const handleSalvarAiNoRegistro = async () => {
     const targetId = aiSelectedId || selectedRoteiro?.id
     if (!targetId || !aiResultado) return
@@ -266,7 +266,7 @@ export default function AdminRoteirosScreen() {
       await pb.collection('roteiros_convidados').update(targetId, {
         roteiro_final_texto: aiResultado,
       })
-      toast.success('Sugestão de roteiro salva no registro do convidado com sucesso!')
+      toast.success('Roteiro da Nine vinculado ao registro do convidado com sucesso!')
       loadRoteiros()
     } catch (err) {
       console.error(err)
@@ -302,7 +302,7 @@ export default function AdminRoteirosScreen() {
           </div>
           <p className="text-xs text-vinho/70 mt-0.5">
             Gerencie os roteiros e pautas preenchidos pelos convidados, anexe o roteiro pronto e
-            conte com o Assistente IA do CoffeeCast 4.0.
+            conte com a Nine, sua assistente virtual no CoffeeCast 4.0.
           </p>
         </div>
 
@@ -377,7 +377,7 @@ export default function AdminRoteirosScreen() {
         </div>
       </div>
 
-      {/* Tabs: Roteiros Enviados / Assistente IA */}
+      {/* Tabs: Roteiros Enviados / Assistente Virtual Nine */}
       <Tabs
         value={activeTab}
         onValueChange={(val) => setActiveTab(val as 'roteiros' | 'assistente')}
@@ -400,9 +400,8 @@ export default function AdminRoteirosScreen() {
             value="assistente"
             className="data-[state=active]:bg-vinho data-[state=active]:text-white rounded-xl text-xs font-semibold py-2 px-4 transition-all flex items-center gap-2"
           >
-            <Bot className="w-3.5 h-3.5 text-dourado" />
-            <span>Assistente IA do Roteirista</span>
-            <Sparkles className="w-3 h-3 text-dourado" />
+            <Sparkles className="w-3.5 h-3.5 text-dourado" />
+            <span>Nine · Assistente Virtual</span>
           </TabsTrigger>
         </TabsList>
 
@@ -687,33 +686,122 @@ export default function AdminRoteirosScreen() {
           </div>
         </TabsContent>
 
-        {/* ABA 2: ASSISTENTE IA NATIVO */}
+        {/* ABA 2: ASSISTENTE VIRTUAL NINE */}
         <TabsContent value="assistente" className="space-y-5 pt-2">
-          <div className="bg-white rounded-3xl border-2 border-dourado/50 p-6 sm:p-8 shadow-md relative overflow-hidden">
-            <div className="flex items-start justify-between gap-4 pb-4 border-b border-vinho/10">
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dourado/15 border border-dourado/40 text-vinho text-xs font-semibold">
-                  <Bot className="w-4 h-4 text-dourado" />
-                  <span>Agente Inteligente do CoffeeCast 4.0</span>
-                  <Sparkles className="w-3 h-3 text-dourado" />
+          {/* Card Principal de Apresentação da Nine */}
+          <div className="bg-gradient-to-br from-white via-marfim/40 to-white rounded-3xl border-2 border-dourado/60 p-6 sm:p-8 shadow-md relative overflow-hidden">
+            {/* Brilhos decorativos de fundo */}
+            <div className="absolute -top-16 -right-16 w-56 h-56 bg-dourado/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-vinho/10 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Cabeçalho de Apresentação da Nine */}
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 pb-6 border-b border-vinho/10">
+              <div className="flex items-start sm:items-center gap-4">
+                {/* Avatar / Ícone harmonizado da Nine (vinho/dourado) */}
+                <div className="relative shrink-0">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-vinho via-[#4B1E3F] to-vinho-dark border-2 border-dourado shadow-md flex items-center justify-center text-marfim relative overflow-hidden">
+                    <div className="absolute inset-0 bg-dourado/10 mix-blend-overlay" />
+                    <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-dourado drop-shadow-sm" />
+                    <span className="absolute bottom-1 right-1.5 font-serif font-black text-[11px] text-dourado-light tracking-wider">
+                      4.0
+                    </span>
+                  </div>
+                  <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-dourado border-2 border-white flex items-center justify-center text-vinho shadow-xs">
+                    <Heart className="w-3 h-3 fill-vinho text-vinho" />
+                  </div>
                 </div>
-                <h3 className="font-serif text-xl sm:text-2xl font-bold text-vinho">
-                  Assistente de Roteiro & Apresentação com IA
-                </h3>
-                <p className="text-xs sm:text-sm text-vinho/70 max-w-2xl">
-                  Selecione um convidado que enviou suas respostas. O agente analisará a biografia,
-                  família, empresa, tema preferido e respeitará rigorosamente temas sensíveis a
-                  evitar, gerando uma bio de apresentação e um roteiro completo em blocos de
-                  perguntas.
-                </p>
+
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dourado/15 border border-dourado/40 text-vinho text-xs font-semibold">
+                    <Sparkles className="w-3.5 h-3.5 text-dourado-dark" />
+                    <span>Inteligência Artificial do CoffeeCast 4.0</span>
+                  </div>
+                  <h3 className="font-serif text-2xl sm:text-3xl font-bold text-vinho flex items-center gap-2">
+                    <span>Nine</span>
+                    <span className="text-xs sm:text-sm font-sans font-normal text-vinho/70 py-0.5 px-2 rounded-full bg-vinho/5 border border-vinho/10">
+                      Sua assistente virtual
+                    </span>
+                  </h3>
+                  <p className="text-xs sm:text-sm text-vinho/80 max-w-2xl leading-relaxed">
+                    <strong className="text-vinho font-semibold">
+                      "Olá! Eu sou a Nine, sua assistente virtual."
+                    </strong>{' '}
+                    Estou aqui para acolher com carinho as respostas do convidado e estruturar um
+                    roteiro marcante para o episódio: com bio de abertura para a apresentadora Aline
+                    Lana, destaque dos pontos fortes e perguntas organizadas em blocos, sempre
+                    respeitando com rigor os temas sensíveis.
+                  </p>
+                </div>
+              </div>
+
+              {/* Tag / Slogan */}
+              <div className="hidden lg:flex flex-col items-end text-right shrink-0 bg-marfim/70 border border-dourado/40 rounded-2xl p-3.5 shadow-2xs">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-dourado-dark">
+                  Identidade do CoffeeCast
+                </span>
+                <span className="font-serif italic text-xs text-vinho font-medium mt-0.5">
+                  "Mais que conversas, histórias que transformam."
+                </span>
+                <span className="text-[11px] text-vinho/60 mt-1 flex items-center gap-1">
+                  <Coffee className="w-3 h-3 text-dourado-dark" /> Tom caloroso, refinado e
+                  acolhedor
+                </span>
               </div>
             </div>
 
-            {/* Seleção do Convidado */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+            {/* Painel de Recursos da Nine */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 py-4 text-xs">
+              <div className="p-3 rounded-2xl bg-marfim/60 border border-vinho/10 flex items-start gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-vinho/10 text-vinho flex items-center justify-center shrink-0 mt-0.5">
+                  <User className="w-4 h-4 text-dourado-dark" />
+                </div>
+                <div>
+                  <strong className="text-vinho block font-semibold text-[12px]">
+                    Bio de Abertura
+                  </strong>
+                  <span className="text-vinho/70 text-[11px] leading-tight block mt-0.5">
+                    Resumo emocionante e marcante pronto para a leitura da apresentadora.
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-marfim/60 border border-vinho/10 flex items-start gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-vinho/10 text-vinho flex items-center justify-center shrink-0 mt-0.5">
+                  <FileText className="w-4 h-4 text-dourado-dark" />
+                </div>
+                <div>
+                  <strong className="text-vinho block font-semibold text-[12px]">
+                    Roteiro em 4 Blocos
+                  </strong>
+                  <span className="text-vinho/70 text-[11px] leading-tight block mt-0.5">
+                    Raízes, virada de chave, ponto alto e bate-bola final com café.
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-marfim/60 border border-vinho/10 flex items-start gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+                  <ShieldCheck className="w-4 h-4 text-amber-700" />
+                </div>
+                <div>
+                  <strong className="text-vinho block font-semibold text-[12px]">
+                    Cuidado com Temas Sensíveis
+                  </strong>
+                  <span className="text-vinho/70 text-[11px] leading-tight block mt-0.5">
+                    A Nine garante que nenhum assunto delicado seja mencionado no roteiro.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Seleção do Convidado para a Nine preparar */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
               <div className="md:col-span-2 space-y-1.5">
-                <Label htmlFor="ai-guest-select" className="text-xs font-bold text-vinho">
-                  Selecione o(a) Convidado(a) *
+                <Label
+                  htmlFor="ai-guest-select"
+                  className="text-xs font-bold text-vinho flex items-center gap-1.5"
+                >
+                  <span>Selecione a Convidada ou Convidado para a Nine estruturar *</span>
                 </Label>
                 <select
                   id="ai-guest-select"
@@ -724,7 +812,7 @@ export default function AdminRoteirosScreen() {
                   }}
                   className="w-full bg-marfim/50 border border-vinho/20 focus:ring-2 focus:ring-dourado text-sm rounded-xl px-3 py-2.5 min-h-[44px] text-vinho"
                 >
-                  <option value="">Selecione um convidado da lista...</option>
+                  <option value="">Selecione quem você deseja que a Nine prepare...</option>
                   {roteiros.map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.nome} — {formatDateBR(r.created)}{' '}
@@ -738,17 +826,17 @@ export default function AdminRoteirosScreen() {
                 <Button
                   onClick={() => handleGerarComIA()}
                   disabled={!aiSelectedId || aiLoading}
-                  className="w-full bg-vinho hover:bg-vinho-light text-white font-bold text-xs sm:text-sm py-2.5 min-h-[44px] rounded-xl flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
+                  className="w-full bg-vinho hover:bg-vinho-light text-white font-bold text-xs sm:text-sm py-2.5 min-h-[44px] rounded-xl flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50 transition-all hover:scale-[1.01]"
                 >
                   {aiLoading ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin text-dourado" />
-                      <span>Gerando Roteiro com IA...</span>
+                      <span>A Nine está preparando a sugestão...</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4 text-dourado" />
-                      <span>Gerar sugestão de roteiro com IA</span>
+                      <span>Gerar sugestão de roteiro com a Nine</span>
                     </>
                   )}
                 </Button>
@@ -758,16 +846,22 @@ export default function AdminRoteirosScreen() {
             {/* Caixa de Resultado Editável */}
             {aiResultado && (
               <div className="mt-6 pt-6 border-t border-vinho/10 space-y-4 animate-fade-in">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-marfim/50 p-3 rounded-2xl border border-vinho/10">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-vinho uppercase tracking-wider">
-                      Sugestão Gerada pelo Assistente
-                    </span>
+                    <div className="w-7 h-7 rounded-lg bg-vinho text-dourado flex items-center justify-center shrink-0">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-vinho block">
+                        Sugestão preparada pela Nine
+                      </span>
+                      <span className="text-[11px] text-vinho/70">
+                        Revise e ajuste o roteiro conforme o estilo da conversa
+                      </span>
+                    </div>
                     {aiAgenteUsado && (
-                      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px]">
-                        {aiAgenteUsado === 'native-agent'
-                          ? 'Agente Nativo Ativo'
-                          : 'Modelo Fast Ativo'}
+                      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px] ml-1">
+                        {aiAgenteUsado === 'native-agent' ? 'Nine Ativa' : 'Modo Rápido'}
                       </Badge>
                     )}
                   </div>
@@ -778,9 +872,9 @@ export default function AdminRoteirosScreen() {
                       variant="outline"
                       onClick={() => {
                         navigator.clipboard.writeText(aiResultado)
-                        toast.success('Roteiro copiado para a área de transferência!')
+                        toast.success('Roteiro da Nine copiado com sucesso!')
                       }}
-                      className="text-xs h-9 border-vinho/20 text-vinho hover:bg-vinho/10"
+                      className="text-xs h-9 border-vinho/20 text-vinho hover:bg-vinho/10 rounded-xl"
                     >
                       <Copy className="w-3.5 h-3.5 mr-1 text-dourado-dark" />
                       Copiar Texto
@@ -804,9 +898,12 @@ export default function AdminRoteirosScreen() {
                   onChange={(e) => setAiResultado(e.target.value)}
                   className="bg-marfim/60 border-vinho/20 focus-visible:ring-dourado font-mono text-xs sm:text-sm rounded-2xl p-4 leading-relaxed text-vinho shadow-inner"
                 />
-                <p className="text-[11px] text-vinho/60 italic">
-                  Você pode editar o texto acima à vontade antes de salvá-lo ou copiá-lo para a
-                  produção.
+                <p className="text-[11px] text-vinho/60 italic flex items-center gap-1.5">
+                  <Coffee className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
+                  <span>
+                    Você pode editar as sugestões da Nine livremente acima antes de salvar no
+                    registro do convidado ou copiar para o estúdio.
+                  </span>
                 </p>
               </div>
             )}
@@ -1096,7 +1193,7 @@ export default function AdminRoteirosScreen() {
                         className="w-full bg-vinho hover:bg-vinho-light text-white font-bold text-xs rounded-xl h-10 flex items-center justify-center gap-1.5 shadow-sm mt-2"
                       >
                         <Sparkles className="w-3.5 h-3.5 text-dourado" />
-                        <span>Gerar Roteiro com IA</span>
+                        <span>Gerar Roteiro com a Nine</span>
                       </Button>
                     </div>
                   </div>
