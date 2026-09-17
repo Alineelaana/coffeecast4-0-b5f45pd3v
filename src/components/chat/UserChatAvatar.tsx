@@ -1,7 +1,7 @@
 import React from 'react'
-import type { UserRole } from '@/types/database'
+import type { UserRole, UserStatus } from '@/types/database'
 import { Badge } from '@/components/ui/badge'
-import { ShieldCheck, Shield, Award, Crown, Sparkles } from 'lucide-react'
+import { ShieldCheck, Shield, Award, Crown, Sparkles, Coffee, Clock } from 'lucide-react'
 import { getFileUrl } from '@/lib/formatters'
 
 interface UserBadgeProps {
@@ -89,7 +89,7 @@ export const UserChatAvatar: React.FC<UserAvatarProps> = ({
   let avatarUrl = ''
   if (avatar && userRecord) {
     avatarUrl = getFileUrl(userRecord, avatar)
-  } else if (avatar && avatar.startsWith('http')) {
+  } else if (avatar && (avatar.startsWith('http') || avatar.startsWith('/'))) {
     avatarUrl = avatar
   }
 
@@ -108,5 +108,74 @@ export const UserChatAvatar: React.FC<UserAvatarProps> = ({
         <span>{getInitials(name)}</span>
       )}
     </div>
+  )
+}
+
+interface UserStatusIndicatorProps {
+  status?: UserStatus | string
+  pauseReason?: string
+  showText?: boolean
+  className?: string
+  size?: 'sm' | 'md' | 'lg'
+}
+
+export const UserStatusIndicator: React.FC<UserStatusIndicatorProps> = ({
+  status = 'offline',
+  pauseReason,
+  showText = false,
+  className = '',
+  size = 'md',
+}) => {
+  const normalized = (status || 'offline').toLowerCase()
+
+  const config = {
+    online: {
+      label: 'Online',
+      dotColor: 'bg-emerald-500 ring-emerald-200',
+      badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      textColor: 'text-emerald-700',
+    },
+    em_pausa: {
+      label: pauseReason ? `Em pausa — ${pauseReason}` : 'Em pausa',
+      dotColor: 'bg-amber-500 ring-amber-200 animate-pulse',
+      badgeColor: 'bg-amber-100 text-amber-900 border-amber-300',
+      textColor: 'text-amber-800',
+    },
+    offline: {
+      label: 'Offline',
+      dotColor: 'bg-slate-400 ring-slate-200',
+      badgeColor: 'bg-slate-100 text-slate-600 border-slate-300',
+      textColor: 'text-slate-500',
+    },
+  }[normalized] || {
+    label: 'Offline',
+    dotColor: 'bg-slate-400 ring-slate-200',
+    badgeColor: 'bg-slate-100 text-slate-600 border-slate-300',
+    textColor: 'text-slate-500',
+  }
+
+  const dotSizes = {
+    sm: 'w-2 h-2 ring-1',
+    md: 'w-2.5 h-2.5 ring-2',
+    lg: 'w-3 h-3 ring-2',
+  }[size]
+
+  if (showText) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${config.badgeColor} ${className}`}
+        title={config.label}
+      >
+        <span className={`rounded-full shrink-0 ${dotSizes} ${config.dotColor}`} />
+        <span className="truncate max-w-[150px]">{config.label}</span>
+      </span>
+    )
+  }
+
+  return (
+    <span
+      className={`rounded-full shrink-0 ${dotSizes} ${config.dotColor} ${className}`}
+      title={config.label}
+    />
   )
 }

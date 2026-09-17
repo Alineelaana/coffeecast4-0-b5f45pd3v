@@ -113,6 +113,35 @@ export default function AdminAuditoriaScreen() {
   const [observacaoAlerta, setObservacaoAlerta] = useState('')
   const [updatingAlerta, setUpdatingAlerta] = useState(false)
 
+  // Histórico de status por usuário selecionado
+  const [usuarioStatusSelecionado, setUsuarioStatusSelecionado] = useState<string>('todos')
+  const [periodoStatusInicio, setPeriodoStatusInicio] = useState<string>('')
+  const [periodoStatusFim, setPeriodoStatusFim] = useState<string>('')
+  const [loadingStatusReport, setLoadingStatusReport] = useState<boolean>(false)
+  const [statusReport, setStatusReport] = useState<{
+    eventos: AuditoriaEventoRecord[]
+    tempoOnlineSegundos: number
+    tempoOfflineSegundos: number
+    tempoPausaSegundos: number
+    totalSegundos: number
+    percentualOnline: number
+    percentualOffline: number
+    percentualPausa: number
+  } | null>(null)
+
+  const carregarRelatorioStatus = async (uid: string, inicio?: string, fim?: string) => {
+    setLoadingStatusReport(true)
+    try {
+      const report = await AuditoriaService.obterHistoricoStatusUsuario(uid, inicio, fim)
+      setStatusReport(report)
+    } catch (err) {
+      console.error(err)
+      toast.error('Erro ao calcular histórico de status.')
+    } finally {
+      setLoadingStatusReport(false)
+    }
+  }
+
   // Carregar dados de acordo com os filtros
   const carregarDados = async () => {
     setLoading(true)
@@ -178,6 +207,12 @@ export default function AdminAuditoriaScreen() {
     filtroSuspeito,
     filtroUsuario,
   ])
+
+  useEffect(() => {
+    if (activeTab === 'monitoramento') {
+      carregarRelatorioStatus(usuarioStatusSelecionado, periodoStatusInicio, periodoStatusFim)
+    }
+  }, [activeTab, usuarioStatusSelecionado, periodoStatusInicio, periodoStatusFim])
 
   // Tratar busca por ID vinda da URL
   useEffect(() => {
@@ -693,6 +728,7 @@ export default function AdminAuditoriaScreen() {
                       <SelectItem value="alteracao_permissao">Alteração Permissão</SelectItem>
                       <SelectItem value="movimentacao_financeira">Financeiro</SelectItem>
                       <SelectItem value="chat">Chat / Conversa</SelectItem>
+                      <SelectItem value="alteracao_status">Alteração de status</SelectItem>
                       <SelectItem value="bloqueio_acesso">Bloqueio / Não Autorizado</SelectItem>
                     </SelectContent>
                   </Select>
@@ -988,7 +1024,234 @@ export default function AdminAuditoriaScreen() {
         {/* ========================================================
             ABA 3: MONITORAMENTO DE USUÁRIOS
         ======================================================== */}
-        <TabsContent value="monitoramento" className="space-y-4">
+        <TabsContent value="monitoramento" className="space-y-6">
+          {/* SEÇÃO NOVO: MONITORAMENTO DE TEMPO E STATUS DO USUÁRIO */}
+          <div className="bg-gradient-to-r from-vinho via-[#3d1332] to-[#240b1e] p-5 sm:p-6 rounded-3xl text-white shadow-md space-y-4 border border-dourado/40">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-dourado/30 pb-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-dourado" />
+                  <h3 className="font-serif font-bold text-base sm:text-lg text-white">
+                    Histórico & Tempo Acumulado de Status (Chat & Sessão)
+                  </h3>
+                  <Badge className="bg-dourado text-vinho font-black text-[10px] px-2 py-0.5 rounded-full">
+                    Auditoria de Presença
+                  </Badge>
+                </div>
+                <p className="text-xs text-marfim/80">
+                  Consulte o tempo total acumulado em <strong>Online</strong>,{' '}
+                  <strong>Offline</strong> e <strong>Em pausa</strong> (com motivos), somatório com
+                  percentuais e histórico completo de transições.
+                </p>
+              </div>
+
+              {/* FILTRO DE USUÁRIO E PERÍODO */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  value={usuarioStatusSelecionado}
+                  onValueChange={(val) => {
+                    setUsuarioStatusSelecionado(val)
+                    carregarRelatorioStatus(val, periodoStatusInicio, periodoStatusFim)
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-48 text-xs bg-white text-vinho border-dourado font-semibold rounded-xl">
+                    <SelectValue placeholder="Selecione um usuário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os Usuários</SelectItem>
+                    {metricas.topUsuarios.map((u, i) => (
+                      <SelectItem key={i} value={u.email}>
+                        {u.nome} ({u.role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="flex items-center gap-1 text-xs">
+                  <Input
+                    type="date"
+                    value={periodoStatusInicio}
+                    onChange={(e) => setPeriodoStatusInicio(e.target.value)}
+                    className="h-9 w-32 bg-white text-vinho text-xs rounded-xl"
+                    title="Data de Início"
+                  />
+                  <span className="text-marfim/70 text-xs">até</span>
+                  <Input
+                    type="date"
+                    value={periodoStatusFim}
+                    onChange={(e) => setPeriodoStatusFim(e.target.value)}
+                    className="h-9 w-32 bg-white text-vinho text-xs rounded-xl"
+                    title="Data de Fim"
+                  />
+                  {(periodoStatusInicio || periodoStatusFim) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setPeriodoStatusInicio('')
+                        setPeriodoStatusFim('')
+                      }}
+                      className="h-9 px-2 text-dourado hover:text-white hover:bg-white/10 text-xs"
+                    >
+                      Limpar
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* CARDS DE TEMPO ACUMULADO */}
+            {loadingStatusReport ? (
+              <div className="py-8 text-center text-xs text-marfim/70 flex items-center justify-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin text-dourado" />
+                <span>Calculando tempos acumulados de presença...</span>
+              </div>
+            ) : statusReport ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  {/* ONLINE */}
+                  <div className="bg-white/10 backdrop-blur-md border border-emerald-400/40 rounded-2xl p-4 space-y-1">
+                    <div className="flex items-center justify-between text-xs text-emerald-300 font-semibold">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-emerald-300/30" />
+                        Online
+                      </span>
+                      <span className="text-white font-bold">{statusReport.percentualOnline}%</span>
+                    </div>
+                    <div className="text-xl sm:text-2xl font-serif font-black text-white">
+                      {Math.floor(statusReport.tempoOnlineSegundos / 3600)}h{' '}
+                      {Math.floor((statusReport.tempoOnlineSegundos % 3600) / 60)}m
+                    </div>
+                    <p className="text-[10px] text-marfim/70">
+                      {statusReport.tempoOnlineSegundos}s acumulados em atividade
+                    </p>
+                  </div>
+
+                  {/* EM PAUSA */}
+                  <div className="bg-white/10 backdrop-blur-md border border-amber-400/40 rounded-2xl p-4 space-y-1">
+                    <div className="flex items-center justify-between text-xs text-amber-300 font-semibold">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-amber-300/30 animate-pulse" />
+                        Em pausa
+                      </span>
+                      <span className="text-white font-bold">{statusReport.percentualPausa}%</span>
+                    </div>
+                    <div className="text-xl sm:text-2xl font-serif font-black text-white">
+                      {Math.floor(statusReport.tempoPausaSegundos / 3600)}h{' '}
+                      {Math.floor((statusReport.tempoPausaSegundos % 3600) / 60)}m
+                    </div>
+                    <p className="text-[10px] text-marfim/70">
+                      Almoço, Reunião, Intervalo, Atendimento
+                    </p>
+                  </div>
+
+                  {/* OFFLINE */}
+                  <div className="bg-white/10 backdrop-blur-md border border-slate-400/40 rounded-2xl p-4 space-y-1">
+                    <div className="flex items-center justify-between text-xs text-slate-300 font-semibold">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-slate-400 ring-2 ring-slate-300/30" />
+                        Offline
+                      </span>
+                      <span className="text-white font-bold">
+                        {statusReport.percentualOffline}%
+                      </span>
+                    </div>
+                    <div className="text-xl sm:text-2xl font-serif font-black text-white">
+                      {Math.floor(statusReport.tempoOfflineSegundos / 3600)}h{' '}
+                      {Math.floor((statusReport.tempoOfflineSegundos % 3600) / 60)}m
+                    </div>
+                    <p className="text-[10px] text-marfim/70">Desconectado ou sem sessão ativa</p>
+                  </div>
+
+                  {/* TOTAL DE TRANSIÇÕES */}
+                  <div className="bg-white/10 backdrop-blur-md border border-dourado/40 rounded-2xl p-4 space-y-1">
+                    <div className="flex items-center justify-between text-xs text-dourado font-semibold">
+                      <span className="flex items-center gap-1.5">
+                        <Activity className="w-3.5 h-3.5" />
+                        Transições Registradas
+                      </span>
+                    </div>
+                    <div className="text-xl sm:text-2xl font-serif font-black text-white">
+                      {statusReport.eventos.length}
+                    </div>
+                    <p className="text-[10px] text-marfim/70">
+                      Eventos imutáveis com IP, dispositivo e motivo
+                    </p>
+                  </div>
+                </div>
+
+                {/* BARRA DE PROGRESSO PERCENTUAL CONSOLIDADA */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px] text-marfim/80">
+                    <span>Distribuição percentual do tempo no período:</span>
+                    <span>
+                      {statusReport.percentualOnline}% Online · {statusReport.percentualPausa}% Em
+                      pausa · {statusReport.percentualOffline}% Offline
+                    </span>
+                  </div>
+                  <div className="h-3 w-full bg-white/20 rounded-full overflow-hidden flex shadow-inner">
+                    <div
+                      style={{ width: `${statusReport.percentualOnline}%` }}
+                      className="bg-emerald-400 h-full transition-all"
+                      title={`Online: ${statusReport.percentualOnline}%`}
+                    />
+                    <div
+                      style={{ width: `${statusReport.percentualPausa}%` }}
+                      className="bg-amber-400 h-full transition-all"
+                      title={`Em pausa: ${statusReport.percentualPausa}%`}
+                    />
+                    <div
+                      style={{ width: `${statusReport.percentualOffline}%` }}
+                      className="bg-slate-400 h-full transition-all"
+                      title={`Offline: ${statusReport.percentualOffline}%`}
+                    />
+                  </div>
+                </div>
+
+                {/* TABELA DE ÚLTIMAS TRANSIÇÕES DO USUÁRIO */}
+                {statusReport.eventos.length > 0 && (
+                  <div className="bg-white/95 text-vinho rounded-2xl p-4 space-y-2 border border-dourado/40 shadow-inner">
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-vinho flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-dourado-dark" />
+                      Histórico Recente de Mudanças de Status
+                    </h4>
+                    <div className="max-h-56 overflow-y-auto divide-y divide-vinho/10 text-xs">
+                      {statusReport.eventos.slice(0, 8).map((evt) => {
+                        const diffDepois = evt.diff_depois as any
+                        const diffAntes = evt.diff_antes as any
+                        const duracao =
+                          diffDepois?.duracao_status_anterior_segundos ||
+                          evt.metadata?.duracao_segundos ||
+                          0
+                        return (
+                          <div
+                            key={evt.id}
+                            className="py-2 flex items-center justify-between gap-3"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-semibold text-vinho truncate">{evt.descricao}</p>
+                              <p className="text-[10px] text-vinho/60 font-mono">
+                                {new Date(evt.created).toLocaleString('pt-BR')} ·{' '}
+                                {evt.dispositivo || 'Desktop'} · IP: {evt.ip || '—'}
+                              </p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              {duracao > 0 && (
+                                <Badge className="bg-vinho/10 text-vinho text-[9px] font-bold">
+                                  {Math.round(duracao / 60)} min no status anterior
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+
           <div className="bg-white p-5 rounded-2xl border border-vinho/10 shadow-sm space-y-4">
             <div>
               <h3 className="font-serif font-bold text-vinho text-base">

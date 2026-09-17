@@ -9,13 +9,30 @@ import type {
   ChatUserItem,
   ChatConversaTipo,
 } from '@/types/database'
-import { UserChatAvatar, UserRoleBadge } from '@/components/chat/UserChatAvatar'
+import {
+  UserChatAvatar,
+  UserRoleBadge,
+  UserStatusIndicator,
+} from '@/components/chat/UserChatAvatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   MessageSquare,
   Users,
@@ -31,6 +48,9 @@ import {
   RefreshCw,
   Sparkles,
   Info,
+  Coffee,
+  Clock,
+  ChevronDown,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDateBR } from '@/lib/formatters'
@@ -59,6 +79,16 @@ export default function ChatScreen() {
 
   // Mensagem em digitação
   const [inputMessage, setInputMessage] = useState('')
+
+  // Status do próprio usuário autenticado
+  const [myStatus, setMyStatus] = useState<'online' | 'offline' | 'em_pausa'>('online')
+  const [myPauseReason, setMyPauseReason] = useState<string>('')
+  const [pauseModalOpen, setPauseModalOpen] = useState(false)
+  const [selectedPauseOption, setSelectedPauseOption] = useState<
+    'Almoço' | 'Reunião' | 'Atendimento' | 'Intervalo' | 'Outro'
+  >('Almoço')
+  const [customPauseText, setCustomPauseText] = useState('')
+  const [updatingStatus, setUpdatingStatus] = useState(false)
 
   // Modais
   const [newPrivateModalOpen, setNewPrivateModalOpen] = useState(false)
@@ -186,6 +216,81 @@ export default function ChatScreen() {
       await ChatService.markConversationAsRead(conv.id, user.id)
       // Zera contador local
       setConversations((prev) => prev.map((c) => (c.id === conv.id ? { ...c, unreadCount: 0 } : c)))
+    }
+  }
+
+  // Carrega status atual do usuário logado
+  useEffect(() => {
+    if (user) {
+      const st = (user.status as any) || 'online'
+      setMyStatus(st)
+      setMyPauseReason(user.pause_reason || '')
+    }
+  }, [user])
+
+  // Heartbeat automático a cada 60 segundos enquanto a tela de chat estiver ativa
+  useEffect(() => {
+    if (!user) return
+    // Dispara heartbeat inicial
+    ChatService.sendHeartbeat()
+
+    const interval = setInterval(() => {
+      ChatService.sendHeartbeat()
+    }, 60 * 1000)
+
+    return () => clearInterval(interval)
+  }, [user])
+
+  // Troca de status
+  const handleSelectStatus = async (newStatus: 'online' | 'offline' | 'em_pausa') => {
+    if (newStatus === 'em_pausa') {
+      setPauseModalOpen(true)
+      return
+    }
+
+    try {
+      setUpdatingStatus(true)
+      await ChatService.updateUserStatus(newStatus)
+      setMyStatus(newStatus)
+      setMyPauseReason('')
+      toast.success(
+        `Seu status foi alterado para ${newStatus === 'online' ? 'Online' : 'Offline'}.`,
+      )
+      loadData(true)
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.message || 'Erro ao alterar status.')
+    } finally {
+      setUpdatingStatus(false)
+    }
+  }
+
+  // Confirmar pausa com validação de motivo obrigatório
+  const handleConfirmPause = async (e: React.FormEvent) => {
+    e.preventDefault()
+    let motivoFinal = selectedPauseOption
+    if (selectedPauseOption === 'Outro') {
+      if (!customPauseText.trim()) {
+        toast.error('Ao escolher "Outro", informe a justificativa da pausa.')
+        return
+      }
+      motivoFinal = customPauseText.trim() as any
+    }
+
+    try {
+      setUpdatingStatus(true)
+      await ChatService.updateUserStatus('em_pausa', motivoFinal)
+      setMyStatus('em_pausa')
+      setMyPauseReason(motivoFinal)
+      setPauseModalOpen(false)
+      setCustomPauseText('')
+      toast.success(`Status alterado para Em pausa: ${motivoFinal}`)
+      loadData(true)
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.message || 'Falha ao colocar em pausa.')
+    } finally {
+      setUpdatingStatus(false)
     }
   }
 
@@ -418,8 +523,56 @@ export default function ChatScreen() {
           </div>
         </div>
 
-        {/* BOTÕES DE AÇÃO: NOVA CONVERSA / NOVO GRUPO / GESTÃO MASTER */}
-        <div className="flex items-center gap-2">
+        {/* SELETOR DE STATUS DO USUÁRIO & BOTÕES DE AÇÃO */}
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {/* SELETOR DE STATUS DO PRÓPRIO USUÁRIO */}
+          <div className="flex items-center bg-white/10 backdrop-blur-md border border-dourado/40 rounded-2xl px-2.5 py-1 text-xs text-white">
+            <span className="text-[10px] text-marfim/80 hidden lg:inline mr-2 font-medium">
+              Meu Status:
+            </span>
+            <div className="flex items-center gap-1.5">
+              <UserStatusIndicator status={myStatus} pauseReason={myPauseReason} size="md" />
+              <Select
+                value={myStatus}
+                onValueChange={(val: any) => handleSelectStatus(val)}
+                disabled={updatingStatus}
+              >
+                <SelectTrigger className="h-7 text-xs bg-transparent border-0 text-white font-bold hover:bg-white/10 rounded-lg p-1 px-2 focus:ring-0 gap-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-vinho/20 text-vinho text-xs font-semibold">
+                  <SelectItem value="online">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      Online
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="em_pausa">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                      Em pausa (exige motivo)
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="offline">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                      Offline
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {myStatus === 'em_pausa' && myPauseReason && (
+              <span
+                onClick={() => setPauseModalOpen(true)}
+                className="text-[10px] bg-amber-400/20 text-amber-200 border border-amber-300/40 rounded-lg px-2 py-0.5 ml-1.5 truncate max-w-[120px] cursor-pointer hover:bg-amber-400/30"
+                title={`Pausa: ${myPauseReason} (clique para alterar)`}
+              >
+                {myPauseReason}
+              </span>
+            )}
+          </div>
+
           {activeTab === 'privado' && (
             <Button
               size="sm"
@@ -635,6 +788,17 @@ export default function ChatScreen() {
                           {conv.unreadCount}
                         </span>
                       )}
+
+                      {/* Indicador de status no avatar da conversa privada */}
+                      {conv.tipo === 'privado' && conv.targetUser && (
+                        <span className="absolute bottom-0 right-0">
+                          <UserStatusIndicator
+                            status={conv.targetUser.status}
+                            pauseReason={conv.targetUser.pause_reason}
+                            size="sm"
+                          />
+                        </span>
+                      )}
                     </div>
 
                     {/* Informações da conversa */}
@@ -664,6 +828,17 @@ export default function ChatScreen() {
                       <div className="flex items-center gap-1.5 mt-1">
                         {conv.tipo === 'privado' && conv.displayRole && (
                           <UserRoleBadge role={conv.displayRole} size="sm" />
+                        )}
+                        {conv.tipo === 'privado' && conv.targetUser?.status === 'em_pausa' && (
+                          <span
+                            className={`text-[9px] px-1 rounded truncate max-w-[90px] font-medium ${
+                              isSelected
+                                ? 'bg-amber-400 text-vinho font-bold'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            Pausa
+                          </span>
                         )}
                         {conv.tipo === 'grupo' && (
                           <Badge
@@ -744,12 +919,19 @@ export default function ChatScreen() {
                   </div>
 
                   <div className="truncate">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="font-serif font-bold text-sm sm:text-base text-vinho truncate">
                         {activeConversation.displayName}
                       </h2>
                       {activeConversation.tipo === 'privado' && activeConversation.displayRole && (
                         <UserRoleBadge role={activeConversation.displayRole} size="sm" />
+                      )}
+                      {activeConversation.tipo === 'privado' && activeConversation.targetUser && (
+                        <UserStatusIndicator
+                          status={activeConversation.targetUser.status}
+                          pauseReason={activeConversation.targetUser.pause_reason}
+                          showText
+                        />
                       )}
                     </div>
                     <p className="text-[11px] text-vinho/60 truncate">
@@ -757,9 +939,11 @@ export default function ChatScreen() {
                         ? 'Todos os usuários cadastrados e ativos no CoffeeCast 4.0'
                         : activeConversation.tipo === 'grupo'
                           ? activeConversation.descricao || 'Grupo fechado de membros'
-                          : activeConversation.targetUser?.bio ||
-                            activeConversation.targetUser?.email ||
-                            'Conversa privada'}
+                          : activeConversation.targetUser?.pause_reason
+                            ? `${activeConversation.displayName} / ${activeConversation.displayRole || 'Membro'} / Em pausa — ${activeConversation.targetUser.pause_reason}`
+                            : activeConversation.targetUser?.bio ||
+                              activeConversation.targetUser?.email ||
+                              'Conversa privada'}
                     </p>
                   </div>
                 </div>
@@ -959,18 +1143,27 @@ export default function ChatScreen() {
                     <div className="flex items-center gap-2.5 min-w-0">
                       <UserChatAvatar name={u.name} avatar={u.avatar} userRecord={u} size="sm" />
                       <div className="truncate">
-                        <p className="text-xs font-bold text-vinho truncate group-hover:text-dourado-dark">
-                          {u.name}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-bold text-vinho truncate group-hover:text-dourado-dark">
+                            {u.name}
+                          </p>
+                        </div>
                         <p className="text-[10px] text-vinho/50 truncate font-mono">{u.email}</p>
+                        <div className="mt-0.5">
+                          <UserStatusIndicator
+                            status={u.status}
+                            pauseReason={u.pause_reason}
+                            showText
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       <UserRoleBadge role={u.role} size="sm" />
                       <Button
                         size="sm"
-                        className="h-8 px-2.5 text-[11px] bg-vinho hover:bg-vinho-light text-white rounded-lg"
+                        className="h-8 px-2.5 text-[11px] bg-vinho hover:bg-vinho-light text-white rounded-lg shadow-2xs font-semibold"
                       >
                         Conversar
                       </Button>
@@ -980,6 +1173,85 @@ export default function ChatScreen() {
               )}
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: MOTIVO OBRIGATÓRIO DE PAUSA */}
+      <Dialog open={pauseModalOpen} onOpenChange={setPauseModalOpen}>
+        <DialogContent className="sm:max-w-md bg-[#FAF8F5] border-2 border-dourado/40 rounded-3xl p-6">
+          <DialogHeader className="border-b border-vinho/10 pb-3">
+            <DialogTitle className="font-serif font-bold text-lg text-vinho flex items-center gap-2">
+              <Coffee className="w-5 h-5 text-amber-600" />
+              Entrar em Pausa no Chat
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleConfirmPause} className="space-y-4 pt-2">
+            <p className="text-xs text-vinho/75">
+              Ao escolher o status <strong>Em pausa</strong>, é obrigatório informar o motivo para
+              que os outros membros e a coordenação saibam sua disponibilidade temporária.
+            </p>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-vinho">Selecione o Motivo da Pausa *</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['Almoço', 'Reunião', 'Atendimento', 'Intervalo', 'Outro'] as const).map(
+                  (opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setSelectedPauseOption(opt)}
+                      className={`py-2 px-3 text-xs font-bold rounded-xl border text-left transition-all ${
+                        selectedPauseOption === opt
+                          ? 'bg-vinho text-white border-vinho shadow-xs'
+                          : 'bg-white hover:bg-marfim border-vinho/15 text-vinho'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
+
+            {selectedPauseOption === 'Outro' && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-vinho">Especifique o Motivo *</Label>
+                <Input
+                  required
+                  value={customPauseText}
+                  onChange={(e) => setCustomPauseText(e.target.value)}
+                  placeholder="Ex.: Treinamento interno, gravação de áudio..."
+                  className="bg-white border-vinho/20 text-xs sm:text-sm rounded-xl focus-visible:ring-dourado"
+                />
+              </div>
+            )}
+
+            <DialogFooter className="pt-2 border-t border-vinho/10 flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPauseModalOpen(false)}
+                className="text-xs border-vinho/20 rounded-xl"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={updatingStatus}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl px-4"
+              >
+                {updatingStatus ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                    Registrando...
+                  </>
+                ) : (
+                  'Confirmar Pausa'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -1053,20 +1325,34 @@ export default function ChatScreen() {
                           <UserChatAvatar
                             name={u.name}
                             avatar={u.avatar}
-                            userRecord={u}
+                            userRecord={u as any}
                             size="sm"
                           />
                           <div className="truncate">
-                            <span className="text-xs font-semibold text-vinho truncate block">
-                              {u.name}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-semibold text-vinho truncate block">
+                                {u.name}
+                              </span>
+                              <UserStatusIndicator
+                                status={u.status}
+                                pauseReason={u.pause_reason}
+                                size="sm"
+                              />
+                            </div>
                             <span className="text-[10px] text-vinho/50 truncate block">
                               {u.email}
                             </span>
                           </div>
                         </div>
 
-                        <UserRoleBadge role={u.role} size="sm" />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {u.status === 'em_pausa' && u.pause_reason && (
+                            <span className="text-[9px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.2 rounded font-medium truncate max-w-[100px]">
+                              {u.pause_reason}
+                            </span>
+                          )}
+                          <UserRoleBadge role={u.role} size="sm" />
+                        </div>
                       </div>
                     )
                   })}

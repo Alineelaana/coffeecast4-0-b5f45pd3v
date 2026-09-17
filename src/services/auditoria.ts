@@ -574,6 +574,93 @@ export const AuditoriaService = {
   /**
    * Mocks iniciais para enriquecer visualização e testes se o banco for novo
    */
+  /**
+   * Busca histórico de status de um usuário específico para relatório de monitoramento
+   */
+  async obterHistoricoStatusUsuario(
+    usuarioId: string,
+    dataInicio?: string,
+    dataFim?: string,
+  ): Promise<{
+    eventos: AuditoriaEventoRecord[]
+    tempoOnlineSegundos: number
+    tempoOfflineSegundos: number
+    tempoPausaSegundos: number
+    totalSegundos: number
+    percentualOnline: number
+    percentualOffline: number
+    percentualPausa: number
+  }> {
+    try {
+      const filterParts = [`tipo_acao = "alteracao_status"`]
+      if (usuarioId && usuarioId !== 'todos') {
+        filterParts.push(`(usuario_id = "${usuarioId}" || registro_afetado = "${usuarioId}")`)
+      }
+      if (dataInicio) {
+        filterParts.push(`created >= "${dataInicio} 00:00:00"`)
+      }
+      if (dataFim) {
+        filterParts.push(`created <= "${dataFim} 23:59:59"`)
+      }
+
+      const res = await pb.collection('auditoria_eventos').getFullList<AuditoriaEventoRecord>({
+        filter: filterParts.join(' && '),
+        sort: 'created',
+      })
+
+      let tempoOnline = 0
+      let tempoOffline = 0
+      let tempoPausa = 0
+
+      // Calcular acumulação a partir dos diffs gravados
+      res.forEach((evt) => {
+        const diffAntes = evt.diff_antes as any
+        const diffDepois = evt.diff_depois as any
+        const duracao =
+          diffDepois?.duracao_status_anterior_segundos || evt.metadata?.duracao_segundos || 0
+
+        const statusAnterior = diffAntes?.status || 'offline'
+        if (duracao > 0) {
+          if (statusAnterior === 'online') {
+            tempoOnline += duracao
+          } else if (statusAnterior === 'em_pausa') {
+            tempoPausa += duracao
+          } else {
+            tempoOffline += duracao
+          }
+        }
+      })
+
+      const total = tempoOnline + tempoOffline + tempoPausa
+      const percentualOnline = total > 0 ? Math.round((tempoOnline / total) * 100) : 0
+      const percentualOffline = total > 0 ? Math.round((tempoOffline / total) * 100) : 0
+      const percentualPausa = total > 0 ? Math.round((tempoPausa / total) * 100) : 0
+
+      return {
+        eventos: res.reverse(), // Mais recentes primeiro
+        tempoOnlineSegundos: tempoOnline,
+        tempoOfflineSegundos: tempoOffline,
+        tempoPausaSegundos: tempoPausa,
+        totalSegundos: total,
+        percentualOnline,
+        percentualOffline,
+        percentualPausa,
+      }
+    } catch (err) {
+      console.warn('Erro ao obter histórico de status do usuário:', err)
+      return {
+        eventos: [],
+        tempoOnlineSegundos: 0,
+        tempoOfflineSegundos: 0,
+        tempoPausaSegundos: 0,
+        totalSegundos: 0,
+        percentualOnline: 0,
+        percentualOffline: 0,
+        percentualPausa: 0,
+      }
+    }
+  },
+
   _gerarMocksIniciais(): AuditoriaEventoRecord[] {
     const agora = Date.now()
     return [

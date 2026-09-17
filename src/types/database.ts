@@ -15,6 +15,8 @@ export interface AdmPermissions {
   auditoria?: AuditoriaSubPermissions // Sub-permissões granulares da Auditoria do Sistema
 }
 
+export type UserStatus = 'online' | 'offline' | 'em_pausa'
+
 export interface UserRecord {
   id: string
   email: string
@@ -23,6 +25,10 @@ export interface UserRecord {
   bio?: string
   role: UserRole
   ativo: boolean
+  status?: UserStatus
+  pause_reason?: string
+  status_updated?: string
+  last_seen?: string
   telefone?: string
   origem?: string
   adm_permissions?: AdmPermissions | null
@@ -478,6 +484,10 @@ export interface ChatUserItem {
   avatar?: string
   role: UserRole
   bio?: string
+  status?: UserStatus
+  pause_reason?: string
+  last_seen?: string
+  status_updated?: string
 }
 
 // ==========================================
@@ -506,6 +516,7 @@ export type AuditoriaTipoAcao =
   | 'configuracao'
   | 'chat'
   | 'bloqueio_acesso'
+  | 'alteracao_status'
   | 'outro'
 
 export type AuditoriaResultado = 'sucesso' | 'erro' | 'bloqueio'
@@ -629,6 +640,8 @@ export interface ChatOverviewItem {
     email: string
     avatar?: string
     role: UserRole
+    status?: UserStatus
+    pause_reason?: string
     is_admin?: boolean
   }[]
   total_mensagens: number

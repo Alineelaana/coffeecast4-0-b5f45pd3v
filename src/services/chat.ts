@@ -17,22 +17,79 @@ export class ChatService {
         '/backend/v1/chat/users',
         { method: 'GET' },
       )
-      return res?.users || []
+      if (res?.users) {
+        return res.users
+      }
     } catch (err) {
-      console.warn('Fallback ao buscar usuários via coleção:', err)
-      // Fallback direto via SDK
+      console.warn('Endpoint /backend/v1/chat/users falhou, usando fallback SDK:', err)
+    }
+
+    // Fallback direto via SDK
+    try {
       const list = await pb.collection('users').getFullList({
         filter: 'ativo = true',
         sort: 'name',
       })
-      return list.map((u: any) => ({
-        id: u.id,
-        name: u.name || u.email?.split('@')[0] || 'Membro',
-        email: u.email || '',
-        avatar: u.avatar || '',
-        role: u.role || 'prata',
-        bio: u.bio || '',
-      }))
+      const nowMs = Date.now()
+      return list.map((u: any) => {
+        let status = u.status || 'offline'
+        if (status !== 'em_pausa') {
+          if (u.last_seen && nowMs - new Date(u.last_seen).getTime() <= 3 * 60 * 1000) {
+            status = 'online'
+          } else {
+            status = 'offline'
+          }
+        }
+        return {
+          id: u.id,
+          name: u.name || u.email?.split('@')[0] || 'Membro',
+          email: u.email || '',
+          avatar: u.avatar || '',
+          role: u.role || 'prata',
+          bio: u.bio || '',
+          status,
+          pause_reason: status === 'em_pausa' ? u.pause_reason || '' : '',
+          last_seen: u.last_seen || '',
+          status_updated: u.status_updated || '',
+        }
+      })
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * Atualiza o status do usuário autenticado no Chat e registra na auditoria
+   */
+  static async updateUserStatus(
+    status: 'online' | 'offline' | 'em_pausa',
+    pauseReason?: string,
+  ): Promise<{ status: string; pause_reason?: string; status_updated: string }> {
+    const res = await pb.send<{
+      success: boolean
+      status: string
+      pause_reason: string
+      status_updated: string
+    }>('/backend/v1/chat/status', {
+      method: 'POST',
+      body: {
+        status,
+        pause_reason: status === 'em_pausa' ? pauseReason || '' : '',
+      },
+    })
+    return res
+  }
+
+  /**
+   * Envia sinal de heartbeat para manter status online
+   */
+  static async sendHeartbeat(): Promise<void> {
+    try {
+      await pb.send('/backend/v1/chat/heartbeat', {
+        method: 'POST',
+      })
+    } catch {
+      /* intentionally ignored */
     }
   }
 
