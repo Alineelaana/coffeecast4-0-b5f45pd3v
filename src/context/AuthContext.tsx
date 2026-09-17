@@ -132,6 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const gerencialAllowed = [
         'dashboard',
         'notificacoes',
+        'chat',
         'nine',
         'episodios',
         'momentos',

@@ -6,6 +6,8 @@ import officialLogo from '@/assets/sem-nome-1350-x-1080-px-1-c4c50.png'
 import {
   LayoutDashboard,
   Bell,
+  MessageSquare,
+  MessagesSquare,
   Tv,
   Users2,
   MessageSquareQuote,
@@ -44,6 +46,7 @@ export default function AdminLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [ninePendingCount, setNinePendingCount] = useState(0)
+  const [chatUnreadCount, setChatUnreadCount] = useState(0)
 
   // Submenu exclusivo Master / Gestão Avançada colapsável
   const isMasterPathActive = [
@@ -53,6 +56,7 @@ export default function AdminLayout() {
     '/admin/integrantes',
     '/admin/politicas',
     '/admin/usuarios',
+    '/admin/chat/gestao',
   ].some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`))
 
   const [masterSubmenuOpen, setMasterSubmenuOpen] = useState(true)
@@ -114,9 +118,47 @@ export default function AdminLayout() {
     }
   }
 
+  // Carrega total de mensagens de chat não lidas para o usuário autenticado
+  const fetchChatUnreadCount = async () => {
+    if (!user) return
+    try {
+      // Buscar participações do usuário
+      const participacoes = await pb.collection('chat_participantes').getFullList({
+        filter: `user = "${user.id}"`,
+        fields: 'conversa,ultima_leitura',
+      })
+      let totalUnread = 0
+      for (const p of participacoes as any[]) {
+        let f = `conversa = "${p.conversa}" && remetente != "${user.id}"`
+        if (p.ultima_leitura) {
+          f += ` && created > "${p.ultima_leitura}"`
+        }
+        const res = await pb
+          .collection('chat_mensagens')
+          .getList(1, 1, { filter: f, fields: 'id' })
+          .catch(() => ({ totalItems: 0 }))
+        totalUnread += res.totalItems
+      }
+      setChatUnreadCount(totalUnread)
+    } catch (err) {
+      console.warn('Erro ao carregar contagem de chat não lido:', err)
+    }
+  }
+
   React.useEffect(() => {
     fetchUnreadCount()
     fetchNinePendingCount()
+    fetchChatUnreadCount()
+
+    let unsubChat: (() => void) | undefined
+    pb.collection('chat_mensagens')
+      .subscribe('*', () => {
+        fetchChatUnreadCount()
+      })
+      .then((unsub) => {
+        unsubChat = unsub
+      })
+      .catch(() => {})
 
     let unsubNine: (() => void) | undefined
     pb.collection('nine_conversas')
@@ -164,8 +206,9 @@ export default function AdminLayout() {
       if (unsubDep) unsubDep()
       if (unsubCont) unsubCont()
       if (unsubNine) unsubNine()
+      if (unsubChat) unsubChat()
     }
-  }, [])
+  }, [user?.id])
 
   const handleLogout = () => {
     logout()
@@ -187,6 +230,14 @@ export default function AdminLayout() {
       path: '/admin/notificacoes',
       icon: Bell,
       badgeCount: unreadNotificationsCount,
+    },
+    {
+      key: 'chat',
+      label: 'Chat CoffeeCast',
+      path: '/admin/chat',
+      icon: MessageSquare,
+      badgeCount: chatUnreadCount,
+      highlight: true,
     },
     {
       key: 'nine',
@@ -256,6 +307,15 @@ export default function AdminLayout() {
 
   // SUBMENU EXCLUSIVO MASTER / GESTÃO AVANÇADA
   const rawMasterMenuItems = [
+    {
+      key: 'chat_gestao',
+      label: 'Gestão de Conversas',
+      path: '/admin/chat/gestao',
+      icon: MessagesSquare,
+      masterOnly: true,
+      badge: 'Master',
+      exact: false,
+    },
     {
       key: 'storefront',
       label: 'Storefront',

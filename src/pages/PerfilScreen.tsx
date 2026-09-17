@@ -32,6 +32,7 @@ import {
   ExternalLink,
   RefreshCw,
   LogOut,
+  MessageSquare,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -325,13 +326,25 @@ export default function PerfilScreen() {
               </Link>
             )}
 
-            {/* Atalho para Área de Membros */}
-            <Link to="/membros">
+            {/* Atalho para o Chat Oficial */}
+            <Link to="/chat">
               <Button
                 size="sm"
                 className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-full px-3.5 shadow-sm inline-flex items-center gap-1.5"
               >
-                <ShieldCheck className="w-3.5 h-3.5" />
+                <MessageSquare className="w-3.5 h-3.5 text-vinho" />
+                Chat
+              </Button>
+            </Link>
+
+            {/* Atalho para Área de Membros */}
+            <Link to="/membros">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-dourado/60 text-dourado-light hover:bg-vinho-light bg-transparent text-xs rounded-full px-3 hidden sm:inline-flex items-center gap-1.5"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-dourado" />
                 Área de Membros
               </Button>
             </Link>

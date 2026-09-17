@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Headphones,
   User,
+  MessageSquare,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDateBR, extractYouTubeId, getFileUrl } from '@/lib/formatters'
@@ -36,6 +37,45 @@ export default function MembersScreen() {
   const [momentos, setMomentos] = useState<MomentoRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
+  const [chatUnreadCount, setChatUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (!user) return
+    const fetchChatUnread = async () => {
+      try {
+        const parts = await pb.collection('chat_participantes').getFullList({
+          filter: `user = "${user.id}"`,
+          fields: 'conversa,ultima_leitura',
+        })
+        let total = 0
+        for (const p of parts as any[]) {
+          let f = `conversa = "${p.conversa}" && remetente != "${user.id}"`
+          if (p.ultima_leitura) f += ` && created > "${p.ultima_leitura}"`
+          const res = await pb
+            .collection('chat_mensagens')
+            .getList(1, 1, { filter: f, fields: 'id' })
+            .catch(() => ({ totalItems: 0 }))
+          total += res.totalItems
+        }
+        setChatUnreadCount(total)
+      } catch (e) {
+        console.warn('Erro ao carregar badge do chat na área de membros:', e)
+      }
+    }
+    fetchChatUnread()
+    let unsub: (() => void) | undefined
+    pb.collection('chat_mensagens')
+      .subscribe('*', () => {
+        fetchChatUnread()
+      })
+      .then((u) => {
+        unsub = u
+      })
+      .catch(() => {})
+    return () => {
+      if (unsub) unsub()
+    }
+  }, [user?.id])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -135,13 +175,30 @@ export default function MembersScreen() {
               </Link>
             )}
 
+            {/* Botão do Chat Oficial visível no cabeçalho */}
+            <Link to="/chat">
+              <Button
+                size="sm"
+                className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-full px-3.5 shadow-sm inline-flex items-center gap-1.5 relative"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-vinho" />
+                <span>Chat</span>
+                {chatUnreadCount > 0 && (
+                  <Badge className="bg-amber-500 text-white font-bold text-[9px] px-1.5 py-0 rounded-full h-4 min-w-[16px] flex items-center justify-center">
+                    {chatUnreadCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
+
             {/* Botão Meu Perfil visível no cabeçalho */}
             <Link to="/perfil">
               <Button
                 size="sm"
-                className="bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-full px-3.5 shadow-sm inline-flex items-center gap-1.5"
+                variant="outline"
+                className="border-dourado/60 text-dourado-light hover:bg-vinho-light bg-transparent font-bold text-xs rounded-full px-3 hidden sm:inline-flex items-center gap-1.5"
               >
-                <User className="w-3.5 h-3.5 text-vinho" />
+                <User className="w-3.5 h-3.5 text-dourado" />
                 Meu Perfil
               </Button>
             </Link>
@@ -224,11 +281,16 @@ export default function MembersScreen() {
               </p>
               <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs text-dourado-light">
                 <Link
-                  to="/perfil"
+                  to="/chat"
                   className="font-bold text-dourado hover:text-white inline-flex items-center gap-1.5"
                 >
-                  <User className="w-3.5 h-3.5" />
-                  Editar Meu Perfil & Senha
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Abrir Chat CoffeeCast
+                  {chatUnreadCount > 0 && (
+                    <Badge className="bg-amber-400 text-vinho font-bold text-[9px] px-1.5 py-0 rounded-full ml-1">
+                      {chatUnreadCount}
+                    </Badge>
+                  )}
                 </Link>
 
                 {isMaster || isGerencial ? (
@@ -239,7 +301,12 @@ export default function MembersScreen() {
                     Painel <ChevronRight className="w-3 h-3" />
                   </Link>
                 ) : (
-                  <span className="text-[10px] text-marfim/60">Ativo</span>
+                  <Link
+                    to="/perfil"
+                    className="text-[11px] underline hover:text-white inline-flex items-center gap-1"
+                  >
+                    Perfil
+                  </Link>
                 )}
               </div>
             </div>

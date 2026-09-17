@@ -18,6 +18,7 @@ import LoginScreen from '@/pages/LoginScreen'
 import ResetPasswordScreen from '@/pages/ResetPasswordScreen'
 import MembersScreen from '@/pages/MembersScreen'
 import PerfilScreen from '@/pages/PerfilScreen'
+import ChatScreen from '@/pages/ChatScreen'
 import NotFound from '@/pages/NotFound'
 
 // Admin Layout & Screens
@@ -40,6 +41,7 @@ import AdminUsuariosScreen from '@/pages/admin/AdminUsuariosScreen'
 import AdminNotificacoesScreen from '@/pages/admin/AdminNotificacoesScreen'
 import AdminRoteirosScreen from '@/pages/admin/AdminRoteirosScreen'
 import AdminNineScreen from '@/pages/admin/AdminNineScreen'
+import AdminChatManagementScreen from '@/pages/admin/AdminChatManagementScreen'
 
 export default function App() {
   return (
@@ -93,6 +95,18 @@ export default function App() {
               }
             />
 
+            {/* Chat (Acessível a TODOS os níveis: Master, ADM, Gerencial, Ouro e Prata) */}
+            <Route
+              path="/chat"
+              element={
+                <ProtectedRoute requireMembersOnly>
+                  <div className="min-h-screen bg-[#FAF8F5] p-3 sm:p-6 lg:p-8 flex flex-col">
+                    <ChatScreen />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+
             {/* Rotas Administrativas Protegidas (Master e Gerencial) */}
             <Route
               path="/admin"
@@ -118,6 +132,24 @@ export default function App() {
                 element={
                   <ProtectedRoute screenKey="notificacoes">
                     <AdminNotificacoesScreen />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Chat no painel administrativo */}
+              <Route
+                path="chat"
+                element={
+                  <ProtectedRoute screenKey="chat">
+                    <ChatScreen />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Gestão de Conversas (Exclusivo Master) */}
+              <Route
+                path="chat/gestao"
+                element={
+                  <ProtectedRoute requireMaster>
+                    <AdminChatManagementScreen />
                   </ProtectedRoute>
                 }
               />

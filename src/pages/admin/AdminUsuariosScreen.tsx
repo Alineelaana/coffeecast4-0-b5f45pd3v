@@ -57,6 +57,12 @@ const AVAILABLE_SCREENS = [
     group: 'Operacional',
   },
   {
+    key: 'chat',
+    label: 'Chat (Membros & Equipe)',
+    description: 'Conversas privadas, chat geral e grupos com outros usuários',
+    group: 'Operacional',
+  },
+  {
     key: 'nine',
     label: 'Nine Assistente Virtual',
     description: 'Atendimento inteligente e conversas de visitantes',

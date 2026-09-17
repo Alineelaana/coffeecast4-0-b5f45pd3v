@@ -413,3 +413,96 @@ export interface StoreTestimonialRecord {
   created: string
   updated: string
 }
+
+// ==========================================
+// CHAT & CONVERSAS COFFEECAST 4.0
+// ==========================================
+
+export type ChatConversaTipo = 'privado' | 'geral' | 'grupo'
+
+export interface ChatConversaRecord {
+  id: string
+  tipo: ChatConversaTipo
+  nome?: string
+  descricao?: string
+  criador?: string
+  private_pair?: string
+  ultima_mensagem?: string
+  ultimo_envio?: string
+  created: string
+  updated: string
+}
+
+export interface ChatParticipanteRecord {
+  id: string
+  conversa: string
+  user: string
+  is_admin?: boolean
+  ultima_leitura?: string
+  created: string
+  updated: string
+  // expand
+  expand?: {
+    user?: UserRecord
+    conversa?: ChatConversaRecord
+  }
+}
+
+export interface ChatMensagemRecord {
+  id: string
+  conversa: string
+  remetente: string
+  texto: string
+  created: string
+  updated: string
+  // expand
+  expand?: {
+    remetente?: UserRecord
+    conversa?: ChatConversaRecord
+  }
+}
+
+export interface ChatUserItem {
+  id: string
+  name: string
+  email: string
+  avatar?: string
+  role: UserRole
+  bio?: string
+}
+
+export interface ChatOverviewItem {
+  id: string
+  tipo: ChatConversaTipo
+  nome: string
+  descricao?: string
+  criador?: {
+    id: string
+    name: string
+    email: string
+    avatar?: string
+    role: UserRole
+  } | null
+  participantes: {
+    id: string
+    user_id: string
+    name: string
+    email: string
+    avatar?: string
+    role: UserRole
+    is_admin?: boolean
+  }[]
+  total_mensagens: number
+  primeira_mensagem?: {
+    data: string
+    texto: string
+  } | null
+  ultima_mensagem?: {
+    data: string
+    texto: string
+    remetente_id?: string
+    remetente_nome?: string
+  } | null
+  created: string
+  updated: string
+}

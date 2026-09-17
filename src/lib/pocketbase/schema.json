@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T17:50:22.151Z",
+  "generatedAt": "2026-09-17T17:56:28.360Z",
   "collections": [
     {
       "name": "users",
@@ -1924,6 +1924,190 @@
       "indexes": [
         "CREATE INDEX idx_store_testim_store ON store_testimonials (store)",
         "CREATE INDEX idx_store_testim_approved ON store_testimonials (approved)"
+      ]
+    },
+    {
+      "name": "chat_conversas",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != \"\"",
+        "view": "@request.auth.id != \"\"",
+        "create": "@request.auth.id != \"\"",
+        "update": "@request.auth.id != \"\"",
+        "delete": "@request.auth.role = \"master\""
+      },
+      "fields": [
+        {
+          "name": "tipo",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["privado", "geral", "grupo"]
+        },
+        {
+          "name": "nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "descricao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "criador",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "private_pair",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ultima_mensagem",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ultimo_envio",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_chat_conversas_tipo ON chat_conversas (tipo)",
+        "CREATE INDEX idx_chat_conversas_pair ON chat_conversas (private_pair)",
+        "CREATE INDEX idx_chat_conversas_envio ON chat_conversas (ultimo_envio DESC)"
+      ]
+    },
+    {
+      "name": "chat_participantes",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != \"\"",
+        "view": "@request.auth.id != \"\"",
+        "create": "@request.auth.id != \"\"",
+        "update": "@request.auth.id != \"\"",
+        "delete": "@request.auth.id != \"\""
+      },
+      "fields": [
+        {
+          "name": "conversa",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "chat_conversas"
+        },
+        {
+          "name": "user",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "is_admin",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ultima_leitura",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX idx_chat_part_unique ON chat_participantes (conversa, user)",
+        "CREATE INDEX idx_chat_part_user ON chat_participantes (user)"
+      ]
+    },
+    {
+      "name": "chat_mensagens",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != \"\"",
+        "view": "@request.auth.id != \"\"",
+        "create": "@request.auth.id != \"\"",
+        "update": "@request.auth.id != \"\" && (remetente = @request.auth.id || @request.auth.role = \"master\")",
+        "delete": "@request.auth.role = \"master\" || remetente = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "conversa",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "chat_conversas"
+        },
+        {
+          "name": "remetente",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "texto",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_chat_msg_conversa_created ON chat_mensagens (conversa, created ASC)",
+        "CREATE INDEX idx_chat_msg_remetente ON chat_mensagens (remetente)"
       ]
     }
   ]
