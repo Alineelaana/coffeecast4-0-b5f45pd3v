@@ -6,6 +6,7 @@ import { Toaster } from 'sonner'
 
 // Public Pages
 import Index from '@/pages/Index'
+import ConvidadoScreen from '@/pages/ConvidadoScreen'
 import DepoimentoScreen from '@/pages/DepoimentoScreen'
 import PoliticaScreen from '@/pages/PoliticaScreen'
 import LoginScreen from '@/pages/LoginScreen'
@@ -38,6 +39,7 @@ export default function App() {
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/" element={<Index />} />
+          <Route path="/convidado" element={<ConvidadoScreen />} />
           <Route path="/depoimento" element={<DepoimentoScreen />} />
           <Route path="/politica/:slug" element={<PoliticaScreen />} />
           <Route path="/login" element={<LoginScreen />} />

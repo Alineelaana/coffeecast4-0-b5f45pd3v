@@ -22,14 +22,20 @@ export default function DepoimentoScreen() {
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-rose-brand/15 rounded-full blur-3xl pointer-events-none" />
 
           <div className="max-w-4xl mx-auto relative z-10 space-y-6">
-            {/* Botão de retorno sutil */}
-            <div>
+            {/* Botões de retorno sutis */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Link
+                to="/convidado"
+                className="inline-flex items-center gap-2 text-xs font-semibold text-dourado hover:text-white transition-colors bg-vinho/80 hover:bg-vinho px-3.5 py-1.5 rounded-full border border-dourado/50 backdrop-blur-xs shadow-xs"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-dourado" />
+                Voltar à Área do Convidado
+              </Link>
               <Link
                 to="/"
                 className="inline-flex items-center gap-2 text-xs font-semibold text-marfim/80 hover:text-dourado transition-colors bg-white/10 hover:bg-white/15 px-3.5 py-1.5 rounded-full border border-dourado/30 backdrop-blur-xs shadow-xs"
               >
-                <ArrowLeft className="w-3.5 h-3.5 text-dourado" />
-                Voltar para o site do CoffeeCast 4.0
+                Início do Site
               </Link>
             </div>
 

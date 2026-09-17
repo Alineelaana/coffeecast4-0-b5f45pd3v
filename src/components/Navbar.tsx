@@ -32,6 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
     { label: 'Integrantes', href: '/#integrantes', isRoute: false },
     { label: 'Episódios', href: '/#episodios', isRoute: false },
     { label: 'Depoimentos', href: '/#depoimentos', isRoute: false },
+    { label: 'Área do Convidado', href: '/convidado', isRoute: true },
     { label: 'Deixe seu depoimento', href: '/depoimento', isRoute: true },
     { label: 'Participar', href: '/#participar', isRoute: false },
     { label: 'Contato', href: '/#contato', isRoute: false },

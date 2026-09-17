@@ -47,9 +47,12 @@ export default function AdminDepoimentosScreen() {
   const { isMaster, isGerencial } = useAuth()
   const [activeTab, setActiveTab] = useState<'publicados' | 'recebidos'>('publicados')
   const [copiedLink, setCopiedLink] = useState(false)
+  const [copiedConvidadoLink, setCopiedConvidadoLink] = useState(false)
 
   const publicTestimonialUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/depoimento` : '/depoimento'
+  const publicConvidadoUrl =
+    typeof window !== 'undefined' ? `${window.location.origin}/convidado` : '/convidado'
 
   const handleCopyLink = async () => {
     try {
@@ -57,6 +60,18 @@ export default function AdminDepoimentosScreen() {
       setCopiedLink(true)
       toast.success('Link do formulário copiado com sucesso! Pronto para enviar ao convidado.')
       setTimeout(() => setCopiedLink(false), 3000)
+    } catch (err) {
+      console.error('Falha ao copiar:', err)
+      toast.error('Não foi possível copiar automaticamente. Selecione e copie o link.')
+    }
+  }
+
+  const handleCopyConvidadoLink = async () => {
+    try {
+      await navigator.clipboard.writeText(publicConvidadoUrl)
+      setCopiedConvidadoLink(true)
+      toast.success('Link da Área do Convidado copiado com sucesso!')
+      setTimeout(() => setCopiedConvidadoLink(false), 3000)
     } catch (err) {
       console.error('Falha ao copiar:', err)
       toast.error('Não foi possível copiar automaticamente. Selecione e copie o link.')
@@ -366,66 +381,123 @@ export default function AdminDepoimentosScreen() {
         )}
       </div>
 
-      {/* Card de Divulgação: Copiar Link do Formulário para Convidados */}
+      {/* Card de Divulgação: Copiar Link do Formulário para Convidados e Portal do Convidado */}
       <div className="bg-gradient-to-r from-vinho via-[#4B1E3F] to-[#36142d] text-marfim rounded-2xl p-4 sm:p-5 border-2 border-dourado/40 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-dourado/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1 max-w-xl">
+        <div className="relative z-10 space-y-4">
+          <div className="space-y-1 max-w-2xl">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-dourado/20 border border-dourado/40 text-dourado text-[11px] font-bold">
                 <Share2 className="w-3 h-3 text-dourado" />
-                Divulgue o formulário
+                Divulgue o formulário & Área do Convidado
               </span>
-              <span className="text-[11px] text-marfim/70">Página dedicada para convidados</span>
+              <span className="text-[11px] text-marfim/70">
+                Páginas públicas sem exigência de login
+              </span>
             </div>
             <h3 className="font-serif text-base sm:text-lg font-bold text-white">
-              Link direto para o convidado deixar seu depoimento
+              Links públicos para enviar ao convidado
             </h3>
             <p className="text-xs text-marfim/80 leading-relaxed font-light">
-              Envie este link para quem já participou de um episódio no CoffeeCast 4.0. Ele abre uma
-              página acolhedora e exclusiva onde o convidado preenche seu depoimento, anexa a foto e
-              autoriza a exibição.
+              Envie o link direto do depoimento ou o portal completo da Área do Convidado (onde ele
+              escolhe preencher o depoimento ou acessar futuras etapas do episódio). Nenhum exige
+              cadastro ou senha.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto shrink-0">
-            {/* Input do link em somente-leitura */}
-            <div className="bg-black/30 border border-dourado/30 rounded-xl px-3 py-2 flex items-center gap-2 min-w-0 md:max-w-xs">
-              <span className="text-xs font-mono text-dourado-light truncate select-all">
-                {publicTestimonialUrl}
-              </span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-1">
+            {/* Linha 1: Link Direto /depoimento */}
+            <div className="bg-black/30 border border-dourado/30 rounded-xl p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+              <div className="min-w-0 space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-dourado">
+                    Link Direto: Depoimento
+                  </span>
+                </div>
+                <div className="text-xs font-mono text-dourado-light truncate select-all">
+                  {publicTestimonialUrl}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="flex-1 sm:flex-none bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-xl px-3.5 py-2 min-h-[38px] shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copiar link</span>
+                    </>
+                  )}
+                </Button>
+
+                <a
+                  href={publicTestimonialUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-marfim hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 min-h-[38px] transition-colors cursor-pointer"
+                  title="Abrir página do depoimento em nova aba"
+                >
+                  <span>Abrir</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-dourado" />
+                </a>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                onClick={handleCopyLink}
-                className="flex-1 sm:flex-none bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-xl px-4 py-2 min-h-[40px] shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
-              >
-                {copiedLink ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
-                    <span>Copiado!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copiar link</span>
-                  </>
-                )}
-              </Button>
+            {/* Linha 2: Portal /convidado */}
+            <div className="bg-black/30 border border-dourado/30 rounded-xl p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+              <div className="min-w-0 space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-dourado">
+                    Portal: Área do Convidado
+                  </span>
+                  <span className="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-1.5 py-0.2 rounded font-semibold">
+                    Novo
+                  </span>
+                </div>
+                <div className="text-xs font-mono text-dourado-light truncate select-all">
+                  {publicConvidadoUrl}
+                </div>
+              </div>
 
-              <a
-                href={publicTestimonialUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-marfim hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 min-h-[40px] transition-colors cursor-pointer"
-                title="Abrir página pública em nova aba"
-              >
-                <span>Abrir</span>
-                <ExternalLink className="w-3.5 h-3.5 text-dourado" />
-              </a>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  type="button"
+                  onClick={handleCopyConvidadoLink}
+                  className="flex-1 sm:flex-none bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-xl px-3.5 py-2 min-h-[38px] shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                >
+                  {copiedConvidadoLink ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copiar link</span>
+                    </>
+                  )}
+                </Button>
+
+                <a
+                  href={publicConvidadoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-marfim hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 min-h-[38px] transition-colors cursor-pointer"
+                  title="Abrir Área do Convidado em nova aba"
+                >
+                  <span>Abrir</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-dourado" />
+                </a>
+              </div>
             </div>
           </div>
         </div>

@@ -152,13 +152,21 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <Link
-                  to="/depoimento"
+                  to="/convidado"
                   className="hover:text-dourado transition-colors font-medium text-dourado-light flex items-center gap-1.5"
                 >
-                  <span>Deixe seu Depoimento</span>
+                  <span>Área do Convidado</span>
                   <span className="text-[10px] bg-dourado/20 text-dourado px-1.5 py-0.2 rounded font-bold">
-                    Novo
+                    Portal
                   </span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/depoimento"
+                  className="hover:text-dourado transition-colors flex items-center gap-1.5"
+                >
+                  <span>Deixe seu Depoimento</span>
                 </Link>
               </li>
               <li>
