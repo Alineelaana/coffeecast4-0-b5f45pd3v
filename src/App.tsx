@@ -57,6 +57,8 @@ export default function App() {
           <Route path="/_/#/auth/confirm-password-reset/:token" element={<ResetPasswordScreen />} />
           <Route path="/auth/confirm-password-reset/:token" element={<ResetPasswordScreen />} />
           <Route path="/auth/confirm-password-reset" element={<ResetPasswordScreen />} />
+          <Route path="/confirm-password-reset/:token" element={<ResetPasswordScreen />} />
+          <Route path="/confirm-password-reset" element={<ResetPasswordScreen />} />
           <Route path="/_/*" element={<ResetPasswordScreen />} />
 
           {/* Área de Membros (Disponível para Master, Gerencial, Ouro e Prata) */}

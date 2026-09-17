@@ -15,7 +15,7 @@ export default function ResetPasswordScreen() {
   // Extrai o token com suporte abrangente a:
   // 1. Query parameter: ?token=...
   // 2. Route param: /redefinir-senha/:token ou /auth/confirm-password-reset/:token
-  // 3. Pathname da URL (ex.: se a rota for /_/* ou /auth/confirm-password-reset/*)
+  // 3. Pathname da URL (ex.: se a rota for /_/* ou /auth/confirm-password-reset/* ou /redefinir-senha/*)
   // 4. Fallback de hash URL (ex.: se o navegador recebeu /#token=... ou /#/.../:token)
   const resolveToken = (): string => {
     const fromQuery = searchParams.get('token')
@@ -24,19 +24,40 @@ export default function ResetPasswordScreen() {
     if (routeParams.token && routeParams.token.trim()) return routeParams.token.trim()
 
     if (typeof window !== 'undefined') {
-      const pathname = window.location.pathname
-      const matchPath = pathname.match(/confirm-password-reset\/([a-zA-Z0-9_\-.]+)/)
-      if (matchPath && matchPath[1]) return matchPath[1].trim()
+      // 1. Verifica se há token na query da window diretamente (?token=...)
+      try {
+        const winSearch = new URLSearchParams(window.location.search)
+        const winToken = winSearch.get('token')
+        if (winToken && winToken.trim()) return winToken.trim()
+      } catch {
+        /* intentionally ignored */
+      }
 
+      // 2. Verifica segmentos do pathname
+      const pathname = window.location.pathname
+      const matchReset = pathname.match(/confirm-password-reset\/([a-zA-Z0-9_\-.]+)/)
+      if (matchReset && matchReset[1]) return matchReset[1].trim()
+
+      const matchRedefinir = pathname.match(/redefinir-senha\/([a-zA-Z0-9_\-.]+)/)
+      if (matchRedefinir && matchRedefinir[1]) return matchRedefinir[1].trim()
+
+      const matchResetPass = pathname.match(/reset-password\/([a-zA-Z0-9_\-.]+)/)
+      if (matchResetPass && matchResetPass[1]) return matchResetPass[1].trim()
+
+      // 3. Verifica hash (#/auth/confirm-password-reset/... ou #token=... ou #/redefinir-senha/...)
       if (window.location.hash) {
         const hash = window.location.hash
-        // Formato #token=xyz
         const matchParam = hash.match(/[?&#]token=([a-zA-Z0-9_\-.]+)/)
         if (matchParam && matchParam[1]) return matchParam[1].trim()
 
-        // Formato #/auth/confirm-password-reset/xyz
         const matchSegment = hash.match(/confirm-password-reset\/([a-zA-Z0-9_\-.]+)/)
         if (matchSegment && matchSegment[1]) return matchSegment[1].trim()
+
+        const matchHashRedefinir = hash.match(/redefinir-senha\/([a-zA-Z0-9_\-.]+)/)
+        if (matchHashRedefinir && matchHashRedefinir[1]) return matchHashRedefinir[1].trim()
+
+        const matchHashReset = hash.match(/reset-password\/([a-zA-Z0-9_\-.]+)/)
+        if (matchHashReset && matchHashReset[1]) return matchHashReset[1].trim()
       }
     }
 

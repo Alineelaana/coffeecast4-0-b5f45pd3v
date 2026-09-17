@@ -25,6 +25,7 @@ onMailerSend((e) => {
     // ou se contiver o domínio backend interno, substitui para apontar para a rota pública do site.
     // Trata todas as variações de padrão de URL de autenticação:
     // Exemplo: https://.../_/#/auth/confirm-password-reset/<token> -> https://.../redefinir-senha?token=<token>
+    // NOTA: Em HTML escapado por entidades (&amp; etc.), normaliza também
     html = html.replace(
       /https?:\/\/[^\s"'<>]+\/(?:_\/)?#\/auth\/confirm-password-reset\/([a-zA-Z0-9_\-\.]+)/g,
       siteUrl + '/redefinir-senha?token=$1',
@@ -53,7 +54,15 @@ onMailerSend((e) => {
     )
 
     // Se o backend tiver interpolado com o domínio interno .internal.goskip.dev apontando para /redefinir-senha,
-    // corrige para o siteUrl público
+    // ou se contiver qualquer rota apontando para o host interno, corrige para o siteUrl público
+    html = html.replace(
+      /https?:\/\/[a-zA-Z0-9\-\.]+\.internal\.goskip\.dev(?:\/api\/collections\/users\/[^\s"'<>]*)?\/redefinir-senha/g,
+      siteUrl + '/redefinir-senha',
+    )
+    text = text.replace(
+      /https?:\/\/[a-zA-Z0-9\-\.]+\.internal\.goskip\.dev(?:\/api\/collections\/users\/[^\s"'<>]*)?\/redefinir-senha/g,
+      siteUrl + '/redefinir-senha',
+    )
     html = html.replace(
       /https?:\/\/[a-zA-Z0-9\-\.]+\.internal\.goskip\.dev\/redefinir-senha/g,
       siteUrl + '/redefinir-senha',
@@ -61,6 +70,16 @@ onMailerSend((e) => {
     text = text.replace(
       /https?:\/\/[a-zA-Z0-9\-\.]+\.internal\.goskip\.dev\/redefinir-senha/g,
       siteUrl + '/redefinir-senha',
+    )
+
+    // Também garante substituição caso {TOKEN} ou &amp; tenha sido gerado
+    html = html.replace(
+      /redefinir-senha\?token=([a-zA-Z0-9_\-\.]+)&amp;/g,
+      'redefinir-senha?token=$1&',
+    )
+    text = text.replace(
+      /redefinir-senha\?token=([a-zA-Z0-9_\-\.]+)&amp;/g,
+      'redefinir-senha?token=$1&',
     )
     msg.html = html
     msg.text = text

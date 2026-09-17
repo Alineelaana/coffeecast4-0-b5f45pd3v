@@ -366,16 +366,29 @@ export default function Index() {
   }
 
   // Rolar suavemente até o elemento caso venha de outra rota com hash na URL (ex: /#integrantes).
-  // Se o hash contiver rota de autenticação de e-mail antigo (ex.: #/auth/confirm-password-reset/<token>),
-  // redireciona de imediato para a tela de redefinição de senha /redefinir-senha?token=<token>.
+  // Se houver qualquer indício de link de recuperação de senha que tenha chegado na Home
+  // (seja por hash, por query param ou fragmento de URL), redireciona imediatamente para a tela de redefinição.
   useEffect(() => {
+    // 1. Checa se há token na query da home (?token=xyz)
+    const searchParams = new URLSearchParams(window.location.search)
+    const queryToken = searchParams.get('token')
+    if (queryToken && queryToken.trim()) {
+      window.location.replace(`/redefinir-senha?token=${encodeURIComponent(queryToken.trim())}`)
+      return
+    }
+
+    // 2. Checa se há rota de autenticação de e-mail no hash (ex.: #/auth/confirm-password-reset/<token> ou #token=xyz)
     const hash = window.location.hash
     if (hash) {
-      if (hash.includes('confirm-password-reset')) {
-        const match = hash.match(/confirm-password-reset\/([a-zA-Z0-9_\-.]+)/)
-        const token = match && match[1] ? match[1] : ''
-        if (token) {
-          window.location.replace(`/redefinir-senha?token=${encodeURIComponent(token)}`)
+      if (hash.includes('confirm-password-reset') || hash.includes('token=')) {
+        const matchReset = hash.match(/confirm-password-reset\/([a-zA-Z0-9_\-.]+)/)
+        const matchTokenParam = hash.match(/[?&#]token=([a-zA-Z0-9_\-.]+)/)
+        const extractedToken =
+          (matchReset && matchReset[1]) || (matchTokenParam && matchTokenParam[1]) || ''
+        if (extractedToken) {
+          window.location.replace(
+            `/redefinir-senha?token=${encodeURIComponent(extractedToken.trim())}`,
+          )
           return
         }
       }
