@@ -82,14 +82,18 @@ export interface MomentoRecord {
 export interface ContatoRecord {
   id: string
   nome_completo: string
-  idade: number
-  profissao: string
-  instagram: string
+  idade?: number
+  profissao?: string
+  instagram?: string
   email: string
-  telefone: string
-  whatsapp: string
-  motivo: string
-  como_nos_conheceu: string
+  telefone?: string
+  whatsapp?: string
+  motivo?: string
+  como_nos_conheceu?: string
+  origem?: string
+  user?: string
+  conversation_id?: string
+  notas_comerciais?: string
   status: 'novo' | 'visualizado' | 'contatado'
   created: string
   updated: string

@@ -297,6 +297,89 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       if (linkedUserId) {
         conversaRecord.set('user', linkedUserId)
       }
+
+      // -----------------------------------------------------------------------
+      // SINCRONIZAÇÃO AUTOMÁTICA COM A ÁREA DE CONTATOS & LEADS (COMERCIAL)
+      // Todo usuário criado ou identificado pela Nine deve aparecer em contatos.
+      // Sem duplicar contatos: se e-mail ou telefone já existirem, atualiza.
+      // -----------------------------------------------------------------------
+      try {
+        const contatosCol = $app.findCollectionByNameOrId('contatos')
+        let matchedContato = null
+
+        if (storedEmail) {
+          try {
+            matchedContato = $app.findFirstRecordByData('contatos', 'email', storedEmail)
+          } catch (_) {}
+        }
+
+        if (!matchedContato && storedPhone) {
+          const cleanPhone = storedPhone.replace(/\D/g, '').slice(-8)
+          if (cleanPhone.length >= 8) {
+            try {
+              const phoneContatos = $app.findRecordsByFilter(
+                'contatos',
+                `whatsapp ~ "${cleanPhone}" || telefone ~ "${cleanPhone}"`,
+                '-created',
+                1,
+                0,
+              )
+              if (phoneContatos && phoneContatos.length > 0) {
+                matchedContato = phoneContatos[0]
+              }
+            } catch (_) {}
+          }
+        }
+
+        if (matchedContato) {
+          // Atualiza dados faltantes no contato existente
+          let contatoNeedsSave = false
+          if (!matchedContato.getString('user') && linkedUserId) {
+            matchedContato.set('user', linkedUserId)
+            contatoNeedsSave = true
+          }
+          if (!matchedContato.getString('origem')) {
+            matchedContato.set('origem', originTag)
+            contatoNeedsSave = true
+          }
+          if (!matchedContato.getString('conversation_id')) {
+            matchedContato.set('conversation_id', conversationId)
+            contatoNeedsSave = true
+          }
+          if (!matchedContato.getString('whatsapp') && storedPhone) {
+            matchedContato.set('whatsapp', storedPhone)
+            contatoNeedsSave = true
+          }
+          if (!matchedContato.getString('telefone') && storedPhone) {
+            matchedContato.set('telefone', storedPhone)
+            contatoNeedsSave = true
+          }
+          if (contatoNeedsSave) {
+            $app.save(matchedContato)
+          }
+        } else {
+          // Cria novo contato para o comercial
+          const newContato = new Record(contatosCol)
+          newContato.set('nome_completo', storedName || 'Contato Nine')
+          newContato.set('email', storedEmail)
+          newContato.set('telefone', storedPhone)
+          newContato.set('whatsapp', storedPhone)
+          newContato.set('origem', originTag)
+          newContato.set('como_nos_conheceu', 'Nine — Chat do Site')
+          newContato.set(
+            'motivo',
+            `Lead captado pela Nine no chat do site. Mensagem inicial: "${rawMessage.slice(0, 300)}"`,
+          )
+          newContato.set('status', 'novo')
+          if (linkedUserId) {
+            newContato.set('user', linkedUserId)
+          }
+          newContato.set('conversation_id', conversationId)
+          $app.save(newContato)
+        }
+      } catch (syncContatoErr) {
+        console.log('Aviso ao sincronizar lead com contatos:', syncContatoErr)
+      }
     }
 
     $app.save(conversaRecord)

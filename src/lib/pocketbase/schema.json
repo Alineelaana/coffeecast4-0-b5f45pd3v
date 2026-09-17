@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T17:16:00.518Z",
+  "generatedAt": "2026-09-17T17:26:13.839Z",
   "collections": [
     {
       "name": "users",
@@ -324,19 +324,19 @@
         {
           "name": "idade",
           "type": "number",
-          "required": true,
+          "required": false,
           "system": false
         },
         {
           "name": "profissao",
           "type": "text",
-          "required": true,
+          "required": false,
           "system": false
         },
         {
           "name": "instagram",
           "type": "text",
-          "required": true,
+          "required": false,
           "system": false
         },
         {
@@ -348,25 +348,25 @@
         {
           "name": "telefone",
           "type": "text",
-          "required": true,
+          "required": false,
           "system": false
         },
         {
           "name": "whatsapp",
           "type": "text",
-          "required": true,
+          "required": false,
           "system": false
         },
         {
           "name": "motivo",
           "type": "text",
-          "required": true,
+          "required": false,
           "system": false
         },
         {
           "name": "como_nos_conheceu",
           "type": "text",
-          "required": true,
+          "required": false,
           "system": false
         },
         {
@@ -389,6 +389,31 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "origem",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "user",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "conversation_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "notas_comerciais",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
