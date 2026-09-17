@@ -528,7 +528,7 @@ export default function AdminFinanceiroScreen() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos os Fluxos</SelectItem>
-                <SelectItem value="receita">Receitas (Entradas)</SelectItem>
+                <SelectItem value="receita">Receitas (Créditos)</SelectItem>
                 <SelectItem value="despesa">Despesas (Saídas)</SelectItem>
               </SelectContent>
             </Select>
@@ -858,7 +858,7 @@ export default function AdminFinanceiroScreen() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="despesa">Despesa (Saída de Caixa / Custo)</SelectItem>
-                  <SelectItem value="receita">Receita (Entrada / Compra de Horas)</SelectItem>
+                  <SelectItem value="receita">Receitas (Créditos)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
