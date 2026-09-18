@@ -146,7 +146,7 @@ export default function ConvidadoScreen() {
                   </div>
                   <div className="flex items-center gap-2 text-xs text-vinho/80">
                     <Heart className="w-3.5 h-3.5 text-rose-brand fill-rose-brand/30 shrink-0" />
-                    <span>Inspira novas convidadas e fortalece sua autoridade</span>
+                    <span>Inspira novos convidados e convidadas e fortalece sua autoridade</span>
                   </div>
                 </div>
               </div>
@@ -239,7 +239,7 @@ export default function ConvidadoScreen() {
             </p>
             <div className="pt-2">
               <a
-                href="https://wa.me/5531991297619?text=Ol%C3%A1%2C%20sou%20convidada%20do%20CoffeeCast%204.0%20e%20gostaria%20de%20uma%20orienta%C3%A7%C3%A3o!"
+                href="https://wa.me/5531991297619?text=Ol%C3%A1%2C%20participei%20do%20CoffeeCast%204.0%20e%20gostaria%20de%20uma%20orienta%C3%A7%C3%A3o!"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-vinho bg-marfim border border-dourado/50 hover:bg-dourado/20 hover:border-dourado transition-all shadow-xs"

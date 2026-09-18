@@ -109,6 +109,7 @@ export default function AdminDepoimentosScreen() {
   const [editingItem, setEditingItem] = useState<DepoimentoRecord | null>(null)
   const [nome, setNome] = useState('')
   const [texto, setTexto] = useState('')
+  const [tipoConvidado, setTipoConvidado] = useState<'convidado' | 'convidada'>('convidado')
   const [deNossaAutoridade, setDeNossaAutoridade] = useState(false)
   const [ordem, setOrdem] = useState('1')
   const [instagram, setInstagram] = useState('')
@@ -273,6 +274,7 @@ export default function AdminDepoimentosScreen() {
     setEditingItem(null)
     setNome('')
     setTexto('')
+    setTipoConvidado('convidado')
     setDeNossaAutoridade(false)
     setOrdem(String(depoimentos.length + 1))
     setInstagram('')
@@ -285,6 +287,7 @@ export default function AdminDepoimentosScreen() {
     setEditingItem(item)
     setNome(item.nome || '')
     setTexto(item.texto || '')
+    setTipoConvidado(item.tipo_convidado === 'convidada' ? 'convidada' : 'convidado')
     setDeNossaAutoridade(Boolean(item.de_nossa_autoridade))
     setOrdem(item.ordem !== undefined && item.ordem !== null ? String(item.ordem) : '1')
     setInstagram(item.instagram || '')
@@ -304,6 +307,7 @@ export default function AdminDepoimentosScreen() {
       const formData = new FormData()
       formData.append('nome', nome.trim())
       formData.append('texto', texto.trim())
+      formData.append('tipo_convidado', tipoConvidado)
       formData.append('de_nossa_autoridade', String(deNossaAutoridade))
       formData.append('ordem', ordem)
       formData.append('instagram', cleanedInsta)
@@ -359,6 +363,10 @@ export default function AdminDepoimentosScreen() {
       const formData = new FormData()
       formData.append('nome', item.nome)
       formData.append('texto', item.texto)
+      formData.append(
+        'tipo_convidado',
+        item.tipo_convidado === 'convidada' ? 'convidada' : 'convidado',
+      )
       formData.append('de_nossa_autoridade', 'false')
       formData.append('ordem', String(depoimentos.length + 1))
       formData.append('instagram', item.instagram || '')
@@ -720,6 +728,15 @@ export default function AdminDepoimentosScreen() {
                             <span className="text-[10px] font-bold bg-dourado/20 text-vinho px-1.5 py-0.5 rounded">
                               #{item.ordem || '-'}
                             </span>
+                            <span
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                item.tipo_convidado === 'convidada'
+                                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                  : 'bg-amber-100 text-amber-900 border border-amber-300'
+                              }`}
+                            >
+                              {item.tipo_convidado === 'convidada' ? 'Convidada' : 'Convidado'}
+                            </span>
                             <h3 className="text-sm font-bold text-vinho">{item.nome}</h3>
                           </div>
                           {item.instagram && (
@@ -856,6 +873,7 @@ export default function AdminDepoimentosScreen() {
                     <TableHead className="w-16 font-bold text-vinho text-xs">Ordem</TableHead>
                     <TableHead className="w-20 font-bold text-vinho text-xs">Foto</TableHead>
                     <TableHead className="font-bold text-vinho text-xs">Nome</TableHead>
+                    <TableHead className="font-bold text-vinho text-xs">Gênero</TableHead>
                     <TableHead className="font-bold text-vinho text-xs">Instagram (@)</TableHead>
                     <TableHead className="font-bold text-vinho text-xs">
                       Episódio (YouTube)
@@ -891,6 +909,17 @@ export default function AdminDepoimentosScreen() {
                           )}
                         </TableCell>
                         <TableCell className="text-xs font-bold text-vinho">{item.nome}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full inline-block ${
+                              item.tipo_convidado === 'convidada'
+                                ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                : 'bg-amber-100 text-amber-900 border border-amber-300'
+                            }`}
+                          >
+                            {item.tipo_convidado === 'convidada' ? 'Convidada' : 'Convidado'}
+                          </span>
+                        </TableCell>
                         <TableCell className="text-xs text-vinho/80">
                           {item.instagram ? (
                             <span className="font-medium text-vinho bg-vinho/5 px-2 py-0.5 rounded border border-vinho/10">
@@ -1081,14 +1110,25 @@ export default function AdminDepoimentosScreen() {
                           </div>
                         )}
                         <div>
-                          <h3 className="text-sm font-bold text-vinho">{item.nome}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-vinho">{item.nome}</h3>
+                            <span
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                item.tipo_convidado === 'convidada'
+                                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                  : 'bg-amber-100 text-amber-900 border border-amber-300'
+                              }`}
+                            >
+                              {item.tipo_convidado === 'convidada' ? 'Convidada' : 'Convidado'}
+                            </span>
+                          </div>
                           {item.empresa && (
-                            <p className="text-[11px] text-vinho/70 flex items-center gap-1">
+                            <p className="text-[11px] text-vinho/70 flex items-center gap-1 mt-0.5">
                               <Building className="w-3 h-3 text-dourado shrink-0" />
                               <span>{item.empresa}</span>
                             </p>
                           )}
-                          <p className="text-xs text-dourado-dark font-medium">
+                          <p className="text-xs text-dourado-dark font-medium mt-0.5">
                             {item.instagram.startsWith('@') ? item.instagram : `@${item.instagram}`}
                           </p>
                         </div>
@@ -1248,6 +1288,7 @@ export default function AdminDepoimentosScreen() {
                     <TableHead className="font-bold text-vinho text-xs">
                       Convidado / Empresa
                     </TableHead>
+                    <TableHead className="font-bold text-vinho text-xs">Gênero</TableHead>
                     <TableHead className="font-bold text-vinho text-xs">Instagram (@)</TableHead>
                     <TableHead className="font-bold text-vinho text-xs">Autorização</TableHead>
                     <TableHead className="font-bold text-vinho text-xs">Status</TableHead>
@@ -1284,6 +1325,17 @@ export default function AdminDepoimentosScreen() {
                               {item.empresa}
                             </span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full inline-block ${
+                              item.tipo_convidado === 'convidada'
+                                ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                : 'bg-amber-100 text-amber-900 border border-amber-300'
+                            }`}
+                          >
+                            {item.tipo_convidado === 'convidada' ? 'Convidada' : 'Convidado'}
+                          </span>
                         </TableCell>
                         <TableCell className="text-xs font-medium text-dourado-dark">
                           {item.instagram.startsWith('@') ? item.instagram : `@${item.instagram}`}
@@ -1420,6 +1472,59 @@ export default function AdminDepoimentosScreen() {
           </DialogHeader>
 
           <form onSubmit={handleSave} className="space-y-4 pt-2">
+            {/* Escolha do Gênero: Convidado ou Convidada */}
+            <div className="space-y-1.5 p-3 rounded-xl bg-white border border-vinho/15">
+              <Label className="text-xs font-bold text-vinho block">
+                Classificação de Gênero *
+              </Label>
+              <p className="text-[11px] text-vinho/65">
+                Define o tratamento exibido no card do site ("Convidado do Podcast" ou "Convidada do
+                Podcast").
+              </p>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setTipoConvidado('convidado')}
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-lg border-2 text-xs font-bold transition-all cursor-pointer ${
+                    tipoConvidado === 'convidado'
+                      ? 'border-dourado bg-dourado/15 text-vinho shadow-xs'
+                      : 'border-vinho/15 bg-marfim/40 text-vinho/70 hover:border-vinho/30'
+                  }`}
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      tipoConvidado === 'convidado' ? 'border-vinho bg-vinho' : 'border-vinho/40'
+                    }`}
+                  >
+                    {tipoConvidado === 'convidado' && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span>Convidado (Masculino)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTipoConvidado('convidada')}
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-lg border-2 text-xs font-bold transition-all cursor-pointer ${
+                    tipoConvidado === 'convidada'
+                      ? 'border-dourado bg-dourado/15 text-vinho shadow-xs'
+                      : 'border-vinho/15 bg-marfim/40 text-vinho/70 hover:border-vinho/30'
+                  }`}
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      tipoConvidado === 'convidada' ? 'border-vinho bg-vinho' : 'border-vinho/40'
+                    }`}
+                  >
+                    {tipoConvidado === 'convidada' && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span>Convidada (Feminino)</span>
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="dep-nome" className="text-xs font-semibold text-vinho">
                 Nome do Convidado ou Entrevistado *
@@ -1427,7 +1532,9 @@ export default function AdminDepoimentosScreen() {
               <Input
                 id="dep-nome"
                 required
-                placeholder="Ex.: Juliana Martins"
+                placeholder={
+                  tipoConvidado === 'convidado' ? 'Ex.: Mateus Capelli' : 'Ex.: Juliana Martins'
+                }
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 className="bg-white border-vinho/20 text-sm"
@@ -1577,15 +1684,28 @@ export default function AdminDepoimentosScreen() {
                       </div>
                     )}
                     <div>
-                      <DialogTitle className="font-serif text-xl sm:text-2xl font-bold text-vinho">
-                        {selectedRecebido.nome}
-                      </DialogTitle>
+                      <div className="flex items-center gap-2">
+                        <DialogTitle className="font-serif text-xl sm:text-2xl font-bold text-vinho">
+                          {selectedRecebido.nome}
+                        </DialogTitle>
+                        <span
+                          className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                            selectedRecebido.tipo_convidado === 'convidada'
+                              ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                              : 'bg-amber-100 text-amber-900 border border-amber-300'
+                          }`}
+                        >
+                          {selectedRecebido.tipo_convidado === 'convidada'
+                            ? 'Convidada'
+                            : 'Convidado'}
+                        </span>
+                      </div>
                       {selectedRecebido.empresa && (
-                        <p className="text-xs text-vinho/70 font-medium">
+                        <p className="text-xs text-vinho/70 font-medium mt-0.5">
                           {selectedRecebido.empresa}
                         </p>
                       )}
-                      <p className="text-xs text-dourado-dark font-semibold">
+                      <p className="text-xs text-dourado-dark font-semibold mt-0.5">
                         {selectedRecebido.instagram.startsWith('@')
                           ? selectedRecebido.instagram
                           : `@${selectedRecebido.instagram}`}
@@ -1641,7 +1761,13 @@ export default function AdminDepoimentosScreen() {
               </DialogHeader>
 
               {/* Informações detalhadas */}
-              <div className="grid grid-cols-2 gap-3 bg-white p-3.5 rounded-xl border border-vinho/10 text-xs">
+              <div className="grid grid-cols-3 gap-2 bg-white p-3.5 rounded-xl border border-vinho/10 text-xs">
+                <div>
+                  <span className="text-vinho/60 font-semibold block">Classificação:</span>
+                  <span className="font-bold text-vinho capitalize">
+                    {selectedRecebido.tipo_convidado === 'convidada' ? 'Convidada' : 'Convidado'}
+                  </span>
+                </div>
                 <div>
                   <span className="text-vinho/60 font-semibold block">Data do Envio:</span>
                   <span className="font-bold text-vinho">
@@ -1649,15 +1775,13 @@ export default function AdminDepoimentosScreen() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-vinho/60 font-semibold block">Autorização no Site:</span>
+                  <span className="text-vinho/60 font-semibold block">Autorização:</span>
                   <span
                     className={`font-bold ${
                       selectedRecebido.autoriza_publicacao ? 'text-emerald-700' : 'text-amber-800'
                     }`}
                   >
-                    {selectedRecebido.autoriza_publicacao
-                      ? 'SIM (autorizado)'
-                      : 'NÃO (apenas interno)'}
+                    {selectedRecebido.autoriza_publicacao ? 'SIM (autorizado)' : 'NÃO (interno)'}
                   </span>
                 </div>
               </div>

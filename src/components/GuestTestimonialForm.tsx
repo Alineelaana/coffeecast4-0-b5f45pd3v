@@ -23,6 +23,7 @@ export const GuestTestimonialForm: React.FC = () => {
   const [empresa, setEmpresa] = useState('')
   const [instagram, setInstagram] = useState('')
   const [texto, setTexto] = useState('')
+  const [tipoConvidado, setTipoConvidado] = useState<'convidado' | 'convidada'>('convidado')
   const [fotoFile, setFotoFile] = useState<File | null>(null)
   const [fotoPreview, setFotoPreview] = useState<string | null>(null)
   const [autorizaPublicacao, setAutorizaPublicacao] = useState<'sim' | 'nao' | null>(null)
@@ -59,9 +60,23 @@ export const GuestTestimonialForm: React.FC = () => {
     setErrorMessage(null)
 
     // Validações explícitas
+    if (!tipoConvidado) {
+      setErrorMessage('Por favor, selecione se você é Convidado ou Convidada.')
+      toast.error('Selecione Convidado ou Convidada.')
+      return
+    }
+
     if (!nome.trim()) {
-      setErrorMessage('Por favor, informe seu nome.')
-      toast.error('Informe seu nome.')
+      setErrorMessage(
+        tipoConvidado === 'convidado'
+          ? 'Por favor, informe seu nome de convidado.'
+          : 'Por favor, informe seu nome de convidada.',
+      )
+      toast.error(
+        tipoConvidado === 'convidado'
+          ? 'Informe seu nome de convidado.'
+          : 'Informe seu nome de convidada.',
+      )
       return
     }
 
@@ -102,6 +117,7 @@ export const GuestTestimonialForm: React.FC = () => {
       if (empresa.trim()) {
         formData.append('empresa', empresa.trim())
       }
+      formData.append('tipo_convidado', tipoConvidado)
       formData.append('instagram', cleanInsta)
       formData.append('texto', texto.trim())
       formData.append('foto', fotoFile)
@@ -112,7 +128,9 @@ export const GuestTestimonialForm: React.FC = () => {
       await pb.collection('depoimentos_convidados').create(formData)
 
       toast.success(
-        'Depoimento enviado com carinho! Muito obrigada por compartilhar sua história conosco.',
+        tipoConvidado === 'convidado'
+          ? 'Depoimento enviado com sucesso! Muito obrigado por compartilhar sua história no CoffeeCast 4.0.'
+          : 'Depoimento enviado com carinho! Muito obrigada por compartilhar sua história no CoffeeCast 4.0.',
       )
       setSubmitted(true)
     } catch (err: unknown) {
@@ -133,6 +151,7 @@ export const GuestTestimonialForm: React.FC = () => {
     setEmpresa('')
     setInstagram('')
     setTexto('')
+    setTipoConvidado('convidado')
     setFotoFile(null)
     setFotoPreview(null)
     setAutorizaPublicacao(null)
@@ -231,16 +250,85 @@ export const GuestTestimonialForm: React.FC = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+              {/* Escolha obrigatória e elegante do gênero: Convidado ou Convidada */}
+              <div className="space-y-2 p-3.5 sm:p-4 rounded-2xl bg-marfim/60 border-2 border-dourado/40">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-vinho flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-dourado" />
+                    Como devemos apresentar você? *
+                  </Label>
+                  <span className="text-[11px] font-semibold text-dourado-dark uppercase tracking-wider">
+                    {tipoConvidado === 'convidado' ? 'Convidado' : 'Convidada'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-vinho/70 leading-snug">
+                  Selecione abaixo para garantir o tratamento correto (Convidado ou Convidada) no
+                  seu card público e no painel do podcast.
+                </p>
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setTipoConvidado('convidado')}
+                    className={`flex items-center justify-center gap-2.5 p-3 rounded-xl border-2 transition-all cursor-pointer min-h-[46px] ${
+                      tipoConvidado === 'convidado'
+                        ? 'border-dourado bg-white shadow-md ring-2 ring-dourado/40 text-vinho font-bold'
+                        : 'border-vinho/20 bg-white/70 hover:bg-white text-vinho/75 hover:border-vinho/40'
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        tipoConvidado === 'convidado'
+                          ? 'border-dourado-dark bg-dourado text-vinho'
+                          : 'border-vinho/40 bg-white'
+                      }`}
+                    >
+                      {tipoConvidado === 'convidado' && (
+                        <div className="w-2 h-2 rounded-full bg-vinho" />
+                      )}
+                    </div>
+                    <span className="text-xs sm:text-sm">Sou Convidado</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTipoConvidado('convidada')}
+                    className={`flex items-center justify-center gap-2.5 p-3 rounded-xl border-2 transition-all cursor-pointer min-h-[46px] ${
+                      tipoConvidado === 'convidada'
+                        ? 'border-dourado bg-white shadow-md ring-2 ring-dourado/40 text-vinho font-bold'
+                        : 'border-vinho/20 bg-white/70 hover:bg-white text-vinho/75 hover:border-vinho/40'
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        tipoConvidado === 'convidada'
+                          ? 'border-dourado-dark bg-dourado text-vinho'
+                          : 'border-vinho/40 bg-white'
+                      }`}
+                    >
+                      {tipoConvidado === 'convidada' && (
+                        <div className="w-2 h-2 rounded-full bg-vinho" />
+                      )}
+                    </div>
+                    <span className="text-xs sm:text-sm">Sou Convidada</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                {/* Nome do Convidado (Obrigatório) */}
+                {/* Nome do Convidado / Convidada (Obrigatório) */}
                 <div className="space-y-1.5">
                   <Label htmlFor="dep-guest-nome" className="text-xs font-bold text-vinho">
-                    Nome do Convidado *
+                    {tipoConvidado === 'convidado' ? 'Nome do Convidado *' : 'Nome da Convidada *'}
                   </Label>
                   <Input
                     id="dep-guest-nome"
                     required
-                    placeholder="Ex.: Mariana Fernandes"
+                    placeholder={
+                      tipoConvidado === 'convidado'
+                        ? 'Ex.: Mateus Capelli'
+                        : 'Ex.: Mariana Fernandes'
+                    }
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
                     className="bg-marfim/40 border-vinho/20 focus-visible:ring-dourado text-sm rounded-xl py-2.5 min-h-[44px]"

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T20:12:36.127Z",
+  "generatedAt": "2026-09-18T17:44:47.426Z",
   "collections": [
     {
       "name": "users",
@@ -285,6 +285,13 @@
           "type": "text",
           "required": false,
           "system": false
+        },
+        {
+          "name": "tipo_convidado",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["convidado", "convidada"]
         }
       ],
       "indexes": ["CREATE INDEX idx_depoimentos_ordem ON depoimentos (ordem)"]
@@ -961,6 +968,13 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "tipo_convidado",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["convidado", "convidada"]
         }
       ],
       "indexes": [
@@ -1944,6 +1958,13 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "tipo_convidado",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["convidado", "convidada"]
         }
       ],
       "indexes": [

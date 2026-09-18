@@ -57,6 +57,8 @@ export interface IntegranteRecord {
   updated: string
 }
 
+export type TipoConvidado = 'convidado' | 'convidada'
+
 export interface DepoimentoRecord {
   id: string
   nome: string
@@ -66,6 +68,7 @@ export interface DepoimentoRecord {
   foto?: string
   instagram?: string
   link_episodio?: string
+  tipo_convidado?: TipoConvidado
   created: string
   updated: string
 }
@@ -82,6 +85,7 @@ export interface DepoimentoConvidadoRecord {
   autoriza_publicacao: boolean
   status: DepoimentoConvidadoStatus
   visualizado?: boolean
+  tipo_convidado?: TipoConvidado
   created: string
   updated: string
 }
@@ -425,6 +429,7 @@ export interface StoreTestimonialRecord {
   video_url?: string
   approved?: boolean
   order?: number
+  tipo_convidado?: TipoConvidado
   created: string
   updated: string
 }

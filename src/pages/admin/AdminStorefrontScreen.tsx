@@ -139,6 +139,7 @@ export default function AdminStorefrontScreen() {
   const [showTestimonialModal, setShowTestimonialModal] = useState(false)
   const [editingTestimonial, setEditingTestimonial] = useState<StoreTestimonialRecord | null>(null)
   const [tName, setTName] = useState('')
+  const [tTipoConvidado, setTTipoConvidado] = useState<'convidado' | 'convidada'>('convidado')
   const [tRole, setTRole] = useState('')
   const [tInstagram, setTInstagram] = useState('')
   const [tMessage, setTMessage] = useState('')
@@ -678,6 +679,7 @@ export default function AdminStorefrontScreen() {
     if (t) {
       setEditingTestimonial(t)
       setTName(t.name || '')
+      setTTipoConvidado(t.tipo_convidado === 'convidada' ? 'convidada' : 'convidado')
       setTRole(t.role || '')
       setTInstagram(t.instagram || '')
       setTMessage(t.message || '')
@@ -686,6 +688,7 @@ export default function AdminStorefrontScreen() {
     } else {
       setEditingTestimonial(null)
       setTName('')
+      setTTipoConvidado('convidado')
       setTRole('')
       setTInstagram('')
       setTMessage('')
@@ -709,6 +712,7 @@ export default function AdminStorefrontScreen() {
       const formData = new FormData()
       formData.append('store', activeStoreId)
       formData.append('name', tName.trim())
+      formData.append('tipo_convidado', tTipoConvidado)
       formData.append('role', tRole.trim())
       formData.append('instagram', tInstagram.trim())
       formData.append('message', tMessage.trim())
@@ -1507,9 +1511,22 @@ export default function AdminStorefrontScreen() {
                                     )}
                                   </div>
                                   <div className="overflow-hidden">
-                                    <h4 className="font-serif font-bold text-xs text-vinho truncate">
-                                      {t.name}
-                                    </h4>
+                                    <div className="flex items-center gap-1.5">
+                                      <h4 className="font-serif font-bold text-xs text-vinho truncate">
+                                        {t.name}
+                                      </h4>
+                                      <span
+                                        className={`text-[9px] font-semibold px-1.5 py-0.2 rounded ${
+                                          t.tipo_convidado === 'convidada'
+                                            ? 'bg-rose-100 text-rose-800'
+                                            : 'bg-amber-100 text-amber-900'
+                                        }`}
+                                      >
+                                        {t.tipo_convidado === 'convidada'
+                                          ? 'Convidada'
+                                          : 'Convidado'}
+                                      </span>
+                                    </div>
                                     <p className="text-[10px] text-vinho/60 truncate">{t.role}</p>
                                   </div>
                                 </div>
@@ -2518,8 +2535,38 @@ export default function AdminStorefrontScreen() {
               {editingTestimonial ? 'Editar Depoimento' : 'Novo Depoimento'}
             </h3>
             <form onSubmit={handleSaveTestimonial} className="space-y-3">
+              <div className="p-2.5 rounded-xl bg-marfim/60 border border-vinho/15 space-y-1">
+                <Label className="text-xs font-bold text-vinho block">Gênero / Tratamento</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTTipoConvidado('convidado')}
+                    className={`py-1.5 px-2 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                      tTipoConvidado === 'convidado'
+                        ? 'border-dourado bg-dourado/20 text-vinho font-bold'
+                        : 'border-vinho/15 bg-white text-vinho/70'
+                    }`}
+                  >
+                    Convidado
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTTipoConvidado('convidada')}
+                    className={`py-1.5 px-2 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                      tTipoConvidado === 'convidada'
+                        ? 'border-dourado bg-dourado/20 text-vinho font-bold'
+                        : 'border-vinho/15 bg-white text-vinho/70'
+                    }`}
+                  >
+                    Convidada
+                  </button>
+                </div>
+              </div>
+
               <div>
-                <Label className="text-xs font-bold text-vinho">Nome da Pessoa *</Label>
+                <Label className="text-xs font-bold text-vinho">
+                  {tTipoConvidado === 'convidada' ? 'Nome da Convidada *' : 'Nome do Convidado *'}
+                </Label>
                 <Input
                   value={tName}
                   onChange={(e) => setTName(e.target.value)}

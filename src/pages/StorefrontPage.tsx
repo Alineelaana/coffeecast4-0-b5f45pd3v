@@ -48,6 +48,7 @@ export default function StorefrontPage() {
   // Modal de depoimento público para a loja
   const [showTestimonialModal, setShowTestimonialModal] = useState(false)
   const [tName, setTName] = useState('')
+  const [tTipoConvidado, setTTipoConvidado] = useState<'convidado' | 'convidada'>('convidado')
   const [tRole, setTRole] = useState('')
   const [tInstagram, setTInstagram] = useState('')
   const [tMessage, setTMessage] = useState('')
@@ -151,6 +152,7 @@ export default function StorefrontPage() {
       const formData = new FormData()
       formData.append('store', store.id)
       formData.append('name', tName.trim())
+      formData.append('tipo_convidado', tTipoConvidado)
       formData.append('role', tRole.trim())
       formData.append('instagram', tInstagram.trim())
       formData.append('message', tMessage.trim())
@@ -163,6 +165,7 @@ export default function StorefrontPage() {
       toast.success('Seu depoimento foi enviado com sucesso e será publicado após aprovação!')
       setShowTestimonialModal(false)
       setTName('')
+      setTTipoConvidado('convidado')
       setTRole('')
       setTInstagram('')
       setTMessage('')
@@ -1039,12 +1042,46 @@ export default function StorefrontPage() {
             </div>
 
             <form onSubmit={handleTestimonialSubmit} className="space-y-4">
+              <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-1.5">
+                <Label className="text-xs font-bold text-zinc-700 block">
+                  Identificação de Gênero *
+                </Label>
+                <div className="grid grid-cols-2 gap-2 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setTTipoConvidado('convidado')}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      tTipoConvidado === 'convidado'
+                        ? 'border-zinc-800 bg-zinc-900 text-white shadow-xs'
+                        : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300'
+                    }`}
+                  >
+                    Convidado
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTTipoConvidado('convidada')}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      tTipoConvidado === 'convidada'
+                        ? 'border-zinc-800 bg-zinc-900 text-white shadow-xs'
+                        : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300'
+                    }`}
+                  >
+                    Convidada
+                  </button>
+                </div>
+              </div>
+
               <div>
-                <Label className="text-xs font-bold text-zinc-700">Seu Nome *</Label>
+                <Label className="text-xs font-bold text-zinc-700">
+                  {tTipoConvidado === 'convidado' ? 'Nome do Convidado *' : 'Nome da Convidada *'}
+                </Label>
                 <Input
                   value={tName}
                   onChange={(e) => setTName(e.target.value)}
-                  placeholder="Ex.: Carolina Mendes"
+                  placeholder={
+                    tTipoConvidado === 'convidado' ? 'Ex.: Mateus Silva' : 'Ex.: Carolina Mendes'
+                  }
                   required
                   className="mt-1 text-xs"
                 />

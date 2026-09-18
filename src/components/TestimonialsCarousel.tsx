@@ -223,7 +223,13 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
                   </h4>
 
                   <span className="text-[10px] sm:text-[11px] text-vinho/65 font-medium block mt-0.5">
-                    {isHighlight ? 'Convidada Homenageada' : 'Convidada do Podcast'}
+                    {dep.tipo_convidado === 'convidado'
+                      ? isHighlight
+                        ? 'Convidado Homenageado'
+                        : 'Convidado do Podcast'
+                      : isHighlight
+                        ? 'Convidada Homenageada'
+                        : 'Convidada do Podcast'}
                   </span>
 
                   {parsedInsta && (
@@ -362,9 +368,13 @@ export const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
                       {modalDepoimento.dep.nome}
                     </DialogTitle>
                     <span className="text-xs text-vinho/65 font-medium block mt-0.5">
-                      {modalDepoimento.isHighlight
-                        ? 'Convidada Homenageada (Visão da Equipe)'
-                        : 'Convidada do Podcast'}
+                      {modalDepoimento.dep.tipo_convidado === 'convidado'
+                        ? modalDepoimento.isHighlight
+                          ? 'Convidado Homenageado (Visão da Equipe)'
+                          : 'Convidado do Podcast'
+                        : modalDepoimento.isHighlight
+                          ? 'Convidada Homenageada (Visão da Equipe)'
+                          : 'Convidada do Podcast'}
                     </span>
                     {modalDepoimento.parsedInsta && (
                       <a
