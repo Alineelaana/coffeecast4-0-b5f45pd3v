@@ -421,14 +421,14 @@ export async function renderInviteToCanvas(
   drawCornerStar(60, height - 60)
   drawCornerStar(width - 60, height - 60)
 
-  // 3. CABEÇALHO DO CONVITE
-  const topY = 160
+  // 3. CABEÇALHO DO CONVITE (Logo discreta no topo para dar total protagonismo à foto do convidado)
+  const topY = 125
   ctx.textAlign = 'center'
 
   if (brandLogoImg) {
-    // Desenha a logo oficial completa com efeito de sombra suave
-    const logoMaxW = 560
-    const logoMaxH = 210
+    // Versão compacta e elegante da logo da marca no topo
+    const logoMaxW = 320
+    const logoMaxH = 120
     const logoRatio = brandLogoImg.width / brandLogoImg.height
     let logoDrawW = logoMaxW
     let logoDrawH = logoDrawW / logoRatio
@@ -437,43 +437,43 @@ export async function renderInviteToCanvas(
       logoDrawW = logoDrawH * logoRatio
     }
     const logoX = (width - logoDrawW) / 2
-    const logoY = topY - 70
+    const logoY = topY - 35
 
     ctx.save()
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)'
-    ctx.shadowBlur = 24
-    ctx.shadowOffsetY = 6
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.65)'
+    ctx.shadowBlur = 18
+    ctx.shadowOffsetY = 4
     ctx.drawImage(brandLogoImg, logoX, logoY, logoDrawW, logoDrawH)
     ctx.restore()
   } else {
-    // Fallback caso a imagem não carregue
-    drawVectorLogo(ctx, width / 2, topY, 150)
+    // Fallback vetorial compacto caso a imagem da logo não carregue
+    drawVectorLogo(ctx, width / 2, topY + 10, 85)
     ctx.save()
-    ctx.font = 'bold 64px "Playfair Display", Georgia, serif'
+    ctx.font = 'bold 36px "Playfair Display", Georgia, serif'
     ctx.fillStyle = '#FFFFFF'
-    ctx.fillText('CoffeeCast ', width / 2 - 50, topY + 140)
-    ctx.font = '900 64px "Playfair Display", Georgia, serif'
+    ctx.fillText('CoffeeCast ', width / 2 - 32, topY + 80)
+    ctx.font = '900 36px "Playfair Display", Georgia, serif'
     ctx.fillStyle = '#D4AF37'
-    ctx.fillText('4.0', width / 2 + 130, topY + 140)
+    ctx.fillText('4.0', width / 2 + 82, topY + 80)
     ctx.restore()
   }
 
-  // Subtítulo dourado caixa-alta
+  // Subtítulo dourado refinado
   ctx.save()
-  ctx.font = '700 24px "Plus Jakarta Sans", sans-serif'
-  ctx.letterSpacing = '6px'
+  ctx.font = '700 22px "Plus Jakarta Sans", sans-serif'
+  ctx.letterSpacing = '5px'
   ctx.fillStyle = '#F3E5AB'
-  ctx.fillText('CONVITE OFICIAL DE PARTICIPAÇÃO', width / 2, topY + 185)
+  ctx.fillText('CONVITE OFICIAL DE PARTICIPAÇÃO', width / 2, topY + 125)
   ctx.restore()
 
-  // 4. CARD CENTRAL (Moldura com foto, nome e apresentação)
+  // 4. CARD CENTRAL (Moldura com foto em destaque absoluto, nome e apresentação)
   const cardX = 130
-  const cardY = topY + 240
+  const cardY = topY + 160
   const cardW = width - 260
   const hasExtraLocation = Boolean(
     options.enderecoGravacao?.trim() || options.linkLocalizacao?.trim(),
   )
-  const cardH = 1180
+  const cardH = 1260
 
   ctx.save()
   // Fundo do card
@@ -509,11 +509,74 @@ export async function renderInviteToCanvas(
     ctx.restore()
   }
 
-  // FOTO CIRCULAR DO CONVIDADO(A)
-  const photoSize = 250
+  // FOTO DO CONVIDADO(A) - PROTAGONISTA DO CONVITE (MEDALHÃO NOBRE COM BORDA DUPLA DOURADA E HALO)
+  const photoSize = 390
   const photoCx = width / 2
-  const photoCy = cardY + 180
+  const photoCy = cardY + 235
 
+  // Halo dourado suave atrás da foto para criar profundidade e prestígio
+  ctx.save()
+  const photoHalo = ctx.createRadialGradient(
+    photoCx,
+    photoCy,
+    photoSize / 2 - 20,
+    photoCx,
+    photoCy,
+    photoSize / 2 + 50,
+  )
+  photoHalo.addColorStop(0, 'rgba(212, 175, 55, 0.4)')
+  photoHalo.addColorStop(0.7, 'rgba(212, 175, 55, 0.12)')
+  photoHalo.addColorStop(1, 'rgba(212, 175, 55, 0)')
+  ctx.fillStyle = photoHalo
+  ctx.beginPath()
+  ctx.arc(photoCx, photoCy, photoSize / 2 + 50, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // Borda externa sólida decorativa (primeiro anel dourado largo)
+  ctx.save()
+  const goldRingGrad = ctx.createLinearGradient(
+    photoCx - photoSize / 2,
+    photoCy - photoSize / 2,
+    photoCx + photoSize / 2,
+    photoCy + photoSize / 2,
+  )
+  goldRingGrad.addColorStop(0, '#FFF2B2')
+  goldRingGrad.addColorStop(0.4, '#F5D061')
+  goldRingGrad.addColorStop(0.8, '#D4AF37')
+  goldRingGrad.addColorStop(1, '#996515')
+
+  // Sombra profunda sob o medalhão
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.75)'
+  ctx.shadowBlur = 28
+  ctx.shadowOffsetY = 8
+
+  ctx.beginPath()
+  ctx.arc(photoCx, photoCy, photoSize / 2 + 10, 0, Math.PI * 2)
+  ctx.strokeStyle = goldRingGrad
+  ctx.lineWidth = 8
+  ctx.stroke()
+  ctx.restore()
+
+  // Anel intermediário escuro para separar os frisos dourados
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(photoCx, photoCy, photoSize / 2 + 4, 0, Math.PI * 2)
+  ctx.strokeStyle = '#2A0F23'
+  ctx.lineWidth = 4
+  ctx.stroke()
+  ctx.restore()
+
+  // Anel dourado interno fino
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(photoCx, photoCy, photoSize / 2 + 1, 0, Math.PI * 2)
+  ctx.strokeStyle = '#FFF2B2'
+  ctx.lineWidth = 2
+  ctx.stroke()
+  ctx.restore()
+
+  // Imagem do convidado
   if (guestImg) {
     ctx.save()
     ctx.beginPath()
@@ -548,47 +611,59 @@ export async function renderInviteToCanvas(
       photoSize,
     )
     ctx.restore()
+  } else {
+    // Fallback elegante caso a foto falhe no carregamento
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(photoCx, photoCy, photoSize / 2, 0, Math.PI * 2)
+    ctx.fillStyle = '#4B1E3F'
+    ctx.fill()
+    ctx.font = 'bold 96px "Playfair Display", Georgia, serif'
+    ctx.fillStyle = '#D4AF37'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    const initials = (options.nome || 'C')
+      .split(' ')
+      .map((p) => p[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase()
+    ctx.fillText(initials || 'C', photoCx, photoCy)
+    ctx.restore()
   }
 
-  // Moldura dourada circular da foto
+  // Selo de brilho/estrelinha sobre o medalhão (canto inferior direito)
   ctx.save()
-  ctx.beginPath()
-  ctx.arc(photoCx, photoCy, photoSize / 2 + 5, 0, Math.PI * 2)
-  ctx.strokeStyle = '#D4AF37'
-  ctx.lineWidth = 8
-  ctx.stroke()
+  const badgeX = photoCx + photoSize / 2 - 20
+  const badgeY = photoCy + photoSize / 2 - 20
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'
+  ctx.shadowBlur = 10
+  ctx.shadowOffsetY = 3
 
   ctx.beginPath()
-  ctx.arc(photoCx, photoCy, photoSize / 2 + 10, 0, Math.PI * 2)
-  ctx.strokeStyle = 'rgba(243, 229, 171, 0.4)'
-  ctx.lineWidth = 2
-  ctx.stroke()
-  ctx.restore()
-
-  // Selo de brilho/estrelinha sobre a foto
-  ctx.save()
-  const badgeX = photoCx + photoSize / 2 - 15
-  const badgeY = photoCy + photoSize / 2 - 15
-  ctx.beginPath()
-  ctx.arc(badgeX, badgeY, 26, 0, Math.PI * 2)
-  ctx.fillStyle = '#4B1E3F'
+  ctx.arc(badgeX, badgeY, 34, 0, Math.PI * 2)
+  const badgeBg = ctx.createLinearGradient(badgeX - 34, badgeY - 34, badgeX + 34, badgeY + 34)
+  badgeBg.addColorStop(0, '#5A1A3B')
+  badgeBg.addColorStop(1, '#250B1B')
+  ctx.fillStyle = badgeBg
   ctx.fill()
   ctx.strokeStyle = '#D4AF37'
-  ctx.lineWidth = 3
+  ctx.lineWidth = 3.5
   ctx.stroke()
 
-  // Estrela no badge
+  // Estrela dourada no badge
   ctx.translate(badgeX, badgeY)
-  ctx.fillStyle = '#D4AF37'
+  ctx.fillStyle = '#FFF2B2'
   ctx.beginPath()
-  ctx.moveTo(0, -12)
-  ctx.lineTo(3.5, -3.5)
-  ctx.lineTo(12, 0)
-  ctx.lineTo(3.5, 3.5)
-  ctx.lineTo(0, 12)
-  ctx.lineTo(-3.5, 3.5)
-  ctx.lineTo(-12, 0)
-  ctx.lineTo(-3.5, -3.5)
+  ctx.moveTo(0, -16)
+  ctx.lineTo(4.5, -4.5)
+  ctx.lineTo(16, 0)
+  ctx.lineTo(4.5, 4.5)
+  ctx.lineTo(0, 16)
+  ctx.lineTo(-4.5, 4.5)
+  ctx.lineTo(-16, 0)
+  ctx.lineTo(-4.5, -4.5)
   ctx.closePath()
   ctx.fill()
   ctx.restore()
@@ -602,26 +677,29 @@ export async function renderInviteToCanvas(
         : 'CONVIDADO(A) DE HONRA'
 
   ctx.save()
-  ctx.font = '700 22px "Plus Jakarta Sans", sans-serif'
-  ctx.letterSpacing = '4px'
+  ctx.font = '700 23px "Plus Jakarta Sans", sans-serif'
+  ctx.letterSpacing = '5px'
   ctx.fillStyle = '#D4AF37'
   ctx.textAlign = 'center'
-  ctx.fillText(honorLabel, width / 2, photoCy + photoSize / 2 + 70)
+  ctx.fillText(honorLabel, width / 2, photoCy + photoSize / 2 + 65)
   ctx.restore()
 
-  // Nome do Convidado
+  // Nome do Convidado em Grande Destaque Tipográfico
   ctx.save()
-  ctx.font = 'bold 56px "Playfair Display", Georgia, serif'
+  ctx.font = 'bold 64px "Playfair Display", Georgia, serif'
   ctx.fillStyle = '#FFFFFF'
   ctx.textAlign = 'center'
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'
+  ctx.shadowBlur = 12
+  ctx.shadowOffsetY = 3
   ctx.fillText(options.nome || 'Convidado Especial', width / 2, photoCy + photoSize / 2 + 140)
   ctx.restore()
 
   // Linha dourada decorativa abaixo do nome
   ctx.save()
   ctx.beginPath()
-  ctx.moveTo(width / 2 - 140, photoCy + photoSize / 2 + 175)
-  ctx.lineTo(width / 2 + 140, photoCy + photoSize / 2 + 175)
+  ctx.moveTo(width / 2 - 160, photoCy + photoSize / 2 + 175)
+  ctx.lineTo(width / 2 + 160, photoCy + photoSize / 2 + 175)
   ctx.strokeStyle = '#D4AF37'
   ctx.lineWidth = 2
   ctx.stroke()
@@ -638,7 +716,7 @@ export async function renderInviteToCanvas(
   ctx.fillStyle = 'rgba(250, 248, 245, 0.92)'
   ctx.textAlign = 'center'
   const textQuote = `"${options.apresentacao || ''}"`
-  const textStartY = photoCy + photoSize / 2 + 230
+  const textStartY = photoCy + photoSize / 2 + 225
   wrapText(ctx, textQuote, width / 2, textStartY, cardW - 160, 42)
   ctx.restore()
 

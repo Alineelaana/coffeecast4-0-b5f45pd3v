@@ -956,25 +956,25 @@ export default function AdminConvitesScreen() {
                   <div className="absolute inset-3 border-2 border-dourado/50 rounded-2xl pointer-events-none" />
                   <div className="absolute inset-5 border border-dourado/20 rounded-xl pointer-events-none" />
 
-                  {/* Cabeçalho do Convite */}
-                  <div className="text-center space-y-2 relative z-10">
-                    <div className="flex justify-center mb-1">
+                  {/* Cabeçalho do Convite: Logo discreta no topo e subtítulo dourado */}
+                  <div className="text-center space-y-1.5 relative z-10">
+                    <div className="flex justify-center">
                       <img
                         src={officialLogoImg}
                         alt="CoffeeCast 4.0"
-                        className="w-52 sm:w-64 max-w-full h-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.65)]"
+                        className="w-28 sm:w-36 max-w-full h-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)] opacity-95 transition-opacity"
                       />
                     </div>
-                    <p className="text-[11px] uppercase tracking-widest text-dourado-light font-bold mt-1">
+                    <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-dourado-light font-bold">
                       Convite Oficial de Participação
                     </p>
                   </div>
 
-                  {/* Card Central com Foto, Logo da Empresa e Apresentação */}
-                  <div className="bg-[#2A0F23]/80 border border-dourado/40 rounded-2xl p-5 sm:p-7 space-y-5 relative z-10 text-center shadow-xl backdrop-blur-sm">
+                  {/* Card Central com Foto em Grande Destaque (Protagonista), Logo da Empresa e Apresentação */}
+                  <div className="bg-[#2A0F23]/85 border border-dourado/40 rounded-2xl p-5 sm:p-7 space-y-5 relative z-10 text-center shadow-2xl backdrop-blur-sm">
                     {/* Logomarca da empresa no topo do card (se existir) */}
                     {previewConvite.logomarca_empresa && (
-                      <div className="flex justify-end -mb-3">
+                      <div className="flex justify-end -mb-4">
                         <img
                           src={getFileUrl(previewConvite, previewConvite.logomarca_empresa)}
                           alt="Empresa Convidada"
@@ -983,35 +983,50 @@ export default function AdminConvitesScreen() {
                       </div>
                     )}
 
-                    {/* Foto da convidada com moldura dourada */}
-                    <div className="flex justify-center">
-                      <div className="relative">
-                        <img
-                          src={
-                            previewConvite.foto_convidado
-                              ? getFileUrl(previewConvite, previewConvite.foto_convidado)
-                              : 'https://img.usecurling.com/ppl/256?gender=female'
-                          }
-                          alt={previewConvite.nome}
-                          className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-dourado shadow-2xl"
-                        />
-                        <div className="absolute -bottom-2 -right-2 bg-vinho p-1.5 rounded-full border border-dourado">
-                          <Sparkles className="w-4 h-4 text-dourado" />
+                    {/* Foto da pessoa convidada como protagonista visual com medalhão de bordas duplas douradas e sombra nobre */}
+                    <div className="flex justify-center pt-1">
+                      <div className="relative group">
+                        {/* Halo dourado sutil de fundo para enaltecer a foto */}
+                        <div className="absolute -inset-2 rounded-full bg-gradient-to-tr from-dourado/40 via-dourado-light/20 to-dourado/40 blur-md pointer-events-none" />
+
+                        {/* Moldura externa refinada */}
+                        <div className="relative p-1 rounded-full bg-gradient-to-b from-[#FFF2B2] via-[#D4AF37] to-[#B38612] shadow-[0_12px_32px_rgba(0,0,0,0.7)]">
+                          <div className="p-1 rounded-full bg-[#2A0F23]">
+                            <img
+                              src={
+                                previewConvite.foto_convidado
+                                  ? getFileUrl(previewConvite, previewConvite.foto_convidado)
+                                  : 'https://img.usecurling.com/ppl/256?gender=female'
+                              }
+                              alt={previewConvite.nome}
+                              className="w-36 h-36 sm:w-44 sm:h-44 rounded-full object-cover border-2 border-dourado/70 shadow-inner"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Badge dourado com estrela */}
+                        <div className="absolute -bottom-1 -right-1 bg-gradient-to-b from-vinho via-[#2A0F23] to-vinho p-2 rounded-full border-2 border-dourado shadow-lg">
+                          <Sparkles className="w-5 h-5 text-dourado" />
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <span className="text-xs text-dourado-light uppercase font-semibold tracking-wider">
+                    <div className="space-y-1.5 pt-1">
+                      <span className="text-[11px] sm:text-xs text-dourado-light uppercase font-bold tracking-[0.2em]">
                         {previewConvite.tipo_convidado === 'convidado'
                           ? 'Convidado de Honra'
                           : previewConvite.tipo_convidado === 'convidada'
                             ? 'Convidada de Honra'
                             : 'Convidado(a) de Honra'}
                       </span>
-                      <h4 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+                      <h4 className="font-serif text-2xl sm:text-4xl font-bold text-white tracking-tight leading-tight drop-shadow-sm">
                         {previewConvite.nome}
                       </h4>
+                      <div className="flex items-center justify-center gap-2 pt-1">
+                        <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-dourado/80" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-dourado" />
+                        <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-dourado/80" />
+                      </div>
                     </div>
 
                     <p className="text-xs sm:text-sm text-marfim/90 leading-relaxed font-light italic max-w-lg mx-auto">
@@ -1148,48 +1163,48 @@ export default function AdminConvitesScreen() {
               }}
             />
 
-            {/* Cabeçalho do Convite */}
+            {/* Cabeçalho do Convite: Logo discreta no topo e subtítulo dourado */}
             <div
-              style={{ textAlign: 'center', position: 'relative', zIndex: 10, marginTop: '2mm' }}
+              style={{ textAlign: 'center', position: 'relative', zIndex: 10, marginTop: '1.5mm' }}
             >
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5mm' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1mm' }}>
                 <img
                   src={officialLogoImg}
                   alt="CoffeeCast 4.0"
                   style={{
-                    width: '56mm',
-                    maxHeight: '26mm',
+                    width: '32mm',
+                    maxHeight: '14mm',
                     objectFit: 'contain',
-                    filter: 'drop-shadow(0 3px 10px rgba(0, 0, 0, 0.7))',
+                    filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6))',
                   }}
                 />
               </div>
               <p
                 style={{
-                  fontSize: '8pt',
+                  fontSize: '7.5pt',
                   textTransform: 'uppercase',
-                  letterSpacing: '3px',
+                  letterSpacing: '2.5px',
                   color: '#F3E5AB',
                   fontWeight: 700,
-                  margin: '1.5mm 0 0 0',
+                  margin: '0.8mm 0 0 0',
                 }}
               >
                 Convite Oficial de Participação
               </p>
             </div>
 
-            {/* Card Central com Foto, Logo da Empresa e Apresentação */}
+            {/* Card Central com Foto em Grande Destaque (Protagonista), Logo da Empresa e Apresentação */}
             <div
               style={{
                 backgroundColor: 'rgba(42, 15, 35, 0.88)',
                 border: '1px solid rgba(212, 175, 55, 0.5)',
                 borderRadius: '6mm',
-                padding: '5mm',
+                padding: '4.5mm 5mm',
                 position: 'relative',
                 zIndex: 10,
                 textAlign: 'center',
-                margin: '2mm 0',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+                margin: '1.5mm 0',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
               }}
             >
               {/* Logomarca da empresa no topo direito */}
@@ -1197,8 +1212,8 @@ export default function AdminConvitesScreen() {
                 <div
                   style={{
                     position: 'absolute',
-                    top: '4mm',
-                    right: '4mm',
+                    top: '3.5mm',
+                    right: '3.5mm',
                     zIndex: 20,
                   }}
                 >
@@ -1206,61 +1221,81 @@ export default function AdminConvitesScreen() {
                     src={getFileUrl(previewConvite, previewConvite.logomarca_empresa)}
                     alt="Empresa Convidada"
                     style={{
-                      height: '9mm',
-                      maxWidth: '28mm',
+                      height: '8.5mm',
+                      maxWidth: '26mm',
                       objectFit: 'contain',
                       borderRadius: '2mm',
                       backgroundColor: '#FFFFFF',
-                      padding: '1mm',
+                      padding: '0.8mm',
                       border: '0.8px solid rgba(212, 175, 55, 0.5)',
                     }}
                   />
                 </div>
               )}
 
-              {/* Foto da convidada com moldura dourada */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3mm' }}>
-                <div style={{ position: 'relative' }}>
-                  <img
-                    src={
-                      previewConvite.foto_convidado
-                        ? getFileUrl(previewConvite, previewConvite.foto_convidado)
-                        : 'https://img.usecurling.com/ppl/256?gender=female'
-                    }
-                    alt={previewConvite.nome}
-                    style={{
-                      width: '26mm',
-                      height: '26mm',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: '2.5px solid #D4AF37',
-                      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.4)',
-                    }}
-                  />
+              {/* Foto da pessoa convidada como protagonista visual com medalhão de bordas duplas douradas */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5mm' }}>
+                <div
+                  style={{
+                    position: 'relative',
+                    padding: '1.2mm',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #FFF2B2 0%, #D4AF37 50%, #B38612 100%)',
+                    boxShadow: '0 3px 14px rgba(0, 0, 0, 0.5)',
+                  }}
+                >
                   <div
                     style={{
-                      position: 'absolute',
-                      bottom: '-1mm',
-                      right: '-1mm',
-                      backgroundColor: '#4B1E3F',
-                      padding: '1.2mm',
+                      padding: '1mm',
                       borderRadius: '50%',
-                      border: '1px solid #D4AF37',
+                      backgroundColor: '#2A0F23',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Sparkles style={{ width: '3.5mm', height: '3.5mm', color: '#D4AF37' }} />
+                    <img
+                      src={
+                        previewConvite.foto_convidado
+                          ? getFileUrl(previewConvite, previewConvite.foto_convidado)
+                          : 'https://img.usecurling.com/ppl/256?gender=female'
+                      }
+                      alt={previewConvite.nome}
+                      style={{
+                        width: '38mm',
+                        height: '38mm',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '1.2px solid rgba(212, 175, 55, 0.8)',
+                        display: 'block',
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '0mm',
+                      right: '0mm',
+                      backgroundColor: '#36142D',
+                      padding: '1.4mm',
+                      borderRadius: '50%',
+                      border: '1.5px solid #D4AF37',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.4)',
+                    }}
+                  >
+                    <Sparkles style={{ width: '4mm', height: '4mm', color: '#D4AF37' }} />
                   </div>
                 </div>
               </div>
 
-              {/* Rótulo de Convidado/Convidada */}
-              <div style={{ marginBottom: '2mm' }}>
+              {/* Rótulo de Convidado/Convidada e Nome */}
+              <div style={{ marginBottom: '1.5mm' }}>
                 <span
                   style={{
-                    fontSize: '8pt',
+                    fontSize: '7.5pt',
                     color: '#F3E5AB',
                     textTransform: 'uppercase',
                     fontWeight: 700,
@@ -1280,8 +1315,8 @@ export default function AdminConvitesScreen() {
                     fontSize: '18pt',
                     fontWeight: 700,
                     color: '#FFFFFF',
-                    margin: '1.5mm 0 0 0',
-                    lineHeight: 1.2,
+                    margin: '1mm 0 0 0',
+                    lineHeight: 1.15,
                   }}
                 >
                   {previewConvite.nome}
