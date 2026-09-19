@@ -167,17 +167,18 @@ export default function AdminConvitesScreen() {
 
     try {
       setSavingTextDefaults(true)
-      const trimmedConvidado = defaultTextoConvidado.trim()
-      const trimmedConvidada = defaultTextoConvidada.trim()
+      // Preserva quebras de linha e espaçamentos internos intactos
+      const valConvidado = defaultTextoConvidado.replace(/^\s+|\s+$/g, '')
+      const valConvidada = defaultTextoConvidada.replace(/^\s+|\s+$/g, '')
 
       if (defaultTextoConvidadoId) {
         await pb
           .collection('conteudo_site')
-          .update(defaultTextoConvidadoId, { valor: trimmedConvidado })
+          .update(defaultTextoConvidadoId, { valor: valConvidado })
       } else {
         const created = await pb.collection('conteudo_site').create<ConteudoSiteRecord>({
           chave: 'convites_padrao_texto_convidado',
-          valor: trimmedConvidado,
+          valor: valConvidado,
         })
         setDefaultTextoConvidadoId(created.id)
       }
@@ -185,11 +186,11 @@ export default function AdminConvitesScreen() {
       if (defaultTextoConvidadaId) {
         await pb
           .collection('conteudo_site')
-          .update(defaultTextoConvidadaId, { valor: trimmedConvidada })
+          .update(defaultTextoConvidadaId, { valor: valConvidada })
       } else {
         const created = await pb.collection('conteudo_site').create<ConteudoSiteRecord>({
           chave: 'convites_padrao_texto_convidada',
-          valor: trimmedConvidada,
+          valor: valConvidada,
         })
         setDefaultTextoConvidadaId(created.id)
       }
@@ -333,6 +334,7 @@ export default function AdminConvitesScreen() {
       formData.append('tipo_convidado', tipoConvidado)
       formData.append('data_gravacao', toInputDate(dataGravacao))
       formData.append('horario', horario.trim())
+      // Salva o texto cru de apresentação preservando quebras de linha (\n) e espaçamentos
       formData.append('apresentacao', apresentacao.trim())
       formData.append('endereco_gravacao', enderecoGravacao.trim())
       formData.append('link_localizacao', linkLocalizacao.trim())
@@ -760,7 +762,9 @@ export default function AdminConvitesScreen() {
                     )}
                   </div>
 
-                  <p className="text-xs text-vinho/75 italic line-clamp-3">"{item.apresentacao}"</p>
+                  <p className="text-xs text-vinho/75 italic line-clamp-3 whitespace-pre-line">
+                    "{item.apresentacao}"
+                  </p>
                 </div>
 
                 {/* Ações do Card */}
@@ -926,16 +930,22 @@ export default function AdminConvitesScreen() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="conv-apres" className="text-xs font-semibold text-vinho">
-                Texto de Apresentação / Mensagem de Boas-Vindas *
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="conv-apres" className="text-xs font-semibold text-vinho">
+                  Texto de Apresentação / Mensagem de Boas-Vindas *
+                </Label>
+                <span className="text-[10px] text-vinho/60 font-medium">
+                  Preserva quebras de linha e espaçamentos
+                </span>
+              </div>
               <Textarea
                 id="conv-apres"
                 required
-                rows={3}
+                rows={4}
                 value={apresentacao}
                 onChange={(e) => setApresentacao(e.target.value)}
-                className="bg-white border-vinho/20 text-xs"
+                className="bg-white border-vinho/20 text-xs whitespace-pre-wrap resize-y font-normal"
+                placeholder="Digite a mensagem de boas-vindas..."
               />
             </div>
 
@@ -1223,7 +1233,20 @@ export default function AdminConvitesScreen() {
                       </div>
                     </div>
 
-                    <p className="text-xs sm:text-sm text-marfim/90 leading-relaxed font-light italic max-w-lg mx-auto">
+                    {/* Texto de apresentação com quebras de linha e espaçamentos fiéis */}
+                    <p
+                      className={`text-marfim/90 font-light italic max-w-lg mx-auto whitespace-pre-wrap break-words leading-relaxed text-center ${
+                        (previewConvite.apresentacao || '').length > 320
+                          ? 'text-[11px] sm:text-xs leading-normal'
+                          : (previewConvite.apresentacao || '').length > 200
+                            ? 'text-xs sm:text-[13px] leading-relaxed'
+                            : 'text-xs sm:text-sm leading-relaxed'
+                      }`}
+                      style={{
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
+                      }}
+                    >
                       "{previewConvite.apresentacao}"
                     </p>
 
@@ -1564,20 +1587,49 @@ export default function AdminConvitesScreen() {
                 />
               </div>
 
-              {/* Texto de apresentação */}
-              <p
-                style={{
-                  fontSize: '8.8pt',
-                  color: 'rgba(250, 248, 245, 0.95)',
-                  lineHeight: 1.35,
-                  fontWeight: 300,
-                  fontStyle: 'italic',
-                  margin: '2mm auto 3mm auto',
-                  maxWidth: '116mm',
-                }}
-              >
-                "{previewConvite.apresentacao}"
-              </p>
+              {/* Texto de apresentação com quebras de linha e espaçamentos fiéis no PDF A5 */}
+              {(() => {
+                const textLen = (previewConvite.apresentacao || '').length
+                const lineCount = (previewConvite.apresentacao || '').split('\n').length
+                // Tipografia proporcional adaptativa para garantir que não estoure a página A5
+                let fontSize = '8.8pt'
+                let lineHeight = 1.35
+                let marginY = '2mm auto 3mm auto'
+                if (textLen > 400 || lineCount > 7) {
+                  fontSize = '6.8pt'
+                  lineHeight = 1.2
+                  marginY = '1mm auto 1.5mm auto'
+                } else if (textLen > 280 || lineCount > 5) {
+                  fontSize = '7.5pt'
+                  lineHeight = 1.25
+                  marginY = '1.2mm auto 2mm auto'
+                } else if (textLen > 180 || lineCount > 3) {
+                  fontSize = '8.2pt'
+                  lineHeight = 1.3
+                  marginY = '1.5mm auto 2.5mm auto'
+                }
+
+                return (
+                  <p
+                    className="invite-presentation-text"
+                    style={{
+                      fontSize,
+                      lineHeight,
+                      color: 'rgba(250, 248, 245, 0.95)',
+                      fontWeight: 300,
+                      fontStyle: 'italic',
+                      margin: marginY,
+                      maxWidth: '116mm',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
+                      textAlign: 'center',
+                    }}
+                  >
+                    "{previewConvite.apresentacao}"
+                  </p>
+                )
+              })()}
 
               {/* Informações de Gravação */}
               <div

@@ -79,7 +79,11 @@ function roundRect(
   ctx.closePath()
 }
 
-function wrapText(
+/**
+ * Renderiza texto no canvas preservando quebras de linha manuais (\n)
+ * e quebrando palavras longas que ultrapassem a largura máxima.
+ */
+function wrapPreformattedText(
   ctx: CanvasRenderingContext2D,
   text: string,
   x: number,
@@ -87,24 +91,46 @@ function wrapText(
   maxWidth: number,
   lineHeight: number,
 ): number {
-  const words = text.split(' ')
-  let line = ''
+  // Divide o texto pelas quebras de linha explícitas (\r\n ou \n)
+  const paragraphs = text.split(/\r?\n/)
   let currentY = y
 
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' '
-    const metrics = ctx.measureText(testLine)
-    const testWidth = metrics.width
-    if (testWidth > maxWidth && n > 0) {
-      ctx.fillText(line.trim(), x, currentY)
-      line = words[n] + ' '
+  for (let p = 0; p < paragraphs.length; p++) {
+    const paragraph = paragraphs[p]
+
+    // Se o parágrafo estiver vazio (linha em branco intencional)
+    if (paragraph === '') {
       currentY += lineHeight
-    } else {
-      line = testLine
+      continue
+    }
+
+    // Separa mantendo os espaços caso haja múltiplos espaços
+    // Regex /(\s+)/ divide preservando os tokens de whitespace
+    const tokens = paragraph.split(/(\s+)/)
+    let currentLine = ''
+
+    for (let t = 0; t < tokens.length; t++) {
+      const token = tokens[t]
+      const testLine = currentLine + token
+      const metrics = ctx.measureText(testLine)
+
+      if (metrics.width > maxWidth && currentLine.trim().length > 0) {
+        ctx.fillText(currentLine, x, currentY)
+        // Se o token for apenas whitespace, não inicia a próxima linha com ele
+        currentLine = /^\s+$/.test(token) ? '' : token
+        currentY += lineHeight
+      } else {
+        currentLine = testLine
+      }
+    }
+
+    if (currentLine.length > 0) {
+      ctx.fillText(currentLine, x, currentY)
+      currentY += lineHeight
     }
   }
-  ctx.fillText(line.trim(), x, currentY)
-  return currentY + lineHeight
+
+  return currentY
 }
 
 /**
@@ -710,14 +736,29 @@ export async function renderInviteToCanvas(
   ctx.fill()
   ctx.restore()
 
-  // Texto de Apresentação (itálico com aspas)
+  // Texto de Apresentação (itálico com aspas, preservando quebras de linha e espaçamentos)
   ctx.save()
-  ctx.font = 'italic 300 28px "Plus Jakarta Sans", Georgia, serif'
+  const rawText = (options.apresentacao || '').trim()
+  const lineBreaks = rawText.split(/\r?\n/).length
+  const rawLen = rawText.length
+
+  // Tipografia adaptativa para o canvas do JPEG caso o texto seja longo
+  let fontSize = 28
+  let lineHeight = 42
+  if (rawLen > 380 || lineBreaks > 7) {
+    fontSize = 21
+    lineHeight = 31
+  } else if (rawLen > 250 || lineBreaks > 4) {
+    fontSize = 24
+    lineHeight = 36
+  }
+
+  ctx.font = `italic 300 ${fontSize}px "Plus Jakarta Sans", Georgia, serif`
   ctx.fillStyle = 'rgba(250, 248, 245, 0.92)'
   ctx.textAlign = 'center'
-  const textQuote = `"${options.apresentacao || ''}"`
-  const textStartY = photoCy + photoSize / 2 + 225
-  wrapText(ctx, textQuote, width / 2, textStartY, cardW - 160, 42)
+  const textQuote = `"${rawText}"`
+  const textStartY = photoCy + photoSize / 2 + 220
+  wrapPreformattedText(ctx, textQuote, width / 2, textStartY, cardW - 160, lineHeight)
   ctx.restore()
 
   // BLOCOS INFORMATIVOS DE GRAVAÇÃO (Data e Horário)

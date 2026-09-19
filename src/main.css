@@ -308,4 +308,11 @@
     text-decoration: none !important;
     color: inherit !important;
   }
+
+  /* Garante fidelidade de quebras de linha e espaçamentos no texto de apresentação */
+  #printable-invite-portal .invite-presentation-text {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
 }
