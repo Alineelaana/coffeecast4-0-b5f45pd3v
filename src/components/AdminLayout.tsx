@@ -220,21 +220,20 @@ export default function AdminLayout() {
     navigate('/login')
   }
 
-  // Itens gerais do menu principal
+  // Comparador alfabético estrito em português (pt-BR, case-insensitive, ignorando acentos)
+  const sortAlphabeticallyByLabel = <T extends { label: string }>(items: T[]): T[] => {
+    return [...items].sort((a, b) =>
+      a.label.localeCompare(b.label, 'pt-BR', { sensitivity: 'base', numeric: true }),
+    )
+  }
+
+  // Itens gerais do menu principal (ordenados alfabeticamente para fácil localização)
   const rawMainMenuItems = [
     {
-      key: 'dashboard',
-      label: 'Visão Geral',
-      path: '/admin',
-      icon: LayoutDashboard,
-      exact: true,
-    },
-    {
-      key: 'notificacoes',
-      label: 'Notificações',
-      path: '/admin/notificacoes',
-      icon: Bell,
-      badgeCount: unreadNotificationsCount,
+      key: 'agenda',
+      label: 'Agenda de Gravação',
+      path: '/admin/agenda',
+      icon: CalendarDays,
     },
     {
       key: 'chat',
@@ -245,30 +244,16 @@ export default function AdminLayout() {
       highlight: true,
     },
     {
-      key: 'nine',
-      label: 'Nine Assistente Virtual',
-      path: '/admin/nine',
-      icon: Bot,
-      badgeCount: ninePendingCount,
-      highlight: true,
+      key: 'contatos',
+      label: 'Contatos & Leads',
+      path: '/admin/contatos',
+      icon: Inbox,
     },
     {
-      key: 'episodios',
-      label: 'Episódios',
-      path: '/admin/episodios',
-      icon: Tv,
-    },
-    {
-      key: 'momentos',
-      label: 'Nossos Momentos',
-      path: '/admin/momentos',
-      icon: Camera,
-    },
-    {
-      key: 'roteiros',
-      label: 'Roteiros e Apresentações',
-      path: '/admin/roteiros',
-      icon: FileText,
+      key: 'horas',
+      label: 'Controle de Horas',
+      path: '/admin/horas',
+      icon: Clock,
     },
     {
       key: 'depoimentos',
@@ -277,10 +262,10 @@ export default function AdminLayout() {
       icon: MessageSquareQuote,
     },
     {
-      key: 'contatos',
-      label: 'Contatos & Leads',
-      path: '/admin/contatos',
-      icon: Inbox,
+      key: 'episodios',
+      label: 'Episódios',
+      path: '/admin/episodios',
+      icon: Tv,
     },
     {
       key: 'financeiro',
@@ -290,45 +275,50 @@ export default function AdminLayout() {
       highlight: true,
     },
     {
-      key: 'horas',
-      label: 'Controle de Horas',
-      path: '/admin/horas',
-      icon: Clock,
-    },
-    {
-      key: 'agenda',
-      label: 'Agenda de Gravação',
-      path: '/admin/agenda',
-      icon: CalendarDays,
-    },
-    {
       key: 'convites',
       label: 'Gerador de Convites',
       path: '/admin/convites',
       icon: FileCheck2,
       badge: 'PDF',
     },
+    {
+      key: 'nine',
+      label: 'Nine Assistente Virtual',
+      path: '/admin/nine',
+      icon: Bot,
+      badgeCount: ninePendingCount,
+      highlight: true,
+    },
+    {
+      key: 'momentos',
+      label: 'Nossos Momentos',
+      path: '/admin/momentos',
+      icon: Camera,
+    },
+    {
+      key: 'notificacoes',
+      label: 'Notificações',
+      path: '/admin/notificacoes',
+      icon: Bell,
+      badgeCount: unreadNotificationsCount,
+    },
+    {
+      key: 'roteiros',
+      label: 'Roteiros e Apresentações',
+      path: '/admin/roteiros',
+      icon: FileText,
+    },
+    {
+      key: 'dashboard',
+      label: 'Visão Geral',
+      path: '/admin',
+      icon: LayoutDashboard,
+      exact: true,
+    },
   ]
 
-  // SUBMENU EXCLUSIVO MASTER / GESTÃO AVANÇADA
+  // SUBMENU EXCLUSIVO MASTER / GESTÃO AVANÇADA (ordenado alfabeticamente)
   const rawMasterMenuItems = [
-    {
-      key: 'chat_gestao',
-      label: 'Gestão de Conversas',
-      path: '/admin/chat/gestao',
-      icon: MessagesSquare,
-      masterOnly: true,
-      badge: 'Master',
-      exact: false,
-    },
-    {
-      key: 'storefront',
-      label: 'Storefront',
-      path: '/admin/storefront',
-      icon: Store,
-      badge: 'Multi-Loja',
-      exact: false,
-    },
     {
       key: 'dominio',
       label: 'Área do Domínio',
@@ -346,14 +336,6 @@ export default function AdminLayout() {
       exact: false,
     },
     {
-      key: 'usuarios',
-      label: 'Usuários & Permissões',
-      path: '/admin/usuarios',
-      icon: UserCheck,
-      masterOnly: true, // Apenas o Master pode ver e editar usuários & permissões
-      exact: false,
-    },
-    {
       key: 'backups',
       label: 'Backups do Banco',
       path: '/admin/backups',
@@ -363,10 +345,35 @@ export default function AdminLayout() {
       exact: false,
     },
     {
+      key: 'documentacao',
+      label: 'Documentação',
+      path: '/admin/documentacao',
+      icon: BookOpen,
+      badge: 'Dossiê',
+      exact: false,
+    },
+    {
       key: 'conteudo',
       label: 'Editar Site',
       path: '/admin/conteudo',
       icon: FileText,
+      exact: false,
+    },
+    {
+      key: 'chat_gestao',
+      label: 'Gestão de Conversas',
+      path: '/admin/chat/gestao',
+      icon: MessagesSquare,
+      masterOnly: true,
+      badge: 'Master',
+      exact: false,
+    },
+    {
+      key: 'guia_ajuda',
+      label: 'Guia de Ajuda',
+      path: '/admin/guia-ajuda',
+      icon: HelpCircle,
+      badge: 'Ajuda',
       exact: false,
     },
     {
@@ -384,30 +391,35 @@ export default function AdminLayout() {
       exact: false,
     },
     {
-      key: 'documentacao',
-      label: 'Documentação',
-      path: '/admin/documentacao',
-      icon: BookOpen,
-      badge: 'Dossiê',
+      key: 'storefront',
+      label: 'Storefront',
+      path: '/admin/storefront',
+      icon: Store,
+      badge: 'Multi-Loja',
       exact: false,
     },
     {
-      key: 'guia_ajuda',
-      label: 'Guia de Ajuda',
-      path: '/admin/guia-ajuda',
-      icon: HelpCircle,
-      badge: 'Ajuda',
+      key: 'usuarios',
+      label: 'Usuários & Permissões',
+      path: '/admin/usuarios',
+      icon: UserCheck,
+      masterOnly: true, // Apenas o Master pode ver e editar usuários & permissões
       exact: false,
     },
   ]
 
   // Filtragem dinâmica de itens do menu conforme as permissões do perfil autenticado
-  const mainMenuItems = rawMainMenuItems.filter((item) => hasScreenPermission(item.key))
+  // Aplica ordenação alfabética resiliente (pt-BR, sem acento, case-insensitive)
+  const mainMenuItems = sortAlphabeticallyByLabel(
+    rawMainMenuItems.filter((item) => hasScreenPermission(item.key)),
+  )
 
-  const masterMenuItems = rawMasterMenuItems.filter((item) => {
-    if (item.masterOnly && !isMaster) return false
-    return hasScreenPermission(item.key)
-  })
+  const masterMenuItems = sortAlphabeticallyByLabel(
+    rawMasterMenuItems.filter((item) => {
+      if (item.masterOnly && !isMaster) return false
+      return hasScreenPermission(item.key)
+    }),
+  )
 
   // Exibe o submenu "Exclusivo Master" / "Gestão da Loja / Master" se houver itens autorizados
   const showMasterSection = isMaster || masterMenuItems.length > 0

@@ -161,7 +161,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
     id: 'gestao-operacional',
     titulo: '2. Painel Administrativo — Gestão Operacional',
     descricao:
-      'Telas do dia a dia da produção: episódios, agenda, financeiro, roteiros, contatos e IA.',
+      'Telas do dia a dia da produção organizadas em ordem alfabética no menu lateral: agenda, chat, contatos, episódios, financeiro, roteiros, visão geral e IA.',
     icone: 'Sliders',
     itens: [
       {
@@ -171,7 +171,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
         icone: 'LayoutDashboard',
         rota: '/admin',
         perfisPermitidos: ['master', 'adm', 'gerencial'],
-        ondeClicar: 'Menu lateral ➔ Item "Visão Geral" (primeiro item).',
+        ondeClicar: 'Menu lateral ➔ Item "Visão Geral" (organizado em ordem alfabética).',
         paraQueServe:
           'Reúne os principais números da operação: total de episódios no ar, novos leads, despesas em aberto, gravações agendadas e saldo de horas do estúdio.',
         passoAPasso: [
@@ -691,7 +691,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
     id: 'exclusivo-master',
     titulo: '3. Submenu Exclusivo Master & Governança',
     descricao:
-      'Ferramentas de soberania: Multi-Lojas (Storefronts), DNS, gestão de usuários e edição do site.',
+      'Ferramentas de governança e soberania organizadas em ordem alfabética dentro do submenu: Área do Domínio, Auditoria, Backups, Documentação, Editar Site, Gestão de Conversas, Guia de Ajuda, Integrantes, Políticas, Storefront e Usuários.',
     icone: 'Shield',
     itens: [
       {
