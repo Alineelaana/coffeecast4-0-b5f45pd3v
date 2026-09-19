@@ -27,7 +27,11 @@ import {
   Save,
   SlidersHorizontal,
 } from 'lucide-react'
-import { renderInviteToCanvas, downloadCanvasAsJpeg } from '@/lib/inviteExporter'
+import {
+  renderInviteToCanvas,
+  downloadCanvasAsJpeg,
+  createCircularGuestPhotoDataUrl,
+} from '@/lib/inviteExporter'
 import officialLogoImg from '@/assets/sem-nome-1350-x-1080-px-1-01237.png'
 import { toast } from 'sonner'
 
@@ -76,6 +80,11 @@ export default function AdminConvitesScreen() {
   // Previews locais das imagens selecionadas ou já salvas
   const [fotoPreviewUrl, setFotoPreviewUrl] = useState<string>('')
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string>('')
+
+  // PNG pré-recortado circular com fundo transparente para uso no Preview em tela e no Portal de Impressão A5 (PDF)
+  // Isso blinda a exibição em visualizadores de PDF mobile e WhatsApp contra falhas de border-radius/clip-path do CSS
+  const [circularGuestPhotoUrl, setCircularGuestPhotoUrl] = useState<string>('')
+  const [processingCircularPhoto, setProcessingCircularPhoto] = useState(false)
 
   const [saving, setSaving] = useState(false)
   const [exportingJpegId, setExportingJpegId] = useState<string | null>(null)
@@ -231,6 +240,42 @@ export default function AdminConvitesScreen() {
       if (logoPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(logoPreviewUrl)
     }
   }, [fotoPreviewUrl, logoPreviewUrl])
+
+  // Sempre que o convite em preview mudar (ou for aberto), gera o PNG circular pré-recortado
+  useEffect(() => {
+    let isMounted = true
+    if (!previewConvite) {
+      setCircularGuestPhotoUrl('')
+      return
+    }
+
+    const rawUrl = previewConvite.foto_convidado
+      ? getFileUrl(previewConvite, previewConvite.foto_convidado)
+      : 'https://img.usecurling.com/ppl/256?gender=female'
+
+    setProcessingCircularPhoto(true)
+    createCircularGuestPhotoDataUrl(rawUrl, 512)
+      .then((dataUrl) => {
+        if (isMounted) {
+          setCircularGuestPhotoUrl(dataUrl || rawUrl)
+        }
+      })
+      .catch((err) => {
+        console.warn('Erro ao processar foto circular do convidado:', err)
+        if (isMounted) {
+          setCircularGuestPhotoUrl(rawUrl)
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setProcessingCircularPhoto(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [previewConvite])
 
   const handleOpenCreate = () => {
     const initialGender: 'convidado' | 'convidada' = 'convidada'
@@ -394,7 +439,16 @@ export default function AdminConvitesScreen() {
     }
   }
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    // Se a foto circular ainda estiver sendo processada em segundo plano, espera até 1s
+    if (processingCircularPhoto) {
+      toast.info('Finalizando preparação gráfica do convite...')
+      let waitCount = 0
+      while (processingCircularPhoto && waitCount < 10) {
+        await new Promise((r) => setTimeout(r, 100))
+        waitCount++
+      }
+    }
     window.print()
   }
 
@@ -1199,9 +1253,10 @@ export default function AdminConvitesScreen() {
                           <div className="w-full h-full aspect-square p-1 rounded-full bg-[#2A0F23] flex items-center justify-center overflow-hidden shrink-0">
                             <img
                               src={
-                                previewConvite.foto_convidado
+                                circularGuestPhotoUrl ||
+                                (previewConvite.foto_convidado
                                   ? getFileUrl(previewConvite, previewConvite.foto_convidado)
-                                  : 'https://img.usecurling.com/ppl/256?gender=female'
+                                  : 'https://img.usecurling.com/ppl/256?gender=female')
                               }
                               alt={previewConvite.nome}
                               className="w-full h-full aspect-square rounded-full object-cover [object-position:50%_18%] border-2 border-dourado/70 shadow-inner block shrink-0"
@@ -1530,12 +1585,16 @@ export default function AdminConvitesScreen() {
                         printColorAdjust: 'exact',
                       }}
                     >
+                      {/* A foto é inserida como um PNG DataURL pré-recortado no canvas (transparente por fora).
+                          Dessa forma, mesmo que o leitor de PDF do celular ou WhatsApp ignore border-radius/clip-path,
+                          a imagem já é fisicamente redonda e nunca vaza para fora do círculo nem desconfigura. */}
                       <img
                         className="invite-photo-img"
                         src={
-                          previewConvite.foto_convidado
+                          circularGuestPhotoUrl ||
+                          (previewConvite.foto_convidado
                             ? getFileUrl(previewConvite, previewConvite.foto_convidado)
-                            : 'https://img.usecurling.com/ppl/256?gender=female'
+                            : 'https://img.usecurling.com/ppl/256?gender=female')
                         }
                         alt={previewConvite.nome}
                         style={{
@@ -1549,6 +1608,7 @@ export default function AdminConvitesScreen() {
                           display: 'block',
                           boxSizing: 'border-box',
                           flexShrink: 0,
+                          backgroundColor: 'transparent',
                           WebkitPrintColorAdjust: 'exact',
                           printColorAdjust: 'exact',
                         }}

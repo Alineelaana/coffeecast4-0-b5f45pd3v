@@ -595,8 +595,8 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Informe a data da gravação e horário marcado para início.',
           'Faça o upload da foto em alta resolução do convidado e, opcionalmente, da logomarca da empresa.',
           'Revise ou ajuste livremente a mensagem de apresentação/boas-vindas.',
-          'Visualize o convite em tempo real no preview interativo: a foto do convidado ganha protagonismo nobre no centro do convite (com medalhão circular recortado e moldura dupla dourada, sem vazamento de imagem para fora do círculo tanto no preview quanto na impressão do PDF), enquanto a logomarca oficial do CoffeeCast 4.0 permanece discreta e elegante no topo, mantendo endereço e localização centralizados harmonicamente (os campos só aparecem se preenchidos).',
-          'Clique em "JPEG" para salvar a imagem em alta resolução e enviar pelo WhatsApp, ou em "Gerar PDF" para exportar o arquivo formal de impressão em tamanho oficial A5 com fidelidade visual idêntica ao preview, foto estritamente circular e link ativo do Maps.',
+          'Visualize o convite em tempo real no preview interativo: a foto do convidado ganha protagonismo nobre no centro do convite com medalhão circular e moldura dupla dourada. O recorte circular é incorporado diretamente à própria imagem (Canvas com canal alfa transparente e foco facial a 18% do topo), garantindo que a foto nunca apareça cortada ou vazando fora do círculo em nenhum dispositivo — seja no PC, no visualizador de PDF do celular ou ao enviar pelo WhatsApp.',
+          'Clique em "JPEG" para salvar a imagem em alta resolução e enviar pelo WhatsApp, ou em "Gerar PDF" para exportar o arquivo formal de impressão em tamanho oficial A5 com fidelidade visual idêntica ao preview, foto circular blindada em qualquer visualizador e link ativo do Maps.',
         ],
         botoesPrincipais: [
           {
@@ -645,7 +645,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
               'Abre a rota e localização exata do estúdio no Google Maps diretamente do documento.',
           },
         ],
-        dica: 'Dica para salvar o PDF perfeito: ao clicar em "Gerar PDF", na janela de impressão do navegador, certifique-se de que a opção "Gráficos de segundo plano" (Background graphics) esteja marcada para preservar todos os gradientes de vinho e dourado. O layout já está travado em 1 página A5 oficial sem margens indesejadas.',
+        dica: 'Dica para salvar o PDF perfeito: ao clicar em "Gerar PDF", na janela de impressão do navegador, certifique-se de que a opção "Gráficos de segundo plano" (Background graphics) esteja marcada para preservar todos os gradientes de vinho e dourado. A foto do convidado é pré-recortada em PNG transparente, permanecendo 100% redonda e idêntica tanto em computadores quanto em smartphones e WhatsApp. O layout já está travado em 1 página A5 oficial sem margens indesejadas.',
       },
       {
         id: 'auditoria-sistema',

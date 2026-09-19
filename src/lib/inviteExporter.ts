@@ -20,7 +20,7 @@ interface RenderInviteOptions {
 /**
  * Converte URLs remotas em dataURL com crossOrigin anônimo para evitar tainted canvas
  */
-async function toDataURL(url: string): Promise<string> {
+export async function toDataURL(url: string): Promise<string> {
   if (!url) return ''
   if (url.startsWith('data:')) return url
   try {
@@ -38,7 +38,7 @@ async function toDataURL(url: string): Promise<string> {
   }
 }
 
-function loadImage(src: string): Promise<HTMLImageElement> {
+export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     if (!src) {
       reject(new Error('URL vazia'))
@@ -56,6 +56,80 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     }
     img.src = src
   })
+}
+
+/**
+ * Pré-processa uma imagem para gerar um PNG DataURL estritamente circular com fundo transparente.
+ *
+ * Por que isso é vital:
+ * Em visualizadores de PDF mobile ou ao compartilhar o arquivo via WhatsApp,
+ * recortes baseados puramente em CSS (border-radius, clip-path ou mask-image)
+ * não são interpretados como no Chromium desktop, provocando bordas cortadas ou fotos vazando.
+ *
+ * Ao queimar o recorte circular diretamente em um Canvas (context.arc + clip) com o enquadramento
+ * facial calibrado (foco a 18% do topo em fotos verticais para não cortar a cabeça), a <img>
+ * inserida no DOM de impressão (e no preview) já é fisicamente redonda e transparente por fora.
+ */
+export async function createCircularGuestPhotoDataUrl(
+  imageSource: string | HTMLImageElement,
+  size = 512,
+): Promise<string> {
+  if (!imageSource) return ''
+
+  let img: HTMLImageElement
+  if (typeof imageSource === 'string') {
+    const dataUrl = await toDataURL(imageSource)
+    img = await loadImage(dataUrl)
+  } else {
+    img = imageSource
+  }
+
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return ''
+
+  // Limpa o canvas garantindo canal alfa 100% transparente fora do círculo
+  ctx.clearRect(0, 0, size, size)
+
+  // Traça o círculo perfeito e define a máscara de recorte
+  const radius = size / 2
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(radius, radius, radius, 0, Math.PI * 2)
+  ctx.closePath()
+  ctx.clip()
+
+  // Fundo base escuro vinho sofisticado caso haja alguma área não coberta
+  ctx.fillStyle = '#2A0F23'
+  ctx.fill()
+
+  // Enquadramento facial calibrado:
+  // Se for imagem vertical (altura > largura, típica de retratos), foca a 18% do topo
+  // para manter rosto e cabeça inteiros sem cortar.
+  // Se for paisagem, centraliza horizontalmente.
+  const imgAspect = img.width / img.height
+  let sx = 0
+  let sy = 0
+  let sWidth = img.width
+  let sHeight = img.height
+
+  if (imgAspect > 1) {
+    // Paisagem: corta as laterais mantendo o centro
+    sWidth = img.height
+    sx = (img.width - sWidth) / 2
+  } else if (imgAspect < 1) {
+    // Retrato vertical: foca no terço superior (rosto e ombros do convidado)
+    sHeight = img.width
+    const maxOffsetY = img.height - sHeight
+    sy = Math.min(Math.max(0, (img.height - sHeight) * 0.18), maxOffsetY)
+  }
+
+  ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, size, size)
+  ctx.restore()
+
+  return canvas.toDataURL('image/png')
 }
 
 function roundRect(
@@ -354,8 +428,14 @@ export async function renderInviteToCanvas(
 
   const guestUrl = options.guestPhotoUrl || 'https://img.usecurling.com/ppl/256?gender=female'
   try {
-    const dataUrl = await toDataURL(guestUrl)
-    guestImg = await loadImage(dataUrl)
+    // Gera PNG pré-recortado circularmente em alta resolução (1024x1024) com enquadramento facial calibrado
+    const circularGuestPng = await createCircularGuestPhotoDataUrl(guestUrl, 1024)
+    if (circularGuestPng) {
+      guestImg = await loadImage(circularGuestPng)
+    } else {
+      const dataUrl = await toDataURL(guestUrl)
+      guestImg = await loadImage(dataUrl)
+    }
   } catch (e) {
     console.warn('Erro ao carregar foto do convidado para o canvas:', e)
   }
@@ -614,25 +694,26 @@ export async function renderInviteToCanvas(
     ctx.fillStyle = '#2A0F23'
     ctx.fill()
 
-    // Enquadramento otimizado para retratos de convidados:
-    // Em retratos verticais (típicos de fotos corporativas e de celular), centralizar pelo topo/terço superior
-    // ou manter a pessoa com o enquadramento mais completo possível sem cortar a cabeça ou o rosto.
+    // Se a imagem já foi pré-recortada circularmente pelo utilitário createCircularGuestPhotoDataUrl (1:1),
+    // desenha diretamente preenchendo o diâmetro com nitidez absoluta.
+    // Caso contrário (fallback), recalcula as proporções mantendo a centralização/enquadramento superior.
     const imgAspect = guestImg.width / guestImg.height
     let sx = 0
     let sy = 0
     let sWidth = guestImg.width
     let sHeight = guestImg.height
 
-    if (imgAspect > 1) {
-      // Foto paisagem (mais larga que alta): recorta as laterais mantendo o centro
-      sWidth = guestImg.height
-      sx = (guestImg.width - sWidth) / 2
-    } else if (imgAspect < 1) {
-      // Foto retrato vertical: focar no terço superior (rosto e ombros do convidado) para não cortar a cabeça
-      sHeight = guestImg.width
-      // Posição no topo com leve margem de 10-15% para manter a pessoa inteira e sem cortes bruscos
-      const maxOffsetY = guestImg.height - sHeight
-      sy = Math.min(Math.max(0, (guestImg.height - sHeight) * 0.18), maxOffsetY)
+    if (Math.abs(imgAspect - 1) > 0.02) {
+      if (imgAspect > 1) {
+        // Foto paisagem (mais larga que alta): recorta as laterais mantendo o centro
+        sWidth = guestImg.height
+        sx = (guestImg.width - sWidth) / 2
+      } else if (imgAspect < 1) {
+        // Foto retrato vertical: focar no terço superior (rosto e ombros do convidado) para não cortar a cabeça
+        sHeight = guestImg.width
+        const maxOffsetY = guestImg.height - sHeight
+        sy = Math.min(Math.max(0, (guestImg.height - sHeight) * 0.18), maxOffsetY)
+      }
     }
 
     ctx.drawImage(
