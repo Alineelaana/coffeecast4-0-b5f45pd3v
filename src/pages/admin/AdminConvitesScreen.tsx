@@ -1203,14 +1203,14 @@ export default function AdminConvitesScreen() {
                                   : 'https://img.usecurling.com/ppl/256?gender=female'
                               }
                               alt={previewConvite.nome}
-                              className="w-36 h-36 sm:w-44 sm:h-44 rounded-full object-cover border-2 border-dourado/70 shadow-inner"
+                              className="w-36 h-36 sm:w-44 sm:h-44 rounded-full object-cover [object-position:50%_18%] border-2 border-dourado/70 shadow-inner"
                             />
                           </div>
                         </div>
 
-                        {/* Badge dourado com estrela */}
-                        <div className="absolute -bottom-1 -right-1 bg-gradient-to-b from-vinho via-[#2A0F23] to-vinho p-2 rounded-full border-2 border-dourado shadow-lg">
-                          <Sparkles className="w-5 h-5 text-dourado" />
+                        {/* Estrela dourada brilhante sem caixa/fundo escuro quadrado */}
+                        <div className="absolute -bottom-1 -right-1 pointer-events-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] filter">
+                          <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-dourado-light animate-pulse fill-dourado/40" />
                         </div>
                       </div>
                     </div>
@@ -1543,26 +1543,34 @@ export default function AdminConvitesScreen() {
                     </div>
                   </div>
 
-                  {/* Badge estrela dourada no canto inferior direito do medalhão */}
+                  {/* Estrela dourada no canto inferior direito do medalhão sem fundo/caixa quadrada */}
                   <div
+                    className="invite-photo-star"
                     style={{
                       position: 'absolute',
-                      bottom: '0mm',
-                      right: '0mm',
-                      backgroundColor: '#36142D',
-                      padding: '1.4mm',
-                      borderRadius: '50%',
-                      border: '1.5px solid #D4AF37',
+                      bottom: '0.5mm',
+                      right: '0.5mm',
+                      backgroundColor: 'transparent',
+                      background: 'transparent',
+                      border: 'none',
+                      padding: 0,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.5)',
+                      filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7))',
                       zIndex: 5,
                       WebkitPrintColorAdjust: 'exact',
                       printColorAdjust: 'exact',
                     }}
                   >
-                    <Sparkles style={{ width: '4mm', height: '4mm', color: '#D4AF37' }} />
+                    <Sparkles
+                      style={{
+                        width: '5.2mm',
+                        height: '5.2mm',
+                        color: '#FFF2B2',
+                        fill: 'rgba(212, 175, 55, 0.35)',
+                      }}
+                    />
                   </div>
                 </div>
               </div>

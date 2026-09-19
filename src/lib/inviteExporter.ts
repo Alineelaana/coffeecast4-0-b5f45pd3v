@@ -614,7 +614,9 @@ export async function renderInviteToCanvas(
     ctx.fillStyle = '#2A0F23'
     ctx.fill()
 
-    // Desenha imagem centralizada e preenchida proporcionalmente (cover)
+    // Enquadramento otimizado para retratos de convidados:
+    // Em retratos verticais (típicos de fotos corporativas e de celular), centralizar pelo topo/terço superior
+    // ou manter a pessoa com o enquadramento mais completo possível sem cortar a cabeça ou o rosto.
     const imgAspect = guestImg.width / guestImg.height
     let sx = 0
     let sy = 0
@@ -622,11 +624,15 @@ export async function renderInviteToCanvas(
     let sHeight = guestImg.height
 
     if (imgAspect > 1) {
+      // Foto paisagem (mais larga que alta): recorta as laterais mantendo o centro
       sWidth = guestImg.height
       sx = (guestImg.width - sWidth) / 2
-    } else {
+    } else if (imgAspect < 1) {
+      // Foto retrato vertical: focar no terço superior (rosto e ombros do convidado) para não cortar a cabeça
       sHeight = guestImg.width
-      sy = (guestImg.height - sHeight) / 2
+      // Posição no topo com leve margem de 10-15% para manter a pessoa inteira e sem cortes bruscos
+      const maxOffsetY = guestImg.height - sHeight
+      sy = Math.min(Math.max(0, (guestImg.height - sHeight) * 0.18), maxOffsetY)
     }
 
     ctx.drawImage(
@@ -663,39 +669,62 @@ export async function renderInviteToCanvas(
     ctx.restore()
   }
 
-  // Selo de brilho/estrelinha sobre o medalhão (canto inferior direito)
+  // Brilho/estrelinha dourada sobre o medalhão (canto inferior direito) - sem fundo escuro ou quadrado
   ctx.save()
-  const badgeX = photoCx + photoSize / 2 - 20
-  const badgeY = photoCy + photoSize / 2 - 20
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'
-  ctx.shadowBlur = 10
-  ctx.shadowOffsetY = 3
+  const starX = photoCx + photoSize / 2 - 24
+  const starY = photoCy + photoSize / 2 - 24
 
+  // Halo dourado sutil de brilho atrás da estrela para contraste nobre
+  const starGlow = ctx.createRadialGradient(starX, starY, 2, starX, starY, 26)
+  starGlow.addColorStop(0, 'rgba(255, 242, 178, 0.45)')
+  starGlow.addColorStop(0.5, 'rgba(212, 175, 55, 0.25)')
+  starGlow.addColorStop(1, 'rgba(212, 175, 55, 0)')
+  ctx.fillStyle = starGlow
   ctx.beginPath()
-  ctx.arc(badgeX, badgeY, 34, 0, Math.PI * 2)
-  const badgeBg = ctx.createLinearGradient(badgeX - 34, badgeY - 34, badgeX + 34, badgeY + 34)
-  badgeBg.addColorStop(0, '#5A1A3B')
-  badgeBg.addColorStop(1, '#250B1B')
-  ctx.fillStyle = badgeBg
+  ctx.arc(starX, starY, 26, 0, Math.PI * 2)
   ctx.fill()
-  ctx.strokeStyle = '#D4AF37'
-  ctx.lineWidth = 3.5
-  ctx.stroke()
 
-  // Estrela dourada no badge
-  ctx.translate(badgeX, badgeY)
-  ctx.fillStyle = '#FFF2B2'
+  // Estrela principal de 4 pontas dourada com brilho
+  ctx.save()
+  ctx.translate(starX, starY)
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.55)'
+  ctx.shadowBlur = 8
+  ctx.shadowOffsetY = 2
+
+  // Estrela principal
+  const starGrad = ctx.createLinearGradient(-18, -18, 18, 18)
+  starGrad.addColorStop(0, '#FFFFFF')
+  starGrad.addColorStop(0.3, '#FFF2B2')
+  starGrad.addColorStop(0.7, '#D4AF37')
+  starGrad.addColorStop(1, '#B38612')
+  ctx.fillStyle = starGrad
+
   ctx.beginPath()
-  ctx.moveTo(0, -16)
-  ctx.lineTo(4.5, -4.5)
-  ctx.lineTo(16, 0)
-  ctx.lineTo(4.5, 4.5)
-  ctx.lineTo(0, 16)
-  ctx.lineTo(-4.5, 4.5)
-  ctx.lineTo(-16, 0)
-  ctx.lineTo(-4.5, -4.5)
+  ctx.moveTo(0, -22)
+  ctx.lineTo(5.5, -5.5)
+  ctx.lineTo(22, 0)
+  ctx.lineTo(5.5, 5.5)
+  ctx.lineTo(0, 22)
+  ctx.lineTo(-5.5, 5.5)
+  ctx.lineTo(-22, 0)
+  ctx.lineTo(-5.5, -5.5)
   ctx.closePath()
   ctx.fill()
+
+  // Estrela menor auxiliar brilhando ao lado (estilo Sparkles)
+  ctx.beginPath()
+  ctx.moveTo(13, -13 - 9)
+  ctx.lineTo(13 + 2.5, -13 - 2.5)
+  ctx.lineTo(13 + 9, -13)
+  ctx.lineTo(13 + 2.5, -13 + 2.5)
+  ctx.lineTo(13, -13 + 9)
+  ctx.lineTo(13 - 2.5, -13 + 2.5)
+  ctx.lineTo(13 - 9, -13)
+  ctx.lineTo(13 - 2.5, -13 - 2.5)
+  ctx.closePath()
+  ctx.fill()
+
+  ctx.restore()
   ctx.restore()
 
   // Rótulo de Convidado(a) de Honra ajustado por gênero

@@ -330,11 +330,20 @@
   #printable-invite-portal .invite-photo-img {
     border-radius: 50% !important;
     object-fit: cover !important;
+    object-position: 50% 18% !important;
     clip-path: circle(50% at 50% 50%) !important;
     -webkit-clip-path: circle(50% at 50% 50%) !important;
     box-shadow: none !important;
     filter: none !important;
     display: block !important;
     background: transparent !important;
+  }
+
+  /* Estrela brilhante sem fundo na impressão */
+  #printable-invite-portal .invite-photo-star {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 }
