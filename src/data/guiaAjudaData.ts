@@ -588,16 +588,30 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
         paraQueServe:
           'Gera convites elegantes no padrão visual ouro/vinho do CoffeeCast com a foto do convidado para enviar por WhatsApp ou imprimir.',
         passoAPasso: [
-          'Preencha o nome do convidado ou convidada e selecione o tratamento apropriado.',
+          'Configure o Endereço e a Localização Padrão no card superior: informe o endereço físico fixo do estúdio e o link do Google Maps (com botão "Testar link" para validação imediata) e clique em "Salvar Padrão". Esses valores virão automaticamente preenchidos em todos os novos convites criados.',
+          'Clique no botão dourado "Gerar Novo Convite": os campos "Endereço da gravação:" e "Localização" já virão preenchidos com os padrões definidos, mantendo total liberdade para edição naquele convite individual.',
+          'Preencha o nome do convidado ou convidada e selecione o tratamento apropriado ("Convidado de Honra" ou "Convidada de Honra").',
           'Informe a data da gravação e horário marcado para início.',
-          'Opcionalmente, preencha o campo de texto livre "Endereço da gravação:" com o endereço físico onde o episódio será gravado.',
-          'Abaixo do endereço, insira a "Localização" com o link do Google Maps (ex.: https://maps.app.goo.gl/...), que ficará interativo e clicável no PDF do convite.',
           'Faça o upload da foto em alta resolução do convidado e, opcionalmente, da logomarca da empresa.',
           'Escreva uma mensagem calorosa de apresentação.',
           'Visualize o convite em tempo real no preview interativo (com a logomarca oficial CoffeeCast 4.0 em destaque e as informações de endereço e localização centralizadas harmonicamente; os campos só aparecem se preenchidos).',
           'Clique em "Baixar Imagem JPEG" para salvar no computador e enviar pelo WhatsApp, ou "Imprimir / Salvar PDF" para gerar arquivo formal com link ativo do Maps.',
         ],
         botoesPrincipais: [
+          {
+            nome: 'Salvar Padrão (Endereço & Localização)',
+            onde: 'Card superior da tela de Convites',
+            paraQueServe:
+              'Grava globalmente o endereço físico e link do Google Maps que virão pré-preenchidos em novos convites.',
+            icone: 'Save',
+          },
+          {
+            nome: 'Testar Link (Google Maps)',
+            onde: 'Ao lado do campo de Localização Padrão',
+            paraQueServe:
+              'Abre a URL cadastrada em nova aba para certificar que aponta exatamente para a rota do estúdio.',
+            icone: 'ExternalLink',
+          },
           {
             nome: 'Baixar Imagem JPEG (Alta Resolução)',
             onde: 'Abaixo do preview do convite',
@@ -623,7 +637,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
               'Abre a rota e localização exata do estúdio no Google Maps diretamente do documento.',
           },
         ],
-        dica: 'Use fotos verticais com fundo neutro para obter o melhor enquadramento na moldura dourada. Os campos "Endereço da gravação:" e "Localização" são opcionais e são diagramados de forma centralizada e elegante no convite.',
+        dica: 'Cadastre o endereço e o link do Google Maps padrão uma única vez no topo da página. Ao criar novos convites eles já vêm preenchidos, economizando digitação repetitiva, mas você pode personalizá-los ou apagá-los a qualquer momento em convites específicos sem afetar os demais.',
       },
       {
         id: 'auditoria-sistema',

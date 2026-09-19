@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import pb from '@/lib/pocketbase/client'
 import { formatDateBR, getFileUrl, toInputDate } from '@/lib/formatters'
-import type { ConviteRecord } from '@/types/database'
+import type { ConviteRecord, ConteudoSiteRecord } from '@/types/database'
+import { useAuth } from '@/context/AuthContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,6 +22,10 @@ import {
   Loader2,
   Eye,
   Check,
+  MapPin,
+  ExternalLink,
+  Save,
+  SlidersHorizontal,
 } from 'lucide-react'
 import { CoffeeCastLogo } from '@/components/CoffeeCastLogo'
 import { renderInviteToCanvas, downloadCanvasAsJpeg } from '@/lib/inviteExporter'
@@ -28,8 +33,19 @@ import officialLogoImg from '@/assets/sem-nome-1350-x-1080-px-1-01237.png'
 import { toast } from 'sonner'
 
 export default function AdminConvitesScreen() {
+  const { role, isMaster, hasScreenPermission } = useAuth()
+  const canEditDefaults = isMaster || (role === 'adm' && hasScreenPermission('convites'))
+
   const [convites, setConvites] = useState<ConviteRecord[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Valores padrão globais para novos convites
+  const [defaultEndereco, setDefaultEndereco] = useState('')
+  const [defaultLocalizacao, setDefaultLocalizacao] = useState('')
+  const [defaultEnderecoId, setDefaultEnderecoId] = useState<string | null>(null)
+  const [defaultLocalizacaoId, setDefaultLocalizacaoId] = useState<string | null>(null)
+  const [savingDefaults, setSavingDefaults] = useState(false)
+  const [loadingDefaults, setLoadingDefaults] = useState(true)
 
   // Controle de modal de formulário (criação e edição)
   const [modalOpen, setModalOpen] = useState(false)
@@ -59,6 +75,71 @@ export default function AdminConvitesScreen() {
 
   const invitePrintRef = useRef<HTMLDivElement>(null)
 
+  const loadDefaults = async () => {
+    try {
+      setLoadingDefaults(true)
+      const records = await pb.collection('conteudo_site').getFullList<ConteudoSiteRecord>({
+        filter: 'chave = "convites_padrao_endereco" || chave = "convites_padrao_localizacao"',
+      })
+      const endRec = records.find((r) => r.chave === 'convites_padrao_endereco')
+      const locRec = records.find((r) => r.chave === 'convites_padrao_localizacao')
+
+      if (endRec) {
+        setDefaultEndereco(endRec.valor || '')
+        setDefaultEnderecoId(endRec.id)
+      }
+      if (locRec) {
+        setDefaultLocalizacao(locRec.valor || '')
+        setDefaultLocalizacaoId(locRec.id)
+      }
+    } catch (err) {
+      console.error('Erro ao carregar valores padrão de convites:', err)
+    } finally {
+      setLoadingDefaults(false)
+    }
+  }
+
+  const handleSaveDefaults = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (!canEditDefaults) {
+      toast.error('Você não tem permissão para alterar as configurações padrão.')
+      return
+    }
+
+    try {
+      setSavingDefaults(true)
+      const trimmedEnd = defaultEndereco.trim()
+      const trimmedLoc = defaultLocalizacao.trim()
+
+      if (defaultEnderecoId) {
+        await pb.collection('conteudo_site').update(defaultEnderecoId, { valor: trimmedEnd })
+      } else {
+        const created = await pb.collection('conteudo_site').create<ConteudoSiteRecord>({
+          chave: 'convites_padrao_endereco',
+          valor: trimmedEnd,
+        })
+        setDefaultEnderecoId(created.id)
+      }
+
+      if (defaultLocalizacaoId) {
+        await pb.collection('conteudo_site').update(defaultLocalizacaoId, { valor: trimmedLoc })
+      } else {
+        const created = await pb.collection('conteudo_site').create<ConteudoSiteRecord>({
+          chave: 'convites_padrao_localizacao',
+          valor: trimmedLoc,
+        })
+        setDefaultLocalizacaoId(created.id)
+      }
+
+      toast.success('Endereço e localização padrão salvos com sucesso!')
+    } catch (err) {
+      console.error('Erro ao salvar padrões de convites:', err)
+      toast.error('Erro ao salvar endereço e localização padrão.')
+    } finally {
+      setSavingDefaults(false)
+    }
+  }
+
   const loadConvites = async () => {
     try {
       setLoading(true)
@@ -76,6 +157,7 @@ export default function AdminConvitesScreen() {
 
   useEffect(() => {
     loadConvites()
+    loadDefaults()
   }, [])
 
   // Limpa URLs de objeto para evitar memory leaks
@@ -95,8 +177,9 @@ export default function AdminConvitesScreen() {
     setApresentacao(
       'É com grande alegria e honra que convidamos você para compartilhar sua trajetória inspiradora no CoffeeCast 4.0. Preparamos uma mesa com afeto, respeito e cafés especiais para dar voz à sua história que transforma vidas.',
     )
-    setEnderecoGravacao('')
-    setLinkLocalizacao('')
+    // Pré-preenche novos convites com os valores padrão globais cadastrados
+    setEnderecoGravacao(defaultEndereco || '')
+    setLinkLocalizacao(defaultLocalizacao || '')
     setFotoFile(null)
     setLogoFile(null)
     setFotoPreviewUrl('')
@@ -285,6 +368,112 @@ export default function AdminConvitesScreen() {
           <Plus className="w-4 h-4 text-dourado shrink-0" />
           Gerar Novo Convite
         </Button>
+      </div>
+
+      {/* Card Discreto de Configuração: Endereço e Localização Padrão para Novos Convites */}
+      <div className="bg-white rounded-2xl border border-vinho/10 shadow-xs p-4 sm:p-5">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 pb-3 border-b border-vinho/10">
+          <div className="flex items-start gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-vinho/5 border border-dourado/30 flex items-center justify-center shrink-0 text-vinho mt-0.5">
+              <MapPin className="w-4 h-4 text-dourado" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-serif font-bold text-sm text-vinho">
+                  Endereço e Localização Padrão
+                </h3>
+                <span className="text-[10px] bg-dourado/20 text-vinho font-semibold px-2 py-0.5 rounded-full border border-dourado/30">
+                  Novos Convites
+                </span>
+              </div>
+              <p className="text-xs text-vinho/70 mt-0.5">
+                Defina o endereço físico e o link do Google Maps que já virão preenchidos ao criar
+                novos convites. É sempre possível editar livremente em cada convite individual.
+              </p>
+            </div>
+          </div>
+
+          {canEditDefaults && (
+            <Button
+              type="button"
+              onClick={() => handleSaveDefaults()}
+              disabled={savingDefaults || loadingDefaults}
+              size="sm"
+              className="bg-vinho hover:bg-vinho-light text-white text-xs font-semibold px-4 min-h-[38px] rounded-xl flex items-center gap-1.5 self-end md:self-auto shrink-0 shadow-xs"
+            >
+              {savingDefaults ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-dourado" />
+                  <span>Salvando...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-3.5 h-3.5 text-dourado" />
+                  <span>Salvar Padrão</span>
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-3.5">
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="default-endereco"
+              className="text-xs font-semibold text-vinho flex items-center gap-1.5"
+            >
+              <MapPin className="w-3.5 h-3.5 text-dourado" />
+              Endereço da gravação padrão:
+            </Label>
+            <Input
+              id="default-endereco"
+              disabled={!canEditDefaults || loadingDefaults}
+              placeholder="Ex.: Av. Paulista, 1000 - Bela Vista, São Paulo - SP"
+              value={defaultEndereco}
+              onChange={(e) => setDefaultEndereco(e.target.value)}
+              className="bg-marfim/30 border-vinho/20 text-xs focus-visible:ring-dourado"
+            />
+            <p className="text-[10px] text-vinho/60">
+              Texto que virá pré-preenchido no campo de endereço de novos convites.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="default-localizacao"
+                className="text-xs font-semibold text-vinho flex items-center gap-1.5"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-dourado" />
+                Localização padrão (link Google Maps):
+              </Label>
+              {defaultLocalizacao.trim() && (
+                <a
+                  href={defaultLocalizacao.trim()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-vinho hover:text-dourado-dark underline transition-colors"
+                  title="Testar link do Google Maps"
+                >
+                  <span>Testar link</span>
+                  <ExternalLink className="w-3 h-3 text-dourado" />
+                </a>
+              )}
+            </div>
+            <Input
+              id="default-localizacao"
+              type="url"
+              disabled={!canEditDefaults || loadingDefaults}
+              placeholder="Ex.: https://maps.app.goo.gl/..."
+              value={defaultLocalizacao}
+              onChange={(e) => setDefaultLocalizacao(e.target.value)}
+              className="bg-marfim/30 border-vinho/20 text-xs focus-visible:ring-dourado"
+            />
+            <p className="text-[10px] text-vinho/60">
+              URL do Google Maps que virá pré-preenchida e ficará interativa no PDF.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Grid de Convites */}
