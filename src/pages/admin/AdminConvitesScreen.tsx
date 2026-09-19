@@ -44,6 +44,8 @@ export default function AdminConvitesScreen() {
   const [dataGravacao, setDataGravacao] = useState('')
   const [horario, setHorario] = useState('14:00')
   const [apresentacao, setApresentacao] = useState('')
+  const [enderecoGravacao, setEnderecoGravacao] = useState('')
+  const [linkLocalizacao, setLinkLocalizacao] = useState('')
   const [fotoFile, setFotoFile] = useState<File | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
 
@@ -92,6 +94,8 @@ export default function AdminConvitesScreen() {
     setApresentacao(
       'É com grande alegria e honra que convidamos você para compartilhar sua trajetória inspiradora no CoffeeCast 4.0. Preparamos uma mesa com afeto, respeito e cafés especiais para dar voz à sua história que transforma vidas.',
     )
+    setEnderecoGravacao('')
+    setLinkLocalizacao('')
     setFotoFile(null)
     setLogoFile(null)
     setFotoPreviewUrl('')
@@ -106,6 +110,8 @@ export default function AdminConvitesScreen() {
     setDataGravacao(toInputDate(convite.data_gravacao) || toInputDate(new Date().toISOString()))
     setHorario(convite.horario || '14:00')
     setApresentacao(convite.apresentacao || '')
+    setEnderecoGravacao(convite.endereco_gravacao || '')
+    setLinkLocalizacao(convite.link_localizacao || '')
     setFotoFile(null)
     setLogoFile(null)
     if (convite.foto_convidado) {
@@ -152,6 +158,8 @@ export default function AdminConvitesScreen() {
       formData.append('data_gravacao', toInputDate(dataGravacao))
       formData.append('horario', horario.trim())
       formData.append('apresentacao', apresentacao.trim())
+      formData.append('endereco_gravacao', enderecoGravacao.trim())
+      formData.append('link_localizacao', linkLocalizacao.trim())
 
       if (fotoFile) {
         formData.append('foto_convidado', fotoFile)
@@ -233,6 +241,8 @@ export default function AdminConvitesScreen() {
         dataGravacao: formatDateBR(convite.data_gravacao),
         horario: convite.horario,
         apresentacao: convite.apresentacao,
+        enderecoGravacao: convite.endereco_gravacao,
+        linkLocalizacao: convite.link_localizacao,
         guestPhotoUrl,
         companyLogoUrl,
       })
@@ -339,13 +349,32 @@ export default function AdminConvitesScreen() {
 
                   <div className="bg-marfim p-3 rounded-xl border border-vinho/5 space-y-1 text-xs text-vinho">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-dourado-dark" />
+                      <Calendar className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
                       <span>Data: {formatDateBR(item.data_gravacao)}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5 text-dourado-dark" />
+                      <Clock className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
                       <span>Horário: {item.horario}</span>
                     </div>
+                    {item.endereco_gravacao && (
+                      <div className="pt-1 border-t border-vinho/10 text-[11px] text-vinho/80 line-clamp-1">
+                        <span className="font-semibold text-vinho">Endereço da gravação:</span>{' '}
+                        {item.endereco_gravacao}
+                      </div>
+                    )}
+                    {item.link_localizacao && (
+                      <div className="text-[11px]">
+                        <span className="font-semibold text-vinho">Localização:</span>{' '}
+                        <a
+                          href={item.link_localizacao}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-vinho font-medium underline hover:text-dourado-dark break-all"
+                        >
+                          Ver no Google Maps
+                        </a>
+                      </div>
+                    )}
                   </div>
 
                   <p className="text-xs text-vinho/75 italic line-clamp-3">"{item.apresentacao}"</p>
@@ -525,6 +554,42 @@ export default function AdminConvitesScreen() {
                 onChange={(e) => setApresentacao(e.target.value)}
                 className="bg-white border-vinho/20 text-xs"
               />
+            </div>
+
+            {/* Endereço da gravação */}
+            <div className="space-y-1.5">
+              <Label htmlFor="conv-endereco" className="text-xs font-semibold text-vinho">
+                Endereço da gravação:
+              </Label>
+              <Input
+                id="conv-endereco"
+                placeholder="Ex.: Av. Paulista, 1000 - Bela Vista, São Paulo - SP"
+                value={enderecoGravacao}
+                onChange={(e) => setEnderecoGravacao(e.target.value)}
+                className="bg-white border-vinho/20 text-xs"
+              />
+              <p className="text-[10px] text-vinho/60">
+                Campo de texto livre com o endereço onde será gravado o episódio (opcional).
+              </p>
+            </div>
+
+            {/* Localização (Link Google Maps) */}
+            <div className="space-y-1.5">
+              <Label htmlFor="conv-localizacao" className="text-xs font-semibold text-vinho">
+                Localização
+              </Label>
+              <Input
+                id="conv-localizacao"
+                type="url"
+                placeholder="Ex.: https://maps.app.goo.gl/... ou https://google.com/maps/..."
+                value={linkLocalizacao}
+                onChange={(e) => setLinkLocalizacao(e.target.value)}
+                className="bg-white border-vinho/20 text-xs"
+              />
+              <p className="text-[10px] text-vinho/60">
+                Link do Google Maps para a localização. Ficará clicável no PDF do convite
+                (opcional).
+              </p>
             </div>
 
             {/* Foto do Convidado */}
@@ -782,6 +847,39 @@ export default function AdminConvitesScreen() {
                         </span>
                       </div>
                     </div>
+
+                    {/* Endereço da gravação e Localização (Google Maps) */}
+                    {(Boolean(previewConvite.endereco_gravacao?.trim()) ||
+                      Boolean(previewConvite.link_localizacao?.trim())) && (
+                      <div className="bg-vinho/80 p-3 sm:p-4 rounded-xl border border-dourado/30 text-left space-y-2 text-xs">
+                        {previewConvite.endereco_gravacao?.trim() && (
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-dourado uppercase font-bold tracking-wider block">
+                              Endereço da gravação:
+                            </span>
+                            <p className="text-sm text-white font-normal leading-relaxed">
+                              {previewConvite.endereco_gravacao}
+                            </p>
+                          </div>
+                        )}
+
+                        {previewConvite.link_localizacao?.trim() && (
+                          <div className="space-y-1 pt-1.5 border-t border-dourado/20">
+                            <span className="text-[10px] text-dourado uppercase font-bold tracking-wider block">
+                              Localização
+                            </span>
+                            <a
+                              href={previewConvite.link_localizacao}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-dourado/20 hover:bg-dourado/30 border border-dourado text-dourado-light hover:text-white font-semibold text-xs transition-colors"
+                            >
+                              <span>📍 Ver no Google Maps</span>
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Rodapé do Convite */}
@@ -1029,28 +1127,28 @@ export default function AdminConvitesScreen() {
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
                   gap: '3mm',
-                  paddingTop: '3mm',
+                  paddingTop: '2.5mm',
                   borderTop: '0.8px solid rgba(212, 175, 55, 0.35)',
                 }}
               >
                 <div
                   style={{
                     backgroundColor: 'rgba(75, 30, 63, 0.8)',
-                    padding: '2.5mm 3mm',
-                    borderRadius: '3mm',
+                    padding: '2mm 2.5mm',
+                    borderRadius: '2.5mm',
                     border: '0.8px solid rgba(212, 175, 55, 0.3)',
                     textAlign: 'center',
                   }}
                 >
                   <span
                     style={{
-                      fontSize: '7pt',
+                      fontSize: '6.5pt',
                       color: '#D4AF37',
                       textTransform: 'uppercase',
                       fontWeight: 700,
                       letterSpacing: '1px',
                       display: 'block',
-                      marginBottom: '1mm',
+                      marginBottom: '0.8mm',
                     }}
                   >
                     Data da Gravação
@@ -1058,7 +1156,7 @@ export default function AdminConvitesScreen() {
                   <span
                     style={{
                       fontFamily: "'Playfair Display', Georgia, serif",
-                      fontSize: '10.5pt',
+                      fontSize: '9.5pt',
                       fontWeight: 700,
                       color: '#FFFFFF',
                     }}
@@ -1070,21 +1168,21 @@ export default function AdminConvitesScreen() {
                 <div
                   style={{
                     backgroundColor: 'rgba(75, 30, 63, 0.8)',
-                    padding: '2.5mm 3mm',
-                    borderRadius: '3mm',
+                    padding: '2mm 2.5mm',
+                    borderRadius: '2.5mm',
                     border: '0.8px solid rgba(212, 175, 55, 0.3)',
                     textAlign: 'center',
                   }}
                 >
                   <span
                     style={{
-                      fontSize: '7pt',
+                      fontSize: '6.5pt',
                       color: '#D4AF37',
                       textTransform: 'uppercase',
                       fontWeight: 700,
                       letterSpacing: '1px',
                       display: 'block',
-                      marginBottom: '1mm',
+                      marginBottom: '0.8mm',
                     }}
                   >
                     Horário Marcado
@@ -1092,7 +1190,7 @@ export default function AdminConvitesScreen() {
                   <span
                     style={{
                       fontFamily: "'Playfair Display', Georgia, serif",
-                      fontSize: '10.5pt',
+                      fontSize: '9.5pt',
                       fontWeight: 700,
                       color: '#FFFFFF',
                     }}
@@ -1101,6 +1199,95 @@ export default function AdminConvitesScreen() {
                   </span>
                 </div>
               </div>
+
+              {/* Endereço da gravação e Localização no PDF de Impressão (A5) */}
+              {(Boolean(previewConvite.endereco_gravacao?.trim()) ||
+                Boolean(previewConvite.link_localizacao?.trim())) && (
+                <div
+                  style={{
+                    marginTop: '2.5mm',
+                    backgroundColor: 'rgba(75, 30, 63, 0.85)',
+                    padding: '2.5mm 3mm',
+                    borderRadius: '2.5mm',
+                    border: '0.8px solid rgba(212, 175, 55, 0.35)',
+                    textAlign: 'left',
+                  }}
+                >
+                  {previewConvite.endereco_gravacao?.trim() && (
+                    <div
+                      style={{ marginBottom: previewConvite.link_localizacao?.trim() ? '2mm' : 0 }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '6.5pt',
+                          color: '#D4AF37',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                          letterSpacing: '1px',
+                          display: 'block',
+                          marginBottom: '0.6mm',
+                        }}
+                      >
+                        Endereço da gravação:
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '8pt',
+                          color: '#FFFFFF',
+                          lineHeight: 1.3,
+                          display: 'block',
+                        }}
+                      >
+                        {previewConvite.endereco_gravacao}
+                      </span>
+                    </div>
+                  )}
+
+                  {previewConvite.link_localizacao?.trim() && (
+                    <div
+                      style={{
+                        paddingTop: previewConvite.endereco_gravacao?.trim() ? '1.8mm' : 0,
+                        borderTop: previewConvite.endereco_gravacao?.trim()
+                          ? '0.6px solid rgba(212, 175, 55, 0.25)'
+                          : 'none',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '6.5pt',
+                          color: '#D4AF37',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                          letterSpacing: '1px',
+                          display: 'block',
+                          marginBottom: '1mm',
+                        }}
+                      >
+                        Localização
+                      </span>
+                      <a
+                        href={previewConvite.link_localizacao}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-block',
+                          padding: '1.2mm 3mm',
+                          backgroundColor: 'rgba(212, 175, 55, 0.2)',
+                          border: '0.8px solid #D4AF37',
+                          borderRadius: '1.8mm',
+                          color: '#F3E5AB',
+                          fontSize: '7.5pt',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                          letterSpacing: '0.5px',
+                        }}
+                      >
+                        📍 Ver no Google Maps
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Rodapé do Convite */}

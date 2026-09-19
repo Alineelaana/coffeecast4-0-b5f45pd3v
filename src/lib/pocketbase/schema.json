@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-18T17:44:47.426Z",
+  "generatedAt": "2026-09-19T19:58:47.725Z",
   "collections": [
     {
       "name": "users",
@@ -736,6 +736,18 @@
           "required": false,
           "system": false,
           "selectValues": ["convidado", "convidada"]
+        },
+        {
+          "name": "endereco_gravacao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "link_localizacao",
+          "type": "url",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": ["CREATE INDEX idx_convites_gravacao ON convites (data_gravacao)"]

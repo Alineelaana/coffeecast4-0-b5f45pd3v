@@ -10,6 +10,8 @@ interface RenderInviteOptions {
   dataGravacao: string // YYYY-MM-DD ou formatada
   horario: string
   apresentacao: string
+  enderecoGravacao?: string
+  linkLocalizacao?: string
   guestPhotoUrl?: string
   companyLogoUrl?: string
 }
@@ -439,6 +441,9 @@ export async function renderInviteToCanvas(
   const cardX = 130
   const cardY = topY + 240
   const cardW = width - 260
+  const hasExtraLocation = Boolean(
+    options.enderecoGravacao?.trim() || options.linkLocalizacao?.trim(),
+  )
   const cardH = 1180
 
   ctx.save()
@@ -609,13 +614,13 @@ export async function renderInviteToCanvas(
   ctx.restore()
 
   // BLOCOS INFORMATIVOS DE GRAVAÇÃO (Data e Horário)
-  const infoBoxY = cardY + cardH - 220
+  const infoBoxH = hasExtraLocation ? 100 : 130
+  const infoBoxY = hasExtraLocation ? cardY + cardH - 300 : cardY + cardH - 210
   const infoBoxW = (cardW - 140) / 2
-  const infoBoxH = 140
 
   // Caixa 1: Data
   ctx.save()
-  roundRect(ctx, cardX + 50, infoBoxY, infoBoxW, infoBoxH, 20)
+  roundRect(ctx, cardX + 50, infoBoxY, infoBoxW, infoBoxH, 18)
   ctx.fillStyle = 'rgba(75, 30, 63, 0.85)'
   ctx.fill()
   ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)'
@@ -623,19 +628,19 @@ export async function renderInviteToCanvas(
   ctx.stroke()
 
   ctx.textAlign = 'center'
-  ctx.font = '700 18px "Plus Jakarta Sans", sans-serif'
+  ctx.font = '700 16px "Plus Jakarta Sans", sans-serif'
   ctx.letterSpacing = '2px'
   ctx.fillStyle = '#D4AF37'
-  ctx.fillText('DATA DA GRAVAÇÃO', cardX + 50 + infoBoxW / 2, infoBoxY + 45)
+  ctx.fillText('DATA DA GRAVAÇÃO', cardX + 50 + infoBoxW / 2, infoBoxY + 36)
 
-  ctx.font = 'bold 32px "Playfair Display", Georgia, serif'
+  ctx.font = 'bold 28px "Playfair Display", Georgia, serif'
   ctx.fillStyle = '#FFFFFF'
-  ctx.fillText(options.dataGravacao, cardX + 50 + infoBoxW / 2, infoBoxY + 98)
+  ctx.fillText(options.dataGravacao, cardX + 50 + infoBoxW / 2, infoBoxY + 76)
   ctx.restore()
 
   // Caixa 2: Horário
   ctx.save()
-  roundRect(ctx, cardX + 90 + infoBoxW, infoBoxY, infoBoxW, infoBoxH, 20)
+  roundRect(ctx, cardX + 90 + infoBoxW, infoBoxY, infoBoxW, infoBoxH, 18)
   ctx.fillStyle = 'rgba(75, 30, 63, 0.85)'
   ctx.fill()
   ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)'
@@ -643,15 +648,55 @@ export async function renderInviteToCanvas(
   ctx.stroke()
 
   ctx.textAlign = 'center'
-  ctx.font = '700 18px "Plus Jakarta Sans", sans-serif'
+  ctx.font = '700 16px "Plus Jakarta Sans", sans-serif'
   ctx.letterSpacing = '2px'
   ctx.fillStyle = '#D4AF37'
-  ctx.fillText('HORÁRIO MARCADO', cardX + 90 + infoBoxW + infoBoxW / 2, infoBoxY + 45)
+  ctx.fillText('HORÁRIO MARCADO', cardX + 90 + infoBoxW + infoBoxW / 2, infoBoxY + 36)
 
-  ctx.font = 'bold 32px "Playfair Display", Georgia, serif'
+  ctx.font = 'bold 28px "Playfair Display", Georgia, serif'
   ctx.fillStyle = '#FFFFFF'
-  ctx.fillText(options.horario || '14:00', cardX + 90 + infoBoxW + infoBoxW / 2, infoBoxY + 98)
+  ctx.fillText(options.horario || '14:00', cardX + 90 + infoBoxW + infoBoxW / 2, infoBoxY + 76)
   ctx.restore()
+
+  // BLOCO DE ENDEREÇO DA GRAVAÇÃO E LOCALIZAÇÃO (SE INFORMADOS)
+  if (hasExtraLocation) {
+    const locBoxY = infoBoxY + infoBoxH + 16
+    const locBoxW = cardW - 100
+    const locBoxH = 150
+
+    ctx.save()
+    roundRect(ctx, cardX + 50, locBoxY, locBoxW, locBoxH, 18)
+    ctx.fillStyle = 'rgba(42, 15, 35, 0.92)'
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.45)'
+    ctx.lineWidth = 1.5
+    ctx.stroke()
+
+    let curY = locBoxY + 28
+    if (options.enderecoGravacao?.trim()) {
+      ctx.textAlign = 'center'
+      ctx.font = '700 15px "Plus Jakarta Sans", sans-serif'
+      ctx.letterSpacing = '1.5px'
+      ctx.fillStyle = '#D4AF37'
+      ctx.fillText('ENDEREÇO DA GRAVAÇÃO:', width / 2, curY)
+      curY += 24
+
+      ctx.font = '400 18px "Plus Jakarta Sans", sans-serif'
+      ctx.fillStyle = '#FAF8F5'
+      const endLine = options.enderecoGravacao.trim()
+      ctx.fillText(endLine, width / 2, curY)
+      curY += 28
+    }
+
+    if (options.linkLocalizacao?.trim()) {
+      ctx.textAlign = 'center'
+      ctx.font = '700 14px "Plus Jakarta Sans", sans-serif'
+      ctx.letterSpacing = '1px'
+      ctx.fillStyle = '#F3E5AB'
+      ctx.fillText('LOCALIZAÇÃO: Ver no Google Maps (link interativo no PDF)', width / 2, curY)
+    }
+    ctx.restore()
+  }
 
   // 5. RODAPÉ DO CONVITE
   const footerY = height - 160

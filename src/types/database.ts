@@ -196,6 +196,8 @@ export interface ConviteRecord {
   data_gravacao: string
   horario: string
   apresentacao: string
+  endereco_gravacao?: string
+  link_localizacao?: string
   created: string
   updated: string
 }

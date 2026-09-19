@@ -589,11 +589,13 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Gera convites elegantes no padrão visual ouro/vinho do CoffeeCast com a foto do convidado para enviar por WhatsApp ou imprimir.',
         passoAPasso: [
           'Preencha o nome do convidado ou convidada e selecione o tratamento apropriado.',
-          'Informe a data da gravação, horário de chegada e data de postagem.',
-          'Faça o upload da foto em alta resolução do convidado e, opcionalmente, do logotipo da empresa dele.',
+          'Informe a data da gravação e horário marcado para início.',
+          'Opcionalmente, preencha o campo de texto livre "Endereço da gravação:" com o endereço físico onde o episódio será gravado.',
+          'Abaixo do endereço, insira a "Localização" com o link do Google Maps (ex.: https://maps.app.goo.gl/...), que ficará interativo e clicável no PDF do convite.',
+          'Faça o upload da foto em alta resolução do convidado e, opcionalmente, da logomarca da empresa.',
           'Escreva uma mensagem calorosa de apresentação.',
-          'Visualize o convite em tempo real no preview interativo.',
-          'Clique em "Baixar Imagem JPEG" para salvar no computador e enviar pelo WhatsApp, ou "Imprimir / Salvar PDF" para gerar arquivo formal.',
+          'Visualize o convite em tempo real no preview interativo (os campos de endereço e localização só aparecem se preenchidos).',
+          'Clique em "Baixar Imagem JPEG" para salvar no computador e enviar pelo WhatsApp, ou "Imprimir / Salvar PDF" para gerar arquivo formal com link ativo do Maps.',
         ],
         botoesPrincipais: [
           {
@@ -606,7 +608,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             nome: 'Imprimir / Salvar PDF',
             onde: 'Ao lado do botão de JPEG',
             paraQueServe:
-              'Abre o diálogo de impressão do navegador formatado para salvar em PDF elegante.',
+              'Abre o diálogo de impressão do navegador formatado para salvar em PDF elegante A5, com link clicável do Google Maps.',
           },
           {
             nome: '+ Salvar Convite no Histórico',
@@ -614,8 +616,14 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             paraQueServe:
               'Armazena o convite na lista para reemissão futura sem precisar preencher tudo de novo.',
           },
+          {
+            nome: 'Ver no Google Maps (Link Clicável)',
+            onde: 'No PDF e preview do convite (quando informado)',
+            paraQueServe:
+              'Abre a rota e localização exata do estúdio no Google Maps diretamente do documento.',
+          },
         ],
-        dica: 'Use fotos verticais com fundo neutro para obter o melhor enquadramento na moldura dourada.',
+        dica: 'Use fotos verticais com fundo neutro para obter o melhor enquadramento na moldura dourada. Os campos "Endereço da gravação:" e "Localização" são opcionais.',
       },
       {
         id: 'auditoria-sistema',
