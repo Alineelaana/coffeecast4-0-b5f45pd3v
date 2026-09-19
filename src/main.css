@@ -316,27 +316,72 @@
     overflow-wrap: break-word !important;
   }
 
-  /* Blindagem e recorte circular absoluto para a foto do convidado na impressão */
-  #printable-invite-portal .invite-photo-container,
-  #printable-invite-portal .invite-photo-inner {
-    border-radius: 50% !important;
-    overflow: hidden !important;
-    -webkit-mask-image: -webkit-radial-gradient(white, black) !important;
-    mask-image: radial-gradient(circle, white 100%, black 100%) !important;
-    clip-path: circle(50% at 50% 50%) !important;
-    -webkit-clip-path: circle(50% at 50% 50%) !important;
+  /* Blindagem e geometria 1:1 estritamente circular para o medalhão na impressão */
+  #printable-invite-portal .invite-photo-wrapper {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 44mm !important;
+    height: 44mm !important;
+    min-width: 44mm !important;
+    min-height: 44mm !important;
+    max-width: 44mm !important;
+    max-height: 44mm !important;
+    aspect-ratio: 1 / 1 !important;
+    overflow: visible !important;
+    flex-shrink: 0 !important;
   }
 
+  /* Moldura externa dourada com proporção 1:1 estrita e sem corte do anel */
+  #printable-invite-portal .invite-photo-container {
+    width: 40mm !important;
+    height: 40mm !important;
+    min-width: 40mm !important;
+    min-height: 40mm !important;
+    max-width: 40mm !important;
+    max-height: 40mm !important;
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 50% !important;
+    box-sizing: border-box !important;
+    padding: 1.2mm !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    /* Recorte circular para o anel dourado externo */
+    -webkit-mask-image: -webkit-radial-gradient(circle, white 100%, black 100%) !important;
+    mask-image: radial-gradient(circle, white 100%, black 100%) !important;
+  }
+
+  /* Anel escuro intermediário */
+  #printable-invite-portal .invite-photo-inner {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 50% !important;
+    box-sizing: border-box !important;
+    padding: 1mm !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    -webkit-mask-image: -webkit-radial-gradient(circle, white 100%, black 100%) !important;
+    mask-image: radial-gradient(circle, white 100%, black 100%) !important;
+  }
+
+  /* Imagem recortada perfeitamente no círculo sem vazamento */
   #printable-invite-portal .invite-photo-img {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 1 / 1 !important;
     border-radius: 50% !important;
     object-fit: cover !important;
     object-position: 50% 18% !important;
-    clip-path: circle(50% at 50% 50%) !important;
-    -webkit-clip-path: circle(50% at 50% 50%) !important;
     box-shadow: none !important;
     filter: none !important;
     display: block !important;
     background: transparent !important;
+    flex-shrink: 0 !important;
   }
 
   /* Estrela brilhante sem fundo na impressão */

@@ -1188,14 +1188,15 @@ export default function AdminConvitesScreen() {
                     )}
 
                     {/* Foto da pessoa convidada como protagonista visual com medalhão de bordas duplas douradas e sombra nobre */}
-                    <div className="flex justify-center pt-1">
-                      <div className="relative group">
-                        {/* Halo dourado sutil de fundo para enaltecer a foto */}
-                        <div className="absolute -inset-2 rounded-full bg-gradient-to-tr from-dourado/40 via-dourado-light/20 to-dourado/40 blur-md pointer-events-none" />
+                    <div className="flex justify-center pt-2 pb-1 px-4">
+                      <div className="relative group shrink-0" style={{ overflow: 'visible' }}>
+                        {/* Halo dourado sutil de fundo para enaltecer a foto com folga para não ser clipado */}
+                        <div className="absolute -inset-3 rounded-full bg-gradient-to-tr from-dourado/35 via-dourado-light/20 to-dourado/35 blur-md pointer-events-none" />
 
-                        {/* Moldura externa refinada */}
-                        <div className="relative p-1 rounded-full bg-gradient-to-b from-[#FFF2B2] via-[#D4AF37] to-[#B38612] shadow-[0_12px_32px_rgba(0,0,0,0.7)]">
-                          <div className="p-1 rounded-full bg-[#2A0F23]">
+                        {/* Moldura externa circular perfeita 1:1 */}
+                        <div className="relative w-36 h-36 sm:w-44 sm:h-44 aspect-square p-1 rounded-full bg-gradient-to-b from-[#FFF2B2] via-[#D4AF37] to-[#B38612] shadow-[0_12px_32px_rgba(0,0,0,0.7)] flex items-center justify-center shrink-0">
+                          {/* Anel escuro intermediário */}
+                          <div className="w-full h-full aspect-square p-1 rounded-full bg-[#2A0F23] flex items-center justify-center overflow-hidden shrink-0">
                             <img
                               src={
                                 previewConvite.foto_convidado
@@ -1203,13 +1204,13 @@ export default function AdminConvitesScreen() {
                                   : 'https://img.usecurling.com/ppl/256?gender=female'
                               }
                               alt={previewConvite.nome}
-                              className="w-36 h-36 sm:w-44 sm:h-44 rounded-full object-cover [object-position:50%_18%] border-2 border-dourado/70 shadow-inner"
+                              className="w-full h-full aspect-square rounded-full object-cover [object-position:50%_18%] border-2 border-dourado/70 shadow-inner block shrink-0"
                             />
                           </div>
                         </div>
 
                         {/* Estrela dourada brilhante sem caixa/fundo escuro quadrado */}
-                        <div className="absolute -bottom-1 -right-1 pointer-events-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] filter">
+                        <div className="absolute -bottom-1 -right-1 pointer-events-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] filter z-10">
                           <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-dourado-light animate-pulse fill-dourado/40" />
                         </div>
                       </div>
@@ -1462,40 +1463,50 @@ export default function AdminConvitesScreen() {
                 </div>
               )}
 
-              {/* Foto da pessoa convidada como protagonista visual com medalhão de bordas duplas douradas e recorte circular absoluto */}
+              {/* Foto da pessoa convidada como protagonista visual com medalhão de bordas duplas douradas e proporção 1:1 sem corte */}
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'center',
                   marginBottom: '2mm',
                   paddingTop: '1mm',
+                  overflow: 'visible',
                 }}
               >
                 <div
+                  className="invite-photo-wrapper"
                   style={{
                     position: 'relative',
-                    width: '41mm',
-                    height: '41mm',
+                    width: '44mm',
+                    height: '44mm',
+                    minWidth: '44mm',
+                    minHeight: '44mm',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    overflow: 'visible',
+                    flexShrink: 0,
                   }}
                 >
-                  {/* Contêiner de moldura externa e anéis dourados com recorte estritamente circular */}
+                  {/* Contêiner de moldura externa e anéis dourados com proporção circular perfeita */}
                   <div
                     className="invite-photo-container"
                     style={{
                       position: 'relative',
                       width: '40mm',
                       height: '40mm',
+                      minWidth: '40mm',
+                      minHeight: '40mm',
+                      maxWidth: '40mm',
+                      maxHeight: '40mm',
+                      aspectRatio: '1 / 1',
                       borderRadius: '50%',
                       background: 'linear-gradient(135deg, #FFF2B2 0%, #D4AF37 50%, #B38612 100%)',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.45)',
-                      padding: '1mm',
+                      boxShadow: '0 4px 14px rgba(0, 0, 0, 0.45)',
+                      padding: '1.2mm',
                       boxSizing: 'border-box',
                       overflow: 'hidden',
-                      clipPath: 'circle(50% at 50% 50%)',
-                      WebkitClipPath: 'circle(50% at 50% 50%)',
+                      flexShrink: 0,
                       WebkitPrintColorAdjust: 'exact',
                       printColorAdjust: 'exact',
                     }}
@@ -1505,16 +1516,16 @@ export default function AdminConvitesScreen() {
                       style={{
                         width: '100%',
                         height: '100%',
+                        aspectRatio: '1 / 1',
                         borderRadius: '50%',
                         backgroundColor: '#2A0F23',
-                        padding: '0.8mm',
+                        padding: '1mm',
                         boxSizing: 'border-box',
                         overflow: 'hidden',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        clipPath: 'circle(50% at 50% 50%)',
-                        WebkitClipPath: 'circle(50% at 50% 50%)',
+                        flexShrink: 0,
                         WebkitPrintColorAdjust: 'exact',
                         printColorAdjust: 'exact',
                       }}
@@ -1530,12 +1541,14 @@ export default function AdminConvitesScreen() {
                         style={{
                           width: '100%',
                           height: '100%',
+                          aspectRatio: '1 / 1',
                           borderRadius: '50%',
                           objectFit: 'cover',
+                          objectPosition: '50% 18%',
                           border: '1.2px solid rgba(212, 175, 55, 0.85)',
                           display: 'block',
-                          clipPath: 'circle(50% at 50% 50%)',
-                          WebkitClipPath: 'circle(50% at 50% 50%)',
+                          boxSizing: 'border-box',
+                          flexShrink: 0,
                           WebkitPrintColorAdjust: 'exact',
                           printColorAdjust: 'exact',
                         }}
@@ -1548,8 +1561,8 @@ export default function AdminConvitesScreen() {
                     className="invite-photo-star"
                     style={{
                       position: 'absolute',
-                      bottom: '0.5mm',
-                      right: '0.5mm',
+                      bottom: '0.8mm',
+                      right: '0.8mm',
                       backgroundColor: 'transparent',
                       background: 'transparent',
                       border: 'none',
@@ -1558,7 +1571,7 @@ export default function AdminConvitesScreen() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7))',
-                      zIndex: 5,
+                      zIndex: 10,
                       WebkitPrintColorAdjust: 'exact',
                       printColorAdjust: 'exact',
                     }}
