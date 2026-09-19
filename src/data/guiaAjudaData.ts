@@ -594,7 +594,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Abaixo do endereço, insira a "Localização" com o link do Google Maps (ex.: https://maps.app.goo.gl/...), que ficará interativo e clicável no PDF do convite.',
           'Faça o upload da foto em alta resolução do convidado e, opcionalmente, da logomarca da empresa.',
           'Escreva uma mensagem calorosa de apresentação.',
-          'Visualize o convite em tempo real no preview interativo (os campos de endereço e localização só aparecem se preenchidos).',
+          'Visualize o convite em tempo real no preview interativo (com a logomarca oficial CoffeeCast 4.0 em destaque e as informações de endereço e localização centralizadas harmonicamente; os campos só aparecem se preenchidos).',
           'Clique em "Baixar Imagem JPEG" para salvar no computador e enviar pelo WhatsApp, ou "Imprimir / Salvar PDF" para gerar arquivo formal com link ativo do Maps.',
         ],
         botoesPrincipais: [
@@ -623,7 +623,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
               'Abre a rota e localização exata do estúdio no Google Maps diretamente do documento.',
           },
         ],
-        dica: 'Use fotos verticais com fundo neutro para obter o melhor enquadramento na moldura dourada. Os campos "Endereço da gravação:" e "Localização" são opcionais.',
+        dica: 'Use fotos verticais com fundo neutro para obter o melhor enquadramento na moldura dourada. Os campos "Endereço da gravação:" e "Localização" são opcionais e são diagramados de forma centralizada e elegante no convite.',
       },
       {
         id: 'auditoria-sistema',

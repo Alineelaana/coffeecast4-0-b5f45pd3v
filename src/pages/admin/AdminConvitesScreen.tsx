@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { CoffeeCastLogo } from '@/components/CoffeeCastLogo'
 import { renderInviteToCanvas, downloadCanvasAsJpeg } from '@/lib/inviteExporter'
+import officialLogoImg from '@/assets/sem-nome-1350-x-1080-px-1-01237.png'
 import { toast } from 'sonner'
 
 export default function AdminConvitesScreen() {
@@ -769,12 +770,13 @@ export default function AdminConvitesScreen() {
                   {/* Cabeçalho do Convite */}
                   <div className="text-center space-y-2 relative z-10">
                     <div className="flex justify-center mb-1">
-                      <CoffeeCastLogo className="w-16 h-16" variant="gold" />
+                      <img
+                        src={officialLogoImg}
+                        alt="CoffeeCast 4.0"
+                        className="w-52 sm:w-64 max-w-full h-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.65)]"
+                      />
                     </div>
-                    <h3 className="font-serif font-black text-2xl sm:text-3xl tracking-wide text-white">
-                      CoffeeCast <span className="text-dourado">4.0</span>
-                    </h3>
-                    <p className="text-[11px] uppercase tracking-widest text-dourado-light font-bold">
+                    <p className="text-[11px] uppercase tracking-widest text-dourado-light font-bold mt-1">
                       Convite Oficial de Participação
                     </p>
                   </div>
@@ -851,28 +853,34 @@ export default function AdminConvitesScreen() {
                     {/* Endereço da gravação e Localização (Google Maps) */}
                     {(Boolean(previewConvite.endereco_gravacao?.trim()) ||
                       Boolean(previewConvite.link_localizacao?.trim())) && (
-                      <div className="bg-vinho/80 p-3 sm:p-4 rounded-xl border border-dourado/30 text-left space-y-2 text-xs">
+                      <div className="bg-vinho/80 p-3 sm:p-4 rounded-xl border border-dourado/30 text-center space-y-2.5 text-xs">
                         {previewConvite.endereco_gravacao?.trim() && (
-                          <div className="space-y-0.5">
-                            <span className="text-[10px] text-dourado uppercase font-bold tracking-wider block">
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-dourado uppercase font-bold tracking-wider block text-center">
                               Endereço da gravação:
                             </span>
-                            <p className="text-sm text-white font-normal leading-relaxed">
+                            <p className="text-sm text-white font-normal leading-relaxed text-center max-w-md mx-auto">
                               {previewConvite.endereco_gravacao}
                             </p>
                           </div>
                         )}
 
                         {previewConvite.link_localizacao?.trim() && (
-                          <div className="space-y-1 pt-1.5 border-t border-dourado/20">
-                            <span className="text-[10px] text-dourado uppercase font-bold tracking-wider block">
+                          <div
+                            className={`space-y-1.5 flex flex-col items-center justify-center ${
+                              previewConvite.endereco_gravacao?.trim()
+                                ? 'pt-2 border-t border-dourado/20'
+                                : ''
+                            }`}
+                          >
+                            <span className="text-[10px] text-dourado uppercase font-bold tracking-wider block text-center">
                               Localização
                             </span>
                             <a
                               href={previewConvite.link_localizacao}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-dourado/20 hover:bg-dourado/30 border border-dourado text-dourado-light hover:text-white font-semibold text-xs transition-colors"
+                              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-dourado/20 hover:bg-dourado/30 border border-dourado text-dourado-light hover:text-white font-semibold text-xs transition-colors shadow-xs"
                             >
                               <span>📍 Ver no Google Maps</span>
                             </a>
@@ -955,22 +963,18 @@ export default function AdminConvitesScreen() {
             <div
               style={{ textAlign: 'center', position: 'relative', zIndex: 10, marginTop: '2mm' }}
             >
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2mm' }}>
-                <CoffeeCastLogo className="w-14 h-14" variant="gold" />
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5mm' }}>
+                <img
+                  src={officialLogoImg}
+                  alt="CoffeeCast 4.0"
+                  style={{
+                    width: '56mm',
+                    maxHeight: '26mm',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 3px 10px rgba(0, 0, 0, 0.7))',
+                  }}
+                />
               </div>
-              <h1
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontWeight: 900,
-                  fontSize: '22pt',
-                  lineHeight: 1.1,
-                  margin: 0,
-                  color: '#FFFFFF',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                CoffeeCast <span style={{ color: '#D4AF37' }}>4.0</span>
-              </h1>
               <p
                 style={{
                   fontSize: '8pt',
@@ -978,7 +982,7 @@ export default function AdminConvitesScreen() {
                   letterSpacing: '3px',
                   color: '#F3E5AB',
                   fontWeight: 700,
-                  margin: '3mm 0 0 0',
+                  margin: '1.5mm 0 0 0',
                 }}
               >
                 Convite Oficial de Participação
@@ -1210,12 +1214,20 @@ export default function AdminConvitesScreen() {
                     padding: '2.5mm 3mm',
                     borderRadius: '2.5mm',
                     border: '0.8px solid rgba(212, 175, 55, 0.35)',
-                    textAlign: 'left',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
                   {previewConvite.endereco_gravacao?.trim() && (
                     <div
-                      style={{ marginBottom: previewConvite.link_localizacao?.trim() ? '2mm' : 0 }}
+                      style={{
+                        marginBottom: previewConvite.link_localizacao?.trim() ? '1.8mm' : 0,
+                        textAlign: 'center',
+                        width: '100%',
+                      }}
                     >
                       <span
                         style={{
@@ -1226,6 +1238,7 @@ export default function AdminConvitesScreen() {
                           letterSpacing: '1px',
                           display: 'block',
                           marginBottom: '0.6mm',
+                          textAlign: 'center',
                         }}
                       >
                         Endereço da gravação:
@@ -1236,6 +1249,7 @@ export default function AdminConvitesScreen() {
                           color: '#FFFFFF',
                           lineHeight: 1.3,
                           display: 'block',
+                          textAlign: 'center',
                         }}
                       >
                         {previewConvite.endereco_gravacao}
@@ -1250,6 +1264,11 @@ export default function AdminConvitesScreen() {
                         borderTop: previewConvite.endereco_gravacao?.trim()
                           ? '0.6px solid rgba(212, 175, 55, 0.25)'
                           : 'none',
+                        textAlign: 'center',
+                        width: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
                       }}
                     >
                       <span
@@ -1261,6 +1280,7 @@ export default function AdminConvitesScreen() {
                           letterSpacing: '1px',
                           display: 'block',
                           marginBottom: '1mm',
+                          textAlign: 'center',
                         }}
                       >
                         Localização
@@ -1271,7 +1291,7 @@ export default function AdminConvitesScreen() {
                         rel="noopener noreferrer"
                         style={{
                           display: 'inline-block',
-                          padding: '1.2mm 3mm',
+                          padding: '1.2mm 3.5mm',
                           backgroundColor: 'rgba(212, 175, 55, 0.2)',
                           border: '0.8px solid #D4AF37',
                           borderRadius: '1.8mm',
@@ -1280,6 +1300,7 @@ export default function AdminConvitesScreen() {
                           fontWeight: 700,
                           textDecoration: 'none',
                           letterSpacing: '0.5px',
+                          margin: '0 auto',
                         }}
                       >
                         📍 Ver no Google Maps

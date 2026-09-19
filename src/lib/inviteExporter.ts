@@ -3,6 +3,7 @@
  * Formato A5: 148mm x 210mm (proporção 1:1.414).
  * Em 300 DPI aprox: 1748 x 2480 px. Aqui usamos resolução nativa 1480 x 2100 px para nitidez absoluta.
  */
+import officialLogoImg from '@/assets/sem-nome-1350-x-1080-px-1-01237.png'
 
 interface RenderInviteOptions {
   nome: string
@@ -107,7 +108,7 @@ function wrapText(
 }
 
 /**
- * Desenha a logo vetorial oficial do CoffeeCast 4.0 no canvas
+ * Desenha a logo vetorial oficial do CoffeeCast 4.0 no canvas (fallback)
  */
 function drawVectorLogo(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
   ctx.save()
@@ -316,6 +317,14 @@ export async function renderInviteToCanvas(
   // Pré-carrega imagens com dataURL para garantir ausência de tainted canvas
   let guestImg: HTMLImageElement | null = null
   let companyImg: HTMLImageElement | null = null
+  let brandLogoImg: HTMLImageElement | null = null
+
+  // Pré-carrega logo oficial do CoffeeCast 4.0
+  try {
+    brandLogoImg = await loadImage(officialLogoImg)
+  } catch (e) {
+    console.warn('Falha ao carregar logo oficial da CoffeeCast 4.0:', e)
+  }
 
   const guestUrl = options.guestPhotoUrl || 'https://img.usecurling.com/ppl/256?gender=female'
   try {
@@ -414,27 +423,47 @@ export async function renderInviteToCanvas(
 
   // 3. CABEÇALHO DO CONVITE
   const topY = 160
-  drawVectorLogo(ctx, width / 2, topY, 150)
-
   ctx.textAlign = 'center'
 
-  // Título: CoffeeCast 4.0
-  ctx.save()
-  ctx.font = 'bold 64px "Playfair Display", Georgia, serif'
-  ctx.fillStyle = '#FFFFFF'
-  ctx.fillText('CoffeeCast ', width / 2 - 50, topY + 140)
+  if (brandLogoImg) {
+    // Desenha a logo oficial completa com efeito de sombra suave
+    const logoMaxW = 560
+    const logoMaxH = 210
+    const logoRatio = brandLogoImg.width / brandLogoImg.height
+    let logoDrawW = logoMaxW
+    let logoDrawH = logoDrawW / logoRatio
+    if (logoDrawH > logoMaxH) {
+      logoDrawH = logoMaxH
+      logoDrawW = logoDrawH * logoRatio
+    }
+    const logoX = (width - logoDrawW) / 2
+    const logoY = topY - 70
 
-  ctx.font = '900 64px "Playfair Display", Georgia, serif'
-  ctx.fillStyle = '#D4AF37'
-  ctx.fillText('4.0', width / 2 + 130, topY + 140)
-  ctx.restore()
+    ctx.save()
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)'
+    ctx.shadowBlur = 24
+    ctx.shadowOffsetY = 6
+    ctx.drawImage(brandLogoImg, logoX, logoY, logoDrawW, logoDrawH)
+    ctx.restore()
+  } else {
+    // Fallback caso a imagem não carregue
+    drawVectorLogo(ctx, width / 2, topY, 150)
+    ctx.save()
+    ctx.font = 'bold 64px "Playfair Display", Georgia, serif'
+    ctx.fillStyle = '#FFFFFF'
+    ctx.fillText('CoffeeCast ', width / 2 - 50, topY + 140)
+    ctx.font = '900 64px "Playfair Display", Georgia, serif'
+    ctx.fillStyle = '#D4AF37'
+    ctx.fillText('4.0', width / 2 + 130, topY + 140)
+    ctx.restore()
+  }
 
   // Subtítulo dourado caixa-alta
   ctx.save()
   ctx.font = '700 24px "Plus Jakarta Sans", sans-serif'
   ctx.letterSpacing = '6px'
   ctx.fillStyle = '#F3E5AB'
-  ctx.fillText('CONVITE OFICIAL DE PARTICIPAÇÃO', width / 2, topY + 190)
+  ctx.fillText('CONVITE OFICIAL DE PARTICIPAÇÃO', width / 2, topY + 185)
   ctx.restore()
 
   // 4. CARD CENTRAL (Moldura com foto, nome e apresentação)
@@ -662,7 +691,9 @@ export async function renderInviteToCanvas(
   if (hasExtraLocation) {
     const locBoxY = infoBoxY + infoBoxH + 16
     const locBoxW = cardW - 100
-    const locBoxH = 150
+    const hasAddress = Boolean(options.enderecoGravacao?.trim())
+    const hasLink = Boolean(options.linkLocalizacao?.trim())
+    const locBoxH = hasAddress && hasLink ? 150 : 100
 
     ctx.save()
     roundRect(ctx, cardX + 50, locBoxY, locBoxW, locBoxH, 18)
@@ -672,28 +703,28 @@ export async function renderInviteToCanvas(
     ctx.lineWidth = 1.5
     ctx.stroke()
 
-    let curY = locBoxY + 28
-    if (options.enderecoGravacao?.trim()) {
+    let curY = locBoxY + 32
+    if (hasAddress) {
       ctx.textAlign = 'center'
       ctx.font = '700 15px "Plus Jakarta Sans", sans-serif'
       ctx.letterSpacing = '1.5px'
       ctx.fillStyle = '#D4AF37'
       ctx.fillText('ENDEREÇO DA GRAVAÇÃO:', width / 2, curY)
-      curY += 24
+      curY += 26
 
       ctx.font = '400 18px "Plus Jakarta Sans", sans-serif'
       ctx.fillStyle = '#FAF8F5'
-      const endLine = options.enderecoGravacao.trim()
+      const endLine = options.enderecoGravacao!.trim()
       ctx.fillText(endLine, width / 2, curY)
-      curY += 28
+      curY += 32
     }
 
-    if (options.linkLocalizacao?.trim()) {
+    if (hasLink) {
       ctx.textAlign = 'center'
-      ctx.font = '700 14px "Plus Jakarta Sans", sans-serif'
+      ctx.font = '700 15px "Plus Jakarta Sans", sans-serif'
       ctx.letterSpacing = '1px'
       ctx.fillStyle = '#F3E5AB'
-      ctx.fillText('LOCALIZAÇÃO: Ver no Google Maps (link interativo no PDF)', width / 2, curY)
+      ctx.fillText('📍 LOCALIZAÇÃO: Ver no Google Maps (link interativo no PDF)', width / 2, curY)
     }
     ctx.restore()
   }
