@@ -602,7 +602,7 @@ export async function renderInviteToCanvas(
   ctx.stroke()
   ctx.restore()
 
-  // Imagem do convidado
+  // Imagem do convidado com recorte circular estrito (nada fora do círculo)
   if (guestImg) {
     ctx.save()
     ctx.beginPath()
@@ -610,7 +610,11 @@ export async function renderInviteToCanvas(
     ctx.closePath()
     ctx.clip()
 
-    // Desenha imagem centralizada e preenchida proporcionalmente
+    // Fundo base escuro dentro do círculo para preenchimento consistente
+    ctx.fillStyle = '#2A0F23'
+    ctx.fill()
+
+    // Desenha imagem centralizada e preenchida proporcionalmente (cover)
     const imgAspect = guestImg.width / guestImg.height
     let sx = 0
     let sy = 0

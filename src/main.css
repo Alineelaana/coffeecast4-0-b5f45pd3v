@@ -315,4 +315,26 @@
     word-break: break-word !important;
     overflow-wrap: break-word !important;
   }
+
+  /* Blindagem e recorte circular absoluto para a foto do convidado na impressão */
+  #printable-invite-portal .invite-photo-container,
+  #printable-invite-portal .invite-photo-inner {
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    -webkit-mask-image: -webkit-radial-gradient(white, black) !important;
+    mask-image: radial-gradient(circle, white 100%, black 100%) !important;
+    clip-path: circle(50% at 50% 50%) !important;
+    -webkit-clip-path: circle(50% at 50% 50%) !important;
+  }
+
+  #printable-invite-portal .invite-photo-img {
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    clip-path: circle(50% at 50% 50%) !important;
+    -webkit-clip-path: circle(50% at 50% 50%) !important;
+    box-shadow: none !important;
+    filter: none !important;
+    display: block !important;
+    background: transparent !important;
+  }
 }

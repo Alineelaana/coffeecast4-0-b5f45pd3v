@@ -595,8 +595,8 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Informe a data da gravação e horário marcado para início.',
           'Faça o upload da foto em alta resolução do convidado e, opcionalmente, da logomarca da empresa.',
           'Revise ou ajuste livremente a mensagem de apresentação/boas-vindas.',
-          'Visualize o convite em tempo real no preview interativo: a foto do convidado ganha protagonismo nobre no centro do convite (com medalhão e moldura dupla dourada), enquanto a logomarca oficial do CoffeeCast 4.0 permanece discreta e elegante no topo, mantendo endereço e localização centralizados harmonicamente (os campos só aparecem se preenchidos).',
-          'Clique em "JPEG" para salvar a imagem em alta resolução e enviar pelo WhatsApp, ou em "Gerar PDF" para exportar o arquivo formal de impressão em tamanho oficial A5 com fidelidade visual idêntica ao preview e link ativo do Maps.',
+          'Visualize o convite em tempo real no preview interativo: a foto do convidado ganha protagonismo nobre no centro do convite (com medalhão circular recortado e moldura dupla dourada, sem vazamento de imagem para fora do círculo tanto no preview quanto na impressão do PDF), enquanto a logomarca oficial do CoffeeCast 4.0 permanece discreta e elegante no topo, mantendo endereço e localização centralizados harmonicamente (os campos só aparecem se preenchidos).',
+          'Clique em "JPEG" para salvar a imagem em alta resolução e enviar pelo WhatsApp, ou em "Gerar PDF" para exportar o arquivo formal de impressão em tamanho oficial A5 com fidelidade visual idêntica ao preview, foto estritamente circular e link ativo do Maps.',
         ],
         botoesPrincipais: [
           {

@@ -1462,7 +1462,7 @@ export default function AdminConvitesScreen() {
                 </div>
               )}
 
-              {/* Foto da pessoa convidada como protagonista visual com medalhão de bordas duplas douradas */}
+              {/* Foto da pessoa convidada como protagonista visual com medalhão de bordas duplas douradas e recorte circular absoluto */}
               <div
                 style={{
                   display: 'flex',
@@ -1474,44 +1474,81 @@ export default function AdminConvitesScreen() {
                 <div
                   style={{
                     position: 'relative',
-                    padding: '1.2mm',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #FFF2B2 0%, #D4AF37 50%, #B38612 100%)',
-                    boxShadow: '0 6px 18px rgba(0, 0, 0, 0.6)',
+                    width: '41mm',
+                    height: '41mm',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
+                  {/* Contêiner de moldura externa e anéis dourados com recorte estritamente circular */}
                   <div
+                    className="invite-photo-container"
                     style={{
-                      padding: '0.8mm',
+                      position: 'relative',
+                      width: '40mm',
+                      height: '40mm',
                       borderRadius: '50%',
-                      backgroundColor: '#2A0F23',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      background: 'linear-gradient(135deg, #FFF2B2 0%, #D4AF37 50%, #B38612 100%)',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.45)',
+                      padding: '1mm',
+                      boxSizing: 'border-box',
+                      overflow: 'hidden',
+                      clipPath: 'circle(50% at 50% 50%)',
+                      WebkitClipPath: 'circle(50% at 50% 50%)',
+                      WebkitPrintColorAdjust: 'exact',
+                      printColorAdjust: 'exact',
                     }}
                   >
-                    <img
-                      src={
-                        previewConvite.foto_convidado
-                          ? getFileUrl(previewConvite, previewConvite.foto_convidado)
-                          : 'https://img.usecurling.com/ppl/256?gender=female'
-                      }
-                      alt={previewConvite.nome}
+                    <div
+                      className="invite-photo-inner"
                       style={{
-                        width: '38mm',
-                        height: '38mm',
+                        width: '100%',
+                        height: '100%',
                         borderRadius: '50%',
-                        objectFit: 'cover',
-                        border: '1.2px solid rgba(212, 175, 55, 0.8)',
-                        display: 'block',
+                        backgroundColor: '#2A0F23',
+                        padding: '0.8mm',
+                        boxSizing: 'border-box',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        clipPath: 'circle(50% at 50% 50%)',
+                        WebkitClipPath: 'circle(50% at 50% 50%)',
+                        WebkitPrintColorAdjust: 'exact',
+                        printColorAdjust: 'exact',
                       }}
-                    />
+                    >
+                      <img
+                        className="invite-photo-img"
+                        src={
+                          previewConvite.foto_convidado
+                            ? getFileUrl(previewConvite, previewConvite.foto_convidado)
+                            : 'https://img.usecurling.com/ppl/256?gender=female'
+                        }
+                        alt={previewConvite.nome}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '1.2px solid rgba(212, 175, 55, 0.85)',
+                          display: 'block',
+                          clipPath: 'circle(50% at 50% 50%)',
+                          WebkitClipPath: 'circle(50% at 50% 50%)',
+                          WebkitPrintColorAdjust: 'exact',
+                          printColorAdjust: 'exact',
+                        }}
+                      />
+                    </div>
                   </div>
+
+                  {/* Badge estrela dourada no canto inferior direito do medalhão */}
                   <div
                     style={{
                       position: 'absolute',
-                      bottom: '-0.5mm',
-                      right: '-0.5mm',
+                      bottom: '0mm',
+                      right: '0mm',
                       backgroundColor: '#36142D',
                       padding: '1.4mm',
                       borderRadius: '50%',
@@ -1520,6 +1557,9 @@ export default function AdminConvitesScreen() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       boxShadow: '0 2px 6px rgba(0, 0, 0, 0.5)',
+                      zIndex: 5,
+                      WebkitPrintColorAdjust: 'exact',
+                      printColorAdjust: 'exact',
                     }}
                   >
                     <Sparkles style={{ width: '4mm', height: '4mm', color: '#D4AF37' }} />
