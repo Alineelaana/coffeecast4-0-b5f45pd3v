@@ -596,7 +596,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Faça o upload da foto em alta resolução do convidado e, opcionalmente, da logomarca da empresa.',
           'Revise ou ajuste livremente a mensagem de apresentação/boas-vindas.',
           'Visualize o convite em tempo real no preview interativo: a foto do convidado ganha protagonismo nobre no centro do convite (com medalhão e moldura dupla dourada), enquanto a logomarca oficial do CoffeeCast 4.0 permanece discreta e elegante no topo, mantendo endereço e localização centralizados harmonicamente (os campos só aparecem se preenchidos).',
-          'Clique em "Baixar Imagem JPEG" para salvar no computador e enviar pelo WhatsApp, ou "Imprimir / Salvar PDF" para gerar arquivo formal com link ativo do Maps.',
+          'Clique em "JPEG" para salvar a imagem em alta resolução e enviar pelo WhatsApp, ou em "Gerar PDF" para exportar o arquivo formal de impressão em tamanho oficial A5 com fidelidade visual idêntica ao preview e link ativo do Maps.',
         ],
         botoesPrincipais: [
           {
@@ -622,15 +622,15 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           },
           {
             nome: 'Baixar Imagem JPEG (Alta Resolução)',
-            onde: 'Abaixo do preview do convite',
+            onde: 'Barra superior de ações do preview',
             paraQueServe:
               'Renderiza o convite em canvas com resolução nítida para redes sociais e WhatsApp.',
           },
           {
-            nome: 'Imprimir / Salvar PDF',
-            onde: 'Ao lado do botão de JPEG',
+            nome: 'Gerar PDF (Formato Oficial A5)',
+            onde: 'Barra superior de ações do preview',
             paraQueServe:
-              'Abre o diálogo de impressão do navegador formatado para salvar em PDF elegante A5, com link clicável do Google Maps.',
+              'Abre a janela de impressão/PDF configurada em formato A5 (148 x 210 mm) sem margens e com todas as cores fiéis ao preview.',
           },
           {
             nome: '+ Salvar Convite no Histórico',
@@ -645,7 +645,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
               'Abre a rota e localização exata do estúdio no Google Maps diretamente do documento.',
           },
         ],
-        dica: 'Cadastre o endereço físico, o link do Google Maps e as mensagens padrão para convidados homens e mulheres no topo da página. Ao criar novos convites tudo já vem preenchido conforme o gênero selecionado, economizando digitação repetitiva, mantendo total flexibilidade para editar qualquer detalhe em convites específicos sem alterar os demais.',
+        dica: 'Dica para salvar o PDF perfeito: ao clicar em "Gerar PDF", na janela de impressão do navegador, certifique-se de que a opção "Gráficos de segundo plano" (Background graphics) esteja marcada para preservar todos os gradientes de vinho e dourado. O layout já está travado em 1 página A5 oficial sem margens indesejadas.',
       },
       {
         id: 'auditoria-sistema',

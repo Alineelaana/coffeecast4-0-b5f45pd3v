@@ -27,7 +27,6 @@ import {
   Save,
   SlidersHorizontal,
 } from 'lucide-react'
-import { CoffeeCastLogo } from '@/components/CoffeeCastLogo'
 import { renderInviteToCanvas, downloadCanvasAsJpeg } from '@/lib/inviteExporter'
 import officialLogoImg from '@/assets/sem-nome-1350-x-1080-px-1-01237.png'
 import { toast } from 'sonner'
@@ -1132,10 +1131,11 @@ export default function AdminConvitesScreen() {
                   {/* Botão Imprimir / Salvar PDF */}
                   <Button
                     onClick={handlePrint}
+                    title="Imprimir ou Salvar PDF em formato A5 (148 x 210 mm) fiel ao preview"
                     className="bg-vinho hover:bg-vinho-light text-white text-[11px] sm:text-xs font-bold px-2 sm:px-3.5 py-2 min-h-[44px] sm:min-h-[36px] rounded-xl sm:rounded-full flex items-center justify-center gap-1 shadow-xs active:scale-95"
                   >
                     <Printer className="w-3.5 h-3.5 text-dourado shrink-0" />
-                    <span>PDF</span>
+                    <span>Gerar PDF</span>
                   </Button>
                 </div>
               </div>
@@ -1329,17 +1329,20 @@ export default function AdminConvitesScreen() {
               flexDirection: 'column',
               justifyContent: 'space-between',
               fontFamily: "'Plus Jakarta Sans', sans-serif",
+              WebkitPrintColorAdjust: 'exact',
+              printColorAdjust: 'exact',
+              colorAdjust: 'exact',
             }}
           >
             {/* Bordas decorativas douradas */}
             <div
               style={{
                 position: 'absolute',
-                top: '4mm',
-                left: '4mm',
-                right: '4mm',
-                bottom: '4mm',
-                border: '1.5px solid rgba(212, 175, 55, 0.65)',
+                top: '3.5mm',
+                left: '3.5mm',
+                right: '3.5mm',
+                bottom: '3.5mm',
+                border: '1.6px solid rgba(212, 175, 55, 0.65)',
                 borderRadius: '8mm',
                 pointerEvents: 'none',
               }}
@@ -1347,10 +1350,10 @@ export default function AdminConvitesScreen() {
             <div
               style={{
                 position: 'absolute',
-                top: '6mm',
-                left: '6mm',
-                right: '6mm',
-                bottom: '6mm',
+                top: '5.5mm',
+                left: '5.5mm',
+                right: '5.5mm',
+                bottom: '5.5mm',
                 border: '0.8px solid rgba(212, 175, 55, 0.3)',
                 borderRadius: '6mm',
                 pointerEvents: 'none',
@@ -1359,9 +1362,15 @@ export default function AdminConvitesScreen() {
 
             {/* Cabeçalho do Convite: Logo discreta no topo e subtítulo dourado */}
             <div
-              style={{ textAlign: 'center', position: 'relative', zIndex: 10, marginTop: '1.5mm' }}
+              style={{
+                textAlign: 'center',
+                position: 'relative',
+                zIndex: 10,
+                marginTop: '1mm',
+                marginBottom: '1mm',
+              }}
             >
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1mm' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.8mm' }}>
                 <img
                   src={officialLogoImg}
                   alt="CoffeeCast 4.0"
@@ -1380,7 +1389,7 @@ export default function AdminConvitesScreen() {
                   letterSpacing: '2.5px',
                   color: '#F3E5AB',
                   fontWeight: 700,
-                  margin: '0.8mm 0 0 0',
+                  margin: '0.5mm 0 0 0',
                 }}
               >
                 Convite Oficial de Participação
@@ -1391,14 +1400,16 @@ export default function AdminConvitesScreen() {
             <div
               style={{
                 backgroundColor: 'rgba(42, 15, 35, 0.88)',
-                border: '1px solid rgba(212, 175, 55, 0.5)',
+                border: '1px solid rgba(212, 175, 55, 0.45)',
                 borderRadius: '6mm',
-                padding: '4.5mm 5mm',
+                padding: '4mm 4.5mm',
                 position: 'relative',
                 zIndex: 10,
                 textAlign: 'center',
-                margin: '1.5mm 0',
+                margin: '1mm 0',
                 boxShadow: '0 4px 20px rgba(0, 0, 0, 0.35)',
+                WebkitPrintColorAdjust: 'exact',
+                printColorAdjust: 'exact',
               }}
             >
               {/* Logomarca da empresa no topo direito */}
@@ -1406,7 +1417,7 @@ export default function AdminConvitesScreen() {
                 <div
                   style={{
                     position: 'absolute',
-                    top: '3.5mm',
+                    top: '3mm',
                     right: '3.5mm',
                     zIndex: 20,
                   }}
@@ -1422,25 +1433,33 @@ export default function AdminConvitesScreen() {
                       backgroundColor: '#FFFFFF',
                       padding: '0.8mm',
                       border: '0.8px solid rgba(212, 175, 55, 0.5)',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
                     }}
                   />
                 </div>
               )}
 
               {/* Foto da pessoa convidada como protagonista visual com medalhão de bordas duplas douradas */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5mm' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  marginBottom: '2mm',
+                  paddingTop: '1mm',
+                }}
+              >
                 <div
                   style={{
                     position: 'relative',
                     padding: '1.2mm',
                     borderRadius: '50%',
                     background: 'linear-gradient(135deg, #FFF2B2 0%, #D4AF37 50%, #B38612 100%)',
-                    boxShadow: '0 3px 14px rgba(0, 0, 0, 0.5)',
+                    boxShadow: '0 6px 18px rgba(0, 0, 0, 0.6)',
                   }}
                 >
                   <div
                     style={{
-                      padding: '1mm',
+                      padding: '0.8mm',
                       borderRadius: '50%',
                       backgroundColor: '#2A0F23',
                       display: 'flex',
@@ -1468,8 +1487,8 @@ export default function AdminConvitesScreen() {
                   <div
                     style={{
                       position: 'absolute',
-                      bottom: '0mm',
-                      right: '0mm',
+                      bottom: '-0.5mm',
+                      right: '-0.5mm',
                       backgroundColor: '#36142D',
                       padding: '1.4mm',
                       borderRadius: '50%',
@@ -1477,7 +1496,7 @@ export default function AdminConvitesScreen() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.4)',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.5)',
                     }}
                   >
                     <Sparkles style={{ width: '4mm', height: '4mm', color: '#D4AF37' }} />
@@ -1486,7 +1505,7 @@ export default function AdminConvitesScreen() {
               </div>
 
               {/* Rótulo de Convidado/Convidada e Nome */}
-              <div style={{ marginBottom: '1.5mm' }}>
+              <div style={{ marginBottom: '1.2mm' }}>
                 <span
                   style={{
                     fontSize: '7.5pt',
@@ -1506,11 +1525,12 @@ export default function AdminConvitesScreen() {
                 <h2
                   style={{
                     fontFamily: "'Playfair Display', Georgia, serif",
-                    fontSize: '18pt',
+                    fontSize: '17pt',
                     fontWeight: 700,
                     color: '#FFFFFF',
-                    margin: '1mm 0 0 0',
+                    margin: '0.8mm 0 0 0',
                     lineHeight: 1.15,
+                    letterSpacing: '-0.2px',
                   }}
                 >
                   {previewConvite.nome}
@@ -1520,24 +1540,40 @@ export default function AdminConvitesScreen() {
               {/* Linha separadora dourada */}
               <div
                 style={{
-                  width: '30mm',
-                  height: '1px',
-                  backgroundColor: '#D4AF37',
-                  margin: '2.5mm auto',
-                  opacity: 0.7,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '2mm',
+                  margin: '1.5mm auto',
+                  maxWidth: '40mm',
                 }}
-              />
+              >
+                <div
+                  style={{ height: '1px', flex: 1, backgroundColor: 'rgba(212, 175, 55, 0.8)' }}
+                />
+                <div
+                  style={{
+                    width: '1.6mm',
+                    height: '1.6mm',
+                    borderRadius: '50%',
+                    backgroundColor: '#D4AF37',
+                  }}
+                />
+                <div
+                  style={{ height: '1px', flex: 1, backgroundColor: 'rgba(212, 175, 55, 0.8)' }}
+                />
+              </div>
 
               {/* Texto de apresentação */}
               <p
                 style={{
-                  fontSize: '9.5pt',
+                  fontSize: '8.8pt',
                   color: 'rgba(250, 248, 245, 0.95)',
-                  lineHeight: 1.45,
+                  lineHeight: 1.35,
                   fontWeight: 300,
                   fontStyle: 'italic',
-                  margin: '3mm auto 4mm auto',
-                  maxWidth: '110mm',
+                  margin: '2mm auto 3mm auto',
+                  maxWidth: '116mm',
                 }}
               >
                 "{previewConvite.apresentacao}"
@@ -1548,18 +1584,20 @@ export default function AdminConvitesScreen() {
                 style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
-                  gap: '3mm',
+                  gap: '2.5mm',
                   paddingTop: '2.5mm',
                   borderTop: '0.8px solid rgba(212, 175, 55, 0.35)',
                 }}
               >
                 <div
                   style={{
-                    backgroundColor: 'rgba(75, 30, 63, 0.8)',
+                    backgroundColor: 'rgba(75, 30, 63, 0.75)',
                     padding: '2mm 2.5mm',
                     borderRadius: '2.5mm',
-                    border: '0.8px solid rgba(212, 175, 55, 0.3)',
+                    border: '0.8px solid rgba(212, 175, 55, 0.25)',
                     textAlign: 'center',
+                    WebkitPrintColorAdjust: 'exact',
+                    printColorAdjust: 'exact',
                   }}
                 >
                   <span
@@ -1570,7 +1608,7 @@ export default function AdminConvitesScreen() {
                       fontWeight: 700,
                       letterSpacing: '1px',
                       display: 'block',
-                      marginBottom: '0.8mm',
+                      marginBottom: '0.6mm',
                     }}
                   >
                     Data da Gravação
@@ -1581,6 +1619,7 @@ export default function AdminConvitesScreen() {
                       fontSize: '9.5pt',
                       fontWeight: 700,
                       color: '#FFFFFF',
+                      display: 'block',
                     }}
                   >
                     {formatDateBR(previewConvite.data_gravacao)}
@@ -1589,11 +1628,13 @@ export default function AdminConvitesScreen() {
 
                 <div
                   style={{
-                    backgroundColor: 'rgba(75, 30, 63, 0.8)',
+                    backgroundColor: 'rgba(75, 30, 63, 0.75)',
                     padding: '2mm 2.5mm',
                     borderRadius: '2.5mm',
-                    border: '0.8px solid rgba(212, 175, 55, 0.3)',
+                    border: '0.8px solid rgba(212, 175, 55, 0.25)',
                     textAlign: 'center',
+                    WebkitPrintColorAdjust: 'exact',
+                    printColorAdjust: 'exact',
                   }}
                 >
                   <span
@@ -1604,7 +1645,7 @@ export default function AdminConvitesScreen() {
                       fontWeight: 700,
                       letterSpacing: '1px',
                       display: 'block',
-                      marginBottom: '0.8mm',
+                      marginBottom: '0.6mm',
                     }}
                   >
                     Horário Marcado
@@ -1615,6 +1656,7 @@ export default function AdminConvitesScreen() {
                       fontSize: '9.5pt',
                       fontWeight: 700,
                       color: '#FFFFFF',
+                      display: 'block',
                     }}
                   >
                     {previewConvite.horario}
@@ -1637,6 +1679,8 @@ export default function AdminConvitesScreen() {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    WebkitPrintColorAdjust: 'exact',
+                    printColorAdjust: 'exact',
                   }}
                 >
                   {previewConvite.endereco_gravacao?.trim() && (
@@ -1708,17 +1752,21 @@ export default function AdminConvitesScreen() {
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
-                          display: 'inline-block',
-                          padding: '1.2mm 3.5mm',
-                          backgroundColor: 'rgba(212, 175, 55, 0.2)',
-                          border: '0.8px solid #D4AF37',
-                          borderRadius: '1.8mm',
-                          color: '#F3E5AB',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '1.4mm 4mm',
+                          backgroundColor: 'rgba(212, 175, 55, 0.22)',
+                          border: '0.9px solid #D4AF37',
+                          borderRadius: '2mm',
+                          color: '#FFF2B2',
                           fontSize: '7.5pt',
                           fontWeight: 700,
                           textDecoration: 'none',
-                          letterSpacing: '0.5px',
+                          letterSpacing: '0.4px',
                           margin: '0 auto',
+                          WebkitPrintColorAdjust: 'exact',
+                          printColorAdjust: 'exact',
                         }}
                       >
                         📍 Ver no Google Maps
@@ -1735,24 +1783,25 @@ export default function AdminConvitesScreen() {
                 textAlign: 'center',
                 position: 'relative',
                 zIndex: 10,
-                marginBottom: '2mm',
+                marginBottom: '1.5mm',
+                marginTop: '1mm',
               }}
             >
               <p
                 style={{
-                  fontSize: '9pt',
+                  fontSize: '8.5pt',
                   fontFamily: "'Playfair Display', Georgia, serif",
                   fontStyle: 'italic',
                   color: '#F3E5AB',
-                  margin: '0 0 1.5mm 0',
+                  margin: '0 0 1mm 0',
                 }}
               >
                 "Aqui o café pode até esfriar, mas o papo nunca! ☕️"
               </p>
               <p
                 style={{
-                  fontSize: '7.5pt',
-                  color: 'rgba(250, 248, 245, 0.65)',
+                  fontSize: '7pt',
+                  color: 'rgba(250, 248, 245, 0.7)',
                   textTransform: 'uppercase',
                   letterSpacing: '2px',
                   fontWeight: 600,
