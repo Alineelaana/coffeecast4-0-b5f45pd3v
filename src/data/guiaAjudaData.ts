@@ -589,11 +589,12 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Gera convites elegantes no padrão visual ouro/vinho do CoffeeCast com a foto do convidado para enviar por WhatsApp ou imprimir.',
         passoAPasso: [
           'Configure o Endereço e a Localização Padrão no card superior: informe o endereço físico fixo do estúdio e o link do Google Maps (com botão "Testar link" para validação imediata) e clique em "Salvar Padrão". Esses valores virão automaticamente preenchidos em todos os novos convites criados.',
-          'Clique no botão dourado "Gerar Novo Convite": os campos "Endereço da gravação:" e "Localização" já virão preenchidos com os padrões definidos, mantendo total liberdade para edição naquele convite individual.',
-          'Preencha o nome do convidado ou convidada e selecione o tratamento apropriado ("Convidado de Honra" ou "Convidada de Honra").',
+          'Configure o Texto de Apresentação Padrão por Gênero: defina uma mensagem personalizada para Convidado (homem) e outra para Convidada (mulher) e clique em "Salvar Padrão". Ao gerar novos convites, o texto correspondente ao gênero selecionado será preenchido automaticamente.',
+          'Clique no botão dourado "Gerar Novo Convite": os campos "Endereço da gravação:", "Localização" e o "Texto de Apresentação" já virão preenchidos com os padrões definidos, mantendo total liberdade para edição individual antes de salvar.',
+          'Preencha o nome do convidado ou convidada e selecione o tratamento ("Convidada de Honra" ou "Convidado de Honra"): a seleção atualiza instantaneamente o texto padrão de apresentação correspondente.',
           'Informe a data da gravação e horário marcado para início.',
           'Faça o upload da foto em alta resolução do convidado e, opcionalmente, da logomarca da empresa.',
-          'Escreva uma mensagem calorosa de apresentação.',
+          'Revise ou ajuste livremente a mensagem de apresentação/boas-vindas.',
           'Visualize o convite em tempo real no preview interativo: a foto do convidado ganha protagonismo nobre no centro do convite (com medalhão e moldura dupla dourada), enquanto a logomarca oficial do CoffeeCast 4.0 permanece discreta e elegante no topo, mantendo endereço e localização centralizados harmonicamente (os campos só aparecem se preenchidos).',
           'Clique em "Baixar Imagem JPEG" para salvar no computador e enviar pelo WhatsApp, ou "Imprimir / Salvar PDF" para gerar arquivo formal com link ativo do Maps.',
         ],
@@ -603,6 +604,13 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             onde: 'Card superior da tela de Convites',
             paraQueServe:
               'Grava globalmente o endereço físico e link do Google Maps que virão pré-preenchidos em novos convites.',
+            icone: 'Save',
+          },
+          {
+            nome: 'Salvar Padrão (Texto por Gênero)',
+            onde: 'Card de Texto de Apresentação Padrão',
+            paraQueServe:
+              'Grava globalmente as mensagens de boas-vindas padrão diferenciadas para Convidado (homem) e Convidada (mulher).',
             icone: 'Save',
           },
           {
@@ -637,7 +645,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
               'Abre a rota e localização exata do estúdio no Google Maps diretamente do documento.',
           },
         ],
-        dica: 'Cadastre o endereço e o link do Google Maps padrão uma única vez no topo da página. Ao criar novos convites eles já vêm preenchidos, economizando digitação repetitiva, mas você pode personalizá-los ou apagá-los a qualquer momento em convites específicos sem afetar os demais.',
+        dica: 'Cadastre o endereço físico, o link do Google Maps e as mensagens padrão para convidados homens e mulheres no topo da página. Ao criar novos convites tudo já vem preenchido conforme o gênero selecionado, economizando digitação repetitiva, mantendo total flexibilidade para editar qualquer detalhe em convites específicos sem alterar os demais.',
       },
       {
         id: 'auditoria-sistema',

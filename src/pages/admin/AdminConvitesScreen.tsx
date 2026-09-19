@@ -39,11 +39,19 @@ export default function AdminConvitesScreen() {
   const [convites, setConvites] = useState<ConviteRecord[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Valores padrão globais para novos convites
+  // Valores padrão globais para novos convites (Endereço & Localização)
   const [defaultEndereco, setDefaultEndereco] = useState('')
   const [defaultLocalizacao, setDefaultLocalizacao] = useState('')
   const [defaultEnderecoId, setDefaultEnderecoId] = useState<string | null>(null)
   const [defaultLocalizacaoId, setDefaultLocalizacaoId] = useState<string | null>(null)
+
+  // Valores padrão globais para novos convites (Textos de Apresentação por Gênero)
+  const [defaultTextoConvidado, setDefaultTextoConvidado] = useState('')
+  const [defaultTextoConvidada, setDefaultTextoConvidada] = useState('')
+  const [defaultTextoConvidadoId, setDefaultTextoConvidadoId] = useState<string | null>(null)
+  const [defaultTextoConvidadaId, setDefaultTextoConvidadaId] = useState<string | null>(null)
+  const [savingTextDefaults, setSavingTextDefaults] = useState(false)
+
   const [savingDefaults, setSavingDefaults] = useState(false)
   const [loadingDefaults, setLoadingDefaults] = useState(true)
 
@@ -79,10 +87,13 @@ export default function AdminConvitesScreen() {
     try {
       setLoadingDefaults(true)
       const records = await pb.collection('conteudo_site').getFullList<ConteudoSiteRecord>({
-        filter: 'chave = "convites_padrao_endereco" || chave = "convites_padrao_localizacao"',
+        filter:
+          'chave = "convites_padrao_endereco" || chave = "convites_padrao_localizacao" || chave = "convites_padrao_texto_convidado" || chave = "convites_padrao_texto_convidada"',
       })
       const endRec = records.find((r) => r.chave === 'convites_padrao_endereco')
       const locRec = records.find((r) => r.chave === 'convites_padrao_localizacao')
+      const txtConvidadoRec = records.find((r) => r.chave === 'convites_padrao_texto_convidado')
+      const txtConvidadaRec = records.find((r) => r.chave === 'convites_padrao_texto_convidada')
 
       if (endRec) {
         setDefaultEndereco(endRec.valor || '')
@@ -91,6 +102,14 @@ export default function AdminConvitesScreen() {
       if (locRec) {
         setDefaultLocalizacao(locRec.valor || '')
         setDefaultLocalizacaoId(locRec.id)
+      }
+      if (txtConvidadoRec) {
+        setDefaultTextoConvidado(txtConvidadoRec.valor || '')
+        setDefaultTextoConvidadoId(txtConvidadoRec.id)
+      }
+      if (txtConvidadaRec) {
+        setDefaultTextoConvidada(txtConvidadaRec.valor || '')
+        setDefaultTextoConvidadaId(txtConvidadaRec.id)
       }
     } catch (err) {
       console.error('Erro ao carregar valores padrão de convites:', err)
@@ -140,6 +159,51 @@ export default function AdminConvitesScreen() {
     }
   }
 
+  const handleSaveTextDefaults = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (!canEditDefaults) {
+      toast.error('Você não tem permissão para alterar as configurações padrão.')
+      return
+    }
+
+    try {
+      setSavingTextDefaults(true)
+      const trimmedConvidado = defaultTextoConvidado.trim()
+      const trimmedConvidada = defaultTextoConvidada.trim()
+
+      if (defaultTextoConvidadoId) {
+        await pb
+          .collection('conteudo_site')
+          .update(defaultTextoConvidadoId, { valor: trimmedConvidado })
+      } else {
+        const created = await pb.collection('conteudo_site').create<ConteudoSiteRecord>({
+          chave: 'convites_padrao_texto_convidado',
+          valor: trimmedConvidado,
+        })
+        setDefaultTextoConvidadoId(created.id)
+      }
+
+      if (defaultTextoConvidadaId) {
+        await pb
+          .collection('conteudo_site')
+          .update(defaultTextoConvidadaId, { valor: trimmedConvidada })
+      } else {
+        const created = await pb.collection('conteudo_site').create<ConteudoSiteRecord>({
+          chave: 'convites_padrao_texto_convidada',
+          valor: trimmedConvidada,
+        })
+        setDefaultTextoConvidadaId(created.id)
+      }
+
+      toast.success('Textos de apresentação padrão salvos com sucesso!')
+    } catch (err) {
+      console.error('Erro ao salvar textos padrão de convites:', err)
+      toast.error('Erro ao salvar textos de apresentação padrão.')
+    } finally {
+      setSavingTextDefaults(false)
+    }
+  }
+
   const loadConvites = async () => {
     try {
       setLoading(true)
@@ -169,14 +233,18 @@ export default function AdminConvitesScreen() {
   }, [fotoPreviewUrl, logoPreviewUrl])
 
   const handleOpenCreate = () => {
+    const initialGender: 'convidado' | 'convidada' = 'convidada'
     setEditingConvite(null)
     setNome('')
-    setTipoConvidado('convidada')
+    setTipoConvidado(initialGender)
     setDataGravacao(toInputDate(new Date().toISOString()))
     setHorario('14:00')
-    setApresentacao(
-      'É com grande alegria e honra que convidamos você para compartilhar sua trajetória inspiradora no CoffeeCast 4.0. Preparamos uma mesa com afeto, respeito e cafés especiais para dar voz à sua história que transforma vidas.',
-    )
+
+    const defaultTxt =
+      (initialGender === 'convidada' ? defaultTextoConvidada : defaultTextoConvidado) ||
+      'É com grande alegria e honra que convidamos você para compartilhar sua trajetória inspiradora no CoffeeCast 4.0. Preparamos uma mesa com afeto, respeito e cafés especiais para dar voz à sua história que transforma vidas.'
+    setApresentacao(defaultTxt)
+
     // Pré-preenche novos convites com os valores padrão globais cadastrados
     setEnderecoGravacao(defaultEndereco || '')
     setLinkLocalizacao(defaultLocalizacao || '')
@@ -185,6 +253,31 @@ export default function AdminConvitesScreen() {
     setFotoPreviewUrl('')
     setLogoPreviewUrl('')
     setModalOpen(true)
+  }
+
+  const handleGenderChange = (novoGenero: 'convidado' | 'convidada') => {
+    setTipoConvidado(novoGenero)
+
+    // Se estiver criando um novo convite (não editando um existente), atualiza o texto de apresentação com o padrão do gênero
+    if (!editingConvite) {
+      const currentTextoPadraoConvidado =
+        defaultTextoConvidado ||
+        'É com grande alegria e honra que convidamos você para compartilhar sua trajetória inspiradora no CoffeeCast 4.0. Preparamos uma mesa com afeto, respeito e cafés especiais para dar voz à sua história que transforma vidas.'
+      const currentTextoPadraoConvidada =
+        defaultTextoConvidada ||
+        'É com grande alegria e honra que convidamos você para compartilhar sua trajetória inspiradora no CoffeeCast 4.0. Preparamos uma mesa com afeto, respeito e cafés especiais para dar voz à sua história que transforma vidas.'
+
+      const textoAtualTrim = apresentacao.trim()
+      // Se o campo estiver vazio ou for exatamente o padrão do gênero anterior, atualiza para o novo padrão
+      const isConvidadoPattern = textoAtualTrim === currentTextoPadraoConvidado.trim()
+      const isConvidadaPattern = textoAtualTrim === currentTextoPadraoConvidada.trim()
+
+      if (!textoAtualTrim || isConvidadoPattern || isConvidadaPattern) {
+        setApresentacao(
+          novoGenero === 'convidada' ? currentTextoPadraoConvidada : currentTextoPadraoConvidado,
+        )
+      }
+    }
   }
 
   const handleOpenEdit = (convite: ConviteRecord) => {
@@ -476,6 +569,107 @@ export default function AdminConvitesScreen() {
         </div>
       </div>
 
+      {/* Card de Configuração: Texto de Apresentação Padrão por Gênero para Novos Convites */}
+      <div className="bg-white rounded-2xl border border-vinho/10 shadow-xs p-4 sm:p-5">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 pb-3 border-b border-vinho/10">
+          <div className="flex items-start gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-vinho/5 border border-dourado/30 flex items-center justify-center shrink-0 text-vinho mt-0.5">
+              <Sparkles className="w-4 h-4 text-dourado" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-serif font-bold text-sm text-vinho">
+                  Texto de Apresentação Padrão
+                </h3>
+                <span className="text-[10px] bg-dourado/20 text-vinho font-semibold px-2 py-0.5 rounded-full border border-dourado/30">
+                  Por Gênero
+                </span>
+              </div>
+              <p className="text-xs text-vinho/70 mt-0.5">
+                Defina o texto padrão de apresentação e boas-vindas para{' '}
+                <strong>Convidado (homem)</strong> e para <strong>Convidada (mulher)</strong>. Ao
+                gerar um novo convite, o campo será preenchido automaticamente de acordo com o
+                gênero selecionado, permanecendo totalmente editável antes de salvar.
+              </p>
+            </div>
+          </div>
+
+          {canEditDefaults && (
+            <Button
+              type="button"
+              onClick={() => handleSaveTextDefaults()}
+              disabled={savingTextDefaults || loadingDefaults}
+              size="sm"
+              className="bg-vinho hover:bg-vinho-light text-white text-xs font-semibold px-4 min-h-[38px] rounded-xl flex items-center gap-1.5 self-end md:self-auto shrink-0 shadow-xs"
+            >
+              {savingTextDefaults ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-dourado" />
+                  <span>Salvando...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-3.5 h-3.5 text-dourado" />
+                  <span>Salvar Padrão</span>
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3.5">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="default-texto-convidado"
+                className="text-xs font-semibold text-vinho flex items-center gap-1.5"
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-vinho inline-block" />
+                Padrão para Convidado (homem):
+              </Label>
+              <span className="text-[10px] text-vinho/60 font-medium">Convidado de Honra</span>
+            </div>
+            <Textarea
+              id="default-texto-convidado"
+              rows={4}
+              disabled={!canEditDefaults || loadingDefaults}
+              placeholder="Digite o texto de apresentação padrão para convidados homens..."
+              value={defaultTextoConvidado}
+              onChange={(e) => setDefaultTextoConvidado(e.target.value)}
+              className="bg-marfim/30 border-vinho/20 text-xs focus-visible:ring-dourado resize-y"
+            />
+            <p className="text-[10px] text-vinho/60">
+              Texto que virá pré-preenchido ao selecionar "Convidado (de Honra)".
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="default-texto-convidada"
+                className="text-xs font-semibold text-vinho flex items-center gap-1.5"
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-dourado inline-block" />
+                Padrão para Convidada (mulher):
+              </Label>
+              <span className="text-[10px] text-vinho/60 font-medium">Convidada de Honra</span>
+            </div>
+            <Textarea
+              id="default-texto-convidada"
+              rows={4}
+              disabled={!canEditDefaults || loadingDefaults}
+              placeholder="Digite o texto de apresentação padrão para convidadas mulheres..."
+              value={defaultTextoConvidada}
+              onChange={(e) => setDefaultTextoConvidada(e.target.value)}
+              className="bg-marfim/30 border-vinho/20 text-xs focus-visible:ring-dourado resize-y"
+            />
+            <p className="text-[10px] text-vinho/60">
+              Texto que virá pré-preenchido ao selecionar "Convidada (de Honra)".
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Grid de Convites */}
       {loading ? (
         <div className="py-16 text-center text-xs text-vinho/60 flex flex-col items-center justify-center gap-2">
@@ -664,7 +858,7 @@ export default function AdminConvitesScreen() {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setTipoConvidado('convidada')}
+                  onClick={() => handleGenderChange('convidada')}
                   className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${
                     tipoConvidado === 'convidada'
                       ? 'bg-vinho text-white border-vinho shadow-xs'
@@ -681,7 +875,7 @@ export default function AdminConvitesScreen() {
 
                 <button
                   type="button"
-                  onClick={() => setTipoConvidado('convidado')}
+                  onClick={() => handleGenderChange('convidado')}
                   className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${
                     tipoConvidado === 'convidado'
                       ? 'bg-vinho text-white border-vinho shadow-xs'

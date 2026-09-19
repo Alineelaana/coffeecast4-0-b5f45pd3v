@@ -205,6 +205,8 @@ export interface ConviteRecord {
 export interface ConvitePadroesConfig {
   endereco_padrao: string
   link_localizacao_padrao: string
+  texto_convidado_padrao?: string
+  texto_convidada_padrao?: string
 }
 
 export interface ConteudoSiteRecord {
