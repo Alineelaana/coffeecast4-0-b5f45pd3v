@@ -58,7 +58,9 @@ export const NineChatWidget: React.FC = () => {
   const [pickerOpen, setPickerOpen] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const isDraggingScrollbarRef = useRef<boolean>(false)
 
   // Recupera conversationId persistido no localStorage (se existir)
   useEffect(() => {
@@ -69,6 +71,19 @@ export const NineChatWidget: React.FC = () => {
       }
     } catch {
       /* intentionally ignored */
+    }
+  }, [])
+
+  // Limpa estado de arrasto quando o mouse for solto em qualquer lugar da tela
+  useEffect(() => {
+    const handleGlobalPointerUp = () => {
+      isDraggingScrollbarRef.current = false
+    }
+    window.addEventListener('pointerup', handleGlobalPointerUp)
+    window.addEventListener('mouseup', handleGlobalPointerUp)
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalPointerUp)
+      window.removeEventListener('mouseup', handleGlobalPointerUp)
     }
   }, [])
 
@@ -88,14 +103,22 @@ export const NineChatWidget: React.FC = () => {
     return () => clearInterval(interval)
   }, [])
 
-  // Rola mensagens para baixo suavemente
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  // Rola mensagens para baixo suavemente, com prioridade ao usuário (não rouba scroll se estiver arrastando)
+  const scrollToBottom = (force = false) => {
+    if (!force && isDraggingScrollbarRef.current) return
+    const container = messagesContainerRef.current
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   useEffect(() => {
     if (isOpen) {
-      scrollToBottom()
+      if (!isDraggingScrollbarRef.current) {
+        scrollToBottom()
+      }
       setHasUnreadNotice(false)
       setTimeout(() => {
         textareaRef.current?.focus()
@@ -446,7 +469,23 @@ export const NineChatWidget: React.FC = () => {
           </div>
 
           {/* Área de Mensagens */}
-          <div className="flex-1 overflow-y-auto coffeecast-scrollbar p-4 space-y-3.5 bg-gradient-to-b from-[#FAF8F5] via-[#F4EFEA] to-[#FAF8F5]">
+          <div
+            ref={messagesContainerRef}
+            onPointerDown={(e) => {
+              // Se o clique ocorreu próximo da borda direita onde fica a scrollbar (~16px), marca drag ativo
+              const rect = e.currentTarget.getBoundingClientRect()
+              if (e.clientX >= rect.right - 18) {
+                isDraggingScrollbarRef.current = true
+              }
+            }}
+            onPointerUp={() => {
+              isDraggingScrollbarRef.current = false
+            }}
+            onPointerCancel={() => {
+              isDraggingScrollbarRef.current = false
+            }}
+            className="flex-1 overflow-y-auto coffeecast-scrollbar p-4 space-y-3.5 bg-gradient-to-b from-[#FAF8F5] via-[#F4EFEA] to-[#FAF8F5]"
+          >
             {messages.map((msg) => {
               const isAssistant = msg.role === 'assistant'
               const isHumano = msg.role === 'humano'

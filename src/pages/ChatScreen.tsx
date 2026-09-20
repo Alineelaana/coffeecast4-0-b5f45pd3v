@@ -134,10 +134,31 @@ export default function ChatScreen() {
   const [mobileShowChat, setMobileShowChat] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const isDraggingScrollbarRef = useRef<boolean>(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  // Desativa estado de arrasto quando o mouse for liberado globalmente
+  useEffect(() => {
+    const handleGlobalPointerUp = () => {
+      isDraggingScrollbarRef.current = false
+    }
+    window.addEventListener('pointerup', handleGlobalPointerUp)
+    window.addEventListener('mouseup', handleGlobalPointerUp)
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalPointerUp)
+      window.removeEventListener('mouseup', handleGlobalPointerUp)
+    }
+  }, [])
+
+  const scrollToBottom = (force = false) => {
+    if (!force && isDraggingScrollbarRef.current) return
+    const container = messagesContainerRef.current
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   // Carrega lista de usuários e conversas
@@ -1202,7 +1223,22 @@ export default function ChatScreen() {
               </div>
 
               {/* ÁREA DE ROLAGEM DE MENSAGENS */}
-              <div className="flex-1 overflow-y-auto coffeecast-scrollbar p-4 sm:p-6 space-y-4">
+              <div
+                ref={messagesContainerRef}
+                onPointerDown={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  if (e.clientX >= rect.right - 18) {
+                    isDraggingScrollbarRef.current = true
+                  }
+                }}
+                onPointerUp={() => {
+                  isDraggingScrollbarRef.current = false
+                }}
+                onPointerCancel={() => {
+                  isDraggingScrollbarRef.current = false
+                }}
+                className="flex-1 overflow-y-auto coffeecast-scrollbar p-4 sm:p-6 space-y-4"
+              >
                 {loadingMessages ? (
                   <div className="py-20 text-center text-xs text-vinho/60 flex flex-col items-center justify-center gap-2">
                     <Loader2 className="w-6 h-6 animate-spin text-dourado-dark" />
