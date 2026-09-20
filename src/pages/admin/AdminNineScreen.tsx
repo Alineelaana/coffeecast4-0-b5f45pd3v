@@ -1248,7 +1248,7 @@ export default function AdminNineScreen() {
                   </div>
 
                   {/* Histórico Completo de Mensagens */}
-                  <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-gradient-to-b from-[#FAF8F5]/50 to-white">
+                  <div className="flex-1 overflow-y-auto coffeecast-scrollbar p-4 sm:p-5 space-y-4 bg-gradient-to-b from-[#FAF8F5]/50 to-white">
                     {loadingMensagens ? (
                       <div className="p-8 text-center text-xs text-vinho/60">
                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-dourado" />

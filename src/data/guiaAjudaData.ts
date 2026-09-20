@@ -277,7 +277,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Aba "Personalidade & Prompt": ajuste o tom de voz, regras de atendimento e se o atendimento automático está ativado.',
           'Aba "Base de Conhecimento": cadastre perguntas frequentes (FAQs), informações sobre planos de patrocínio e detalhes do estúdio para a IA consultar.',
           'Aba "Prompt Livre": adicione instruções adicionais e regras de negócio específicas.',
-          'Aba "Conversas em Andamento": visualize os diálogos em tempo real no site e, se necessário, ative o "Modo Humano" para você mesmo responder ao visitante.',
+          'Aba "Conversas em Andamento": visualize os diálogos em tempo real no site e, se necessário, ative o "Modo Humano" para você mesmo responder ao visitante (com histórico em tempo real e barra de rolagem com a identidade nobre do podcast).',
         ],
         botoesPrincipais: [
           {

@@ -199,7 +199,7 @@ export const EmojiStickerPicker: React.FC<EmojiStickerPickerProps> = ({
       </div>
 
       {/* CONTEÚDO ROLÁVEL */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3.5 bg-gradient-to-b from-[#FAF8F5] to-white/70">
+      <div className="flex-1 overflow-y-auto coffeecast-scrollbar p-3 space-y-3.5 bg-gradient-to-b from-[#FAF8F5] to-white/70">
         {activeTab === 'emojis' ? (
           <>
             {/* FILEIRA DE RECENTES (Se não estiver buscando) */}

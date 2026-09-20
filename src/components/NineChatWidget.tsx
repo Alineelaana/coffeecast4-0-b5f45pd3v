@@ -446,7 +446,7 @@ export const NineChatWidget: React.FC = () => {
           </div>
 
           {/* Área de Mensagens */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-gradient-to-b from-[#FAF8F5] via-[#F4EFEA] to-[#FAF8F5]">
+          <div className="flex-1 overflow-y-auto coffeecast-scrollbar p-4 space-y-3.5 bg-gradient-to-b from-[#FAF8F5] via-[#F4EFEA] to-[#FAF8F5]">
             {messages.map((msg) => {
               const isAssistant = msg.role === 'assistant'
               const isHumano = msg.role === 'humano'

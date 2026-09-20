@@ -498,7 +498,7 @@ export default function AdminChatManagementScreen() {
           </DialogHeader>
 
           {/* LISTA DE MENSAGENS COM DATA, HORA, AUTOR E BOTÃO DE EXCLUIR */}
-          <div className="flex-1 overflow-y-auto space-y-3 py-4 pr-1">
+          <div className="flex-1 overflow-y-auto coffeecast-scrollbar space-y-3 py-4 pr-1">
             {loadingMessages ? (
               <div className="py-12 text-center text-xs text-vinho/60 flex flex-col items-center justify-center gap-2">
                 <Loader2 className="w-5 h-5 animate-spin text-dourado-dark" />

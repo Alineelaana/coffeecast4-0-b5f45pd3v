@@ -1202,7 +1202,7 @@ export default function ChatScreen() {
               </div>
 
               {/* ÁREA DE ROLAGEM DE MENSAGENS */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+              <div className="flex-1 overflow-y-auto coffeecast-scrollbar p-4 sm:p-6 space-y-4">
                 {loadingMessages ? (
                   <div className="py-20 text-center text-xs text-vinho/60 flex flex-col items-center justify-center gap-2">
                     <Loader2 className="w-6 h-6 animate-spin text-dourado-dark" />
