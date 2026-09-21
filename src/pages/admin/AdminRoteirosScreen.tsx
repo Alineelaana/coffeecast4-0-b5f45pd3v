@@ -307,16 +307,87 @@ export default function AdminRoteirosScreen() {
     const targetId = aiSelectedId || selectedRoteiro?.id
     if (!targetId || !aiResultado) return
 
+    const convidadoAlvo = roteiros.find((r) => r.id === targetId) || selectedRoteiro
+    const nomeConvidado = convidadoAlvo?.nome || 'Convidado(a)'
+
     try {
       setAiSavingToGuest(true)
-      await pb.collection('roteiros_convidados').update(targetId, {
-        roteiro_final_texto: aiResultado,
-      })
-      toast.success('Roteiro da Nine vinculado ao registro do convidado com sucesso!')
+      let salvoComSucesso = false
+
+      // 1. Tentar primeiro o endpoint oficial do backend com auditoria integrada
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_POCKETBASE_URL}/backend/v1/roteiro-assistente/salvar`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: pb.authStore.token,
+            },
+            body: JSON.stringify({
+              roteiro_id: targetId,
+              roteiro_texto: aiResultado,
+            }),
+          },
+        )
+
+        if (res.ok) {
+          salvoComSucesso = true
+        } else {
+          const errData = await res.json().catch(() => ({}))
+          console.warn(
+            '[AdminRoteirosScreen] Falha no endpoint oficial, acionando fallback direto via SDK:',
+            errData,
+          )
+        }
+      } catch (endpointErr) {
+        console.warn(
+          '[AdminRoteirosScreen] Exceção de rede no endpoint oficial, acionando fallback direto via SDK:',
+          endpointErr,
+        )
+      }
+
+      // 2. Fallback direto via SDK do PocketBase
+      if (!salvoComSucesso) {
+        await pb.collection('roteiros_convidados').update(targetId, {
+          roteiro_final_texto: aiResultado,
+        })
+
+        // Registrar auditoria via serviço do front se caiu no fallback direto
+        AuditoriaService.registrarEvento({
+          tipo_acao: 'edicao',
+          area_sistema: 'Roteiros & Pautas',
+          descricao: `Sugestão de roteiro da assistente virtual Nine vinculada ao registro de "${nomeConvidado}".`,
+          registro_afetado: targetId,
+          tabela_afetada: 'roteiros_convidados',
+          resultado: 'sucesso',
+          metadata: {
+            convidado_nome: nomeConvidado,
+            origem: 'Assistente Nine (SDK)',
+            tamanho_caracteres: aiResultado.length,
+          },
+        }).catch((auditErr) => {
+          console.warn('[AdminRoteirosScreen] Falha ao registrar auditoria de roteiro:', auditErr)
+        })
+      }
+
+      // Se o modal estiver aberto com este roteiro, sincronizar o texto imediatamente
+      if (selectedRoteiro && selectedRoteiro.id === targetId) {
+        setRoteiroTexto(aiResultado)
+        setSelectedRoteiro({ ...selectedRoteiro, roteiro_final_texto: aiResultado })
+      }
+
+      toast.success(
+        `Sugestão de roteiro da Nine vinculada com sucesso ao registro de ${nomeConvidado}!`,
+      )
       loadRoteiros()
-    } catch (err) {
-      console.error(err)
-      toast.error('Erro ao salvar sugestão no registro.')
+    } catch (err: unknown) {
+      console.error('Erro ao salvar sugestão no registro:', err)
+      const msg =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: string }).message)
+          : 'Não foi possível salvar a sugestão no registro. Verifique as permissões de acesso.'
+      toast.error(`Erro ao salvar sugestão no registro: ${msg}`)
     } finally {
       setAiSavingToGuest(false)
     }

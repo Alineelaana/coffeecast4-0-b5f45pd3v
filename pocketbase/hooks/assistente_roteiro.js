@@ -149,3 +149,97 @@ routerAdd(
   },
   $apis.requireAuth(),
 )
+
+// Endpoint administrativo para salvar a sugestão da Nine diretamente no registro do roteiro
+routerAdd(
+  'POST',
+  '/backend/v1/roteiro-assistente/salvar',
+  (e) => {
+    try {
+      const authUser = e.auth
+      if (!authUser) {
+        return e.unauthorizedError('Autenticação necessária')
+      }
+
+      const userRole = authUser.getString('role')
+      if (userRole === 'adm') {
+        const perms = authUser.get('adm_permissions') || {}
+        const allowedScreens = Array.isArray(perms.allowedScreens) ? perms.allowedScreens : []
+        if (!allowedScreens.includes('roteiros')) {
+          return e.forbiddenError('Você não tem permissão para editar roteiros.')
+        }
+      } else if (userRole !== 'master' && userRole !== 'gerencial') {
+        return e.forbiddenError(
+          'Acesso restrito a administradores Master, Gerencial e ADM autorizados',
+        )
+      }
+
+      const body = e.requestInfo().body || {}
+      const roteiroId = (body.roteiro_id || '').trim()
+      const roteiroTexto = (body.roteiro_texto || '').trim()
+
+      if (!roteiroId) {
+        return e.badRequestError('ID do roteiro é obrigatório')
+      }
+
+      if (!roteiroTexto) {
+        return e.badRequestError('O texto da sugestão do roteiro não pode estar vazio.')
+      }
+
+      const roteiroRecord = $app.findRecordById('roteiros_convidados', roteiroId)
+      if (!roteiroRecord) {
+        return e.notFoundError('Registro de roteiro não encontrado')
+      }
+
+      const convidadoNome = roteiroRecord.getString('nome') || 'Convidado(a)'
+
+      // Atualizar o registro com o roteiro sugerido pela Nine
+      roteiroRecord.set('roteiro_final_texto', roteiroTexto)
+      $app.save(roteiroRecord)
+
+      // Registrar na Auditoria do Sistema
+      try {
+        const colAudit = $app.findCollectionByNameOrId('auditoria_eventos')
+        if (colAudit) {
+          const auditRec = new Record(colAudit)
+          auditRec.set('usuario_id', authUser.id)
+          auditRec.set('usuario_email', authUser.getString('email'))
+          auditRec.set('usuario_nome', authUser.getString('name') || 'Administrador')
+          auditRec.set('usuario_role', userRole)
+          auditRec.set('tipo_acao', 'edicao')
+          auditRec.set('area_sistema', 'Roteiros & Pautas')
+          auditRec.set(
+            'descricao',
+            'Sugestão de roteiro da assistente virtual Nine vinculada ao registro de "' +
+              convidadoNome +
+              '".',
+          )
+          auditRec.set('registro_afetado', roteiroId)
+          auditRec.set('tabela_afetada', 'roteiros_convidados')
+          auditRec.set('resultado', 'sucesso')
+          auditRec.set('metadata', {
+            convidado_nome: convidadoNome,
+            origem: 'Assistente Nine',
+            tamanho_caracteres: roteiroTexto.length,
+          })
+          $app.save(auditRec)
+        }
+      } catch (auditErr) {
+        console.log('[Roteiro Assistente] Falha não impeditiva ao registrar auditoria:', auditErr)
+      }
+
+      return e.json(200, {
+        sucesso: true,
+        mensagem: 'Sugestão da Nine vinculada ao registro do convidado com sucesso!',
+        convidado: convidadoNome,
+        roteiro_id: roteiroId,
+      })
+    } catch (err) {
+      console.log('Erro ao salvar sugestão de roteiro da Nine:', err)
+      return e.json(500, {
+        error: err.message || 'Erro interno ao salvar a sugestão no registro do roteiro.',
+      })
+    }
+  },
+  $apis.requireAuth(),
+)

@@ -392,9 +392,15 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           },
           {
             nome: 'Gerar Pauta com IA (Nine)',
-            onde: 'Dentro do modal de detalhes do roteiro',
+            onde: 'Dentro do modal de detalhes do roteiro e na aba Nine · Assistente Virtual',
             paraQueServe:
               'Sintetiza a história do convidado e gera automaticamente uma pauta estruturada de perguntas.',
+          },
+          {
+            nome: 'Salvar Roteiro no Registro do Convidado',
+            onde: 'Abaixo da sugestão gerada pela Nine na aba Assistente Virtual ou no modal',
+            paraQueServe:
+              'Vincula a pauta completa gerada pela IA diretamente ao campo de roteiro final do convidado (com suporte a textos amplos de até 100.000 caracteres e registro em Auditoria).',
           },
           {
             nome: 'Salvar Roteiro Final',
