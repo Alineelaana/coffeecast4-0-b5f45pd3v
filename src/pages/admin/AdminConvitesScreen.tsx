@@ -31,7 +31,10 @@ import {
   renderInviteToCanvas,
   downloadCanvasAsJpeg,
   createCircularGuestPhotoDataUrl,
+  downloadInvitePdf,
+  buildInvitePdfFileName,
 } from '@/lib/inviteExporter'
+import { AuditoriaService } from '@/services/auditoria'
 import officialLogoImg from '@/assets/sem-nome-1350-x-1080-px-1-01237.png'
 import { toast } from 'sonner'
 
@@ -88,6 +91,7 @@ export default function AdminConvitesScreen() {
 
   const [saving, setSaving] = useState(false)
   const [exportingJpegId, setExportingJpegId] = useState<string | null>(null)
+  const [generatingPdf, setGeneratingPdf] = useState(false)
 
   const invitePrintRef = useRef<HTMLDivElement>(null)
 
@@ -439,17 +443,90 @@ export default function AdminConvitesScreen() {
     }
   }
 
-  const handlePrint = async () => {
-    // Se a foto circular ainda estiver sendo processada em segundo plano, espera até 1s
-    if (processingCircularPhoto) {
-      toast.info('Finalizando preparação gráfica do convite...')
-      let waitCount = 0
-      while (processingCircularPhoto && waitCount < 10) {
-        await new Promise((r) => setTimeout(r, 100))
-        waitCount++
+  /**
+   * Gerar e baixar PDF do Convite em formato oficial A5 (148 x 210 mm)
+   * Abre em janela dedicada com fallback automático e registro na Auditoria.
+   */
+  const handleGeneratePdf = async (convite: ConviteRecord) => {
+    try {
+      setGeneratingPdf(true)
+      toast.loading('Gerando PDF oficial do convite (formato A5)...', { id: 'pdf-convite-toast' })
+
+      // Se a foto circular ainda estiver sendo processada em segundo plano, aguarda até 1s
+      let guestPhotoPng = circularGuestPhotoUrl
+      if (!guestPhotoPng || processingCircularPhoto) {
+        const rawPhotoUrl = convite.foto_convidado
+          ? getFileUrl(convite, convite.foto_convidado)
+          : 'https://img.usecurling.com/ppl/256?gender=female'
+        try {
+          guestPhotoPng = await createCircularGuestPhotoDataUrl(rawPhotoUrl, 512)
+        } catch (e) {
+          console.warn('Fallback foto convidado:', e)
+          guestPhotoPng = rawPhotoUrl
+        }
       }
+
+      // Preparar logo da empresa se houver
+      let companyLogoDataUrl: string | undefined = undefined
+      if (convite.logomarca_empresa) {
+        companyLogoDataUrl = getFileUrl(convite, convite.logomarca_empresa)
+      }
+
+      const fileName = buildInvitePdfFileName(convite.nome)
+
+      try {
+        await downloadInvitePdf({
+          nome: convite.nome,
+          tipoConvidado: convite.tipo_convidado,
+          dataGravacao: formatDateBR(convite.data_gravacao),
+          horario: convite.horario,
+          apresentacao: convite.apresentacao,
+          enderecoGravacao: convite.endereco_gravacao,
+          linkLocalizacao: convite.link_localizacao,
+          guestPhotoDataUrl: guestPhotoPng,
+          companyLogoDataUrl,
+        })
+      } catch (winErr: unknown) {
+        console.warn(
+          'Janela dedicada bloqueada ou com falha, acionando fallback window.print:',
+          winErr,
+        )
+        // Fallback robusto no mesmo DOM
+        window.print()
+      }
+
+      // Registrar auditoria de emissão/download do PDF
+      AuditoriaService.registrarEvento({
+        tipo_acao: 'download',
+        area_sistema: 'Convites',
+        descricao: `Geração do arquivo PDF do convite oficial de "${convite.nome}" (${fileName}).`,
+        registro_afetado: convite.id,
+        tabela_afetada: 'convites',
+        resultado: 'sucesso',
+        metadata: {
+          convidado_nome: convite.nome,
+          tipo_convidado: convite.tipo_convidado,
+          data_gravacao: convite.data_gravacao,
+          nome_arquivo: fileName,
+        },
+      }).catch((auditErr) => {
+        console.warn('[AdminConvitesScreen] Falha ao registrar auditoria de convite:', auditErr)
+      })
+
+      toast.success('Diálogo de PDF/impressão aberto com sucesso!', { id: 'pdf-convite-toast' })
+    } catch (err: unknown) {
+      console.error('Erro ao gerar PDF do convite:', err)
+      const msg =
+        err &&
+        typeof err === 'object' &&
+        'message' in err &&
+        String((err as { message: string }).message).includes('bloquead')
+          ? 'Não foi possível abrir o PDF — verifique o bloqueador de pop-ups do navegador e tente novamente.'
+          : 'Não foi possível gerar o PDF — tente novamente ou baixe como JPEG.'
+      toast.error(msg, { id: 'pdf-convite-toast' })
+    } finally {
+      setGeneratingPdf(false)
     }
-    window.print()
   }
 
   /**
@@ -1177,7 +1254,6 @@ export default function AdminConvitesScreen() {
                     <Edit className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
                     <span>Editar</span>
                   </Button>
-
                   {/* Botão Baixar JPEG */}
                   <Button
                     onClick={() => handleDownloadJpeg(previewConvite)}
@@ -1191,16 +1267,20 @@ export default function AdminConvitesScreen() {
                     )}
                     <span>JPEG</span>
                   </Button>
-
                   {/* Botão Imprimir / Salvar PDF */}
                   <Button
-                    onClick={handlePrint}
-                    title="Imprimir ou Salvar PDF em formato A5 (148 x 210 mm) fiel ao preview"
+                    onClick={() => handleGeneratePdf(previewConvite)}
+                    disabled={generatingPdf}
+                    title="Gerar e salvar PDF oficial em formato A5 (148 x 210 mm) fiel ao preview"
                     className="bg-vinho hover:bg-vinho-light text-white text-[11px] sm:text-xs font-bold px-2 sm:px-3.5 py-2 min-h-[44px] sm:min-h-[36px] rounded-xl sm:rounded-full flex items-center justify-center gap-1 shadow-xs active:scale-95"
                   >
-                    <Printer className="w-3.5 h-3.5 text-dourado shrink-0" />
+                    {generatingPdf ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-dourado shrink-0" />
+                    ) : (
+                      <Printer className="w-3.5 h-3.5 text-dourado shrink-0" />
+                    )}
                     <span>Gerar PDF</span>
-                  </Button>
+                  </Button>{' '}
                 </div>
               </div>
 

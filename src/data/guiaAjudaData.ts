@@ -611,7 +611,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Faça o upload da foto em alta resolução do convidado e, opcionalmente, da logomarca da empresa.',
           'Revise ou ajuste livremente a mensagem de apresentação/boas-vindas.',
           'Visualize o convite em tempo real no preview interativo: a foto do convidado ganha protagonismo nobre no centro do convite com medalhão circular e moldura dupla dourada. O recorte circular é incorporado diretamente à própria imagem (Canvas com canal alfa transparente e foco facial a 18% do topo), garantindo que a foto nunca apareça cortada ou vazando fora do círculo em nenhum dispositivo — seja no PC, no visualizador de PDF do celular ou ao enviar pelo WhatsApp.',
-          'Clique em "JPEG" para salvar a imagem em alta resolução e enviar pelo WhatsApp, ou em "Gerar PDF" para exportar o arquivo formal de impressão em tamanho oficial A5 com fidelidade visual idêntica ao preview, foto circular blindada em qualquer visualizador e link ativo do Maps.',
+          'Clique em "JPEG" para salvar a imagem em alta resolução e enviar pelo WhatsApp, ou em "Gerar PDF" para exportar o arquivo formal de impressão em tamanho oficial A5 em janela dedicada ou diálogo direto, com fidelidade visual idêntica ao preview, foto circular blindada em qualquer visualizador e link ativo do Maps.',
         ],
         botoesPrincipais: [
           {
@@ -645,7 +645,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             nome: 'Gerar PDF (Formato Oficial A5)',
             onde: 'Barra superior de ações do preview',
             paraQueServe:
-              'Abre a janela de impressão/PDF configurada em formato A5 (148 x 210 mm) sem margens e com todas as cores fiéis ao preview.',
+              'Abre a janela dedicada de impressão/PDF configurada em formato A5 (148 x 210 mm) sem margens, com todas as cores fiéis ao preview e fallback automático em caso de bloqueio de pop-up.',
           },
           {
             nome: '+ Salvar Convite no Histórico',
@@ -660,7 +660,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
               'Abre a rota e localização exata do estúdio no Google Maps diretamente do documento.',
           },
         ],
-        dica: 'Dica para salvar o PDF perfeito: ao clicar em "Gerar PDF", na janela de impressão do navegador, certifique-se de que a opção "Gráficos de segundo plano" (Background graphics) esteja marcada para preservar todos os gradientes de vinho e dourado. A foto do convidado é pré-recortada em PNG transparente, permanecendo 100% redonda e idêntica tanto em computadores quanto em smartphones e WhatsApp. O layout já está travado em 1 página A5 oficial sem margens indesejadas.',
+        dica: 'Dica para salvar o PDF perfeito: ao clicar em "Gerar PDF", o sistema abre uma janela dedicada configurada com CSS @page A5 oficial. Na janela de impressão do navegador, certifique-se de que a opção "Gráficos de segundo plano" (Background graphics) esteja marcada para preservar todos os gradientes de vinho e dourado. Caso o navegador bloqueie novas abas, um fallback automático de impressão é acionado com aviso visual.',
       },
       {
         id: 'auditoria-sistema',

@@ -992,3 +992,743 @@ export function downloadCanvasAsJpeg(canvas: HTMLCanvasElement, filename: string
   link.click()
   document.body.removeChild(link)
 }
+
+/**
+ * Utilitário para geração de slug seguro no nome de arquivo de convite
+ */
+export function buildInvitePdfFileName(nome: string): string {
+  const safeGuestSlug =
+    (nome || 'convidado')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '') || 'convidado'
+
+  return `convite_coffeecast_${safeGuestSlug}.pdf`
+}
+
+function escapeHtml(text: string | null | undefined): string {
+  if (!text) return ''
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+export interface BuildInvitePdfHtmlOptions {
+  nome: string
+  tipoConvidado?: 'convidado' | 'convidada'
+  dataGravacao: string
+  horario: string
+  apresentacao: string
+  enderecoGravacao?: string
+  linkLocalizacao?: string
+  guestPhotoDataUrl?: string
+  companyLogoDataUrl?: string
+}
+
+/**
+ * Monta o documento HTML completo com CSS @page A5 portrait oficial (148mm x 210mm)
+ * com margens zero e fidelidade gráfica total para gerar o PDF em janela dedicada.
+ */
+export function buildInvitePdfHtml(options: BuildInvitePdfHtmlOptions): string {
+  const guestPhoto = options.guestPhotoDataUrl || 'https://img.usecurling.com/ppl/256?gender=female'
+  const isConvidado = options.tipoConvidado === 'convidado'
+  const isConvidada = options.tipoConvidado === 'convidada'
+  const honorLabel = isConvidada
+    ? 'Convidada de Honra'
+    : isConvidado
+      ? 'Convidado de Honra'
+      : 'Convidado(a) de Honra'
+
+  const safeNome = escapeHtml(options.nome || 'Convidado(a) Especial')
+  const safeData = escapeHtml(options.dataGravacao)
+  const safeHorario = escapeHtml(options.horario || '14:00')
+  const safeApresentacao = escapeHtml(options.apresentacao || '')
+  const safeEndereco = escapeHtml(options.enderecoGravacao?.trim() || '')
+  const safeLink = escapeHtml(options.linkLocalizacao?.trim() || '')
+
+  const rawLen = (options.apresentacao || '').length
+  const lineCount = (options.apresentacao || '').split(/\r?\n/).length
+
+  let fontSize = '8.8pt'
+  let lineHeight = '1.35'
+  let marginY = '2mm auto 3mm auto'
+  if (rawLen > 400 || lineCount > 7) {
+    fontSize = '6.8pt'
+    lineHeight = '1.2'
+    marginY = '1mm auto 1.5mm auto'
+  } else if (rawLen > 280 || lineCount > 5) {
+    fontSize = '7.5pt'
+    lineHeight = '1.25'
+    marginY = '1.2mm auto 2mm auto'
+  } else if (rawLen > 180 || lineCount > 3) {
+    fontSize = '8.2pt'
+    lineHeight = '1.3'
+    marginY = '1.5mm auto 2.5mm auto'
+  }
+
+  const hasExtraLocation = Boolean(safeEndereco || safeLink)
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Convite Oficial - ${safeNome}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: 148mm 210mm;
+      margin: 0;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 148mm;
+      height: 210mm;
+      max-width: 148mm;
+      max-height: 210mm;
+      overflow: hidden;
+      background: #4B1E3F;
+      color: #FAF8F5;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* BARRA SUPERIOR DE AÇÕES NA VISUALIZAÇÃO INTERATIVA EM TELA */
+    .screen-actions-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 99999;
+      background: #36142D;
+      color: #FAF8F5;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 2px solid #D4AF37;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .screen-actions-bar .info {
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .screen-actions-bar .btn-print {
+      background: #D4AF37;
+      color: #4B1E3F;
+      border: none;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.15s ease, background 0.15s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+
+    .screen-actions-bar .btn-print:hover {
+      background: #E5C358;
+      transform: scale(1.02);
+    }
+
+    .screen-actions-bar .btn-close {
+      background: rgba(255,255,255,0.15);
+      color: #FAF8F5;
+      border: 1px solid rgba(255,255,255,0.25);
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      cursor: pointer;
+    }
+
+    .screen-tip {
+      font-size: 11px;
+      color: #F3E5AB;
+      margin-left: 6px;
+    }
+
+    @media print {
+      .screen-actions-bar {
+        display: none !important;
+      }
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #4B1E3F !important;
+        width: 148mm !important;
+        height: 210mm !important;
+        max-width: 148mm !important;
+        max-height: 210mm !important;
+        overflow: hidden !important;
+      }
+      .page-container {
+        margin-top: 0 !important;
+        box-shadow: none !important;
+      }
+    }
+
+    @media screen {
+      body {
+        background: #1F0B18;
+        padding: 64px 0 24px 0;
+        min-height: 100vh;
+        width: 100vw;
+        max-width: none;
+        max-height: none;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    .page-container {
+      width: 148mm;
+      height: 210mm;
+      max-width: 148mm;
+      max-height: 210mm;
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, #4B1E3F 0%, #36142D 35%, #2A0F23 70%, #4B1E3F 100%);
+      color: #FAF8F5;
+      padding: 8mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      page-break-after: avoid;
+      break-after: avoid;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.6);
+    }
+
+    /* Bordas decorativas douradas */
+    .border-outer {
+      position: absolute;
+      top: 3.5mm;
+      left: 3.5mm;
+      right: 3.5mm;
+      bottom: 3.5mm;
+      border: 1.6px solid rgba(212, 175, 55, 0.65);
+      border-radius: 8mm;
+      pointer-events: none;
+    }
+
+    .border-inner {
+      position: absolute;
+      top: 5.5mm;
+      left: 5.5mm;
+      right: 5.5mm;
+      bottom: 5.5mm;
+      border: 0.8px solid rgba(212, 175, 55, 0.3);
+      border-radius: 6mm;
+      pointer-events: none;
+    }
+
+    /* Cabeçalho */
+    .header-block {
+      text-align: center;
+      position: relative;
+      z-index: 10;
+      margin-top: 1mm;
+      margin-bottom: 1mm;
+    }
+
+    .header-logo {
+      width: 32mm;
+      max-height: 14mm;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+      display: block;
+      margin: 0 auto 0.8mm auto;
+    }
+
+    .header-subtitle {
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      color: #F3E5AB;
+      font-weight: 700;
+      margin: 0.5mm 0 0 0;
+    }
+
+    /* Card Central */
+    .card-block {
+      background-color: rgba(42, 15, 35, 0.88);
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      border-radius: 6mm;
+      padding: 4mm 4.5mm;
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      margin: 1mm 0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .company-logo-badge {
+      position: absolute;
+      top: 3mm;
+      right: 3.5mm;
+      z-index: 20;
+    }
+
+    .company-logo-badge img {
+      height: 8.5mm;
+      max-width: 26mm;
+      object-fit: contain;
+      border-radius: 2mm;
+      background-color: #FFFFFF;
+      padding: 0.8mm;
+      border: 0.8px solid rgba(212, 175, 55, 0.5);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+
+    /* Foto circular do convidado */
+    .photo-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2mm;
+      padding-top: 1mm;
+      overflow: visible;
+    }
+
+    .photo-frame {
+      position: relative;
+      width: 44mm;
+      height: 44mm;
+      min-width: 44mm;
+      min-height: 44mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+      flex-shrink: 0;
+    }
+
+    .photo-gold-ring {
+      position: relative;
+      width: 40mm;
+      height: 40mm;
+      min-width: 40mm;
+      min-height: 40mm;
+      max-width: 40mm;
+      max-height: 40mm;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FFF2B2 0%, #D4AF37 50%, #B38612 100%);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+      padding: 1.2mm;
+      box-sizing: border-box;
+      overflow: hidden;
+      flex-shrink: 0;
+      -webkit-mask-image: -webkit-radial-gradient(circle, white 100%, black 100%);
+      mask-image: radial-gradient(circle, white 100%, black 100%);
+    }
+
+    .photo-dark-ring {
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      background-color: #2A0F23;
+      padding: 1mm;
+      box-sizing: border-box;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      -webkit-mask-image: -webkit-radial-gradient(circle, white 100%, black 100%);
+      mask-image: radial-gradient(circle, white 100%, black 100%);
+    }
+
+    .photo-img {
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      object-fit: cover;
+      object-position: 50% 18%;
+      border: 1.2px solid rgba(212, 175, 55, 0.85);
+      display: block;
+      box-sizing: border-box;
+      flex-shrink: 0;
+      background-color: transparent;
+    }
+
+    .photo-star {
+      position: absolute;
+      bottom: 0.8mm;
+      right: 0.8mm;
+      background: transparent !important;
+      border: none !important;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+      z-index: 10;
+    }
+
+    /* Títulos */
+    .guest-label {
+      font-size: 7.5pt;
+      color: #F3E5AB;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 2px;
+      display: block;
+    }
+
+    .guest-name {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 17pt;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin: 0.8mm 0 0 0;
+      line-height: 1.15;
+      letter-spacing: -0.2px;
+    }
+
+    .separator-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2mm;
+      margin: 1.5mm auto;
+      max-width: 40mm;
+    }
+
+    .separator-line .bar {
+      height: 1px;
+      flex: 1;
+      background-color: rgba(212, 175, 55, 0.8);
+    }
+
+    .separator-line .dot {
+      width: 1.6mm;
+      height: 1.6mm;
+      border-radius: 50%;
+      background-color: #D4AF37;
+    }
+
+    .presentation-text {
+      font-size: ${fontSize};
+      line-height: ${lineHeight};
+      color: rgba(250, 248, 245, 0.95);
+      font-weight: 300;
+      font-style: italic;
+      margin: ${marginY};
+      max-width: 116mm;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      text-align: center;
+    }
+
+    /* Informações de Gravação */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5mm;
+      padding-top: 2.5mm;
+      border-top: 0.8px solid rgba(212, 175, 55, 0.35);
+    }
+
+    .info-card {
+      background-color: rgba(75, 30, 63, 0.75);
+      padding: 2mm 2.5mm;
+      border-radius: 2.5mm;
+      border: 0.8px solid rgba(212, 175, 55, 0.25);
+      text-align: center;
+    }
+
+    .info-card-label {
+      font-size: 6.5pt;
+      color: #D4AF37;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 1px;
+      display: block;
+      margin-bottom: 0.6mm;
+    }
+
+    .info-card-value {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #FFFFFF;
+      display: block;
+    }
+
+    /* Bloco de Localização e Endereço */
+    .location-box {
+      margin-top: 2.5mm;
+      background-color: rgba(75, 30, 63, 0.85);
+      padding: 2.5mm 3mm;
+      border-radius: 2.5mm;
+      border: 0.8px solid rgba(212, 175, 55, 0.35);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .location-address-label {
+      font-size: 6.5pt;
+      color: #D4AF37;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 1px;
+      display: block;
+      margin-bottom: 0.6mm;
+      text-align: center;
+    }
+
+    .location-address-value {
+      font-size: 8pt;
+      color: #FFFFFF;
+      line-height: 1.3;
+      display: block;
+      text-align: center;
+    }
+
+    .location-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.4mm 4mm;
+      background-color: rgba(212, 175, 55, 0.22);
+      border: 0.9px solid #D4AF37;
+      border-radius: 2mm;
+      color: #FFF2B2 !important;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-decoration: none !important;
+      letter-spacing: 0.4px;
+      margin: 0 auto;
+    }
+
+    /* Rodapé */
+    .footer-block {
+      text-align: center;
+      position: relative;
+      z-index: 10;
+      margin-bottom: 1.5mm;
+      margin-top: 1mm;
+    }
+
+    .footer-quote {
+      font-size: 8.5pt;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      color: #F3E5AB;
+      margin: 0 0 1mm 0;
+    }
+
+    .footer-brand {
+      font-size: 7pt;
+      color: rgba(250, 248, 245, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="screen-actions-bar">
+    <div class="info">
+      <strong style="color:#D4AF37;">CoffeeCast 4.0</strong>
+      <span>•</span>
+      <span>Convite Oficial de <strong>${safeNome}</strong></span>
+      <span class="screen-tip">(Formato A5 • Ative "Gráficos de segundo plano" para salvar)</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button class="btn-print" onclick="window.print()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+        <span>Salvar PDF / Imprimir</span>
+      </button>
+      <button class="btn-close" onclick="window.close()">Fechar</button>
+    </div>
+  </div>
+
+  <div class="page-container">
+    <div class="border-outer"></div>
+    <div class="border-inner"></div>
+
+    <!-- Cabeçalho -->
+    <div class="header-block">
+      <img src="${officialLogoImg}" alt="CoffeeCast 4.0" class="header-logo" />
+      <p class="header-subtitle">Convite Oficial de Participação</p>
+    </div>
+
+    <!-- Card Central -->
+    <div class="card-block">
+      ${
+        options.companyLogoDataUrl
+          ? `<div class="company-logo-badge"><img src="${options.companyLogoDataUrl}" alt="Empresa Convidada" /></div>`
+          : ''
+      }
+
+      <!-- Foto da pessoa convidada com medalhão de anéis dourados -->
+      <div class="photo-wrapper">
+        <div class="photo-frame">
+          <div class="photo-gold-ring">
+            <div class="photo-dark-ring">
+              <img src="${guestPhoto}" alt="${safeNome}" class="photo-img" />
+            </div>
+          </div>
+          <!-- Estrela dourada no canto sem fundo quadrado -->
+          <div class="photo-star">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#D4AF37" stroke="#FFF2B2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rótulo e Nome -->
+      <div style="margin-bottom: 1.2mm;">
+        <span class="guest-label">${honorLabel}</span>
+        <h2 class="guest-name">${safeNome}</h2>
+      </div>
+
+      <!-- Linha divisória -->
+      <div class="separator-line">
+        <div class="bar"></div>
+        <div class="dot"></div>
+        <div class="bar"></div>
+      </div>
+
+      <!-- Texto de Apresentação -->
+      <p class="presentation-text">"${safeApresentacao}"</p>
+
+      <!-- Informações de Gravação -->
+      <div class="info-grid">
+        <div class="info-card">
+          <span class="info-card-label">Data da Gravação</span>
+          <span class="info-card-value">${safeData}</span>
+        </div>
+        <div class="info-card">
+          <span class="info-card-label">Horário Marcado</span>
+          <span class="info-card-value">${safeHorario}</span>
+        </div>
+      </div>
+
+      <!-- Endereço e Localização -->
+      ${
+        hasExtraLocation
+          ? `
+      <div class="location-box">
+        ${
+          safeEndereco
+            ? `
+        <div style="margin-bottom: ${safeLink ? '1.8mm' : '0'}; width: 100%;">
+          <span class="location-address-label">Endereço da gravação:</span>
+          <span class="location-address-value">${safeEndereco}</span>
+        </div>`
+            : ''
+        }
+
+        ${
+          safeLink
+            ? `
+        <div style="padding-top: ${safeEndereco ? '1.8mm' : '0'}; border-top: ${safeEndereco ? '0.6px solid rgba(212, 175, 55, 0.25)' : 'none'}; width: 100%; display: flex; flex-direction: column; align-items: center;">
+          <span class="location-address-label">Localização</span>
+          <a href="${safeLink}" target="_blank" rel="noopener noreferrer" class="location-btn">
+            📍 Ver no Google Maps
+          </a>
+        </div>`
+            : ''
+        }
+      </div>`
+          : ''
+      }
+    </div>
+
+    <!-- Rodapé -->
+    <div class="footer-block">
+      <p class="footer-quote">"Aqui o café pode até esfriar, mas o papo nunca! ☕️"</p>
+      <p class="footer-brand">Equipe CoffeeCast 4.0 • Aline Lana</p>
+    </div>
+  </div>
+</body>
+</html>`
+}
+
+/**
+ * Dispara o download/impressão em PDF do convite através de uma janela dedicada limpa,
+ * com CSS @page A5 portrait oficial (148 x 210 mm) e suporte a fallback de janela/impressão direta.
+ */
+export async function downloadInvitePdf(options: BuildInvitePdfHtmlOptions): Promise<void> {
+  const fileName = buildInvitePdfFileName(options.nome)
+  const htmlContent = buildInvitePdfHtml(options)
+
+  const printWindow = window.open(
+    '',
+    '_blank',
+    'width=750,height=960,menubar=no,toolbar=no,location=no,status=no',
+  )
+  if (!printWindow) {
+    throw new Error('Abertura de nova janela bloqueada pelo navegador.')
+  }
+
+  printWindow.document.open()
+  printWindow.document.write(htmlContent)
+  printWindow.document.close()
+
+  // Define o título do documento para sugestão do nome do PDF ao salvar
+  printWindow.document.title = fileName.replace(/\.pdf$/i, '')
+
+  // Aguarda fontes e imagens renderizarem antes de invocar print
+  await new Promise((resolve) => {
+    let resolved = false
+    const finish = () => {
+      if (!resolved) {
+        resolved = true
+        resolve(true)
+      }
+    }
+
+    printWindow.onload = () => {
+      setTimeout(finish, 250)
+    }
+
+    setTimeout(finish, 800)
+  })
+
+  try {
+    printWindow.focus()
+    printWindow.print()
+  } catch (err) {
+    console.warn('Falha ao abrir diálogo de impressão da janela do PDF de convite:', err)
+  }
+}
