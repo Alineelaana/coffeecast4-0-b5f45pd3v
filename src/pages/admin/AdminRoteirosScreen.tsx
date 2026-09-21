@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import pb from '@/lib/pocketbase/client'
 import { getFileUrl, formatDateBR } from '@/lib/formatters'
 import type { RoteiroConvidadoRecord, RoteiroConvidadoStatus } from '@/types/database'
+import { downloadRoteiroPdf, buildRoteiroPdfFileName } from '@/lib/roteiroPdfExporter'
+import { AuditoriaService } from '@/services/auditoria'
 import {
   Table,
   TableBody,
@@ -72,6 +74,49 @@ export default function AdminRoteirosScreen() {
   const [selectedRoteiro, setSelectedRoteiro] = useState<RoteiroConvidadoRecord | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+  const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null)
+
+  // Download do PDF com as respostas do convidado
+  const handleDownloadPdf = async (item: RoteiroConvidadoRecord, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    try {
+      setDownloadingPdfId(item.id)
+      await downloadRoteiroPdf(item)
+
+      // Registrar auditoria do download
+      const fileName = buildRoteiroPdfFileName(item.nome)
+      AuditoriaService.registrarEvento({
+        tipo_acao: 'download',
+        area_sistema: 'Roteiros & Pautas',
+        descricao: `Download em PDF das respostas do roteiro de "${item.nome}" (${fileName}).`,
+        registro_afetado: item.id,
+        tabela_afetada: 'roteiros_convidados',
+        resultado: 'sucesso',
+        metadata: {
+          convidado_nome: item.nome,
+          nome_arquivo: fileName,
+          status_roteiro: item.status,
+          empresa: item.nome_empresa || null,
+        },
+      }).catch((auditErr) => {
+        console.warn('[AdminRoteirosScreen] Falha ao registrar auditoria de download:', auditErr)
+      })
+
+      toast.success(`PDF das respostas de "${item.nome}" gerado com sucesso!`)
+    } catch (err: unknown) {
+      console.error('Erro ao gerar PDF do roteiro:', err)
+      const msg =
+        err &&
+        typeof err === 'object' &&
+        'message' in err &&
+        String((err as { message: string }).message).includes('bloqueada')
+          ? 'O navegador bloqueou a abertura da janela. Permita pop-ups para gerar o PDF.'
+          : 'Não foi possível gerar o PDF — tente novamente.'
+      toast.error(msg)
+    } finally {
+      setDownloadingPdfId(null)
+    }
+  }
 
   // Edição do roteiro pronto (texto e arquivo)
   const [roteiroTexto, setRoteiroTexto] = useState('')
@@ -527,16 +572,36 @@ export default function AdminRoteirosScreen() {
                       </p>
                     )}
 
-                    <div className="flex items-center justify-between pt-1 border-t border-vinho/5">
+                    <div className="flex items-center justify-between pt-2 border-t border-vinho/5 gap-2">
                       <span className="text-[11px] text-dourado-dark font-medium flex items-center gap-1">
-                        <Eye className="w-3.5 h-3.5" /> Ver respostas completas
+                        <Eye className="w-3.5 h-3.5" /> Ver respostas
                       </span>
 
-                      {item.roteiro_final_texto && (
-                        <Badge className="bg-dourado/20 text-vinho border border-dourado/40 text-[9px]">
-                          Roteiro Pronto Anexado
-                        </Badge>
-                      )}
+                      <div
+                        className="flex items-center gap-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {item.roteiro_final_texto && (
+                          <Badge className="bg-dourado/20 text-vinho border border-dourado/40 text-[9px]">
+                            Roteiro Pronto
+                          </Badge>
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={downloadingPdfId === item.id}
+                          onClick={(e) => handleDownloadPdf(item, e)}
+                          className="h-7 px-2.5 text-[11px] bg-vinho hover:bg-vinho-light text-white font-semibold rounded-lg flex items-center gap-1 shadow-2xs"
+                          title="Baixar em PDF as respostas do convidado"
+                        >
+                          {downloadingPdfId === item.id ? (
+                            <RefreshCw className="w-3 h-3 animate-spin text-dourado" />
+                          ) : (
+                            <Download className="w-3 h-3 text-dourado" />
+                          )}
+                          <span>Baixar PDF</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )
@@ -569,7 +634,7 @@ export default function AdminRoteirosScreen() {
                     <TableHead className="font-bold text-vinho text-xs">Tema Desejado</TableHead>
                     <TableHead className="font-bold text-vinho text-xs">Roteiro Final</TableHead>
                     <TableHead className="font-bold text-vinho text-xs">Status</TableHead>
-                    <TableHead className="w-36 text-right font-bold text-vinho text-xs">
+                    <TableHead className="w-48 text-right font-bold text-vinho text-xs">
                       Ações
                     </TableHead>
                   </TableRow>
@@ -645,6 +710,21 @@ export default function AdminRoteirosScreen() {
                         </TableCell>
                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="sm"
+                              disabled={downloadingPdfId === item.id}
+                              onClick={(e) => handleDownloadPdf(item, e)}
+                              className="h-8 px-2.5 text-xs bg-vinho hover:bg-vinho-light text-white font-medium rounded-lg flex items-center gap-1.5 shadow-2xs"
+                              title="Baixar em PDF as respostas enviadas pelo convidado"
+                            >
+                              {downloadingPdfId === item.id ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin text-dourado" />
+                              ) : (
+                                <Download className="w-3.5 h-3.5 text-dourado" />
+                              )}
+                              <span>Baixar PDF</span>
+                            </Button>
+
                             {item.status !== 'lida' && (
                               <Button
                                 size="sm"
@@ -941,7 +1021,7 @@ export default function AdminRoteirosScreen() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge
                       className={`text-xs font-bold px-3 py-1 ${
                         selectedRoteiro.status === 'pendente'
@@ -957,6 +1037,21 @@ export default function AdminRoteirosScreen() {
                           ? 'Lida'
                           : 'Arquivada'}
                     </Badge>
+
+                    <Button
+                      size="sm"
+                      disabled={downloadingPdfId === selectedRoteiro.id}
+                      onClick={() => handleDownloadPdf(selectedRoteiro)}
+                      className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold rounded-xl h-9 px-3 flex items-center gap-1.5 shadow-sm active:scale-95"
+                      title="Baixar as respostas do convidado formatadas em PDF (A4)"
+                    >
+                      {downloadingPdfId === selectedRoteiro.id ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-dourado" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5 text-dourado" />
+                      )}
+                      <span>Baixar PDF</span>
+                    </Button>
 
                     {selectedRoteiro.status !== 'lida' && (
                       <Button

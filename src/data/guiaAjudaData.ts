@@ -377,11 +377,19 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
         passoAPasso: [
           'Localize o convidado na lista de roteiros recebidos.',
           'Clique em "Visualizar Roteiro" para ver os dados familiares, histórico de negócios, temas que ele quer enfatizar e temas sensíveis a evitar.',
+          'Clique no botão "Baixar PDF" (disponível tanto na lista quanto no modal de detalhes) para gerar um documento formal A4 com cabeçalho oficial CoffeeCast 4.0, logo, dados e todas as respostas do convidado já prontas para impressão ou salvamento.',
           'Clique no botão "Gerar Sugestão com a Nine" para que a IA analise as respostas e crie um roteiro pronto com perguntas recomendadas para a entrevista.',
           'Edite o texto do roteiro no editor e, se desejar, anexe o arquivo final (PDF/DOCX) aprovado pela produção.',
           'Atualize o status para "Lido" ou "Arquivado".',
         ],
         botoesPrincipais: [
+          {
+            nome: 'Baixar PDF das Respostas',
+            onde: 'Na coluna de ações de cada roteiro e no topo do modal de detalhes',
+            paraQueServe:
+              'Gera um arquivo PDF em formato A4 padronizado na identidade visual do CoffeeCast contendo todas as perguntas e respostas preenchidas pelo convidado.',
+            icone: 'Download',
+          },
           {
             nome: 'Gerar Pauta com IA (Nine)',
             onde: 'Dentro do modal de detalhes do roteiro',
@@ -399,6 +407,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             paraQueServe: 'Faz download da imagem em alta resolução enviada pelo convidado.',
           },
         ],
+        dica: 'O PDF das respostas gerado possui o cabeçalho e as cores da marca (#4B1E3F e #D4AF37), organiza os temas sensíveis com destaque de alerta visual para a produção e salva o arquivo com o nome personalizado "roteiro-[nome-do-convidado].pdf". Cada download é registrado automaticamente na Auditoria do Sistema.',
       },
       {
         id: 'depoimentos-moderacao',
