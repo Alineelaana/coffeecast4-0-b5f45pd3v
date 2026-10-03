@@ -43,6 +43,11 @@ routerAdd(
         userRecord.set('bio', body.bio.trim())
       }
 
+      // 3.1 Remover Avatar se explicitamente solicitado (ex: removeAvatar === true ou avatar === "")
+      if (body.removeAvatar === true || body.avatar === '') {
+        userRecord.set('avatar', '')
+      }
+
       // 4. Alteração de Senha (opcional)
       // Se body.newPassword for enviado, validações completas
       const newPassword = typeof body.newPassword === 'string' ? body.newPassword.trim() : ''

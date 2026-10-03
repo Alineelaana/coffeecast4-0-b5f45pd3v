@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import pb from '@/lib/pocketbase/client'
 import { getFileUrl } from '@/lib/formatters'
+import { AuditoriaService } from '@/services/auditoria'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -29,15 +30,15 @@ import {
   Save,
   Crown,
   Award,
-  ExternalLink,
   RefreshCw,
   LogOut,
   MessageSquare,
+  UploadCloud,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function PerfilScreen() {
-  const { user, role, isMaster, isAdm, isGerencial, isMembro, refreshUser, logout } = useAuth()
+  const { user, role, isMaster, isAdm, isGerencial, refreshUser, logout } = useAuth()
   const navigate = useNavigate()
 
   // Estados dos dados do perfil
@@ -61,6 +62,7 @@ export default function PerfilScreen() {
 
   // Estados de feedback de carregamento
   const [savingProfile, setSavingProfile] = useState(false)
+  const [savingAvatar, setSavingAvatar] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
 
   // Popula os campos com os dados atuais do usuário (regra de ouro: nunca apagar dados existentes)
@@ -81,20 +83,27 @@ export default function PerfilScreen() {
     }
   }, [user])
 
-  // Processamento do arquivo de imagem do avatar
+  // Processamento do arquivo de imagem do avatar com validações claras
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     // Validação de tipo de arquivo
-    if (!file.type.startsWith('image/')) {
-      toast.error('Por favor, selecione um arquivo de imagem válido (JPEG, PNG, WebP).')
+    const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!acceptedTypes.includes(file.type) && !file.type.startsWith('image/')) {
+      toast.error(
+        'Não foi possível carregar o arquivo — selecione uma imagem válida (JPG, PNG ou WebP).',
+      )
+      if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
 
-    // Validação de tamanho (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('A imagem deve ter no máximo 5MB.')
+    // Validação de tamanho (máximo 8MB)
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error(
+        'A imagem selecionada ultrapassa o limite permitido de 8MB. Escolha um arquivo menor.',
+      )
+      if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
 
@@ -107,6 +116,10 @@ export default function PerfilScreen() {
       setAvatarPreview(event.target?.result as string)
     }
     reader.readAsDataURL(file)
+
+    toast.info(
+      'Foto selecionada! Clique em "Salvar Esta Foto Agora" ou em "Salvar Dados Pessoais" para confirmar.',
+    )
   }
 
   // Remove a foto de perfil selecionada ou existente
@@ -118,11 +131,80 @@ export default function PerfilScreen() {
       fileInputRef.current.value = ''
     }
     toast.info(
-      'Foto removida da pré-visualização. Clique em "Salvar Dados Pessoais" para confirmar.',
+      'Foto marcada para remoção. Clique em "Confirmar Remoção da Foto" ou em "Salvar Dados Pessoais" para concluir.',
     )
   }
 
-  // Salvar Informações do Perfil (Nome, Telefone, Bio e Avatar)
+  // Salvar especificamente a foto de perfil (ação dedicada e direta)
+  const handleSaveAvatarOnly = async () => {
+    if (!user) return
+    if (!avatarFile && !removeAvatarRequested) {
+      toast.info('Selecione uma nova imagem antes de salvar a foto.')
+      return
+    }
+
+    setSavingAvatar(true)
+    try {
+      let updatedUserRecord: any = null
+
+      if (avatarFile) {
+        const formData = new FormData()
+        formData.append('avatar', avatarFile)
+        updatedUserRecord = await pb.collection('users').update(user.id, formData)
+      } else if (removeAvatarRequested) {
+        const formData = new FormData()
+        formData.append('avatar', '')
+        updatedUserRecord = await pb.collection('users').update(user.id, formData)
+      }
+
+      // Atualiza o estado da authStore e do contexto de autenticação imediatamente
+      if (updatedUserRecord) {
+        pb.authStore.save(pb.authStore.token, updatedUserRecord)
+      }
+      await refreshUser()
+      setAvatarFile(null)
+      setRemoveAvatarRequested(false)
+
+      // Registrar evento de auditoria
+      try {
+        await AuditoriaService.registrarEvento({
+          tipo_acao: 'edicao',
+          area_sistema: 'Perfil do Usuário',
+          descricao: removeAvatarRequested
+            ? `Foto de perfil removida pelo usuário: ${user.name || user.email} (${user.role})`
+            : `Foto de perfil atualizada com sucesso por: ${user.name || user.email} (${user.role})`,
+          usuario_id: user.id,
+          usuario_email: user.email,
+          usuario_nome: user.name || user.email,
+          usuario_role: user.role,
+          tabela_afetada: 'users',
+          registro_afetado: user.id,
+          resultado: 'sucesso',
+          metadata: {
+            tipo: removeAvatarRequested ? 'remocao_foto' : 'atualizacao_foto',
+            avatar: updatedUserRecord?.avatar || '',
+          },
+        })
+      } catch (_) {
+        // auditoria silenciosa
+      }
+
+      toast.success(
+        removeAvatarRequested
+          ? 'Foto de perfil removida com sucesso!'
+          : 'Foto de perfil atualizada com sucesso!',
+      )
+    } catch (err: any) {
+      console.error('Erro ao salvar foto de perfil:', err)
+      toast.error(
+        'Não foi possível salvar a foto — verifique o formato (JPG/PNG/WebP) e tente novamente.',
+      )
+    } finally {
+      setSavingAvatar(false)
+    }
+  }
+
+  // Salvar Informações do Perfil (Nome, Telefone, Bio e Avatar se houver)
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
@@ -134,8 +216,11 @@ export default function PerfilScreen() {
     }
 
     setSavingProfile(true)
+    const hadAvatarChange = Boolean(avatarFile || removeAvatarRequested)
     try {
-      // 1. Se houver upload de avatar ou solicitação de remoção, atualizamos diretamente na coleção via FormData
+      let updatedUserRecord: any = null
+
+      // Se houver upload de avatar ou solicitação de remoção, enviamos via FormData
       if (avatarFile || removeAvatarRequested) {
         const formData = new FormData()
         formData.append('name', trimmedName)
@@ -148,29 +233,60 @@ export default function PerfilScreen() {
           formData.append('avatar', '')
         }
 
-        await pb.collection('users').update(user.id, formData)
+        updatedUserRecord = await pb.collection('users').update(user.id, formData)
       } else {
-        // Se não houver alteração de arquivo, usamos o endpoint seguro ou SDK direto
-        // O SDK direto com authStore ativo já atende a regra de update do próprio usuário
-        await pb.collection('users').update(user.id, {
+        updatedUserRecord = await pb.collection('users').update(user.id, {
           name: trimmedName,
           telefone: telefone.trim(),
           bio: bio.trim(),
         })
       }
 
+      // Sincroniza authStore imediatamente
+      if (updatedUserRecord) {
+        pb.authStore.save(pb.authStore.token, updatedUserRecord)
+      }
       await refreshUser()
       setAvatarFile(null)
       setRemoveAvatarRequested(false)
-      toast.success('Perfil atualizado com sucesso!')
+
+      // Registrar evento de auditoria
+      try {
+        await AuditoriaService.registrarEvento({
+          tipo_acao: 'edicao',
+          area_sistema: 'Perfil do Usuário',
+          descricao: hadAvatarChange
+            ? `Perfil e foto atualizados por: ${trimmedName} (${user.email})`
+            : `Dados de perfil atualizados por: ${trimmedName} (${user.email})`,
+          usuario_id: user.id,
+          usuario_email: user.email,
+          usuario_nome: trimmedName,
+          usuario_role: user.role,
+          tabela_afetada: 'users',
+          registro_afetado: user.id,
+          resultado: 'sucesso',
+          metadata: {
+            alterou_foto: hadAvatarChange,
+            nome: trimmedName,
+            telefone: telefone.trim(),
+          },
+        })
+      } catch (_) {
+        // auditoria silenciosa
+      }
+
+      toast.success(
+        hadAvatarChange
+          ? 'Foto de perfil e dados atualizados com sucesso!'
+          : 'Perfil atualizado com sucesso!',
+      )
     } catch (err: any) {
       console.error('Erro ao atualizar perfil:', err)
-      const errorMsg =
-        err?.response?.data?.message ||
-        err?.data?.message ||
-        err?.message ||
-        'Erro ao salvar alterações no perfil.'
-      toast.error(errorMsg)
+      toast.error(
+        hadAvatarChange
+          ? 'Não foi possível salvar os dados e a foto — verifique o formato da imagem (JPG/PNG) e tente novamente.'
+          : 'Não foi possível salvar as alterações no perfil. Tente novamente.',
+      )
     } finally {
       setSavingProfile(false)
     }
@@ -465,7 +581,7 @@ export default function PerfilScreen() {
                   Escolher Foto
                 </Button>
 
-                {(avatarPreview || user?.avatar) && (
+                {(avatarPreview || user?.avatar) && !removeAvatarRequested && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -475,15 +591,53 @@ export default function PerfilScreen() {
                     title="Remover foto de perfil"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Remover
+                    Remover Foto
                   </Button>
                 )}
               </div>
 
-              {avatarFile && (
-                <div className="bg-amber-50 border border-amber-200 text-amber-900 text-[11px] p-2 rounded-xl flex items-center gap-1.5 text-left">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span>Nova foto selecionada! Clique no botão salvar abaixo para gravar.</span>
+              {/* Botão dedicado para salvar/remover imediatamente a foto sem precisar rolar */}
+              {(avatarFile || removeAvatarRequested) && (
+                <div className="w-full space-y-2 pt-1">
+                  <div className="bg-amber-50 border border-amber-200 text-amber-900 text-[11px] p-2.5 rounded-xl flex items-start gap-1.5 text-left">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold">
+                        {removeAvatarRequested
+                          ? 'Confirmação de remoção pendente'
+                          : 'Nova foto selecionada!'}
+                      </p>
+                      <p className="text-amber-800 text-[10px] mt-0.5">
+                        {removeAvatarRequested
+                          ? 'Clique no botão abaixo para concluir a remoção da foto.'
+                          : 'Clique no botão abaixo para gravar sua nova foto instantaneamente.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={handleSaveAvatarOnly}
+                    disabled={savingAvatar}
+                    className="w-full bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs rounded-xl py-2.5 shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
+                  >
+                    {savingAvatar ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-vinho" />
+                        Salvando Foto...
+                      </>
+                    ) : removeAvatarRequested ? (
+                      <>
+                        <Trash2 className="w-3.5 h-3.5 text-vinho" />
+                        Confirmar Remoção da Foto
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud className="w-3.5 h-3.5 text-vinho" />
+                        Salvar Esta Foto Agora
+                      </>
+                    )}
+                  </Button>
                 </div>
               )}
 

@@ -124,36 +124,57 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
       },
       {
         id: 'meu-perfil-e-seguranca',
-        titulo: 'Meu Perfil & Alteração de Senha',
-        subtitulo: 'Personalize seus dados, foto e credenciais de acesso',
+        titulo: 'Meu Perfil & Foto de Perfil',
+        subtitulo: 'Personalize seus dados, foto de avatar e credenciais de acesso',
         icone: 'User',
         rota: '/perfil',
         perfisPermitidos: ['master', 'adm', 'gerencial', 'ouro', 'prata'],
         ondeClicar:
           'Clique no seu avatar ou nome no cabeçalho superior (ou no rodapé da barra lateral).',
         paraQueServe:
-          'Permite atualizar sua foto de perfil, nome completo, biografia, telefone/WhatsApp e redefinir sua senha de acesso com segurança.',
+          'Permite atualizar sua foto de perfil (avatar), nome completo, biografia, telefone/WhatsApp e redefinir sua senha de acesso com segurança instantânea em todo o ecossistema CoffeeCast (cabeçalhos, chat interno e área de membros).',
         passoAPasso: [
-          'Para trocar o avatar: clique no ícone de câmera sobre a foto redonda e selecione uma imagem do seu computador ou celular.',
-          'Preencha seu nome completo e telefone de contato.',
-          'Se desejar alterar a senha: preencha a "Senha Atual" e em seguida a "Nova Senha" e confirme.',
-          'Clique no botão "Salvar Alterações".',
+          'Para trocar a foto de perfil: clique sobre o avatar redondo ou no botão "Escolher Foto" e selecione uma imagem do seu computador ou celular (formatos JPG, PNG ou WebP de até 8MB).',
+          'Veja a pré-visualização instantânea da imagem escolhida.',
+          'Para salvar apenas a foto com 1 clique: clique no botão dourado "Salvar Esta Foto Agora" logo abaixo do avatar.',
+          'Alternativamente, você também pode preencher ou revisar seu nome completo, telefone e bio e clicar em "Salvar Dados Pessoais" no final do formulário.',
+          'Se quiser remover sua foto e voltar ao avatar com iniciais elegantes da marca: clique no botão vermelho "Remover Foto" e confirme.',
+          'Se desejar alterar a senha: no cartão "Segurança da Conta", informe a "Senha Atual", digite a "Nova Senha" (mínimo 8 caracteres) e clique em "Atualizar Senha".',
         ],
         botoesPrincipais: [
           {
-            nome: 'Salvar Alterações',
-            onde: 'Canto inferior do formulário de perfil',
+            nome: 'Escolher Foto / Câmera',
+            onde: 'Sobre a imagem redonda de perfil ou logo abaixo dela',
             paraQueServe:
-              'Grava as novas informações pessoais no banco de dados com feedback instantâneo.',
+              'Abre o explorador de arquivos para carregar uma foto em formato JPG, PNG ou WebP.',
+          },
+          {
+            nome: 'Salvar Esta Foto Agora',
+            onde: 'Caixa de confirmação logo abaixo da pré-visualização da foto',
+            paraQueServe:
+              'Grava a nova foto imediatamente no PocketBase, atualizando seu avatar no cabeçalho, na barra lateral, no chat e na Área de Membros.',
+          },
+          {
+            nome: 'Salvar Dados Pessoais',
+            onde: 'Canto inferior do formulário de dados do perfil',
+            paraQueServe:
+              'Grava todas as informações pessoais (nome, telefone, bio e foto pendente) com registro em Auditoria.',
+          },
+          {
+            nome: 'Remover Foto',
+            onde: 'Ao lado do botão de escolher foto (visível quando há foto carregada)',
+            paraQueServe:
+              'Remove o arquivo de foto e volta ao avatar padrão com as iniciais do seu nome.',
           },
           {
             nome: 'Sair da Conta (Logout)',
-            onde: 'Rodapé da barra lateral ou canto do perfil',
+            onde: 'Rodapé da barra lateral ou canto do cabeçalho do perfil',
             paraQueServe: 'Encerra a sessão com segurança e desconecta o usuário.',
           },
         ],
+        dica: 'A foto de perfil é compartilhada automaticamente com o Chat Oficial CoffeeCast, aparecendo para todos os colegas de equipe e membros da comunidade nas conversas privadas e nos grupos.',
         atencao:
-          'Para trocar de senha, é obrigatório informar a senha atual correta por motivos de segurança antifraude.',
+          'Qualquer membro autenticado (Master, ADM, Gerencial, Ouro ou Prata) tem permissão total para alterar a própria foto e dados pessoais a qualquer momento. Para trocar de senha, é obrigatório informar a senha atual correta por motivos de segurança antifraude.',
       },
     ],
   },

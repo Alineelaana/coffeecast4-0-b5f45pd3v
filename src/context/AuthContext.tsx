@@ -51,7 +51,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = async () => {
     try {
-      if (pb.authStore.isValid) {
+      if (pb.authStore.isValid && pb.authStore.record?.id) {
+        // 1. Tenta atualizar os dados do próprio registro via getOne para garantir avatar atualizado imediatamente
+        try {
+          const freshRecord = await pb.collection('users').getOne(pb.authStore.record.id)
+          if (freshRecord) {
+            pb.authStore.save(pb.authStore.token, freshRecord as any)
+          }
+        } catch (_) {
+          // Fallback para authRefresh padrão
+          await pb.collection('users').authRefresh()
+        }
+        setUser(mapAuthRecord())
+      } else if (pb.authStore.isValid) {
         await pb.collection('users').authRefresh()
         setUser(mapAuthRecord())
       } else {
