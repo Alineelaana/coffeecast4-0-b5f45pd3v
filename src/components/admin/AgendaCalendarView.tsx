@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { toInputDate, formatDateBR } from '@/lib/formatters'
+import { toInputDate, formatDateBR, formatDateTimeBR, extractTimeHHmm } from '@/lib/formatters'
 import type { AgendaRecord } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +29,7 @@ export interface AgendaEventItem {
   tipo: AgendaEventType
   dataIso: string
   dataYmd: string
+  horaHhMm?: string
   titulo: string
   horasUtilizadas?: number
   nomeConvidado?: string
@@ -98,12 +99,14 @@ export function AgendaCalendarView({
         if (ymd) {
           const isPast = ymd < todayYmd
           const tipo: AgendaEventType = isPast ? 'gravacao-passada' : 'gravacao-futura'
+          const horaHhMm = extractTimeHHmm(item.data_gravacao)
           const eventItem: AgendaEventItem = {
             id: `${item.id}-gravacao`,
             agendaId: item.id,
             tipo,
             dataIso: item.data_gravacao,
             dataYmd: ymd,
+            horaHhMm: horaHhMm || undefined,
             titulo: item.titulo,
             horasUtilizadas: item.horas_utilizadas,
             nomeConvidado: item.nome_convidado,
@@ -495,9 +498,14 @@ export function AgendaCalendarView({
                         <div
                           key={ev.id}
                           className="truncate text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-[#4b1e3f] text-white flex items-center gap-1 shadow-2xs"
-                          title={`Gravação realizada: ${ev.titulo}`}
+                          title={`Gravação realizada${ev.horaHhMm ? ` às ${ev.horaHhMm}` : ''}: ${ev.titulo}`}
                         >
                           <Video className="w-2.5 h-2.5 text-[#d4af37] shrink-0" />
+                          {ev.horaHhMm && (
+                            <span className="text-[#d4af37] text-[9px] font-bold shrink-0">
+                              {ev.horaHhMm}
+                            </span>
+                          )}
                           <span className="truncate">{ev.titulo}</span>
                         </div>
                       ))}
@@ -517,9 +525,14 @@ export function AgendaCalendarView({
                         <div
                           key={ev.id}
                           className="truncate text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-[#1b4d3e] text-emerald-50 flex items-center gap-1 shadow-2xs"
-                          title={`Gravação futura: ${ev.titulo}`}
+                          title={`Gravação futura${ev.horaHhMm ? ` às ${ev.horaHhMm}` : ''}: ${ev.titulo}`}
                         >
                           <Video className="w-2.5 h-2.5 text-emerald-200 shrink-0" />
+                          {ev.horaHhMm && (
+                            <span className="text-emerald-300 text-[9px] font-bold shrink-0">
+                              {ev.horaHhMm}
+                            </span>
+                          )}
                           <span className="truncate">{ev.titulo}</span>
                         </div>
                       ))}
@@ -635,7 +648,7 @@ export function AgendaCalendarView({
                         <div>
                           <span className="text-[10px] text-vinho/60 block">Gravação</span>
                           <span className="font-medium text-vinho">
-                            {formatDateBR(ev.record.data_gravacao)}
+                            {formatDateTimeBR(ev.record.data_gravacao)}
                           </span>
                         </div>
                         <div>

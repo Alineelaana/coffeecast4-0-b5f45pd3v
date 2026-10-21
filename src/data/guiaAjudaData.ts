@@ -619,15 +619,24 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
         passoAPasso: [
           'Alterne entre as abas de visualização: "Calendário Interativo", "Lista Completa", "Próximas Gravações" ou "Gravações Passadas".',
           'Para agendar: clique em "+ Novo Agendamento" ou clique diretamente em um dia do calendário.',
-          'Preencha o título do episódio, nome do convidado, data/horário de gravação, data prevista de postagem e patrocinadores.',
+          'Defina a "Data da Gravação" e o novo campo "Hora da Gravação" (seletor de horário HH:mm). Se a gravação for para o dia todo, o campo de hora pode ser deixado em branco.',
+          'Preencha o título do episódio, nome do convidado, data prevista de postagem e patrocinadores.',
           'Informe a "Quantidade de horas utilizadas no estúdio" (para débito automático no banco de horas).',
           'Use o campo "Roteiro" com o recurso "Ler mais / Ler menos" para colar anotações rápidas.',
+          'No calendário e na listagem, os episódios com horário definido exibem a informação no formato "DD/MM/AAAA às HH:mm", facilitando a coordenação precisa da equipe.',
         ],
         botoesPrincipais: [
           {
             nome: '+ Novo Agendamento',
             onde: 'Topo direito da tela',
-            paraQueServe: 'Abre o formulário completo de agendamento de estúdio.',
+            paraQueServe:
+              'Abre o formulário completo de agendamento de estúdio com campos de data e horário.',
+          },
+          {
+            nome: 'Hora da Gravação (HH:mm)',
+            onde: 'Formulário de novo agendamento e edição',
+            paraQueServe:
+              'Permite marcar o horário exato da gravação no estúdio (opcional, compõe com a data no fuso de Brasília).',
           },
           {
             nome: 'Visão Calendário vs Lista',

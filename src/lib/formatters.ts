@@ -83,6 +83,88 @@ export function formatDateBR(dateString?: string): string {
 }
 
 /**
+ * Extrai a hora no formato HH:mm a partir de uma string ISO ou timestamp.
+ * Retorna '' se não houver horário explícito válido.
+ */
+export function extractTimeHHmm(dateString?: string | null): string {
+  if (!dateString) return ''
+  const trimmed = String(dateString).trim()
+  if (!trimmed) return ''
+
+  // Se for ISO completo com T ou espaço (ex: 2026-10-23T14:30:00.000Z ou 2026-10-23 14:30:00)
+  // Verifica primeiro se tem hora explícita
+  const timeMatch = trimmed.match(/[T\s](\d{2}):(\d{2})/)
+  if (timeMatch) {
+    // Se o backend/banco guardou horário, converte para horário local de Brasília se for ISO com Z
+    try {
+      const d = new Date(trimmed)
+      if (!isNaN(d.getTime())) {
+        const hh = String(d.getHours()).padStart(2, '0')
+        const mm = String(d.getMinutes()).padStart(2, '0')
+        return `${hh}:${mm}`
+      }
+    } catch {
+      return `${timeMatch[1]}:${timeMatch[2]}`
+    }
+    return `${timeMatch[1]}:${timeMatch[2]}`
+  }
+
+  return ''
+}
+
+/**
+ * Compõe uma data (YYYY-MM-DD) e hora opcional (HH:mm) em string ISO com fuso horário local/Brasília.
+ * Se hora não for informada, retorna a data no formato YYYY-MM-DD (ou ISO meia-noite segura).
+ */
+export function composeDateTimeISO(dateYmd: string, timeHhMm?: string): string {
+  const cleanDate = toInputDate(dateYmd)
+  if (!cleanDate) return ''
+  const trimmedTime = (timeHhMm || '').trim()
+
+  if (!trimmedTime) {
+    // Gravação "dia inteiro" sem hora fixa: salva data limpa YYYY-MM-DD
+    return cleanDate
+  }
+
+  const [hoursStr, minutesStr] = trimmedTime.split(':')
+  const hours = parseInt(hoursStr || '0', 10)
+  const minutes = parseInt(minutesStr || '0', 10)
+
+  const [y, m, d] = cleanDate.split('-').map(Number)
+  const dateObj = new Date(y, m - 1, d, isNaN(hours) ? 0 : hours, isNaN(minutes) ? 0 : minutes, 0)
+
+  return dateObj.toISOString()
+}
+
+/**
+ * Formata data e hora para exibição em português do Brasil:
+ * - Sem hora (ou hora vazia/meia-noite pura): "DD/MM/AAAA"
+ * - Com hora: "DD/MM/AAAA às HH:mm"
+ */
+export function formatDateTimeBR(dateString?: string | null): string {
+  if (!dateString) return '-'
+  const trimmed = String(dateString).trim()
+  if (!trimmed) return '-'
+
+  const dateBR = formatDateBR(trimmed)
+  if (dateBR === '-') return '-'
+
+  // Extrai o horário com nossa função segura
+  const timeStr = extractTimeHHmm(trimmed)
+  if (!timeStr) {
+    return dateBR
+  }
+
+  // Agendamentos antigos gravados como meia-noite ("00:00:00.000Z" ou "00:00")
+  // representavam apenas data sem horário definido. Não mostram "às 00:00" como hora agendada.
+  if (/(\s|T)00:00:00(\.000)?Z?$/i.test(trimmed)) {
+    return dateBR
+  }
+
+  return `${dateBR} às ${timeStr}`
+}
+
+/**
  * Extrai e normaliza username e link de perfil do Instagram a partir de @usuario, usuario ou URL completa.
  */
 export function parseInstagramHandle(raw?: string): { username: string; url: string } | null {

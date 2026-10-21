@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import pb from '@/lib/pocketbase/client'
-import { formatDateBR, getFileUrl, toInputDate } from '@/lib/formatters'
+import {
+  formatDateBR,
+  formatDateTimeBR,
+  extractTimeHHmm,
+  composeDateTimeISO,
+  getFileUrl,
+  toInputDate,
+} from '@/lib/formatters'
 import type { AgendaRecord, HorasCompradasRecord } from '@/types/database'
+import { AuditoriaService } from '@/services/auditoria'
 import {
   Table,
   TableBody,
@@ -196,6 +204,7 @@ export default function AdminAgendaScreen() {
   const [roteiro, setRoteiro] = useState('')
   const [dataAgendamento, setDataAgendamento] = useState('')
   const [dataGravacao, setDataGravacao] = useState('')
+  const [horaGravacao, setHoraGravacao] = useState('')
   const [dataPostagem, setDataPostagem] = useState('')
   const [temConvidado, setTemConvidado] = useState(false)
   const [nomeConvidado, setNomeConvidado] = useState('')
@@ -252,6 +261,7 @@ export default function AdminAgendaScreen() {
     setRoteiro('')
     setDataAgendamento(today)
     setDataGravacao(today)
+    setHoraGravacao('')
     setDataPostagem('')
     setTemConvidado(false)
     setNomeConvidado('')
@@ -272,6 +282,7 @@ export default function AdminAgendaScreen() {
     setRoteiro(item.roteiro || '')
     setDataAgendamento(toInputDate(item.data_agendamento))
     setDataGravacao(toInputDate(item.data_gravacao))
+    setHoraGravacao(extractTimeHHmm(item.data_gravacao))
     setDataPostagem(toInputDate(item.data_postagem))
     setTemConvidado(Boolean(item.tem_convidado))
     setNomeConvidado(item.nome_convidado || '')
@@ -307,9 +318,10 @@ export default function AdminAgendaScreen() {
       formData.append('titulo', titulo.trim())
       formData.append('roteiro', roteiro.trim())
 
-      // Formata as datas no padrão ISO YYYY-MM-DD exigido pelo PocketBase
+      // Formata as datas: data_agendamento e data_postagem usam YYYY-MM-DD
+      // data_gravacao compõe com horário se informado (ISO com fuso de Brasília)
       const formattedDataAgendamento = toInputDate(dataAgendamento)
-      const formattedDataGravacao = toInputDate(dataGravacao)
+      const formattedDataGravacao = composeDateTimeISO(dataGravacao, horaGravacao)
       const formattedDataPostagem = toInputDate(dataPostagem)
 
       formData.append('data_agendamento', formattedDataAgendamento)
@@ -346,10 +358,34 @@ export default function AdminAgendaScreen() {
       }
 
       if (editingItem) {
-        await pb.collection('agenda').update(editingItem.id, formData)
+        const antigo = { ...editingItem }
+        const updated = await pb.collection('agenda').update(editingItem.id, formData)
+
+        const horaTexto = horaGravacao ? ` às ${horaGravacao}` : ''
+        AuditoriaService.registrarEvento({
+          tipo_acao: 'edicao',
+          area_sistema: 'Agenda de Gravação',
+          descricao: `Agendamento "${titulo.trim()}" atualizado para ${formatDateBR(dataGravacao)}${horaTexto}`,
+          registro_afetado: editingItem.id,
+          tabela_afetada: 'agenda',
+          diff_antes: antigo,
+          diff_depois: updated,
+        })
+
         toast.success('Agendamento atualizado com sucesso!')
       } else {
-        await pb.collection('agenda').create(formData)
+        const created = await pb.collection('agenda').create(formData)
+
+        const horaTexto = horaGravacao ? ` às ${horaGravacao}` : ''
+        AuditoriaService.registrarEvento({
+          tipo_acao: 'criacao',
+          area_sistema: 'Agenda de Gravação',
+          descricao: `Novo agendamento criado: "${titulo.trim()}" para ${formatDateBR(dataGravacao)}${horaTexto}`,
+          registro_afetado: created.id,
+          tabela_afetada: 'agenda',
+          diff_depois: created,
+        })
+
         toast.success('Novo episódio agendado com sucesso!')
       }
 
@@ -372,7 +408,18 @@ export default function AdminAgendaScreen() {
       return
 
     try {
+      const itemExcluido = agendamentos.find((a) => a.id === id)
       await pb.collection('agenda').delete(id)
+
+      AuditoriaService.registrarEvento({
+        tipo_acao: 'exclusao',
+        area_sistema: 'Agenda de Gravação',
+        descricao: `Agendamento "${tit}" removido da agenda`,
+        registro_afetado: id,
+        tabela_afetada: 'agenda',
+        diff_antes: (itemExcluido as unknown as Record<string, unknown>) || null,
+      })
+
       toast.success('Agendamento removido e horas estornadas ao banco de horas!')
       loadAgenda()
     } catch (err) {
@@ -640,7 +687,7 @@ export default function AdminAgendaScreen() {
                       <h3 className="text-sm font-bold text-vinho">{item.titulo}</h3>
                       <div className="flex items-center gap-1.5 text-xs font-semibold text-dourado-dark">
                         <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-                        <span>Gravação: {formatDateBR(item.data_gravacao)}</span>
+                        <span>Gravação: {formatDateTimeBR(item.data_gravacao)}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
@@ -751,7 +798,7 @@ export default function AdminAgendaScreen() {
                       <TableCell className="text-xs font-semibold text-dourado-dark">
                         <div className="flex items-center gap-1.5">
                           <CalendarDays className="w-3.5 h-3.5" />
-                          {formatDateBR(item.data_gravacao)}
+                          {formatDateTimeBR(item.data_gravacao)}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs">
@@ -841,7 +888,7 @@ export default function AdminAgendaScreen() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="ag-data-ag" className="text-xs font-semibold text-vinho">
                   Data Agendamento *
@@ -868,6 +915,36 @@ export default function AdminAgendaScreen() {
                   onChange={(e) => setDataGravacao(e.target.value)}
                   className="bg-white border-vinho/20 text-xs"
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="ag-hora-grav"
+                  className="text-xs font-semibold text-vinho flex items-center justify-between"
+                >
+                  <span>Hora da Gravação</span>
+                  <span className="text-[10px] text-vinho/50 font-normal">Opcional</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="ag-hora-grav"
+                    type="time"
+                    value={horaGravacao}
+                    onChange={(e) => setHoraGravacao(e.target.value)}
+                    className="bg-white border-vinho/20 text-xs"
+                    title="Defina o horário da gravação (ex.: 14:00). Deixe em branco se for gravação o dia todo."
+                  />
+                  {horaGravacao && (
+                    <button
+                      type="button"
+                      onClick={() => setHoraGravacao('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-vinho/40 hover:text-vinho text-[10px] px-1"
+                      title="Limpar hora (dia inteiro)"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1.5">
