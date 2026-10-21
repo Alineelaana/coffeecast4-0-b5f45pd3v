@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T23:38:58.368Z",
+  "generatedAt": "2026-10-21T23:48:03.496Z",
   "collections": [
     {
       "name": "users",
@@ -109,6 +109,12 @@
         {
           "name": "forcar_troca_senha",
           "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ultimo_acesso",
+          "type": "date",
           "required": false,
           "system": false
         }

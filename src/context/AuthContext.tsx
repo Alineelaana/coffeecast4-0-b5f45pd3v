@@ -55,6 +55,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       forcar_troca_senha: Boolean(
         (rec as unknown as { forcar_troca_senha?: boolean }).forcar_troca_senha,
       ),
+      ultimo_acesso: (rec as unknown as { ultimo_acesso?: string }).ultimo_acesso || '',
+      last_seen: (rec as unknown as { last_seen?: string }).last_seen || '',
       created: rec.created,
       updated: rec.updated,
     }
@@ -200,6 +202,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, pass: string) => {
     try {
       await pb.collection('users').authWithPassword(email.trim(), pass)
+      const nowIso = new Date().toISOString()
+
+      // Atualiza ultimo_acesso do usuário diretamente no cliente para garantir persistência imediata
+      if (pb.authStore.record?.id) {
+        try {
+          await pb.collection('users').update(pb.authStore.record.id, {
+            ultimo_acesso: nowIso,
+          })
+          if (pb.authStore.record) {
+            ;(pb.authStore.record as any).ultimo_acesso = nowIso
+          }
+        } catch {
+          /* fallback caso hook no backend já tenha tratado */
+        }
+      }
+
       const currentUser = mapAuthRecord()
       setUser(currentUser)
 

@@ -29,6 +29,7 @@ export interface UserRecord {
   pause_reason?: string
   status_updated?: string
   last_seen?: string
+  ultimo_acesso?: string
   telefone?: string
   origem?: string
   adm_permissions?: AdmPermissions | null

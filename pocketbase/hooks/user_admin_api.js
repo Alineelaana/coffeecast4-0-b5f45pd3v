@@ -2,6 +2,21 @@
 // Endpoint administrativo seguro para o cargo Master atualizar qualquer informação de um usuário,
 // incluindo alteração direta de senha, tempo de inatividade individual e flag para exigir nova senha no próximo login.
 
+// Atualização automática de ultimo_acesso no login bem-sucedido
+onRecordAuthWithPasswordRequest((e) => {
+  e.next()
+  try {
+    const authRecord = e.record
+    if (authRecord) {
+      const nowIso = new Date().toISOString()
+      authRecord.set('ultimo_acesso', nowIso)
+      $app.save(authRecord)
+    }
+  } catch (err) {
+    console.log('Aviso ao atualizar ultimo_acesso no login:', err)
+  }
+}, '_pb_users_auth_')
+
 routerAdd(
   'POST',
   '/backend/v1/admin/users/update',
@@ -239,6 +254,8 @@ routerAdd(
         adm_permissions: rec.get('adm_permissions'),
         inatividade_minutos: rec.getInt('inatividade_minutos') || 10,
         forcar_troca_senha: rec.getBool('forcar_troca_senha'),
+        ultimo_acesso: rec.getString('ultimo_acesso') || '',
+        last_seen: rec.getString('last_seen') || '',
         created: rec.getString('created'),
         updated: rec.getString('updated'),
       }))

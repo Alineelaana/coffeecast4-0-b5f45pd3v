@@ -49,6 +49,7 @@ import {
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
+import { formatDateTimeBR } from '@/lib/formatters'
 
 // Lista de telas e blocos gerenciáveis do painel com rótulos amigáveis em português
 const AVAILABLE_SCREENS = [
@@ -682,7 +683,20 @@ export default function AdminUsuariosScreen() {
                       )}
                     </div>
                   </div>
-
+                  {/* Último acesso do usuário no card mobile */}
+                  <div className="pt-2 border-t border-vinho/5 flex items-center justify-between text-xs">
+                    <span className="text-vinho/70 font-medium flex items-center gap-1 text-[11px]">
+                      <Clock className="w-3 h-3 text-dourado-dark shrink-0" />
+                      Último acesso:
+                    </span>
+                    {u.ultimo_acesso ? (
+                      <span className="font-semibold text-vinho font-mono text-[11px]">
+                        {formatDateTimeBR(u.ultimo_acesso)}
+                      </span>
+                    ) : (
+                      <span className="text-vinho/50 italic text-[11px]">Nunca acessou</span>
+                    )}
+                  </div>
                   <div className="flex items-center justify-between pt-2 border-t border-vinho/5 flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-vinho/70 font-medium">Permissão:</span>
@@ -717,7 +731,7 @@ export default function AdminUsuariosScreen() {
                         </Badge>
                       )}
                     </div>
-                  </div>
+                  </div>{' '}
                 </div>
               )
             })
@@ -736,6 +750,7 @@ export default function AdminUsuariosScreen() {
                 <TableHead className="font-bold text-vinho text-xs">Telefone / WhatsApp</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Origem / Captação</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Nível de Permissão</TableHead>
+                <TableHead className="font-bold text-vinho text-xs">Último Acesso</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Inatividade</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Nova Senha</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Status</TableHead>
@@ -823,6 +838,19 @@ export default function AdminUsuariosScreen() {
                               <SelectItem value="master">Master</SelectItem>
                             </SelectContent>
                           </Select>
+                        )}
+                      </TableCell>
+
+                      {/* Data e horário do último acesso em formato brasileiro */}
+                      <TableCell className="text-xs text-vinho">
+                        {u.ultimo_acesso ? (
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-vinho font-mono text-[11px]">
+                              {formatDateTimeBR(u.ultimo_acesso)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-vinho/45 italic text-[11px]">Nunca acessou</span>
                         )}
                       </TableCell>
 

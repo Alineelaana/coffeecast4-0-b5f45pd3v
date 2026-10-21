@@ -855,9 +855,10 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
         ondeClicar:
           'Submenu "Exclusivo Master" ➔ "Usuários & Permissões" (acesso exclusivo do Master soberano).',
         paraQueServe:
-          'Cria novos operadores, redefine senhas, bloqueia acessos e define com precisão cirúrgica quais telas e lojas cada ADM pode acessar.',
+          'Cria novos operadores, redefine senhas, bloqueia acessos, monitora dia e horário exatos do último login e define com precisão cirúrgica quais telas e lojas cada ADM pode acessar.',
         passoAPasso: [
-          'Clique em "+ Novo Usuário".',
+          'Visualize o dia e horário do Último Acesso de cada usuário tanto na tabela desktop (coluna dedicada "Último Acesso") quanto nos cards mobile: exibido no formato oficial brasileiro "DD/MM/AAAA às HH:mm" (ou "Nunca acessou" caso o usuário ainda não tenha realizado login).',
+          'Clique em "+ Novo Usuário" para cadastrar um novo integrante.',
           'Preencha nome, e-mail, senha inicial e selecione a categoria: Master, ADM, Gerencial, Ouro ou Prata.',
           'Defina o Tempo de Inatividade em Minutos: configure individualmente quantos minutos sem interação (cliques, teclado, scroll) provocam o logout automático (o padrão é 10 minutos).',
           'Ative a opção "Criar nova senha no próximo login": se marcada, o usuário verá no próximo login uma tela dedicada para criar e confirmar sua nova senha com visibilidade de olho aberto/fechado antes de acessar o sistema.',
@@ -871,6 +872,12 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             nome: '+ Novo Usuário',
             onde: 'Topo direito da tela',
             paraQueServe: 'Abre formulário para criar uma nova conta de acesso.',
+          },
+          {
+            nome: 'Coluna / Indicador de Último Acesso',
+            onde: 'Tabela desktop e cards móveis de cada usuário',
+            paraQueServe:
+              'Exibe a data e hora do login mais recente do operador no formato brasileiro "DD/MM/AAAA às HH:mm" ou "Nunca acessou".',
           },
           {
             nome: 'Tempo de Inatividade (minutos)',

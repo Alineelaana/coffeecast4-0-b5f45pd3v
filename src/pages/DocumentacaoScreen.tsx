@@ -911,7 +911,10 @@ export default function DocumentacaoScreen() {
                 Usuários & Permissões Granulares (/admin/usuarios)
               </h4>
               <p className="text-xs text-[#4B1E3F]/80 leading-relaxed">
-                Gestão central de todos os operadores da plataforma. Permite ao Master configurar{' '}
+                Gestão central de todos os operadores da plataforma. Exibe em tempo real o{' '}
+                <strong>dia e horário do último acesso (login) de cada usuário</strong> tanto em
+                computador quanto em dispositivos móveis no padrão brasileiro "DD/MM/AAAA às HH:mm"
+                (ou "Nunca acessou"). Permite ao Master configurar{' '}
                 <strong>permissões granulares para cada ADM</strong>, decidindo tela por tela o que
                 ele pode visualizar ou operar, além de restringir seu acesso a lojas específicas do
                 Storefront. Inclui <strong>tempo de inatividade individual configurável</strong>{' '}
