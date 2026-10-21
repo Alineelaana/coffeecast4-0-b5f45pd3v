@@ -179,9 +179,23 @@ Central de comando da inteligência artificial:
 - Botão de ação rápida para iniciar conversa no WhatsApp e envio de e-mail.
 - Notas comerciais e alteração de status do funil: _Novo_, _Visualizado_, _Contatado_.
 
-### 3.10 Gestão de Episódios
+### 3.10 Gestão de Episódios & Programação de Lançamento Automático
 
-- Cadastro, numeração e atualização dos episódios exibidos no carrossel e destaques do site público.
+- **Dois Modos de Cadastro:** Botão tradicional "+ Novo Episódio" (publicação imediata) e botão dedicado **"Programar Episódio"** (posicionado lado a lado).
+- **Campos do Formulário de Programação:**
+  - Número oficial do episódio
+  - Título do episódio
+  - Link do YouTube (Watch, YouTu.be e YouTube Shorts)
+  - **Espaço para Data e Hora** (`type="date"` e `type="time"`, combinados no formato ISO de alta precisão) para definir exatamente quando o episódio vai para o site.
+- **Publicação Automática pelo Backend (Cron Job):**
+  - Rotina agendada contínua no servidor (`cronAdd` a cada 5 minutos) que busca os episódios com status `programado` cuja data e hora já foram atingidas.
+  - Altera o status para `publicado` e registra a operação na Auditoria do Sistema, tornando o episódio imediatamente visível na Home e no carrossel sem intervenção humana.
+  - Ocultação preventiva: episódios programados para o futuro permanecem protegidos e não aparecem na Home pública nem na Área de Membros até a data/hora agendada.
+- **Controle Operacional & Cancelamento:**
+  - Status visual com badge: _Programado para DD/MM/AAAA às HH:mm_ (futuro) ou _Publicado no site_.
+  - Botão de ação rápida "Publicar agora" para antecipar a liberação e cancelar a programação futura com confirmação.
+  - Edição completa do agendamento (ajuste de dia, hora, título ou link) e botão de checagem imediata ("Checar Agendados").
+  - Trilha forense completa: agendamentos, edições, cancelamentos e a publicação automática pelo cron geram logs no módulo de Auditoria do Sistema com diff antes/depois.
 - Suporte a links de vídeos padrão e Shorts do YouTube.
 
 ### 3.11 Nossos Momentos (Carrossel Dinâmico)

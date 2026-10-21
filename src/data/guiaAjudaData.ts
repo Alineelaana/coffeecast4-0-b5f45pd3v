@@ -324,37 +324,66 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
       },
       {
         id: 'gestao-episodios',
-        titulo: 'Gestão de Episódios',
-        subtitulo: 'Cadastro, numeração e vinculação dos vídeos do YouTube',
+        titulo: 'Gestão de Episódios & Programação de Lançamento',
+        subtitulo: 'Cadastro imediato, programação com data e hora e publicação 100% automática',
         icone: 'Tv',
         rota: '/admin/episodios',
         perfisPermitidos: ['master', 'adm', 'gerencial'],
         ondeClicar: 'Menu lateral ➔ "Episódios".',
         paraQueServe:
-          'Cadastra os episódios oficiais que aparecem na Home pública e na Área de Membros.',
+          'Cadastra os episódios oficiais que aparecem na Home pública e na Área de Membros, permitindo publicação imediata ou agendada para data e horário futuros.',
         passoAPasso: [
-          'Clique no botão dourado "+ Novo Episódio".',
-          'Informe o número oficial do episódio (ex.: 12), o título completo e a URL do vídeo no YouTube.',
-          'O sistema reconhece tanto links tradicionais (watch?v=...) quanto YouTube Shorts e formatos encurtados (youtu.be).',
-          'Clique em "Salvar Episódio". O episódio aparecerá automaticamente no carrossel da Home.',
+          'Publicação imediata: clique no botão de fundo vinho "+ Novo Episódio", preencha número, título e URL do YouTube e clique em "Salvar Episódio". Ele entra imediatamente no site.',
+          'Publicação programada: clique no botão "Programar Episódio" (posicionado exatamente ao lado de "+ Novo Episódio").',
+          'Preencha os campos obrigatórios da programação: 1) Número do episódio, 2) Título do episódio, 3) Link do YouTube e 4) Data e hora exatas de liberação no site (espaço dedicado para dia e horário HH:mm).',
+          'Clique em "Programar Episódio": o episódio é gravado com status "programado" e recebe o badge âmbar "Programado para dd/mm/aaaa às HH:mm", ficando oculto do site público e da área de membros até o momento exato escolhido.',
+          'Publicação 100% automática: o agendador no servidor (job cron a cada 5 minutos) monitora continuamente os agendamentos. Quando o momento marcado chega, o sistema altera o status para publicado automaticamente, tornando o episódio visível na Home e no carrossel sem que ninguém precise mexer.',
+          'Controle manual e cancelamento: a qualquer instante antes da liberação, a produção pode clicar no botão "Publicar agora" para antecipar a publicação, em "Editar" para alterar a data/hora ou em "Excluir". Todas as ações geram log com auditoria detalhada.',
         ],
         botoesPrincipais: [
           {
+            nome: 'Programar Episódio',
+            onde: 'Topo direito da tela, ao lado de Novo Episódio',
+            paraQueServe:
+              'Abre o modal de agendamento com campos de número, título, link do YouTube e data e hora para publicação automática no site.',
+            icone: 'CalendarClock',
+          },
+          {
             nome: '+ Novo Episódio',
             onde: 'Topo direito da tela',
-            paraQueServe: 'Abre modal com formulário para cadastrar uma nova gravação.',
+            paraQueServe:
+              'Abre modal para cadastrar uma nova gravação com publicação imediata no ar.',
+            icone: 'Plus',
+          },
+          {
+            nome: 'Publicar agora (Cancelar programação)',
+            onde: 'Ao lado de episódios com status programado na tabela ou card móvel',
+            paraQueServe:
+              'Antecipa a liberação do episódio e cancela o agendamento futuro, colocando o vídeo no ar imediatamente.',
+            icone: 'CheckCircle2',
+          },
+          {
+            nome: 'Checar Agendados (Atualização manual)',
+            onde: 'Barra superior ao lado de Programar Episódio',
+            paraQueServe:
+              'Aciona uma verificação imediata dos episódios programados sem aguardar o próximo ciclo de 5 minutos do cron.',
+            icone: 'RefreshCw',
           },
           {
             nome: 'Editar (ícone de lápis)',
             onde: 'Ao lado de cada linha da tabela',
-            paraQueServe: 'Permite alterar título, número ou link do YouTube.',
+            paraQueServe:
+              'Permite alterar título, número, link do YouTube ou ajustar a data e hora do agendamento.',
+            icone: 'Edit2',
           },
           {
             nome: 'Excluir (ícone de lixeira)',
             onde: 'Ao lado de cada linha da tabela',
             paraQueServe: 'Remove o episódio do site após confirmação.',
+            icone: 'Trash2',
           },
         ],
+        dica: 'Episódios programados ficam destacados com badge âmbar indicando a data e a hora exatas do lançamento. Todas as publicações (sejam automáticas pelo cron, manuais ou edições) são registradas com dados completos de antes e depois na Auditoria do Sistema.',
       },
       {
         id: 'nossos-momentos',

@@ -36,11 +36,15 @@ export interface UserRecord {
   updated: string
 }
 
+export type EpisodioStatus = 'publicado' | 'programado'
+
 export interface EpisodioRecord {
   id: string
   numero: number
   titulo: string
   youtube_url: string
+  status?: EpisodioStatus
+  data_publicacao_programada?: string
   created: string
   updated: string
 }

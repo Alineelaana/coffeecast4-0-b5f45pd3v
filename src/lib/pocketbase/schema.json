@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-03T21:15:10.834Z",
+  "generatedAt": "2026-10-21T23:14:06.135Z",
   "collections": [
     {
       "name": "users",
@@ -148,6 +148,19 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["publicado", "programado"]
+        },
+        {
+          "name": "data_publicacao_programada",
+          "type": "date",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [

@@ -82,7 +82,7 @@ export default function MembersScreen() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [epList, momList] = await Promise.all([
+        const [epListRaw, momList] = await Promise.all([
           pb.collection('episodios').getFullList<EpisodioRecord>({
             sort: '-numero',
           }),
@@ -90,6 +90,13 @@ export default function MembersScreen() {
             sort: 'ordem',
           }),
         ])
+        const agora = new Date()
+        const epList = epListRaw.filter((ep) => {
+          if (ep.status === 'programado' && ep.data_publicacao_programada) {
+            return new Date(ep.data_publicacao_programada) <= agora
+          }
+          return ep.status !== 'programado'
+        })
         setEpisodios(epList)
         setMomentos(momList)
       } catch (err) {

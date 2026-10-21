@@ -358,12 +358,20 @@ export default function Index() {
   const [membersModalOpen, setMembersModalOpen] = useState(false)
 
   // Atualização dos episódios em tempo real (ou recarregamento)
+  // Apenas episódios publicados ou que já atingiram a data/hora programada são visíveis publicamente
   const fetchEpisodios = async () => {
     try {
       const epList = await pb
         .collection('episodios')
         .getFullList<EpisodioRecord>({ sort: 'numero' })
-      setEpisodios(epList)
+      const agora = new Date()
+      const publicados = epList.filter((ep) => {
+        if (ep.status === 'programado' && ep.data_publicacao_programada) {
+          return new Date(ep.data_publicacao_programada) <= agora
+        }
+        return ep.status !== 'programado'
+      })
+      setEpisodios(publicados)
     } catch (err) {
       console.error('Erro ao recarregar episódios:', err)
     }
@@ -435,7 +443,7 @@ export default function Index() {
     if (isStoreDomain) return // Se for loja por domínio próprio, não precisa carregar dados do CoffeeCast
     async function fetchData() {
       try {
-        const [epList, intList, depList, momList, contList] = await Promise.all([
+        const [epListRaw, intList, depList, momList, contList] = await Promise.all([
           pb
             .collection('episodios')
             .getFullList<EpisodioRecord>({ sort: 'numero' })
@@ -457,6 +465,14 @@ export default function Index() {
             .getFullList<ConteudoSiteRecord>()
             .catch(() => []),
         ])
+
+        const agora = new Date()
+        const epList = epListRaw.filter((ep) => {
+          if (ep.status === 'programado' && ep.data_publicacao_programada) {
+            return new Date(ep.data_publicacao_programada) <= agora
+          }
+          return ep.status !== 'programado'
+        })
 
         setEpisodios(epList)
         setIntegrantes(intList)
