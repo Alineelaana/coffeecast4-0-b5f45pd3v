@@ -45,8 +45,25 @@ export default function LoginScreen() {
   const location = useLocation()
 
   useEffect(() => {
+    // Checar mensagem vinda pelo location.state
     if (location.state && typeof location.state === 'object' && 'message' in location.state) {
       setInfoMessage(String((location.state as { message: string }).message))
+    }
+
+    // Checar mensagem por logout de inatividade via sessionStorage ou query param
+    try {
+      const flashMsg = sessionStorage.getItem('coffeecast_flash_message')
+      if (flashMsg) {
+        setInfoMessage(flashMsg)
+        sessionStorage.removeItem('coffeecast_flash_message')
+      } else {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('motivo') === 'inatividade') {
+          setInfoMessage('Você foi desconectado por inatividade. Faça login novamente.')
+        }
+      }
+    } catch {
+      /* ignore */
     }
   }, [location.state])
 

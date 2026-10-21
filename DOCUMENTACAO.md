@@ -274,6 +274,8 @@ Permite ao Master criar e gerenciar infinitos podcasts ou lojas filhas:
 ### 4.3 Gestão de Usuários & Matriz de Permissões Granulares
 
 - Gestão completa de contas de acesso (Master, ADM, Gerencial, Ouro, Prata).
+- **Tempo de Inatividade Individual (Logout Automático):** O Master configura individualmente o tempo limite de inatividade em minutos (1 a 1440 min, padrão de 10 minutos para todos os usuários). Caso o usuário fique esse tempo sem cliques, teclado, scroll ou movimentação, o sistema encerra a sessão com aviso em português e redireciona para a tela de login.
+- **Opção "Criar nova senha no próximo login":** Botão/toggle ativável pelo Master por usuário. Quando ativo, no próximo login o usuário é direcionado obrigatoriamente para uma tela dedicada de redefinição contendo os campos "Nova senha" e "Confirmar nova senha", ambos com ícone de olho para exibir/ocultar senha e validação de igualdade antes de salvar. Ao concluir, a flag é desativada automaticamente e o evento é registrado na Auditoria.
 - **Permissões Granulares por Tela para o ADM:** O Master define com precisão quais telas o ADM pode acessar e em quais lojas possui atuação. Isso permite vender o sistema para clientes que só precisam ver financeiro e agenda, sem acesso a dados confidenciais do ecossistema.
 - Redefinição direta de senhas e bloqueio imediato de contas.
 
@@ -326,6 +328,8 @@ Permite ao Master criar e gerenciar infinitos podcasts ou lojas filhas:
 A plataforma foi construída seguindo as melhores práticas de desenvolvimento web moderno:
 
 - **Autenticação Segura:** Criptografia de senhas no servidor com tokens JWT assinados e renovação segura.
+- **Encerramento de Sessão por Inatividade:** Proteção ativa no cliente contra terminais abandonados, com tempo em minutos configurável individualmente por usuário e 10 minutos pré-programados de fábrica.
+- **Redefinição Obrigatória de Primeiro Acesso:** Fluxo seguro para forçar criação de nova senha no próximo login, com visibilidade via ícone de olho e checagem de consistência.
 - **Histórico de Auditoria Imutável:** Cada ação crítica grava um snapshot contendo identificação do usuário, e-mail, papel, endereço IP, recurso afetado e valores anteriores/posteriores.
 - **Proteção de Rotas em Camadas:** As rotas são validadas duplamente: na camada de navegação do React (`ProtectedRoute`) e nas regras de segurança do banco de dados (PocketBase collection rules).
 - **Preservação de Dados em Uploads:** Fluxos de edição preservam fotos e mídias já cadastradas caso o usuário não envie um novo arquivo.

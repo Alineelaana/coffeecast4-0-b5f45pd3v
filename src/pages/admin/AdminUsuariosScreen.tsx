@@ -44,6 +44,8 @@ import {
   Phone,
   MessageSquare,
   Filter,
+  Clock,
+  RotateCcw,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
@@ -194,6 +196,8 @@ export default function AdminUsuariosScreen() {
     criar_regras: false,
     exportar: false,
   })
+  const [inatividadeMinutos, setInatividadeMinutos] = useState<number>(10)
+  const [forcarTrocaSenha, setForcarTrocaSenha] = useState<boolean>(false)
   const [saving, setSaving] = useState(false)
 
   // Filtro de origem da Nine
@@ -219,6 +223,8 @@ export default function AdminUsuariosScreen() {
     exportar: false,
   })
   const [editAtivo, setEditAtivo] = useState(true)
+  const [editInatividadeMinutos, setEditInatividadeMinutos] = useState<number>(10)
+  const [editForcarTrocaSenha, setEditForcarTrocaSenha] = useState<boolean>(false)
   const [editPassword, setEditPassword] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
 
@@ -274,6 +280,8 @@ export default function AdminUsuariosScreen() {
     setSelectedScreens(['dashboard', 'storefront', 'episodios', 'depoimentos'])
     setAllStores(stores.length === 0)
     setSelectedStoreIds(stores.length > 0 ? [stores[0].id] : [])
+    setInatividadeMinutos(10)
+    setForcarTrocaSenha(false)
     setModalOpen(true)
   }
 
@@ -285,6 +293,12 @@ export default function AdminUsuariosScreen() {
     setEditOrigem(user.origem ?? '')
     setEditRole(user.role || 'prata')
     setEditAtivo(user.ativo !== false)
+    setEditInatividadeMinutos(
+      typeof user.inatividade_minutos === 'number' && user.inatividade_minutos > 0
+        ? user.inatividade_minutos
+        : 10,
+    )
+    setEditForcarTrocaSenha(Boolean(user.forcar_troca_senha))
 
     const perms = user.adm_permissions
     if (perms) {
@@ -379,6 +393,8 @@ export default function AdminUsuariosScreen() {
           role: editRole || editingUser.role,
           ativo: editAtivo,
           adm_permissions: admPermissionsPayload,
+          inatividade_minutos: editInatividadeMinutos || 10,
+          forcar_troca_senha: editForcarTrocaSenha,
           password: editPassword.trim() || undefined,
         },
       })
@@ -427,6 +443,8 @@ export default function AdminUsuariosScreen() {
         telefone: telefone.trim() || undefined,
         role,
         adm_permissions: admPermissionsPayload,
+        inatividade_minutos: inatividadeMinutos || 10,
+        forcar_troca_senha: forcarTrocaSenha,
         ativo: true,
       })
 
@@ -665,24 +683,40 @@ export default function AdminUsuariosScreen() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-vinho/5">
+                  <div className="flex items-center justify-between pt-2 border-t border-vinho/5 flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-vinho/70 font-medium">Permissão:</span>
                       <Badge className="bg-vinho/10 text-vinho border border-vinho/20 text-[10px] font-bold uppercase">
                         {u.role}
                       </Badge>
                     </div>
-                    {u.ativo !== false ? (
-                      <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-medium flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        Ativo
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Badge
+                        variant="outline"
+                        className="bg-marfim border-vinho/20 text-vinho text-[10px] font-medium flex items-center gap-1"
+                        title="Tempo de inatividade configurado para logout automático"
+                      >
+                        <Clock className="w-2.5 h-2.5 text-dourado-dark" />
+                        {u.inatividade_minutos || 10} min
                       </Badge>
-                    ) : (
-                      <Badge className="bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-medium flex items-center gap-1">
-                        <XCircle className="w-3 h-3 text-rose-600" />
-                        Inativo
-                      </Badge>
-                    )}
+                      {u.forcar_troca_senha && (
+                        <Badge className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-bold flex items-center gap-1">
+                          <Key className="w-2.5 h-2.5 text-amber-700" />
+                          Nova senha pendente
+                        </Badge>
+                      )}
+                      {u.ativo !== false ? (
+                        <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-medium flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          Ativo
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-medium flex items-center gap-1">
+                          <XCircle className="w-3 h-3 text-rose-600" />
+                          Inativo
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
               )
@@ -702,6 +736,8 @@ export default function AdminUsuariosScreen() {
                 <TableHead className="font-bold text-vinho text-xs">Telefone / WhatsApp</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Origem / Captação</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Nível de Permissão</TableHead>
+                <TableHead className="font-bold text-vinho text-xs">Inatividade</TableHead>
+                <TableHead className="font-bold text-vinho text-xs">Nova Senha</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Status</TableHead>
                 <TableHead className="w-36 text-right font-bold text-vinho text-xs">
                   Ações
@@ -787,6 +823,28 @@ export default function AdminUsuariosScreen() {
                               <SelectItem value="master">Master</SelectItem>
                             </SelectContent>
                           </Select>
+                        )}
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className="bg-marfim border-vinho/20 text-vinho text-[11px] font-medium inline-flex items-center gap-1"
+                          title="Tempo configurado para logout automático por inatividade"
+                        >
+                          <Clock className="w-3 h-3 text-dourado-dark" />
+                          <span>{u.inatividade_minutos || 10} min</span>
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell>
+                        {u.forcar_troca_senha ? (
+                          <Badge className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold inline-flex items-center gap-1">
+                            <Key className="w-3 h-3 text-amber-700" />
+                            Exigida no login
+                          </Badge>
+                        ) : (
+                          <span className="text-vinho/40 text-[11px] font-medium">Não exigida</span>
                         )}
                       </TableCell>
 
@@ -927,6 +985,48 @@ export default function AdminUsuariosScreen() {
                 <br />• <strong>Gerencial:</strong> Acesso a membros e admin operacional.
                 <br />• <strong>Ouro & Prata:</strong> Acesso restrito à Área de Membros.
               </p>
+            </div>
+            {/* Configuração de Tempo de Inatividade (Logout Automático) */}
+            <div className="space-y-1.5 p-3 bg-white/80 rounded-xl border border-vinho/15">
+              <div className="flex items-center justify-between">
+                <Label
+                  htmlFor="u-inatividade"
+                  className="text-xs font-bold text-vinho flex items-center gap-1.5"
+                >
+                  <Clock className="w-3.5 h-3.5 text-dourado-dark" />
+                  Tempo de Inatividade (Logout Automático)
+                </Label>
+                <span className="text-[10px] text-vinho/60 font-mono">Padrão: 10 min</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="u-inatividade"
+                  type="number"
+                  min={1}
+                  max={1440}
+                  value={inatividadeMinutos}
+                  onChange={(e) => setInatividadeMinutos(parseInt(e.target.value, 10) || 10)}
+                  className="bg-white border-vinho/20 text-sm w-32"
+                />
+                <span className="text-xs text-vinho/70 font-medium">minutos</span>
+              </div>
+              <p className="text-[10px] text-vinho/65">
+                Se o usuário ficar essa quantidade de minutos sem interagir, será deslogado
+                automaticamente.
+              </p>
+            </div>
+            {/* Toggle "Criar nova senha no próximo login" */}
+            <div className="flex items-center justify-between p-3 bg-white/80 rounded-xl border border-vinho/15">
+              <div className="space-y-0.5 pr-2">
+                <Label className="text-xs font-bold text-vinho block flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-dourado-dark" />
+                  Criar nova senha no próximo login
+                </Label>
+                <p className="text-[10px] text-vinho/65">
+                  O usuário será obrigado a criar uma nova senha assim que fizer login no sistema.
+                </p>
+              </div>
+              <Switch checked={forcarTrocaSenha} onCheckedChange={setForcarTrocaSenha} />
             </div>
             {/* SEÇÃO DE PERMISSÕES GRANULARES PARA NOVO ADM */}
             {role === 'adm' && (
@@ -1428,6 +1528,57 @@ export default function AdminUsuariosScreen() {
                   disabled={editingUser.email === 'alineelaana@gmail.com'}
                   onCheckedChange={setEditAtivo}
                 />
+              </div>
+
+              {/* Campo de Tempo de Inatividade por Usuário */}
+              <div className="space-y-1.5 p-3 bg-white/80 rounded-xl border border-vinho/15">
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="edit-inatividade"
+                    className="text-xs font-bold text-vinho flex items-center gap-1.5"
+                  >
+                    <Clock className="w-3.5 h-3.5 text-dourado-dark" />
+                    Tempo de Inatividade em Minutos (Logout Automático)
+                  </Label>
+                  <span className="text-[10px] text-vinho/60 font-mono">Padrão: 10 min</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="edit-inatividade"
+                    type="number"
+                    min={1}
+                    max={1440}
+                    value={editInatividadeMinutos}
+                    onChange={(e) => setEditInatividadeMinutos(parseInt(e.target.value, 10) || 10)}
+                    className="bg-white border-vinho/20 text-sm w-32"
+                  />
+                  <span className="text-xs text-vinho/70 font-medium">minutos sem interação</span>
+                </div>
+                <p className="text-[10px] text-vinho/65">
+                  Após esse período sem cliques, digitação ou navegação, o usuário será desconectado
+                  automaticamente e redirecionado para a tela de login.
+                </p>
+              </div>
+
+              {/* Botão/Toggle "Criar nova senha no próximo login" */}
+              <div className="flex items-center justify-between p-3.5 bg-amber-50/70 rounded-xl border-2 border-dourado/40 shadow-2xs">
+                <div className="space-y-0.5 pr-3">
+                  <Label className="text-xs font-bold text-vinho block flex items-center gap-1.5">
+                    <Key className="w-4 h-4 text-dourado-dark" />
+                    Criar nova senha no próximo login
+                  </Label>
+                  <p className="text-[11px] text-vinho/75 leading-relaxed">
+                    {editForcarTrocaSenha ? (
+                      <span className="text-amber-900 font-semibold">
+                        Ativado: no próximo acesso o usuário será obrigado a cadastrar uma nova
+                        senha.
+                      </span>
+                    ) : (
+                      'Desativado: o usuário acessa normalmente com a senha atual.'
+                    )}
+                  </p>
+                </div>
+                <Switch checked={editForcarTrocaSenha} onCheckedChange={setEditForcarTrocaSenha} />
               </div>
 
               {/* Campo Nova Senha Opcional */}

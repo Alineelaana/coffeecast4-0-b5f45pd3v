@@ -22,6 +22,9 @@ interface AuthContextType {
   hasAuditoriaPermission: (
     subKey: keyof import('@/types/database').AuditoriaSubPermissions,
   ) => boolean
+  inatividadeMinutos: number
+  forcarTrocaSenha: boolean
+  marcarSenhaRedefinida: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -44,6 +47,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: ((rec as unknown as { role?: string }).role as UserRole) || 'prata',
       ativo: Boolean((rec as unknown as { ativo?: boolean }).ativo ?? true),
       adm_permissions: (rec as unknown as { adm_permissions?: any }).adm_permissions || null,
+      inatividade_minutos:
+        typeof (rec as unknown as { inatividade_minutos?: number }).inatividade_minutos ===
+          'number' && (rec as unknown as { inatividade_minutos: number }).inatividade_minutos > 0
+          ? (rec as unknown as { inatividade_minutos: number }).inatividade_minutos
+          : 10,
+      forcar_troca_senha: Boolean(
+        (rec as unknown as { forcar_troca_senha?: boolean }).forcar_troca_senha,
+      ),
       created: rec.created,
       updated: rec.updated,
     }
@@ -87,6 +98,104 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       unsubscribe()
     }
   }, [])
+
+  // =========================================================================
+  // DETECTOR DE INATIVIDADE POR USUÁRIO (LOGOUT AUTOMÁTICO)
+  // Cada usuário possui seu próprio tempo em minutos (mínimo 1, padrão 10).
+  // Monitora cliques, digitação, movimento do mouse, scroll e toque.
+  // =========================================================================
+  const inatividadeMinutos =
+    user && typeof user.inatividade_minutos === 'number' && user.inatividade_minutos > 0
+      ? user.inatividade_minutos
+      : 10
+
+  const forcarTrocaSenha = Boolean(user && user.forcar_troca_senha)
+
+  const marcarSenhaRedefinida = () => {
+    setUser((prev) => (prev ? { ...prev, forcar_troca_senha: false } : null))
+    if (pb.authStore.record) {
+      ;(pb.authStore.record as any).forcar_troca_senha = false
+    }
+  }
+
+  useEffect(() => {
+    if (!user) return
+
+    const timeoutMs = inatividadeMinutos * 60 * 1000
+    let timerId: ReturnType<typeof setTimeout> | null = null
+
+    const handleInatividadeLogout = () => {
+      if (!pb.authStore.isValid) return
+
+      // Registrar auditoria de logout por inatividade
+      try {
+        import('@/services/auditoria').then(({ AuditoriaService }) => {
+          AuditoriaService.registrarEvento({
+            tipo_acao: 'logout',
+            area_sistema: 'Autenticação / Sessão',
+            descricao: `Logout automático por inatividade (${inatividadeMinutos} min sem interação) para o usuário ${user.name || user.email}`,
+            usuario_id: user.id,
+            usuario_email: user.email,
+            usuario_nome: user.name || user.email,
+            usuario_role: user.role,
+            resultado: 'sucesso',
+          })
+        })
+      } catch {
+        /* ignore */
+      }
+
+      pb.authStore.clear()
+      setUser(null)
+
+      try {
+        sessionStorage.setItem(
+          'coffeecast_flash_message',
+          'Você foi desconectado por inatividade. Faça login novamente.',
+        )
+      } catch {
+        /* ignore */
+      }
+
+      // Redireciona para login
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login?motivo=inatividade'
+      }
+    }
+
+    const resetTimer = () => {
+      if (timerId) clearTimeout(timerId)
+      timerId = setTimeout(handleInatividadeLogout, timeoutMs)
+    }
+
+    // Iniciar contagem
+    resetTimer()
+
+    // Eventos de interação para reiniciar o contador
+    const eventos = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'wheel', 'click']
+
+    // Throttle no listener para não onerar CPU em mousemove contínuo
+    let lastActivity = Date.now()
+    const onUserActivity = () => {
+      const now = Date.now()
+      // Só reseta se tiver passado pelo menos 1 segundo da última interação registrada
+      if (now - lastActivity > 1000) {
+        lastActivity = now
+        resetTimer()
+      }
+    }
+
+    eventos.forEach((evt) => {
+      window.addEventListener(evt, onUserActivity, { passive: true })
+    })
+
+    return () => {
+      if (timerId) clearTimeout(timerId)
+      eventos.forEach((evt) => {
+        window.removeEventListener(evt, onUserActivity)
+      })
+    }
+  }, [user?.id, inatividadeMinutos])
 
   const login = async (email: string, pass: string) => {
     try {
@@ -268,6 +377,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hasScreenPermission,
         canManageStore,
         hasAuditoriaPermission,
+        inatividadeMinutos,
+        forcarTrocaSenha,
+        marcarSenhaRedefinida,
       }}
     >
       {children}

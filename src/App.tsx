@@ -5,6 +5,8 @@ import { StorefrontProvider } from '@/context/StorefrontContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { CookieBanner } from '@/components/CookieBanner'
 import { NineChatWidget } from '@/components/NineChatWidget'
+import { RedefinirSenhaObrigatoriaScreen } from '@/components/RedefinirSenhaObrigatoriaScreen'
+import { useAuth } from '@/context/AuthContext'
 import { Toaster } from 'sonner'
 
 // Public Pages
@@ -47,11 +49,17 @@ import AdminChatManagementScreen from '@/pages/admin/AdminChatManagementScreen'
 import DocumentacaoScreen from '@/pages/DocumentacaoScreen'
 import GuiaAjudaScreen from '@/pages/GuiaAjudaScreen'
 
+function AppAuthenticatedGate() {
+  const { forcarTrocaSenha } = useAuth()
+  return forcarTrocaSenha ? <RedefinirSenhaObrigatoriaScreen /> : null
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <StorefrontProvider>
         <BrowserRouter>
+          <AppAuthenticatedGate />
           <Routes>
             {/* Rotas Públicas */}
             <Route path="/" element={<Index />} />

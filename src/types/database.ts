@@ -32,6 +32,8 @@ export interface UserRecord {
   telefone?: string
   origem?: string
   adm_permissions?: AdmPermissions | null
+  inatividade_minutos?: number
+  forcar_troca_senha?: boolean
   created: string
   updated: string
 }

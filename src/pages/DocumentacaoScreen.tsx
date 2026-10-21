@@ -914,7 +914,10 @@ export default function DocumentacaoScreen() {
                 Gestão central de todos os operadores da plataforma. Permite ao Master configurar{' '}
                 <strong>permissões granulares para cada ADM</strong>, decidindo tela por tela o que
                 ele pode visualizar ou operar, além de restringir seu acesso a lojas específicas do
-                Storefront.
+                Storefront. Inclui <strong>tempo de inatividade individual configurável</strong>{' '}
+                (logout automático após X minutos sem interação, padrão de 10 min) e a opção{' '}
+                <strong>"Criar nova senha no próximo login"</strong> com tela dedicada de
+                redefinição e ícone de olho para visualização.
               </p>
             </div>
 
@@ -1133,12 +1136,12 @@ export default function DocumentacaoScreen() {
                 <Lock className="w-4 h-4 text-[#D4AF37]" />
               </div>
               <h4 className="font-serif font-bold text-sm text-[#4B1E3F]">
-                Proteção em Dupla Camada
+                Proteção em Dupla Camada & Inatividade
               </h4>
               <p className="leading-relaxed">
-                Rotas protegidas no frontend através do <code>ProtectedRoute</code> e regras
-                rigorosas de segurança diretamente nas coleções do banco de dados (Skip Cloud /
-                PocketBase).
+                Rotas protegidas no frontend com <code>ProtectedRoute</code>, logout automático por
+                inatividade individual parametrizável e fluxo obrigatório de criação de nova senha
+                no primeiro acesso com auditoria completa.
               </p>
             </div>
 

@@ -1,6 +1,6 @@
 // pocketbase/hooks/user_admin_api.js
 // Endpoint administrativo seguro para o cargo Master atualizar qualquer informação de um usuário,
-// incluindo alteração direta de senha sem necessidade de redefinição por e-mail.
+// incluindo alteração direta de senha, tempo de inatividade individual e flag para exigir nova senha no próximo login.
 
 routerAdd(
   'POST',
@@ -26,16 +26,6 @@ routerAdd(
         return e.badRequestError('ID do usuário é obrigatório.')
       }
 
-      // Preparar snapshot antes da alteração para auditoria
-      let snapshotAntes = null
-
-      let targetUser = null
-      try {
-        targetUser = $app.findCollectionByNameOrId('_pb_users_auth_')
-      } catch (_) {
-        return e.internalServerError('Coleção de usuários não encontrada.')
-      }
-
       let targetRecord = null
       try {
         targetRecord = $app.findFirstRecordByData('_pb_users_auth_', 'id', targetUserId)
@@ -44,8 +34,6 @@ routerAdd(
       }
 
       const targetEmail = targetRecord.getString('email')
-
-      // Se for a conta do Superadmin Master principal, prevenir bloqueio ou perda acidental de privilégios
       const isSuperAdminPrincipal = targetEmail === 'alineelaana@gmail.com'
 
       // 1. Atualizar Nome se fornecido
@@ -62,7 +50,6 @@ routerAdd(
               'O e-mail do Superadministrador Master principal não pode ser alterado.',
             )
           }
-          // Verificar se já existe outro usuário com esse e-mail
           try {
             const existing = $app.findAuthRecordByEmail('_pb_users_auth_', newEmail)
             if (existing && existing.id !== targetUserId) {
@@ -101,13 +88,12 @@ routerAdd(
 
         targetRecord.set('role', newRole)
       }
-      // 3.1 Atualizar Permissões de ADM (adm_permissions)
-      // Se body.adm_permissions foi enviado (objeto ou null/string)
+
+      // 3.3 Atualizar Permissões de ADM (adm_permissions)
       if (body.adm_permissions !== undefined) {
         if (targetRecord.getString('role') === 'adm' || body.role === 'adm') {
           targetRecord.set('adm_permissions', body.adm_permissions)
         } else {
-          // Se não for ADM, limpa permissões específicas de ADM
           targetRecord.set('adm_permissions', null)
         }
       }
@@ -120,6 +106,21 @@ routerAdd(
         targetRecord.set('ativo', body.ativo)
       }
 
+      // 4.1 Atualizar Tempo de Inatividade em Minutos (opcional, configurável individualmente pelo Master)
+      if (body.inatividade_minutos !== undefined) {
+        const parsedMin = parseInt(body.inatividade_minutos, 10)
+        if (!isNaN(parsedMin) && parsedMin >= 1 && parsedMin <= 1440) {
+          targetRecord.set('inatividade_minutos', parsedMin)
+        } else {
+          return e.badRequestError('O tempo de inatividade deve ser entre 1 e 1440 minutos.')
+        }
+      }
+
+      // 4.2 Atualizar Flag "Criar nova senha no próximo login" (forcar_troca_senha)
+      if (typeof body.forcar_troca_senha === 'boolean') {
+        targetRecord.set('forcar_troca_senha', body.forcar_troca_senha)
+      }
+
       // 5. Atualizar Senha (opcional, mínimo 8 caracteres)
       if (typeof body.password === 'string' && body.password.trim() !== '') {
         const newPassword = body.password.trim()
@@ -129,7 +130,7 @@ routerAdd(
         targetRecord.setPassword(newPassword)
       }
 
-      // Registrar log de auditoria da alteração de permissão / usuário
+      // Registrar log de auditoria
       try {
         const colAudit = $app.findCollectionByNameOrId('auditoria_eventos')
         const logRec = new Record(colAudit)
@@ -137,21 +138,30 @@ routerAdd(
         logRec.set('usuario_email', user.getString('email'))
         logRec.set('usuario_nome', user.getString('name') || user.getString('email'))
         logRec.set('usuario_role', user.getString('role'))
-        logRec.set(
-          'tipo_acao',
-          body.adm_permissions !== undefined || body.role !== undefined
-            ? 'alteracao_permissao'
-            : 'edicao',
-        )
-        logRec.set('area_sistema', 'Usuários & Permissões')
-        logRec.set(
-          'descricao',
+
+        let tipoAcaoAudit = 'edicao'
+        let descricaoAudit =
           'Alteração administrativa realizada no usuário: ' +
-            targetRecord.getString('name') +
-            ' (' +
-            targetRecord.getString('email') +
-            ')',
-        )
+          targetRecord.getString('name') +
+          ' (' +
+          targetRecord.getString('email') +
+          ')'
+
+        if (body.forcar_troca_senha !== undefined) {
+          tipoAcaoAudit = 'acao_administrativa'
+          descricaoAudit = body.forcar_troca_senha
+            ? `Master ativou "Criar nova senha no próximo login" para ${targetRecord.getString('name')} (${targetRecord.getString('email')})`
+            : `Master desativou "Criar nova senha no próximo login" para ${targetRecord.getString('name')} (${targetRecord.getString('email')})`
+        } else if (body.inatividade_minutos !== undefined) {
+          tipoAcaoAudit = 'configuracao'
+          descricaoAudit = `Master alterou o tempo de inatividade para ${targetRecord.getInt('inatividade_minutos')} minutos do usuário ${targetRecord.getString('name')} (${targetRecord.getString('email')})`
+        } else if (body.adm_permissions !== undefined || body.role !== undefined) {
+          tipoAcaoAudit = 'alteracao_permissao'
+        }
+
+        logRec.set('tipo_acao', tipoAcaoAudit)
+        logRec.set('area_sistema', 'Usuários & Permissões')
+        logRec.set('descricao', descricaoAudit)
         logRec.set('registro_afetado', targetRecord.id)
         logRec.set('tabela_afetada', '_pb_users_auth_')
         logRec.set('resultado', 'sucesso')
@@ -160,6 +170,8 @@ routerAdd(
           email: targetRecord.getString('email'),
           role: targetRecord.getString('role'),
           ativo: targetRecord.getBool('ativo'),
+          inatividade_minutos: targetRecord.getInt('inatividade_minutos') || 10,
+          forcar_troca_senha: targetRecord.getBool('forcar_troca_senha'),
           adm_permissions: targetRecord.get('adm_permissions'),
         })
         $app.save(logRec)
@@ -181,6 +193,8 @@ routerAdd(
           role: targetRecord.getString('role'),
           ativo: targetRecord.getBool('ativo'),
           adm_permissions: targetRecord.get('adm_permissions'),
+          inatividade_minutos: targetRecord.getInt('inatividade_minutos') || 10,
+          forcar_troca_senha: targetRecord.getBool('forcar_troca_senha'),
           created: targetRecord.getString('created'),
           updated: targetRecord.getString('updated'),
         },
@@ -223,6 +237,8 @@ routerAdd(
         role: rec.getString('role') || 'prata',
         ativo: rec.getBool('ativo'),
         adm_permissions: rec.get('adm_permissions'),
+        inatividade_minutos: rec.getInt('inatividade_minutos') || 10,
+        forcar_troca_senha: rec.getBool('forcar_troca_senha'),
         created: rec.getString('created'),
         updated: rec.getString('updated'),
       }))

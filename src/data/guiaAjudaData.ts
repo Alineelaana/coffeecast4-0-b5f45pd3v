@@ -850,6 +850,8 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
         passoAPasso: [
           'Clique em "+ Novo Usuário".',
           'Preencha nome, e-mail, senha inicial e selecione a categoria: Master, ADM, Gerencial, Ouro ou Prata.',
+          'Defina o Tempo de Inatividade em Minutos: configure individualmente quantos minutos sem interação (cliques, teclado, scroll) provocam o logout automático (o padrão é 10 minutos).',
+          'Ative a opção "Criar nova senha no próximo login": se marcada, o usuário verá no próximo login uma tela dedicada para criar e confirmar sua nova senha com visibilidade de olho aberto/fechado antes de acessar o sistema.',
           'Se selecionar ADM: uma matriz de checkboxes será exibida.',
           'Marque exatamente quais telas o ADM terá acesso (ex.: pode acessar apenas Financeiro e Agenda, sem ver Storefront ou Usuários).',
           'Defina também se ele gerencia todas as lojas ou apenas lojas específicas.',
@@ -860,6 +862,18 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             nome: '+ Novo Usuário',
             onde: 'Topo direito da tela',
             paraQueServe: 'Abre formulário para criar uma nova conta de acesso.',
+          },
+          {
+            nome: 'Tempo de Inatividade (minutos)',
+            onde: 'No cadastro e modal de edição do usuário',
+            paraQueServe:
+              'Programa o tempo limite individual em minutos sem interação para desconexão automática (padrão 10 min, configurado pelo Master).',
+          },
+          {
+            nome: 'Criar nova senha no próximo login',
+            onde: 'Botão/toggle no formulário de edição/criação do usuário',
+            paraQueServe:
+              'Exige que o usuário cadastre obrigatoriamente uma nova senha no seu próximo acesso ao sistema, desativando a flag após o sucesso.',
           },
           {
             nome: 'Editar Permissões Granulares',
@@ -878,7 +892,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             paraQueServe: 'Revoga o acesso imediatamente sem apagar o histórico de ações.',
           },
         ],
-        dica: 'Essa granularidade permite revender o sistema para clientes que só precisam ver seus relatórios operacionais sem comprometer outras áreas da plataforma.',
+        dica: 'Essa granularidade permite revender o sistema para clientes que só precisam ver seus relatórios operacionais sem comprometer outras áreas da plataforma, além de proteger os dados contra sessões esquecidas abertas via logout automático individual.',
       },
       {
         id: 'editar-site-conteudo',
