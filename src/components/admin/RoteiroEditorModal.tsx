@@ -35,6 +35,8 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  RefreshCw,
+  AlertTriangle,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import pb from '@/lib/pocketbase/client'
@@ -44,6 +46,7 @@ import {
   cleanMarkdownSyntax,
 } from '@/lib/roteiroParser'
 import { downloadRoteiroOficialPdf } from '@/lib/roteiroPdfExporter'
+import { AuditoriaService } from '@/services/auditoria'
 import type {
   RoteiroConvidadoRecord,
   RoteiroEstruturado,
@@ -71,6 +74,8 @@ export function RoteiroEditorModal({
 
   const [saving, setSaving] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [modoVisualizacao, setModoVisualizacao] = useState<'blocos' | 'texto'>('blocos')
 
   // Estado dos campos editáveis do Roteiro
@@ -436,6 +441,124 @@ export function RoteiroEditorModal({
     }
   }
 
+  // Regenerar roteiro do zero pela Nine com base nas respostas dos convidados
+  const handleRegenerarRoteiroPelaNine = async () => {
+    if (!roteiro) return
+    setRegenerating(true)
+    try {
+      const ehConjunto = idsVinculados && idsVinculados.length > 0
+      const payloadBody: Record<string, unknown> = {
+        roteiro_id: roteiro.id,
+      }
+      if (ehConjunto) {
+        payloadBody.roteiros_vinculados_ids = idsVinculados
+      }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_POCKETBASE_URL}/backend/v1/roteiro-assistente`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: pb.authStore.token,
+          },
+          body: JSON.stringify(payloadBody),
+        },
+      )
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'A Nine não pôde regenerar o roteiro neste momento.')
+      }
+
+      const novoTexto = cleanMarkdownSyntax(data.roteiroSugerido || '')
+      setTextoCompleto(novoTexto)
+
+      // Fazer o parse dos novos blocos
+      const parsed = parseRoteiroTextToStructure(novoTexto, {
+        tituloFallback: tituloEpisodio || roteiro.nome,
+        subtituloFallback: subtituloEpisodio || 'O poder de transformar pessoas',
+        convidadosRotulo: nomesConvidados.join(' & '),
+        empresaCargo,
+        dataGravacao,
+        horarioGravacao,
+        endereco: enderecoEstudio,
+        linkGps,
+      })
+
+      setTituloEpisodio(parsed.tituloEpisodio)
+      setSubtituloEpisodio(parsed.subtituloEpisodio)
+      setBlocos(parsed.blocos)
+      if (parsed.blocos.length > 0) {
+        setBlocoExpandidoId(parsed.blocos[0].id)
+      }
+
+      // Salvar imediatamente no backend para persistir a regeneração
+      await pb.send('/backend/v1/roteiro-assistente/salvar', {
+        method: 'POST',
+        body: {
+          roteiro_id: roteiro.id,
+          roteiro_texto: novoTexto,
+          status_aprovacao: statusAprovacao,
+          roteiro_estruturado: parsed,
+          data_gravacao: dataGravacao,
+          horario_gravacao: horarioGravacao,
+          subtitulo_episodio: parsed.subtituloEpisodio,
+          empresa_cargo_personalizado: empresaCargo,
+          endereco_personalizado: enderecoEstudio,
+          link_gps_personalizado: linkGps,
+          roteiros_vinculados_ids: idsVinculados,
+          roteiro_conjunto_titulo: parsed.tituloEpisodio,
+        },
+      })
+
+      // Registrar auditoria
+      AuditoriaService.registrarEvento({
+        tipo_acao: 'edicao',
+        area_sistema: 'Roteiros & Pautas',
+        descricao: `Novo roteiro regenerado do zero pela Nine para "${nomesConvidados.join(' & ')}".`,
+        registro_afetado: roteiro.id,
+        tabela_afetada: 'roteiros_convidados',
+        resultado: 'sucesso',
+        metadata: {
+          roteiro_id: roteiro.id,
+          convidados: nomesConvidados,
+          eh_conjunto: ehConjunto,
+          tamanho_novo_texto: novoTexto.length,
+          agente_usado: data.agenteUsado,
+        },
+      }).catch((auditErr) => {
+        console.warn('[RoteiroEditorModal] Erro ao auditar regeneração:', auditErr)
+      })
+
+      const recordAtualizado: RoteiroConvidadoRecord = {
+        ...roteiro,
+        roteiro_final_texto: novoTexto,
+        roteiro_estruturado: parsed,
+      }
+      if (onRoteiroSaved) {
+        onRoteiroSaved(recordAtualizado)
+      }
+
+      toast({
+        title: 'Novo Roteiro Gerado pela Nine!',
+        description:
+          'A pauta foi recriada do zero com base nas respostas dos convidados no modelo oficial Grazi e Márcio.',
+      })
+    } catch (err: unknown) {
+      console.error('Erro ao regenerar roteiro:', err)
+      const msg = err instanceof Error ? err.message : 'Falha ao regenerar roteiro'
+      toast({
+        title: 'Erro na Regeneração',
+        description: msg,
+        variant: 'destructive',
+      })
+    } finally {
+      setRegenerating(false)
+      setConfirmDialogOpen(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[92vh] flex flex-col p-0 gap-0 overflow-hidden bg-background">
@@ -480,12 +603,26 @@ export function RoteiroEditorModal({
             </div>
 
             {/* BOTÕES DE AÇÃO DO TOPO */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* BOTÃO NOVO: GERAR NOVO ROTEIRO PELA NINE */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmDialogOpen(true)}
+                disabled={regenerating || saving}
+                className="gap-1.5 border-amber-500/40 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-semibold"
+                title="Regenera uma nova pauta do zero com a Nine mantendo as respostas dos convidados"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${regenerating ? 'animate-spin' : ''}`} />
+                <span>{regenerating ? 'Nine Gerando...' : 'GERAR NOVO ROTEIRO PELA NINE'}</span>
+              </Button>
+
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleSalvar(false)}
-                disabled={saving}
+                disabled={saving || regenerating}
                 className="gap-1.5"
               >
                 <Save className="w-4 h-4" />
@@ -497,7 +634,7 @@ export function RoteiroEditorModal({
                   variant="outline"
                   size="sm"
                   onClick={() => handleSalvar(true)}
-                  disabled={saving}
+                  disabled={saving || regenerating}
                   className="gap-1.5 border-emerald-500/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                 >
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -509,7 +646,7 @@ export function RoteiroEditorModal({
               <Button
                 size="sm"
                 onClick={handleGerarPdf}
-                disabled={exportingPdf}
+                disabled={exportingPdf || regenerating}
                 className="gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold shadow-md shadow-amber-900/20"
               >
                 <Printer className="w-4 h-4" />
@@ -1059,6 +1196,17 @@ export function RoteiroEditorModal({
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmDialogOpen(true)}
+              disabled={regenerating || saving}
+              className="gap-1.5 border-amber-500/40 text-amber-800 dark:text-amber-300 font-semibold"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${regenerating ? 'animate-spin' : ''}`} />
+              <span>{regenerating ? 'Nine Gerando...' : 'GERAR NOVO ROTEIRO PELA NINE'}</span>
+            </Button>
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               Fechar
             </Button>
@@ -1066,7 +1214,7 @@ export function RoteiroEditorModal({
               variant="outline"
               size="sm"
               onClick={() => handleSalvar(false)}
-              disabled={saving}
+              disabled={saving || regenerating}
               className="gap-1.5"
             >
               <Save className="w-4 h-4" />
@@ -1075,7 +1223,7 @@ export function RoteiroEditorModal({
             <Button
               size="sm"
               onClick={handleGerarPdf}
-              disabled={exportingPdf}
+              disabled={exportingPdf || regenerating}
               className="gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold"
             >
               <Printer className="w-4 h-4" />
@@ -1083,6 +1231,71 @@ export function RoteiroEditorModal({
             </Button>
           </div>
         </div>
+
+        {/* DIÁLOGO DE CONFIRMAÇÃO DE REGENERAÇÃO */}
+        {confirmDialogOpen && (
+          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+            <div className="bg-background border-2 border-amber-500/60 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-foreground">
+                    Gerar Novo Roteiro pela Nine?
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Aviso de substituição do conteúdo atual
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-xs text-foreground/85 leading-relaxed bg-amber-50/60 dark:bg-amber-950/30 p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/50 space-y-2">
+                <p>
+                  Tem certeza de que deseja gerar um <strong>novo roteiro do zero</strong> com a
+                  Nine?
+                </p>
+                <p>
+                  O roteiro atual será <strong>substituído</strong> por uma nova versão estruturada
+                  a partir das respostas originais dos convidados ({nomesConvidados.join(' & ')}),
+                  seguindo o padrão oficial de Grazi e Márcio (sem perguntas de café e com texto
+                  100% limpo).
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfirmDialogOpen(false)}
+                  disabled={regenerating}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleRegenerarRoteiroPelaNine}
+                  disabled={regenerating}
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2"
+                >
+                  {regenerating ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Gerando Novo Roteiro...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Confirmar e Gerar</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

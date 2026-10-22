@@ -474,10 +474,17 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             nome: 'Gerar Pauta com IA (Nine)',
             onde: 'Dentro do modal de detalhes do roteiro e na aba Nine · Assistente Virtual',
             paraQueServe:
-              'Analisa as respostas do convidado e gera um roteiro completo de 60 minutos com 7 blocos, bate-bola e legado, sem asteriscos ou formatações poluídas.',
+              'Analisa as respostas do convidado e gera um roteiro completo de 60 minutos com 7 blocos, bate-bola de dinâmica humana e legado, sem perguntas de café e com texto 100% limpo.',
+          },
+          {
+            nome: 'GERAR NOVO ROTEIRO PELA NINE (Regeneração Completa)',
+            onde: 'No topo do Editor Editorial, no modal de detalhes e no modal Juntar Roteiros',
+            paraQueServe:
+              'Quando a equipe não aprovar ou não gostar da versão gerada, este botão recria uma pauta inédita do zero com a Nine utilizando as mesmas respostas originais dos convidados vinculados. O sistema solicita confirmação prévia, substitui o texto com segurança, salva no registro e grava o evento na auditoria.',
+            icone: 'RefreshCw',
           },
         ],
-        dica: 'O modelo oficial de Grazi e Márcio (Orvex) é a referência editorial definitiva: 60 minutos de duração (55 min estruturados + 5 min respiro), perguntas que investigam o que há por trás dos fatos, capa com endereço e rota GPS clicável e preservação das fotos originais sem IA generativa nos rostos.',
+        dica: 'O modelo oficial de Grazi e Márcio (Orvex) é a referência editorial definitiva: 60 minutos de duração (55 min estruturados + 5 min respiro), perguntas que investigam o que há por trás dos fatos, capa com endereço e rota GPS clicável, sem perguntas invasivas sobre café e sem nenhum caractere de formatação Markdown na saída.',
       },
       {
         id: 'depoimentos-moderacao',

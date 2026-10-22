@@ -5,18 +5,39 @@
 import type { RoteiroBloco, RoteiroBlocoPergunta, RoteiroEstruturado } from '@/types/database'
 
 /**
- * Remove qualquer resíduo de caracteres de formatação Markdown:
- * asteriscos duplos (**), sublinhados (__), cerquilhas de títulos (#, ##, ###)
+ * Remove qualquer resíduo de caracteres de formatação Markdown e símbolos indesejados:
+ * asteriscos duplos/simples (** / *), sublinhados (__ / _), cerquilhas (#, ##, ###),
+ * divisores ("---", "___", "==="), citações (">"), tabelas markdown ("|"),
+ * colchetes de metadados como "[Para Fulano]" e seções artificiais indesejadas.
  */
 export function cleanMarkdownSyntax(text: string): string {
   if (!text) return ''
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '$1')
-    .replace(/\*(.*?)\*/g, '$1')
-    .replace(/__(.*?)__/g, '$1')
-    .replace(/_(.*?)_/g, '$1')
-    .replace(/^#{1,6}\s+/gm, '')
-    .trim()
+  return (
+    text
+      // Remover asteriscos e sublinhados
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/__(.*?)__/g, '$1')
+      .replace(/_(.*?)_/g, '$1')
+      // Remover cerquilhas de títulos
+      .replace(/^#{1,6}\s+/gm, '')
+      // Remover linhas divisórias de texto (---, ___, ===)
+      .replace(/^[ \t]*[-_=]{3,}[ \t]*$/gm, '')
+      // Remover citações markdown (>)
+      .replace(/^[ \t]*>\s?/gm, '')
+      // Remover linhas de tabelas markdown (| e |---|---|)
+      .replace(/^[ \t]*\|.*\|[ \t]*$/gm, '')
+      // Remover colchetes de metadados como [Para Grasiele] -> Grasiele:
+      .replace(/\[(?:Para\s+)?([^\]]+)\]/gi, '$1')
+      // Remover cabeçalhos e blocos artificiais inventados fora do padrão
+      .replace(/^[ \t]*CABEÇALHO EDITORIAL.*$/gim, '')
+      .replace(/^[ \t]*PONTOS FORTES & SINERGIA.*$/gim, '')
+      .replace(/^[ \t]*ORIENTAÇÕES DE BASTIDORES.*$/gim, '')
+      .replace(/^[ \t]*RESUMO DE APRESENTAÇÃO.*$/gim, '')
+      // Normalizar espaçamento de quebras
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  )
 }
 
 /**

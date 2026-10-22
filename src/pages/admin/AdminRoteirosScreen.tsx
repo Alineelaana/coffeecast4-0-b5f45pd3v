@@ -8,6 +8,7 @@ import {
   downloadRoteiroOficialPdf,
   buildRoteiroOficialPdfFileName,
 } from '@/lib/roteiroPdfExporter'
+import { cleanMarkdownSyntax } from '@/lib/roteiroParser'
 import { RoteiroEditorModal } from '@/components/admin/RoteiroEditorModal'
 import { AuditoriaService } from '@/services/auditoria'
 import {
@@ -155,6 +156,11 @@ export default function AdminRoteirosScreen() {
   const [juntarSalvando, setJuntarSalvando] = useState(false)
   const [juntarDownloadingPdf, setJuntarDownloadingPdf] = useState(false)
 
+  // Estado para confirmação de regeneração do roteiro pela Nine (Modal de Detalhes e Conjunto)
+  const [regeneratingIndividual, setRegeneratingIndividual] = useState(false)
+  const [confirmRegenerarIndividualOpen, setConfirmRegenerarIndividualOpen] = useState(false)
+  const [confirmRegenerarConjuntoOpen, setConfirmRegenerarConjuntoOpen] = useState(false)
+
   const loadRoteiros = async () => {
     try {
       setLoading(true)
@@ -284,6 +290,82 @@ export default function AdminRoteirosScreen() {
     } catch (err) {
       console.error(err)
       toast.error('Erro ao excluir roteiro.')
+    }
+  }
+
+  // Ação: Regenerar Novo Roteiro pela Nine para o convidado selecionado (do zero)
+  const handleRegenerarIndividualPelaNine = async () => {
+    if (!selectedRoteiro) return
+    try {
+      setRegeneratingIndividual(true)
+      const res = await fetch(
+        `${import.meta.env.VITE_POCKETBASE_URL}/backend/v1/roteiro-assistente`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: pb.authStore.token,
+          },
+          body: JSON.stringify({
+            roteiro_id: selectedRoteiro.id,
+            roteiros_vinculados_ids: selectedRoteiro.roteiros_vinculados_ids || [],
+          }),
+        },
+      )
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'A Nine não pôde regenerar o roteiro neste momento.')
+      }
+
+      const novoTexto = cleanMarkdownSyntax(data.roteiroSugerido || '')
+      setRoteiroTexto(novoTexto)
+
+      // Atualizar no backend
+      await pb.send('/backend/v1/roteiro-assistente/salvar', {
+        method: 'POST',
+        body: {
+          roteiro_id: selectedRoteiro.id,
+          roteiro_texto: novoTexto,
+          roteiros_vinculados_ids: selectedRoteiro.roteiros_vinculados_ids || [],
+        },
+      })
+
+      // Registrar auditoria
+      AuditoriaService.registrarEvento({
+        tipo_acao: 'edicao',
+        area_sistema: 'Roteiros & Pautas',
+        descricao: `Novo roteiro regenerado do zero pela Nine para "${selectedRoteiro.nome}".`,
+        registro_afetado: selectedRoteiro.id,
+        tabela_afetada: 'roteiros_convidados',
+        resultado: 'sucesso',
+        metadata: {
+          roteiro_id: selectedRoteiro.id,
+          convidado_nome: selectedRoteiro.nome,
+          tamanho_caracteres: novoTexto.length,
+          agente_usado: data.agenteUsado,
+        },
+      }).catch((auditErr) => {
+        console.warn('[AdminRoteirosScreen] Falha ao registrar auditoria de regeneração:', auditErr)
+      })
+
+      const roteiroAtualizado: RoteiroConvidadoRecord = {
+        ...selectedRoteiro,
+        roteiro_final_texto: novoTexto,
+      }
+      setSelectedRoteiro(roteiroAtualizado)
+      toast.success(`Novo roteiro oficial da Nine gerado para ${selectedRoteiro.nome}!`)
+      loadRoteiros()
+    } catch (err: unknown) {
+      console.error('Erro ao regenerar roteiro:', err)
+      const msg =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: string }).message)
+          : 'Falha ao regenerar roteiro com a Nine.'
+      toast.error(msg)
+    } finally {
+      setRegeneratingIndividual(false)
+      setConfirmRegenerarIndividualOpen(false)
     }
   }
 
@@ -1791,6 +1873,28 @@ export default function AdminRoteirosScreen() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {/* BOTÃO REGENERAR NOVO ROTEIRO PELA NINE */}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setConfirmRegenerarIndividualOpen(true)}
+                        disabled={regeneratingIndividual || savingRoteiro}
+                        className="border-dourado/60 text-vinho hover:bg-dourado/15 font-bold text-xs rounded-xl min-h-[38px] px-3 flex items-center gap-1.5 shadow-2xs"
+                        title="Regenera uma nova pauta do zero com a Nine mantendo as respostas do convidado"
+                      >
+                        <RefreshCw
+                          className={`w-3.5 h-3.5 text-dourado-dark ${
+                            regeneratingIndividual ? 'animate-spin' : ''
+                          }`}
+                        />
+                        <span>
+                          {regeneratingIndividual
+                            ? 'Nine Gerando...'
+                            : 'GERAR NOVO ROTEIRO PELA NINE'}
+                        </span>
+                      </Button>
+
                       <Button
                         type="button"
                         size="sm"
@@ -1856,7 +1960,7 @@ export default function AdminRoteirosScreen() {
                       <Button
                         size="sm"
                         onClick={handleSalvarRoteiroPronto}
-                        disabled={savingRoteiro}
+                        disabled={savingRoteiro || regeneratingIndividual}
                         className="bg-vinho hover:bg-vinho-light text-white font-bold text-xs rounded-xl min-h-[38px] px-4"
                       >
                         <Save className="w-3.5 h-3.5 mr-1 text-dourado" />
@@ -2230,6 +2334,22 @@ export default function AdminRoteirosScreen() {
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
+                      {/* BOTÃO GERAR NOVO ROTEIRO PELA NINE (CONJUNTO) */}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setConfirmRegenerarConjuntoOpen(true)}
+                        disabled={juntarGerando || juntarSalvando}
+                        className="text-xs h-8 border-amber-500/50 text-amber-800 dark:text-amber-300 hover:bg-amber-50 rounded-xl font-bold"
+                        title="Regenera uma nova pauta conjunta do zero mantendo os convidados selecionados"
+                      >
+                        <RefreshCw
+                          className={`w-3 h-3 mr-1 ${juntarGerando ? 'animate-spin' : ''}`}
+                        />
+                        {juntarGerando ? 'Nine Gerando...' : 'GERAR NOVO ROTEIRO PELA NINE'}
+                      </Button>
+
                       <Button
                         size="sm"
                         variant="outline"
@@ -2294,6 +2414,137 @@ export default function AdminRoteirosScreen() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* DIÁLOGO DE CONFIRMAÇÃO PARA REGENERAR ROTEIRO INDIVIDUAL */}
+      {confirmRegenerarIndividualOpen && selectedRoteiro && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-background border-2 border-amber-500/60 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-foreground">
+                  Gerar Novo Roteiro pela Nine?
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Aviso de substituição do conteúdo atual
+                </p>
+              </div>
+            </div>
+
+            <div className="text-xs text-foreground/85 leading-relaxed bg-amber-50/60 dark:bg-amber-950/30 p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/50 space-y-2">
+              <p>
+                Tem certeza de que deseja gerar um <strong>novo roteiro do zero</strong> com a Nine
+                para <strong>{selectedRoteiro.nome}</strong>?
+              </p>
+              <p>
+                O texto atual será <strong>substituído</strong> pela nova versão elaborada a partir
+                das respostas da ficha, estruturada no padrão oficial de Grazi e Márcio (sem
+                perguntas de café e com texto 100% limpo).
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmRegenerarIndividualOpen(false)}
+                disabled={regeneratingIndividual}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleRegenerarIndividualPelaNine}
+                disabled={regeneratingIndividual}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2"
+              >
+                {regeneratingIndividual ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Gerando Novo Roteiro...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Confirmar e Gerar</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DIÁLOGO DE CONFIRMAÇÃO PARA REGENERAR ROTEIRO CONJUNTO */}
+      {confirmRegenerarConjuntoOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-background border-2 border-amber-500/60 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-foreground">
+                  Regenerar Roteiro Conjunto pela Nine?
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Aviso de substituição da pauta conjunta
+                </p>
+              </div>
+            </div>
+
+            <div className="text-xs text-foreground/85 leading-relaxed bg-amber-50/60 dark:bg-amber-950/30 p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/50 space-y-2">
+              <p>
+                Deseja gerar uma <strong>nova versão da pauta conjunta</strong> a partir das
+                respostas dos convidados selecionados?
+              </p>
+              <p>
+                O conteúdo anterior do roteiro conjunto será <strong>substituído</strong> pela nova
+                sugestão da Nine, aplicando a referência oficial de Grazi e Márcio (sem perguntas de
+                café e com texto 100% limpo).
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmRegenerarConjuntoOpen(false)}
+                disabled={juntarGerando}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  setConfirmRegenerarConjuntoOpen(false)
+                  handleGerarRoteiroConjunto()
+                }}
+                disabled={juntarGerando}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2"
+              >
+                {juntarGerando ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Gerando Novo Roteiro...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Confirmar e Regenerar</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL DO EDITOR EDITORIAL DE ROTEIROS */}
       <RoteiroEditorModal
