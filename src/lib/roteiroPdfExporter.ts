@@ -1029,9 +1029,9 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
 
     /* A Capa é a única que tem altura exata de página inteira e quebra logo após ela */
     .pdf-cover-page {
-      min-height: 296mm;
-      max-height: 297mm;
+      box-sizing: border-box;
       height: 296mm;
+      max-height: 296mm;
       overflow: hidden;
       page-break-before: auto !important;
       break-before: auto !important;
@@ -1039,22 +1039,33 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
       break-after: page !important;
     }
 
-    /* Conteúdo contínuo com quebras automáticas nos blocos */
+    /* Conteúdo contínuo com quebras automáticas apenas entre blocos */
     .pdf-content-page {
-      min-height: auto;
-      page-break-after: auto;
-      break-after: auto;
+      display: block !important;
+      min-height: auto !important;
+      height: auto !important;
+      page-break-before: auto !important;
+      break-before: auto !important;
+      page-break-after: auto !important;
+      break-after: auto !important;
     }
 
     @media print {
       .pdf-cover-page {
-        min-height: 296mm !important;
-        max-height: 296mm !important;
         height: 296mm !important;
+        max-height: 296mm !important;
+        overflow: hidden !important;
+        page-break-before: auto !important;
+        break-before: auto !important;
         page-break-after: always !important;
         break-after: page !important;
       }
       .pdf-content-page {
+        display: block !important;
+        min-height: auto !important;
+        height: auto !important;
+        page-break-before: auto !important;
+        break-before: auto !important;
         page-break-after: auto !important;
         break-after: auto !important;
       }
@@ -1255,6 +1266,16 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
     /* ======================================================== */
     /* PÁGINAS INTERNAS (PÁGINA 2 EM DIANTE)                     */
     /* ======================================================== */
+    /* Cabeçalho editorial unificado no topo do fluxo de conteúdo */
+    .inner-editorial-header-wrapper {
+      page-break-before: auto !important;
+      break-before: auto !important;
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
     .inner-editorial-header {
       background: #4B1E3F;
       color: #FAF8F5;
@@ -1305,11 +1326,13 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
       color: #4B1E3F;
       border-bottom: 1.5px solid rgba(212, 175, 55, 0.4);
       background: #FAF8F5;
+      page-break-after: avoid !important;
+      break-after: avoid !important;
     }
 
     .inner-page-content {
-      padding: 28px 36px 36px 36px;
-      flex: 1;
+      padding: 24px 36px 36px 36px;
+      display: block;
     }
 
     /* FORMATAÇÃO DOS BLOCOS EDITORIAIS */
@@ -1699,16 +1722,18 @@ function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: stri
   // Container de conteúdo editorial: inicia após a capa sem saltos vazios
   htmlPaginas += `
     <div class="pdf-page pdf-content-page">
-      <div class="inner-editorial-header">
-        <div class="inner-header-brand">
-          <img src="${officialLogoImg}" alt="CoffeeCast 4.0" />
-          <span class="inner-header-brand-title">CoffeeCast 4.0</span>
+      <div class="inner-editorial-header-wrapper">
+        <div class="inner-editorial-header">
+          <div class="inner-header-brand">
+            <img src="${officialLogoImg}" alt="CoffeeCast 4.0" />
+            <span class="inner-header-brand-title">CoffeeCast 4.0</span>
+          </div>
+          <div class="inner-header-guest">${subCabecalhoDireita}</div>
         </div>
-        <div class="inner-header-guest">${subCabecalhoDireita}</div>
-      </div>
-      <div class="inner-editorial-subbar">
-        <span>HISTÓRIAS QUE INSPIRAM • ROTEIRO DE GRAVAÇÃO OFICIAL</span>
-        <span>GUIA DE ESTÚDIO</span>
+        <div class="inner-editorial-subbar">
+          <span>HISTÓRIAS QUE INSPIRAM • ROTEIRO DE GRAVAÇÃO OFICIAL</span>
+          <span>GUIA DE ESTÚDIO</span>
+        </div>
       </div>
 
       <div class="inner-page-content">
