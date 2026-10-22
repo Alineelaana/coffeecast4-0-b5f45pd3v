@@ -1,9 +1,8 @@
 // pocketbase/hooks/assistente_roteiro.js
 // Geração de roteiros profissionais e pautas refinadas para o podcast CoffeeCast 4.0
-// Produzido pela Nine com padrão editorial elevado: norma-padrão rigorosa do português do Brasil,
-// estrutura completa de podcast de estúdio, personalização profunda dos dados do convidado e
-// respeito irrestrito a temas sensíveis.
-// Suporta geração individual E junção de roteiros (múltiplos convidados / casal / parceiros de negócio).
+// Produzido pela Nine com padrão editorial de excelência: modelo de referência Grasiele Scorsatto & Márcio Azevedo (Orvex).
+// Atua como roteirista-chefe e produtora editorial experiente em entrevistas, storytelling, comunicação e podcasts.
+// Suporta episódios individuais, casais/múltiplos convidados e episódios sem convidados.
 // NOTA IMPORTANTE DO SKIP CLOUD / POCKETBASE: Não usar declarações no topo do arquivo compartilhadas entre callbacks.
 // Todas as funções auxiliares e variáveis devem ser declaradas dentro do escopo de cada routerAdd callback.
 
@@ -96,31 +95,36 @@ routerAdd(
           })
         : []
 
-      if (!roteiroId) {
-        return e.badRequestError('ID do roteiro principal é obrigatório')
-      }
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
 
-      const roteiroPrincipal = $app.findRecordById('roteiros_convidados', roteiroId)
-      if (!roteiroPrincipal) {
-        return e.notFoundError('Roteiro principal não encontrado')
-      }
+      let roteiroPrincipal = null
+      const listaRecords = []
 
-      // Buscar todos os registros vinculados
-      const listaRecords = [roteiroPrincipal]
-      const idsJaAdicionados = {}
-      idsJaAdicionados[roteiroId] = true
+      if (!semConvidados) {
+        if (!roteiroId) {
+          return e.badRequestError('ID do roteiro principal é obrigatório')
+        }
+        roteiroPrincipal = $app.findRecordById('roteiros_convidados', roteiroId)
+        if (!roteiroPrincipal) {
+          return e.notFoundError('Roteiro principal não encontrado')
+        }
+        listaRecords.push(roteiroPrincipal)
 
-      for (let i = 0; i < idsVinculados.length; i++) {
-        const idSec = idsVinculados[i].trim()
-        if (idSec && !idsJaAdicionados[idSec]) {
-          try {
-            const rec = $app.findRecordById('roteiros_convidados', idSec)
-            if (rec) {
-              listaRecords.push(rec)
-              idsJaAdicionados[idSec] = true
+        const idsJaAdicionados = {}
+        idsJaAdicionados[roteiroId] = true
+
+        for (let i = 0; i < idsVinculados.length; i++) {
+          const idSec = idsVinculados[i].trim()
+          if (idSec && !idsJaAdicionados[idSec]) {
+            try {
+              const rec = $app.findRecordById('roteiros_convidados', idSec)
+              if (rec) {
+                listaRecords.push(rec)
+                idsJaAdicionados[idSec] = true
+              }
+            } catch (findErr) {
+              console.log('[assistente_roteiro] Roteiro vinculado não encontrado:', idSec, findErr)
             }
-          } catch (findErr) {
-            console.log('[assistente_roteiro] Roteiro vinculado não encontrado:', idSec, findErr)
           }
         }
       }
@@ -135,9 +139,9 @@ routerAdd(
       for (let k = 0; k < convidadosDados.length; k++) {
         nomesArray.push(convidadosDados[k].nome)
       }
-      const nomesLista = nomesArray.join(' & ')
+      const nomesLista = nomesArray.length > 0 ? nomesArray.join(' & ') : 'Episódio Especial Entre Apresentadoras'
 
-      // Carregar conhecimentos e treinamento dinâmico da Nine
+      // Carregar configurações dinâmicas da Nine
       let customTreinamento = ''
       let customPromptLivre = ''
       try {
@@ -161,135 +165,137 @@ routerAdd(
           ? alertasSensiveisTodos.join('\n')
           : 'Nenhum declarado pelos convidados'
 
-      // Montagem do Prompt de Sistema da Nine
-      let systemPromptRoteiro = ''
-      if (ehConjunto) {
-        systemPromptRoteiro = [
-          'Você é a Nine, a roteirista-chefe e assistente virtual oficial do podcast CoffeeCast 4.0.',
+      // PROMPT EDITORIAL MESTRE DA NINE BASEADO NO MODELO DE GRAZI E MÁRCIO
+      const diretrizesEditoriaisMestre = [
+        'Você é a Nine, a roteirista-chefe e produtora editorial sênior do CoffeeCast 4.0.',
+        'Sua referência oficial de excelência editorial, tom, elegância, estrutura e organização é o ROTEIRO OFICIAL DE GRASIELE & MÁRCIO (Orvex).',
+        '',
+        '### IDENTIDADE INSTITUCIONAL DO COFFEECAST 4.0:',
+        '• Slogan oficial: "Mais que conversas, histórias que transformam."',
+        '• Apresentadora titular: Aline Lana (@alineelaana) — empresária, mentora, palestrante e idealizadora.',
+        '• Co-apresentadoras e elenco: Dayana Ribas, Rosi Lima e Flávia Franco.',
+        '• Atmosfera: Estúdio intimista, elegante, acolhedor, com mesa de café selecionado. Conversas profundas, humanas, sofisticadas e que conectam.',
+        '• Filosofia: "O café pode até esfriar, mas o papo nunca."',
+        '',
+        '### PILAR 1: TREINAMENTO EDITORIAL DA NINE (COMPREENSÃO ANTES DA FORMULAÇÃO):',
+        '1. Analise cuidadosamente todas as informações dos convidados antes de criar o roteiro:',
+        '   - Acontecimentos mais relevantes das trajetórias;',
+        '   - Desafios, decisões difíceis e momentos de transformação;',
+        '   - Características pessoais que tornam a história única e interessante;',
+        '   - Experiências profissionais e resultados concretos;',
+        '   - Assuntos que geram identificação e conexão real com o público;',
+        '   - Conexões entre história pessoal, família, carreira e temas de impacto;',
+        '   - Oportunidades de perguntas emocionantes, reflexivas e com forte potencial para cortes de divulgação.',
+        '2. O que é PROIBIDO pela Direção Editorial:',
+        '   - Roteiros genéricos, superficiais, repetitivos ou excessivamente poéticos/melodramáticos;',
+        '   - Perguntas que apenas reproduzam dados da ficha (ex: "você nasceu em tal ano?");',
+        '   - Metáforas forçadas, descrições teatrais de cenários, aromas de café, câmeras ou orientações de bastidores desnecessárias.',
+        '3. REGRA DURA DE FIDELIDADE FACTUAL: NÃO INVENTE fatos, cargos, títulos, empresas, conquistas ou informações biográficas não confirmadas.',
+        '4. REGRA DE OURO — TEMAS SENSÍVEIS (BLOQUEIO TOTAL): Se houver temas sensíveis informados, NUNCA toque neles.',
+        '5. As perguntas devem explorar o que existe POR TRÁS dos acontecimentos: decisões, sentimentos, dificuldades, aprendizados, consequências e transformações.',
+        '',
+        '### PILAR 2: REGRA RIGOROSA DE FORMATAÇÃO E TEXTO LIMPO (CRÍTICO):',
+        'NÃO USE CARACTERES DE MARKDOWN como asteriscos duplos (**), sublinhados (__), cerquilhas (###) ou traços como marcadores de listas.',
+        'A formatação visual será aplicada diretamente pela interface da plataforma em negrito real, títulos, cores e tipografia.',
+        'Escreva texto límpido, elegante, fluído e gramaticalmente perfeito no Português do Brasil culto e natural.',
+        '',
+        '### PILAR 3: ESTRUTURA EDITORIAL OBRIGATÓRIA (PADRÃO 60 MINUTOS):',
+        'O roteiro total soma 60 minutos (55 minutos de conteúdo estruturado + 5 minutos de respiro para a conversa fluir):',
+        '1. TÍTULO DO EPISÓDIO (forte, elegante, conectado à essência — ex: "Duas histórias, um propósito")',
+        '2. SUBTÍTULO DO EPISÓDIO (frase de impacto — ex: "O poder de transformar pessoas")',
+        '3. ABERTURA (3 MINUTOS): Texto corrido escrito em parágrafos para leitura natural e calorosa pelas apresentadoras. Apresenta os convidados, sua história, relevância e introduz a conversa.',
+        '4. BLOCO 01 (8 MINUTOS): Origens, história pessoal, raízes e experiências formadoras. (Em casais/parcerias: o momento em que se conheceram).',
+        '5. BLOCO 02 (8 MINUTOS): Casamento, família, desafios, escolhas e momentos decisivos da trajetória.',
+        '6. BLOCO 03 (12 MINUTOS): O projeto profissional / empresa como propósito (a virada de chave, missão, desafios e conquistas práticas).',
+        '7. BLOCO 04 (10 MINUTOS): Liderança, conhecimento prático e desafios contemporâneos (conteúdo útil para o público / conselhos práticos).',
+        '8. BLOCO 05 (5 MINUTOS): Perspectivas, sonhos e o que ainda pretendem construir.',
+        '9. BLOCO 06 (5 MINUTOS): Bate-bola dinâmico e personalizado com perguntas de resposta rápida, descontraído e intimista.',
+        '10. BLOCO 07 (4 MINUTOS): Encerramento com pergunta marcante de LEGADO e reflexão final transformadora para o ouvinte.',
+        '11. RESUMO DE TEMPO FINAL: "Duração: 55 minutos de roteiro + 5 minutos para a conversa fluir naturalmente = 60 minutos."',
+        '12. PERGUNTAS COMPLEMENTARES OPCIONAIS: Quando couber uma pergunta opcional profunda, identifique com o prefixo exato "Se houver espaço:".',
+        '13. NUMERAÇÃO DAS PERGUNTAS: Numere sequencialmente as perguntas em dois dígitos com ponto (01., 02., 03., ..., 18.).',
+      ].join('\n')
+
+      let systemPromptEspecifico = ''
+
+      if (semConvidados) {
+        systemPromptEspecifico = [
+          diretrizesEditoriaisMestre,
           '',
-          '### SOBRE O COFFEECAST 4.0:',
-          '• Slogan oficial: "Mais que conversas, histórias que transformam."',
-          '• Apresentadora titular: Aline Lana (@alineelaana) — empresária, mentora, palestrante e idealizadora do CoffeeCast.',
-          '• Co-apresentadoras e elenco: Dayana Ribas, Rosi Lima e Flávia Franco.',
-          '• Atmosfera e Conceito: Podcast gravado presencialmente em estúdio intimista com mesa de café selecionado. Conversas profundas, acolhedoras, humanas, elegantes e de alto nível, com foco em histórias inspiradoras, mulheres que transformam, empreendedorismo com propósito, superação e família.',
-          '• Lema do café: "O café pode até esfriar, mas o papo nunca."',
+          '### ADAPTAÇÃO PARA EPISÓDIO SEM CONVIDADOS (ENTRE APRESENTADORAS):',
+          '• Condução fluida e cúmplice entre Aline Lana e as co-apresentadoras Dayana Ribas, Rosi Lima e Flávia Franco.',
+          '• Não crie perguntas artificiais para convidados inexistentes.',
+          '• Estruture tópicos de conversa profunda, reflexões, aprendizados da bancada e bate-bola entre as apresentadoras.',
+        ].join('\n')
+      } else if (ehConjunto) {
+        systemPromptEspecifico = [
+          diretrizesEditoriaisMestre,
           '',
-          '### MISSÃO ESPECIAL: ROTEIRO CONJUNTO DE ESTÚDIO (EPISÓDIO MULTI-CONVIDADOS / CASAL / PARCERIA)',
-          'Você está criando UM ÚNICO ROTEIRO OFICIAL DE EPISÓDIO para os convidados reunidos: ' +
-            nomesLista +
-            '.',
-          'ATENÇÃO: NÃO crie roteiros separados por pessoa! O objetivo é um único episódio fluido, harmônico e colaborativo.',
-          'Entrelaçar as trajetórias dos convidados com sensibilidade:',
-          '• Explore a história individual de cada um, mas valorize intensamente o encontro, a sinergia, os contrastes complementares e a história construída juntos (como casal, sócios, parceiros ou coautores de uma mesma jornada).',
-          '• Em cada bloco, equilibre perguntas dirigidas a cada convidado especificamente E perguntas dinâmicas de troca mútua entre eles na mesa.',
-          '',
-          '### EXIGÊNCIAS RIGOROSAS DE REDAÇÃO E LÍNGUA PORTUGUESA (OBRIGATÓRIO):',
-          '1. NORMA-PADRÃO IMPECÁVEL: Escreva em Português do Brasil na norma culta padrão (Acordo Ortográfico vigente). Revise mentalmente cada frase para que NÃO HAJA NENHUM ERRO de concordância nominal, verbal, regência, crase, pontuação, acentuação ou grafia.',
-          '2. PROSA NATURAL E REFINADA: Fuja de clichês robóticos ou jargões vazios. O texto deve soar elegante, poético, caloroso e pronto para ser falado com naturalidade por Aline Lana.',
-          '3. PONTUAÇÃO E RITMO: Use vírgulas, pontos e travessões para dar ritmo à fala da apresentadora.',
-          '4. RESPEITO ABSOLUTO A TEMAS SENSÍVEIS (BLOQUEIO TOTAL): Se houver qualquer tema sensível informado por qualquer um dos convidados, JAMAIS mencione ou tangencie esses assuntos.',
-          '',
-          '### ESTRUTURA OFICIAL OBRIGATÓRIA DO ROTEIRO CONJUNTO (EM MARKDOWN):',
-          '1. **CABEÇALHO EDITORIAL DO EPISÓDIO**',
-          '   - Convidados da Edição: ' + nomesLista,
-          '   - Tema Central da Conversa Conjunta',
-          '   - Tom e Atmosfera Sugeridos',
-          '   - Alertas Editoriais de Bastidores e Temas Sensíveis (se houver)',
-          '',
-          '2. **RESUMO DE APRESENTAÇÃO (BIO DE ABERTURA CONJUNTA PARA ALINE LANA)**',
-          '   - Texto marcante, poético e acolhedor (6 a 8 linhas) escrito em primeira pessoa da apresentadora Aline Lana apresentando os convidados, sua cumplicidade e o brilho da sua história compartilhada à mesa de café.',
-          '',
-          '3. **PONTOS FORTES & SINERGIA DO ENCONTRO**',
-          '   - Tópicos destacando o que torna essa conversa a dois/múltipla imperdível para a audiência (a química, os aprendizados complementares, o legado conjunto).',
-          '',
-          '4. **ROTEIRO ESTRUTURADO EM 4 BLOCOS COM PERGUNTAS DE ALTO NÍVEL**',
-          '   (Cada pergunta deve indicar claramente a quem se dirige — ex.: "[Para ambos]", "[Para Convidado 1]", "[Para Convidado 2]", "[Troca entre eles]"):',
-          '   - **BLOCO 1: Raízes, Origens e o Ponto de Encontro** (3 a 4 perguntas sobre as origens individuais de cada um e o momento em que seus caminhos se cruzaram).',
-          '   - **BLOCO 2: A Virada de Chave, Desafios e Dinâmica da Parceria** (3 a 4 perguntas sobre como lidam com desafios, família, conciliação e decisões difíceis juntos).',
-          '   - **BLOCO 3: O Ponto Alto — Propósito Compartilhado e Transformação** (3 a 4 perguntas aprofundadas focadas nos temas centrais solicitados e na área de impacto de ambos).',
-          '   - **BLOCO 4: Bate-Bola com Café & Mensagem Final Inspiradora** (perguntas rápidas e afetivas de resposta curta para ambos, finalizando com a pergunta de assinatura do CoffeeCast: *"Para vocês, o que é transformar histórias?"* com resposta de cada um).',
-          '',
-          '5. **ORIENTAÇÕES DE BASTIDORES PARA A PRODUÇÃO**',
-          '   - 2 ou 3 notas práticas de condução para o estúdio acolher os múltiplos convidados com excelência.',
+          '### DIRETRIZES DE ROTEIRO CONJUNTO (CASAL / MÚLTIPLOS CONVIDADOS):',
+          '• Convidados reunidos: ' + nomesLista,
+          '• Distribua as perguntas equilibradamente entre eles:',
+          '  - Perguntas individuais que valorizam a trajetória de cada um (identifique no início da pergunta: "01. NomeDoConvidado: ...")',
+          '  - Perguntas conjuntas e de troca mútua (identifique: "Para os dois: ..." ou "Para ambos: ...")',
+          '• Construa a narrativa do encontro, cumplicidade, complementariedade e o propósito construído a dois.',
         ].join('\n')
       } else {
-        systemPromptRoteiro = [
-          'Você é a Nine, a roteirista-chefe e assistente virtual oficial do podcast CoffeeCast 4.0.',
+        systemPromptEspecifico = [
+          diretrizesEditoriaisMestre,
           '',
-          '### SOBRE O COFFEECAST 4.0:',
-          '• Slogan oficial: "Mais que conversas, histórias que transformam."',
-          '• Apresentadora titular: Aline Lana (@alineelaana) — empresária, mentora, palestrante e idealizadora do CoffeeCast.',
-          '• Co-apresentadoras e elenco: Dayana Ribas, Rosi Lima e Flávia Franco.',
-          '• Atmosfera e Conceito: Podcast gravado presencialmente em estúdio intimista com mesa de café selecionado. Conversas profundas, acolhedoras, humanas, elegantes e de alto nível, com foco em histórias inspiradoras, mulheres que transformam, empreendedorismo com propósito, superação e família.',
-          '• Lema do café: "O café pode até esfriar, mas o papo nunca."',
-          '',
-          '### EXIGÊNCIAS RIGOROSAS DE REDAÇÃO E LÍNGUA PORTUGUESA (OBRIGATÓRIO):',
-          '1. NORMA-PADRÃO IMPECÁVEL: Escreva em Português do Brasil na norma culta padrão (Acordo Ortográfico vigente). Revise mentalmente cada frase para que NÃO HAJA NENHUM ERRO de concordância nominal, verbal, regência, crase, pontuação, acentuação ou grafia.',
-          '2. PROSA NATURAL E REFINADA: Fuja de clichês robóticos ou jargões vazios. O texto deve soar elegante, límpido, acolhedor e pronto para ser falado com naturalidade por Aline Lana.',
-          '3. PONTUAÇÃO E RITMO: Use vírgulas, pontos e travessões para dar ritmo à fala da apresentadora.',
-          '4. REGRA CRÍTICA DE OURO — TEMAS SENSÍVEIS (BLOQUEIO TOTAL): Se houver qualquer tema sensível informado, JAMAIS mencione ou tangencie esses assuntos.',
-          '',
-          '### ESTRUTURA PADRÃO OBRIGATÓRIA DO ROTEIRO (FORMATADA EM MARKDOWN):',
-          '1. **CABEÇALHO EDITORIAL DO EPISÓDIO**',
-          '2. **RESUMO DE APRESENTAÇÃO (BIO DE ABERTURA PARA ALINE LANA LER NO MICROFONE)** (4 a 6 linhas marcantes)',
-          '3. **PONTOS FORTES & CONEXÃO EMOCIONAL DO EPISÓDIO**',
-          '4. **ROTEIRO ESTRUTURADO EM 4 BLOCOS COM PERGUNTAS DE ALTO NÍVEL**:',
-          '   - **BLOCO 1: Raízes, Memórias e os Primeiros Passos**',
-          '   - **BLOCO 2: A Virada de Chave, Desafios e Família**',
-          '   - **BLOCO 3: O Ponto Alto — Propósito e Transformação**',
-          '   - **BLOCO 4: Bate-Bola com Café & Mensagem Final Inspiradora** (finalizando com a pergunta de assinatura da marca: *"Para você, o que é transformar histórias?"*)',
-          '5. **ORIENTAÇÕES DE BASTIDORES PARA A PRODUÇÃO**',
+          '### DIRETRIZES DE ROTEIRO INDIVIDUAL:',
+          '• Convidado(a): ' + nomesLista,
+          '• Conecte a infância, carreira, momento de virada, diferenciais do negócio e legado que deseja deixar no mundo.',
         ].join('\n')
       }
 
-      // Montagem da mensagem com os dados dos convidados
+      // Montagem dos dados de entrada
       const blocosFichas = []
       for (let n = 0; n < convidadosDados.length; n++) {
         const c = convidadosDados[n]
         const headerFicha = ehConjunto
-          ? '=== FICHA DE PRÉ-GRAVAÇÃO DO(A) CONVIDADO(A) ' + (n + 1) + ' (' + c.nome + ') ==='
-          : '=== FICHA DE PRÉ-GRAVAÇÃO DO(A) CONVIDADO(A) ==='
+          ? '=== FICHA DO(A) CONVIDADO(A) ' + (n + 1) + ': ' + c.nome + ' ==='
+          : '=== FICHA DO(A) CONVIDADO(A): ' + c.nome + ' ==='
         blocosFichas.push(
           [
             headerFicha,
-            '- Nome Completo: ' + c.nome,
-            '- Data de Nascimento: ' + (c.dataNascimento || 'Não informada'),
-            '- Estado Civil: ' + (c.estadoCivil || 'Não informado'),
-            '- Cônjuge: ' + c.infoConjuge,
-            '- Filhos: ' + c.infoFilhos,
-            '- Empresa / Atuação: ' + c.infoEmpresa,
-            '- Tema Desejado para Enfatizar: ' + c.temaEnfatizar,
-            '- Temas Sensíveis a EVITAR: ' + c.alertaTemaSensivel,
-            '- Biografia / Trajetória Enviada: ' + (c.biografia || 'Não informada'),
+            'Nome Completo: ' + c.nome,
+            'Data de Nascimento: ' + (c.dataNascimento || 'Não informada'),
+            'Estado Civil: ' + (c.estadoCivil || 'Não informado'),
+            'Cônjuge: ' + c.infoConjuge,
+            'Filhos: ' + c.infoFilhos,
+            'Empresa / Atuação: ' + c.infoEmpresa,
+            'Tema Desejado para Enfatizar: ' + c.temaEnfatizar,
+            'Temas Sensíveis a EVITAR: ' + c.alertaTemaSensivel,
+            'Biografia e Trajetória Enviada: ' + (c.biografia || 'Não informada'),
           ].join('\n'),
         )
       }
 
       const userMessage = [
-        ehConjunto
-          ? 'Por favor, Nine, elabore UM ROTEIRO ÚNICO, COMPLETO E OFICIAL para este episódio conjunto com ' +
-            nomesLista +
-            ':'
-          : 'Por favor, Nine, elabore um roteiro completo, impecável e inspirador para a gravação do seguinte episódio:',
+        semConvidados
+          ? 'Nine, elabore o roteiro completo oficial de estúdio de 60 minutos para este episódio especial de mesa redonda entre as apresentadoras do CoffeeCast 4.0:'
+          : ehConjunto
+            ? 'Nine, por favor elabore o roteiro conjunto oficial de estúdio de 60 minutos com excelência editorial máxima para ' +
+              nomesLista +
+              ', seguindo a referência de qualidade de Grazi e Márcio:'
+            : 'Nine, por favor elabore o roteiro oficial de estúdio de 60 minutos com excelência editorial máxima para ' +
+              nomesLista +
+              ', seguindo a referência de qualidade de Grazi e Márcio:',
         '',
-        blocosFichas.join('\n\n'),
+        blocosFichas.length > 0 ? blocosFichas.join('\n\n') : 'Tema livre da bancada: conversas que transformam, liderança feminina e negócios.',
         '',
-        ehConjunto
-          ? '=== SÍNTESE DE TEMAS SENSÍVEIS (BLOQUEIO ABSOLUTO) ===\n' +
+        alertasSensiveisTodos.length > 0
+          ? '=== ATENÇÃO ABSOLUTA DA PRODUÇÃO AOS TEMAS SENSÍVEIS (BLOQUEIO) ===\n' +
             textoAlertaSensivelConsolidado +
             '\n'
           : '',
         customTreinamento
-          ? '[DIRETRIZES DE PERSONALIDADE DA NINE CADASTRADAS PELA DIREÇÃO]:\n' +
-            customTreinamento.slice(0, 1200) +
-            '\n'
+          ? '[TREINAMENTO ADICIONAL DA DIREÇÃO]:\n' + customTreinamento.slice(0, 1000) + '\n'
           : '',
         customPromptLivre
-          ? '[ORIENTAÇÕES ADICIONAIS DA BASE DE CONHECIMENTO]:\n' +
-            customPromptLivre.slice(0, 800) +
-            '\n'
+          ? '[NOTAS DA BASE DE CONHECIMENTO]:\n' + customPromptLivre.slice(0, 800) + '\n'
           : '',
-        'Lembre-se: qualidade gramatical impecável no português do Brasil, acolhimento, respeito estrito aos temas sensíveis e perguntas profundas que entrelaçam as vivências.',
+        'Lembre-se: NÃO use símbolos de markdown como **, __ ou listas com hifens. Escreva texto limpo, perguntas inteligentes que vão além do óbvio, abertura e encerramento com legado, estrutura de 7 blocos e bate-bola.',
       ]
         .filter(Boolean)
         .join('\n')
@@ -302,7 +308,7 @@ routerAdd(
         try {
           const agentResult = $ai.agent('roteirista-coffeecast').chat({
             user_id: authUser.id,
-            message: systemPromptRoteiro + '\n\n====================\n\n' + userMessage,
+            message: systemPromptEspecifico + '\n\n====================\n\n' + userMessage,
           })
           if (agentResult && agentResult.content && agentResult.content.trim().length > 150) {
             resultadoTexto = agentResult.content.trim()
@@ -310,7 +316,7 @@ routerAdd(
           }
         } catch (agentChatErr) {
           console.log(
-            '[assistente_roteiro] Falha ao acionar $ai.agent, acionando fallback via $ai.chat:',
+            '[assistente_roteiro] Falha ao acionar $ai.agent, fallback via $ai.chat:',
             agentChatErr,
           )
         }
@@ -324,7 +330,7 @@ routerAdd(
             messages: [
               {
                 role: 'system',
-                content: systemPromptRoteiro,
+                content: systemPromptEspecifico,
               },
               {
                 role: 'user',
@@ -352,6 +358,13 @@ routerAdd(
         })
       }
 
+      // Limpeza de segurança extra: remover eventuais resíduos de markdown asteriscos e sublinhados se o LLM colocou
+      resultadoTexto = resultadoTexto
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/__(.*?)__/g, '$1')
+        .replace(/^###?\s+/gm, '')
+        .replace(/^[-*•]\s+/gm, '')
+
       const roteirosProcessadosRes = []
       for (let p = 0; p < convidadosDados.length; p++) {
         roteirosProcessadosRes.push({ id: convidadosDados[p].id, nome: convidadosDados[p].nome })
@@ -362,6 +375,7 @@ routerAdd(
         agenteUsado: agenteUsado,
         convidado: nomesLista,
         ehConjunto: ehConjunto,
+        semConvidados: semConvidados,
         totalConvidados: convidadosDados.length,
         roteirosProcessados: roteirosProcessadosRes,
         roteiroSugerido: resultadoTexto,
@@ -376,7 +390,7 @@ routerAdd(
   $apis.requireAuth(),
 )
 
-// Endpoint administrativo para salvar a sugestão da Nine diretamente no registro do roteiro principal
+// Endpoint administrativo para salvar o roteiro editado e estruturado
 routerAdd(
   'POST',
   '/backend/v1/roteiro-assistente/salvar',
@@ -409,13 +423,21 @@ routerAdd(
           })
         : []
       const tituloConjunto = (body.roteiro_conjunto_titulo || '').trim()
+      const statusAprovacao = (body.status_aprovacao || 'rascunho').trim()
+      const roteiroEstruturado = body.roteiro_estruturado || null
+      const dataGravacao = (body.data_gravacao || '').trim()
+      const horarioGravacao = (body.horario_gravacao || '').trim()
+      const subtituloEpisodio = (body.subtitulo_episodio || '').trim()
+      const empresaCargo = (body.empresa_cargo_personalizado || '').trim()
+      const enderecoPersonalizado = (body.endereco_personalizado || '').trim()
+      const linkGpsPersonalizado = (body.link_gps_personalizado || '').trim()
 
       if (!roteiroId) {
         return e.badRequestError('ID do roteiro é obrigatório')
       }
 
-      if (!roteiroTexto) {
-        return e.badRequestError('O texto da sugestão do roteiro não pode estar vazio.')
+      if (!roteiroTexto && !roteiroEstruturado) {
+        return e.badRequestError('O texto ou os blocos do roteiro não podem estar vazios.')
       }
 
       const roteiroRecord = $app.findRecordById('roteiros_convidados', roteiroId)
@@ -425,8 +447,33 @@ routerAdd(
 
       const convidadoNome = roteiroRecord.getString('nome') || 'Convidado(a)'
 
-      // Atualizar o registro principal com o roteiro da Nine e a lista de roteiros vinculados
-      roteiroRecord.set('roteiro_final_texto', roteiroTexto)
+      if (roteiroTexto) {
+        roteiroRecord.set('roteiro_final_texto', roteiroTexto)
+      }
+      if (statusAprovacao) {
+        roteiroRecord.set('status_aprovacao', statusAprovacao)
+      }
+      if (roteiroEstruturado) {
+        roteiroRecord.set('roteiro_estruturado', roteiroEstruturado)
+      }
+      if (dataGravacao) {
+        roteiroRecord.set('data_gravacao', dataGravacao)
+      }
+      if (horarioGravacao) {
+        roteiroRecord.set('horario_gravacao', horarioGravacao)
+      }
+      if (subtituloEpisodio) {
+        roteiroRecord.set('subtitulo_episodio', subtituloEpisodio)
+      }
+      if (empresaCargo) {
+        roteiroRecord.set('empresa_cargo_personalizado', empresaCargo)
+      }
+      if (enderecoPersonalizado) {
+        roteiroRecord.set('endereco_personalizado', enderecoPersonalizado)
+      }
+      if (linkGpsPersonalizado) {
+        roteiroRecord.set('link_gps_personalizado', linkGpsPersonalizado)
+      }
 
       if (idsVinculados.length > 0) {
         roteiroRecord.set('roteiros_vinculados_ids', idsVinculados)
@@ -437,29 +484,7 @@ routerAdd(
 
       $app.save(roteiroRecord)
 
-      // Coletar nomes dos convidados vinculados para auditoria precisa
-      const nomesVinculados = [convidadoNome]
-      for (let i = 0; i < idsVinculados.length; i++) {
-        try {
-          const vincRec = $app.findRecordById('roteiros_convidados', idsVinculados[i])
-          if (vincRec) {
-            nomesVinculados.push(vincRec.getString('nome') || idsVinculados[i])
-          }
-        } catch (_) {}
-      }
-
-      const ehConjunto = idsVinculados.length > 0
-      const descricaoAudit = ehConjunto
-        ? 'Junção de roteiros realizada com sucesso para o episódio de [' +
-          nomesVinculados.join(' & ') +
-          ']. Roteiro oficial conjunto estruturado pela Nine salvo no registro principal (' +
-          roteiroId +
-          ').'
-        : 'Sugestão de roteiro da assistente virtual Nine vinculada ao registro de "' +
-          convidadoNome +
-          '".'
-
-      // Registrar na Auditoria do Sistema
+      // Registrar auditoria
       try {
         const colAudit = $app.findCollectionByNameOrId('auditoria_eventos')
         if (colAudit) {
@@ -470,39 +495,42 @@ routerAdd(
           auditRec.set('usuario_role', userRole)
           auditRec.set('tipo_acao', 'edicao')
           auditRec.set('area_sistema', 'Roteiros & Pautas')
-          auditRec.set('descricao', descricaoAudit)
+          auditRec.set(
+            'descricao',
+            'Roteiro editorial atualizado/aprovado para "' +
+              convidadoNome +
+              '" (Status: ' +
+              statusAprovacao +
+              ').',
+          )
           auditRec.set('registro_afetado', roteiroId)
           auditRec.set('tabela_afetada', 'roteiros_convidados')
           auditRec.set('resultado', 'sucesso')
           auditRec.set('metadata', {
             convidado_principal: convidadoNome,
-            convidados_todos: nomesVinculados,
             roteiro_principal_id: roteiroId,
-            roteiros_vinculados_ids: idsVinculados,
-            eh_juncao_roteiros: ehConjunto,
-            origem: 'Assistente Nine',
-            tamanho_caracteres: roteiroTexto.length,
+            status_aprovacao: statusAprovacao,
+            tem_estrutura_blocos: Boolean(roteiroEstruturado),
+            data_gravacao: dataGravacao || null,
+            horario_gravacao: horarioGravacao || null,
           })
           $app.save(auditRec)
         }
       } catch (auditErr) {
-        console.log('[Roteiro Assistente] Falha não impeditiva ao registrar auditoria:', auditErr)
+        console.log('[Roteiro Assistente] Falha não impeditiva na auditoria:', auditErr)
       }
 
       return e.json(200, {
         sucesso: true,
-        mensagem: ehConjunto
-          ? 'Roteiro conjunto de ' + nomesVinculados.join(' & ') + ' salvo no registro com sucesso!'
-          : 'Sugestão da Nine vinculada ao registro de ' + convidadoNome + ' com sucesso!',
+        mensagem: 'Roteiro salvo com sucesso!',
         convidado: convidadoNome,
-        convidados_reunidos: nomesVinculados,
         roteiro_id: roteiroId,
-        eh_conjunto: ehConjunto,
+        status_aprovacao: statusAprovacao,
       })
     } catch (err) {
-      console.log('Erro ao salvar sugestão de roteiro da Nine:', err)
+      console.log('Erro ao salvar roteiro:', err)
       return e.json(500, {
-        error: err.message || 'Erro interno ao salvar a sugestão no registro do roteiro.',
+        error: err.message || 'Erro interno ao salvar roteiro.',
       })
     }
   },

@@ -250,6 +250,43 @@ export interface PoliticaRecord {
 }
 
 export type RoteiroConvidadoStatus = 'pendente' | 'lida' | 'arquivada'
+export type RoteiroStatusAprovacao = 'rascunho' | 'em_revisao' | 'aprovado'
+
+export interface RoteiroBlocoPergunta {
+  numero: string // ex: "01"
+  direcionadaPara?: string // ex: "Márcio", "Grasiele", "Para os dois"
+  texto: string
+  opcional?: boolean // Se houver espaço:
+}
+
+export interface RoteiroBloco {
+  id: string
+  numero: string // "01", "02", "06", "07"
+  titulo: string
+  duracaoMinutos: number
+  tipo: 'abertura' | 'perguntas' | 'bate_bola' | 'encerramento'
+  textoIntro?: string
+  perguntas?: RoteiroBlocoPergunta[]
+  itensBateBola?: string[]
+  perguntaEspecialFinal?: string
+  paragrafosEncerramento?: string[]
+}
+
+export interface RoteiroEstruturado {
+  tituloEpisodio: string
+  subtituloEpisodio: string
+  convidadosRotulo?: string
+  empresaCargoRotulo?: string
+  dataGravacaoFormatada?: string
+  horarioGravacao?: string
+  duracaoTotalMinutos?: number
+  duracaoRoteiroMinutos?: number
+  duracaoRespiroMinutos?: number
+  enderecoEstudio?: string
+  linkGps?: string
+  avisoEstacionamento?: string
+  blocos: RoteiroBloco[]
+}
 
 export interface RoteiroConvidadoRecord {
   id: string
@@ -277,6 +314,14 @@ export interface RoteiroConvidadoRecord {
   roteiro_final_arquivo?: string
   roteiros_vinculados_ids?: string[]
   roteiro_conjunto_titulo?: string
+  status_aprovacao?: RoteiroStatusAprovacao
+  roteiro_estruturado?: RoteiroEstruturado | null
+  data_gravacao?: string
+  horario_gravacao?: string
+  subtitulo_episodio?: string
+  empresa_cargo_personalizado?: string
+  endereco_personalizado?: string
+  link_gps_personalizado?: string
   created: string
   updated: string
 }
