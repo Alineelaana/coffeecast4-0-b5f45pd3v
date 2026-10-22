@@ -998,27 +998,34 @@ export default function AdminRoteirosScreen() {
             {/* Caixa de Resultado Editável */}
             {aiResultado && (
               <div className="mt-6 pt-6 border-t border-vinho/10 space-y-4 animate-fade-in">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-marfim/50 p-3 rounded-2xl border border-vinho/10">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-vinho text-dourado flex items-center justify-center shrink-0">
-                      <Sparkles className="w-4 h-4" />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-marfim/90 via-white to-marfim/80 p-3.5 rounded-2xl border border-dourado/40 shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-vinho text-dourado flex items-center justify-center shrink-0 shadow-2xs">
+                      <Sparkles className="w-4 h-4 text-dourado" />
                     </div>
                     <div>
-                      <span className="text-xs font-bold text-vinho block">
-                        Sugestão preparada pela Nine
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-vinho block">
+                          Roteiro Estruturado pela Nine
+                        </span>
+                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px]">
+                          Português Padrão • 4 Blocos
+                        </Badge>
+                        {aiAgenteUsado && (
+                          <Badge className="bg-vinho/10 text-vinho border border-vinho/20 text-[10px]">
+                            {aiAgenteUsado === 'native-agent'
+                              ? 'Agente Nine Ativo'
+                              : 'Modelo Rápido'}
+                          </Badge>
+                        )}
+                      </div>
                       <span className="text-[11px] text-vinho/70">
-                        Revise e ajuste o roteiro conforme o estilo da conversa
+                        Bio de abertura, 4 blocos temáticos e respeito estrito a temas sensíveis.
                       </span>
                     </div>
-                    {aiAgenteUsado && (
-                      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px] ml-1">
-                        {aiAgenteUsado === 'native-agent' ? 'Nine Ativa' : 'Modo Rápido'}
-                      </Badge>
-                    )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Button
                       size="sm"
                       variant="outline"
@@ -1026,37 +1033,40 @@ export default function AdminRoteirosScreen() {
                         navigator.clipboard.writeText(aiResultado)
                         toast.success('Roteiro da Nine copiado com sucesso!')
                       }}
-                      className="text-xs h-9 border-vinho/20 text-vinho hover:bg-vinho/10 rounded-xl"
+                      className="text-xs h-9 border-vinho/20 text-vinho hover:bg-vinho/10 rounded-xl font-medium"
                     >
                       <Copy className="w-3.5 h-3.5 mr-1 text-dourado-dark" />
-                      Copiar Texto
+                      Copiar Roteiro
                     </Button>
 
                     <Button
                       size="sm"
                       onClick={handleSalvarAiNoRegistro}
                       disabled={aiSavingToGuest}
-                      className="text-xs h-9 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl"
+                      className="text-xs h-9 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow-xs"
                     >
                       <Save className="w-3.5 h-3.5 mr-1" />
                       {aiSavingToGuest ? 'Salvando...' : 'Salvar no Registro do Convidado'}
                     </Button>
                   </div>
                 </div>
-
                 <Textarea
-                  rows={16}
+                  rows={18}
                   value={aiResultado}
                   onChange={(e) => setAiResultado(e.target.value)}
-                  className="bg-marfim/60 border-vinho/20 focus-visible:ring-dourado font-mono text-xs sm:text-sm rounded-2xl p-4 leading-relaxed text-vinho shadow-inner"
+                  className="bg-white border-vinho/20 focus-visible:ring-2 focus-visible:ring-dourado font-sans text-xs sm:text-sm rounded-2xl p-4 leading-relaxed text-vinho shadow-xs"
+                  placeholder="O roteiro gerado pela Nine aparecerá aqui com cabeçalho, resumo de apresentação e 4 blocos de perguntas..."
                 />
-                <p className="text-[11px] text-vinho/60 italic flex items-center gap-1.5">
-                  <Coffee className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
-                  <span>
-                    Você pode editar as sugestões da Nine livremente acima antes de salvar no
-                    registro do convidado ou copiar para o estúdio.
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-vinho/70 bg-marfim/60 p-2.5 rounded-xl border border-vinho/10">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Coffee className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
+                    <span>
+                      Edite livremente o texto antes de salvar no registro do convidado ou copiar
+                      para a gravação.
+                    </span>
                   </span>
-                </p>
+                  <span className="text-vinho/50">{aiResultado.length} caracteres</span>
+                </div>{' '}
               </div>
             )}
           </div>

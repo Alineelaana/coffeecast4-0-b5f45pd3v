@@ -428,8 +428,8 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Localize o convidado na lista de roteiros recebidos.',
           'Clique em "Visualizar Roteiro" para ver os dados familiares, histórico de negócios, temas que ele quer enfatizar e temas sensíveis a evitar.',
           'Clique no botão "Baixar PDF" (disponível tanto na lista quanto no modal de detalhes) para gerar um documento formal A4 com cabeçalho oficial CoffeeCast 4.0, logo, dados e todas as respostas do convidado já prontas para impressão ou salvamento.',
-          'Clique no botão "Gerar Sugestão com a Nine" para que a IA analise as respostas e crie um roteiro pronto com perguntas recomendadas para a entrevista.',
-          'Edite o texto do roteiro no editor e, se desejar, anexe o arquivo final (PDF/DOCX) aprovado pela produção.',
+          'Clique no botão "Gerar Sugestão com a Nine" para que a IA analise as respostas do convidado e elabore um roteiro completo de gravação (cabeçalho, bio de abertura para Aline Lana, pontos fortes e 4 blocos de perguntas refinadas no padrão formal da língua portuguesa).',
+          'Edite o texto do roteiro livremente no editor e, se desejar, anexe o arquivo final (PDF/DOCX) aprovado pela produção.',
           'Atualize o status para "Lido" ou "Arquivado".',
         ],
         botoesPrincipais: [
@@ -444,7 +444,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             nome: 'Gerar Pauta com IA (Nine)',
             onde: 'Dentro do modal de detalhes do roteiro e na aba Nine · Assistente Virtual',
             paraQueServe:
-              'Sintetiza a história do convidado e gera automaticamente uma pauta estruturada de perguntas.',
+              'Analisa as respostas do convidado e gera um roteiro completo em norma-padrão do português do Brasil com 4 blocos de perguntas, bio de abertura e blindagem de temas sensíveis.',
           },
           {
             nome: 'Salvar Roteiro no Registro do Convidado',

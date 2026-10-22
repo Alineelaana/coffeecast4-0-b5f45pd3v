@@ -1,3 +1,9 @@
+// pocketbase/hooks/assistente_roteiro.js
+// Geração de roteiros profissionais e pautas refinadas para o podcast CoffeeCast 4.0
+// Produzido pela Nine com padrão editorial elevado: norma-padrão rigorosa do português do Brasil,
+// estrutura completa de podcast de estúdio, personalização profunda dos dados do convidado e
+// respeito irrestrito a temas sensíveis.
+
 routerAdd(
   'POST',
   '/backend/v1/roteiro-assistente',
@@ -16,7 +22,9 @@ routerAdd(
           return e.forbiddenError('Você não tem permissão para usar o assistente de roteiros.')
         }
       } else if (userRole !== 'master' && userRole !== 'gerencial') {
-        return e.forbiddenError('Acesso restrito a usuários Master, ADM autorizados e Gerencial')
+        return e.forbiddenError(
+          'Acesso restrito a administradores Master, Gerencial e ADM autorizados.',
+        )
       }
 
       const body = e.requestInfo().body || {}
@@ -30,80 +38,149 @@ routerAdd(
         return e.notFoundError('Roteiro não encontrado')
       }
 
-      const nome = roteiroRecord.getString('nome') || 'Convidado(a)'
-      const dataNascimento = roteiroRecord.getString('data_nascimento') || 'Não informada'
-      const estadoCivil = roteiroRecord.getString('estado_civil') || 'Não informado'
+      // 1. Extração segura de dados da ficha do(a) convidado(a)
+      const nome = (roteiroRecord.getString('nome') || 'Convidado(a)').trim()
+      const dataNascimento = (roteiroRecord.getString('data_nascimento') || '').trim()
+      const estadoCivil = (roteiroRecord.getString('estado_civil') || '').trim()
       const temConjuge = roteiroRecord.getBool('tem_conjuge')
-      const nomeConjuge = roteiroRecord.getString('nome_conjuge')
+      const nomeConjuge = (roteiroRecord.getString('nome_conjuge') || '').trim()
       const temFilhos = roteiroRecord.getBool('tem_filhos')
-      const quantidadeFilhos = roteiroRecord.getString('quantidade_filhos')
-      const nomesFilhos = roteiroRecord.getString('nomes_filhos')
+      const quantidadeFilhos = (roteiroRecord.getString('quantidade_filhos') || '').trim()
+      const nomesFilhos = (roteiroRecord.getString('nomes_filhos') || '').trim()
       const temEmpresa = roteiroRecord.getBool('tem_empresa')
-      const nomeEmpresa = roteiroRecord.getString('nome_empresa')
-      const sobreEmpresa = roteiroRecord.getString('sobre_empresa')
+      const nomeEmpresa = (roteiroRecord.getString('nome_empresa') || '').trim()
+      const sobreEmpresa = (roteiroRecord.getString('sobre_empresa') || '').trim()
       const temaEnfatizar =
-        roteiroRecord.getString('tema_enfatizar') || 'Trajetória pessoal e profissional'
+        (roteiroRecord.getString('tema_enfatizar') || '').trim() ||
+        'Trajetória de vida, propósito, superação e legado profissional'
       const temTemaSensivel = roteiroRecord.getBool('tem_tema_sensivel')
-      const temaSensivelDetalhes = roteiroRecord.getString('tema_sensivel_detalhes')
-      const biografia = roteiroRecord.getString('biografia') || 'Não informada'
+      const temaSensivelDetalhes = (roteiroRecord.getString('tema_sensivel_detalhes') || '').trim()
+      const biografia = (roteiroRecord.getString('biografia') || '').trim()
 
-      const promptInstrucoes = [
-        'Você é a Nine, a assistente virtual e de produção do podcast CoffeeCast 4.0.',
-        'Slogan da marca: "Mais que conversas, histórias que transformam". Identidade: café acolhedor, refinado, conversas profundas, inspiração, empreendedorismo e família.',
+      // 2. Carregar conhecimentos e treinamento dinâmico da Nine (se houver no banco)
+      let customTreinamento = ''
+      let customPromptLivre = ''
+      try {
+        const globalCfg = $app.findFirstRecordByData('nine_config', 'chave', 'global')
+        if (globalCfg) {
+          customTreinamento = (globalCfg.getString('prompt_sistema') || '').trim()
+          customPromptLivre = (globalCfg.getString('prompt_livre') || '').trim()
+        }
+      } catch (_) {}
+
+      // Formatar resumo familiar e profissional
+      const infoConjuge =
+        temConjuge && nomeConjuge
+          ? `Sim (${nomeConjuge})`
+          : temConjuge
+            ? 'Sim'
+            : 'Não informado / Não possui'
+      let infoFilhos = 'Não'
+      if (temFilhos) {
+        infoFilhos = `Sim`
+        if (quantidadeFilhos) infoFilhos += ` (${quantidadeFilhos} filho(s)`
+        if (nomesFilhos) infoFilhos += ` - Nomes: ${nomesFilhos}`
+        if (quantidadeFilhos) infoFilhos += `)`
+      }
+      const infoEmpresa = temEmpresa
+        ? `${nomeEmpresa || 'Sim'}${sobreEmpresa ? ` — Atuação: ${sobreEmpresa}` : ''}`
+        : 'Não informado / Não possui'
+
+      const alertaTemaSensivel =
+        temTemaSensivel && temaSensivelDetalhes
+          ? temaSensivelDetalhes
+          : 'Nenhum declarado pelo convidado'
+
+      // 3. Montagem do Prompt de Sistema Especialista da Nine para Roteiros
+      const systemPromptRoteiro = [
+        'Você é a Nine, a roteirista-chefe e assistente virtual oficial do podcast CoffeeCast 4.0.',
         '',
-        'Aqui estão os dados enviados pelo(a) convidado(a):',
-        '- Nome: ' + nome,
-        '- Data de Nascimento: ' + dataNascimento,
-        '- Estado Civil: ' + estadoCivil,
-        '- Cônjuge: ' +
-          (temConjuge && nomeConjuge ? 'Sim, ' + nomeConjuge : 'Não informado/Não se aplica'),
-        '- Filhos: ' +
-          (temFilhos
-            ? 'Sim (' + quantidadeFilhos + ' filhos - Nomes: ' + nomesFilhos + ')'
-            : 'Não'),
-        '- Empresa / Negócio: ' +
-          (temEmpresa
-            ? 'Sim (' + nomeEmpresa + ' - Sobre: ' + sobreEmpresa + ')'
-            : 'Não informado/Não tem'),
-        '- Tema principal que o convidado deseja enfatizar: ' + temaEnfatizar,
-        '- Temas sensíveis que prefere EVITAR: ' +
-          (temTemaSensivel && temaSensivelDetalhes ? temaSensivelDetalhes : 'Nenhum declarado'),
-        '- Biografia enviada: ' + biografia,
+        '### SOBRE O COFFEECAST 4.0:',
+        '• Slogan oficial: "Mais que conversas, histórias que transformam."',
+        '• Apresentadora titular: Aline Lana (@alineelaana) — empresária, mentora, palestrante e idealizadora do CoffeeCast.',
+        '• Co-apresentadoras e elenco: Dayana Ribas, Rosi Lima e Flávia Franco.',
+        '• Atmosfera e Conceito: Podcast gravado presencialmente em estúdio intimista com mesa de café selecionado. Conversas profundas, acolhedoras, humanas, elegantes e de alto nível, com foco em histórias inspiradoras, mulheres que transformam, empreendedorismo com propósito, superação e família.',
+        '• Lema do café: "O café pode até esfriar, mas o papo nunca."',
         '',
-        'REGRA CRÍTICA DE OURO: Se houver qualquer tema sensível informado acima, JAMAIS pergunte ou mencione nada a respeito desse tema no roteiro ou nas perguntas.',
+        '### EXIGÊNCIAS RIGOROSAS DE REDAÇÃO E LÍNGUA PORTUGUESA (OBRIGATÓRIO):',
+        '1. NORMA-PADRÃO IMPECÁVEL: Escreva em Português do Brasil na norma culta padrão (Acordo Ortográfico vigente). Revise mentalmente cada frase para que NÃO HAJA NENHUM ERRO de concordância nominal, concordância verbal, regência, crase, pontuação, acentuação ou grafia.',
+        '2. PROSA NATURAL E REFINADA: Fuja de clichês robóticos, frases truncadas, construções de tradução literal do inglês ou jargões vazios. O texto deve soar fluente, poético, caloroso e pronto para ser falado com naturalidade pela apresentadora.',
+        '3. PONTUAÇÃO E RITMO: Use vírgulas, pontos e travessões com precisão para dar ritmo à fala da apresentadora.',
+        '4. ADEQUAÇÃO AO CONVIDADO: Adapte o vocabulário e o tom à história do convidado, sem jamais presumir dados que ele não enviou.',
         '',
-        'Por favor, gere uma estrutura COMPLETA, elegante, prática e pronta para gravação contendo exatamente:',
-        '1. RESUMO DE APRESENTAÇÃO (bio introdutória de 3 a 5 linhas para a apresentadora ler na abertura do podcast).',
-        '2. PONTOS FORTES E FOCO DO EPISÓDIO (o que vai emocionar e engajar a audiência).',
-        '3. ROTEIRO ESTRUTURADO EM BLOCOS COM SUGESTÕES DE PERGUNTAS:',
-        '   - BLOCO 1: Raízes, Infância e Primeiras Escolhas (3 a 4 perguntas)',
-        '   - BLOCO 2: Virada de Chave, Família e Empreendedorismo (3 a 4 perguntas)',
-        '   - BLOCO 3: O Ponto Alto (' + temaEnfatizar + ') e Superações (3 a 4 perguntas)',
-        '   - BLOCO 4: Bate-Bola com Café & Mensagem Final Inspiradora (perguntas rápidas e a pergunta de encerramento da marca: "O que é transformar histórias para você?").',
+        '### REGRA CRÍTICA DE OURO — TEMAS SENSÍVEIS (BLOQUEIO TOTAL):',
+        '• Se houver qualquer tema sensível informado pela produção ou pelo convidado (como política, religião, litígios, traumas específicos ou vida íntima), É TERMINANTEMENTE PROIBIDO mencionar, sugerir ou fazer qualquer pergunta direta ou indireta que tangencie esse assunto.',
+        '• O estúdio do CoffeeCast 4.0 é um espaço de acolhimento, respeito e segurança psicológica.',
         '',
-        'Escreva tudo em Português do Brasil com excelente redação, formatação limpa em tópicos com marcadores e subtítulos elegantes.',
+        '### ESTRUTURA PADRÃO OBRIGATÓRIA DO ROTEIRO (ENTREGUE TODAS AS SEÇÕES FORMATADAS EM MARKDOWN):',
+        '1. **CABEÇALHO EDITORIAL DO EPISÓDIO**',
+        '   - Nome do(a) Convidado(a), tema central da edição, tom sugerido para a conversa e aviso explícito de proteção sobre temas sensíveis (se houver).',
+        '',
+        '2. **RESUMO DE APRESENTAÇÃO (BIO DE ABERTURA PARA ALINE LANA LER NO MICROFONE)**',
+        '   - Texto marcante, envolvente e acolhedor (de 4 a 6 linhas), escrito em primeira pessoa da apresentadora (ex.: "Hoje o nosso café tem um aroma especial..."), apresentando o(a) convidado(a) pelo seu legado, humanidade e trajetória transformadora.',
+        '',
+        '3. **PONTOS FORTES & CONEXÃO EMOCIONAL DO EPISÓDIO**',
+        '   - Destaque em tópicos elegantes dos momentos de maior brilho, inspiração e aprendizado prático que irão encantar a audiência do CoffeeCast.',
+        '',
+        '4. **ROTEIRO ESTRUTURADO EM 4 BLOCOS COM PERGUNTAS DE ALTO NÍVEL** (cada pergunta deve ser instigante, aberta, profunda e natural, acompanhada de um breve direcionamento ou gancho para a apresentadora conduzir):',
+        '   - **BLOCO 1: Raízes, Memórias e os Primeiros Passos** (3 a 4 perguntas sobre infância, família, referências que moldaram o caráter e primeiras decisões de vida).',
+        '   - **BLOCO 2: A Virada de Chave, Desafios e Família** (3 a 4 perguntas sobre momentos decisivos, conciliação entre vida pessoal/filhos/cônjuge e a coragem de empreender ou trilhar o próprio caminho).',
+        '   - **BLOCO 3: O Ponto Alto — Propósito e Transformação** (3 a 4 perguntas aprofundadas focadas no tema principal solicitado pelo convidado e na sua área de impacto).',
+        '   - **BLOCO 4: Bate-Bola com Café & Mensagem Final Inspiradora** (perguntas dinâmicas e afetivas de 1 a 2 palavras, fechando com a pergunta de assinatura da marca: *"Para você, o que é transformar histórias?"*).',
+        '',
+        '5. **ORIENTAÇÕES DE BASTIDORES PARA A PRODUÇÃO**',
+        '   - 2 ou 3 notas curtas e práticas de estúdio para enriquecer a experiência do convidado (ex.: referências a mencionar com carinho, ganchos para o café servido na mesa).',
       ].join('\n')
+
+      // 4. Montagem da Mensagem do Usuário com a ficha do convidado
+      const userMessage = [
+        'Por favor, Nine, elabore um roteiro completo, impecável e inspirador para a gravação do seguinte episódio:',
+        '',
+        '=== DADOS DA FICHA DE PRÉ-GRAVAÇÃO DO(A) CONVIDADO(A) ===',
+        `- Nome Completo: ${nome}`,
+        `- Data de Nascimento: ${dataNascimento || 'Não informada'}`,
+        `- Estado Civil: ${estadoCivil || 'Não informado'}`,
+        `- Cônjuge: ${infoConjuge}`,
+        `- Filhos: ${infoFilhos}`,
+        `- Empresa / Negócio / Atuação: ${infoEmpresa}`,
+        `- Tema Principal Solicitado pelo(a) Convidado(a): ${temaEnfatizar}`,
+        `- Temas Sensíveis a EVITAR com Rigor: ${alertaTemaSensivel}`,
+        `- Biografia / Trajetória Enviada: ${biografia || 'Não informada'}`,
+        '',
+        customTreinamento
+          ? `[DIRETRIZES DE PERSONALIDADE DA NINE CADASTRADAS PELA DIREÇÃO]:\n${customTreinamento.slice(0, 1200)}\n`
+          : '',
+        customPromptLivre
+          ? `[ORIENTAÇÕES ADICIONAIS DA BASE DE CONHECIMENTO]:\n${customPromptLivre.slice(0, 800)}\n`
+          : '',
+        'Lembre-se: qualidade gramatical impecável no português do Brasil, acolhimento, respeito aos temas sensíveis e profundidade em cada pergunta.',
+      ]
+        .filter(Boolean)
+        .join('\n')
 
       let resultadoTexto = ''
       let agenteUsado = 'nenhum'
 
-      // Tentativa 1: Via agente nativo de IA se disponível
+      // Tentativa 1: Agente nativo 'roteirista-coffeecast'
       if (typeof $ai !== 'undefined' && $ai.agent) {
         try {
           const agentResult = $ai.agent('roteirista-coffeecast').chat({
             user_id: authUser.id,
-            message: promptInstrucoes,
+            message: `${systemPromptRoteiro}\n\n====================\n\n${userMessage}`,
           })
-          if (agentResult && agentResult.content) {
-            resultadoTexto = agentResult.content
+          if (agentResult && agentResult.content && agentResult.content.trim().length > 150) {
+            resultadoTexto = agentResult.content.trim()
             agenteUsado = 'native-agent'
           }
         } catch (agentChatErr) {
-          console.log('Falha ao acionar $ai.agent, tentando $ai.chat:', agentChatErr)
+          console.log(
+            '[assistente_roteiro] Falha ao acionar $ai.agent, acionando fallback via $ai.chat:',
+            agentChatErr,
+          )
         }
       }
 
-      // Tentativa 2: Fallback via $ai.chat nativo
+      // Tentativa 2: Fallback via $ai.chat com model: 'fast' e prompt robusto
       if (!resultadoTexto && typeof $ai !== 'undefined' && typeof $ai.chat === 'function') {
         try {
           const chatRes = $ai.chat({
@@ -111,27 +188,30 @@ routerAdd(
             messages: [
               {
                 role: 'system',
-                content:
-                  'Você é a Nine, assistente virtual do podcast CoffeeCast 4.0. Produza roteiros de alto nível, acolhedores, refinados e inspiradores para entrevistas gravadas em estúdio.',
+                content: systemPromptRoteiro,
               },
               {
                 role: 'user',
-                content: promptInstrucoes,
+                content: userMessage,
               },
             ],
           })
           if (chatRes && chatRes.choices && chatRes.choices[0] && chatRes.choices[0].message) {
-            resultadoTexto = chatRes.choices[0].message.content
-            agenteUsado = 'fast-model-chat'
+            const rawContent = (chatRes.choices[0].message.content || '').trim()
+            if (rawContent.length > 150) {
+              resultadoTexto = rawContent
+              agenteUsado = 'fast-model-chat'
+            }
           }
         } catch (chatErr) {
-          console.log('Falha no $ai.chat:', chatErr)
+          console.log('[assistente_roteiro] Falha no fallback $ai.chat:', chatErr)
         }
       }
 
       if (!resultadoTexto) {
         return e.json(503, {
-          error: 'Serviço de IA temporariamente indisponível na plataforma.',
+          error:
+            'A Nine está temporariamente indisponível para gerar o roteiro neste instante. Por favor, tente novamente em alguns segundos.',
           agenteUsado: 'falha',
         })
       }
@@ -144,7 +224,9 @@ routerAdd(
       })
     } catch (err) {
       console.log('Erro no assistente de roteiro:', err)
-      return e.json(500, { error: err.message || 'Erro interno ao processar sugestão de roteiro.' })
+      return e.json(500, {
+        error: err.message || 'Erro interno ao processar sugestão de roteiro.',
+      })
     }
   },
   $apis.requireAuth(),
