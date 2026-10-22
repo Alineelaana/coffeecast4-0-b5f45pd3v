@@ -429,7 +429,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Clique em "Editar" para abrir o novo Editor Editorial Interativo do CoffeeCast 4.0.',
           'No Editor, você pode alterar título e subtítulo, data e horário da gravação, empresa/cargo, reorganizar blocos, ajustar minutos previstos de cada bloco, adicionar perguntas estratégicas ou opcionais ("Se houver espaço:"), editar bate-bola e reflexão de legado.',
           'Acompanhe o status editorial do roteiro ("Rascunho", "Em Revisão" ou "✓ Aprovado") com aprovação formal antes da exportação final.',
-          'Clique no botão "GERAR PDF DO ROTEIRO" para exportar o documento oficial diagramado no padrão de revista (modelo Grazi & Márcio/ORVEX): capa nobre com foto original, logomarca, endereço do estúdio com rota GPS ativa e páginas internas com quebras perfeitas sem caracteres indevidos de formatação.',
+          'Clique no botão "GERAR PDF DO ROTEIRO" para exportar o documento oficial diagramado no padrão de revista (modelo Grazi & Márcio/ORVEX): capa nobre com foto original, logomarca, endereço do estúdio com rota GPS ativa e páginas internas com quebras contínuas perfeitas (sem páginas em branco), cabeçalho editorial exclusivo para quando há conteúdo, títulos em negrito bordô (#4B1E3F), badges douradas para minutos, perguntas numeradas e caixas de assinatura destacadas.',
           'Clique no botão "Baixar PDF" de Respostas para obter a cópia formal das respostas brutas enviadas pelo convidado.',
           'Para entrevistas em DUPLA, CASAL ou PARCERIA: use "Juntar Roteiros" para a Nine entrelaçar as trajetórias em uma narrativa única, preservando as fichas originais.',
           'Para episódios SEM CONVIDADOS: selecione a opção dedicada para a Nine estruturar a mesa redonda entre Aline Lana e as co-apresentadoras.',
@@ -484,7 +484,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             icone: 'RefreshCw',
           },
         ],
-        dica: 'O modelo oficial de Grazi e Márcio (Orvex) é a referência editorial definitiva: 60 minutos de duração (55 min estruturados + 5 min respiro), perguntas que investigam o que há por trás dos fatos, capa com endereço e rota GPS clicável, sem perguntas invasivas sobre café e sem nenhum caractere de formatação Markdown na saída.',
+        dica: 'O modelo oficial de Grazi e Márcio (Orvex) é a referência editorial definitiva: 60 minutos de duração (55 min estruturados + 5 min respiro), perguntas que investigam o que há por trás dos fatos, capa com endereço e rota GPS clicável, sem perguntas invasivas sobre café, sem nenhum caractere de formatação Markdown na saída e com paginação contínua imune a páginas em branco intermediárias.',
       },
       {
         id: 'depoimentos-moderacao',

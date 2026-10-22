@@ -172,11 +172,25 @@ export function parseRoteiroTextToStructure(
       continue
     }
 
-    // Detecção de Bloco numerado (ex: "01 | Duas trajetórias..." ou "01 - ...")
-    const matchBlocoNum = line.match(/^(\d{2})\s*[|—–]\s*(.+?)(?:\s*[|—–]\s*(\d+)\s*minutos?)?$/i)
+    // Detecção de linha de transição de blocos genérica (ex: "ROTEIRO ESTRUTURADO EM 4 BLOCOS COM PERGUNTAS DE ALTO NÍVEL")
+    if (/^roteiro\s+estruturado\s+em/i.test(line)) {
+      continue
+    }
+
+    // Detecção de Bloco numerado em múltiplos formatos:
+    // Ex 1: "01 | Duas trajetórias... - 8 MINUTOS" ou "01 - Duas trajetórias..."
+    // Ex 2: "BLOCO 1 – Raízes, Origens e o Ponto de Encontro" ou "BLOCO 01 - ..." ou "BLOCO1 – ..."
+    // Ex 3: "BLOCO 4 – Bate-Bola com Café & Mensagem Final Inspiradora"
+    const matchBlocoComPalavra = line.match(
+      /^bloco\s*(\d{1,2})\s*[:|—–-]\s*(.+?)(?:\s*[|—–-]\s*(\d+)\s*minutos?)?$/i,
+    )
+    const matchBlocoNum =
+      matchBlocoComPalavra ||
+      line.match(/^(\d{2})\s*[|—–-]\s*(.+?)(?:\s*[|—–-]\s*(\d+)\s*minutos?)?$/i)
     if (matchBlocoNum) {
       flushBloco()
-      const numStr = matchBlocoNum[1]
+      const numRaw = matchBlocoNum[1]
+      const numStr = numRaw.padStart(2, '0')
       let tit = matchBlocoNum[2].trim()
       let dur = 8
       if (matchBlocoNum[3]) {
@@ -195,7 +209,8 @@ export function parseRoteiroTextToStructure(
       } else if (
         titLower.includes('legado') ||
         titLower.includes('encerramento') ||
-        titLower.includes('conclusão')
+        titLower.includes('conclusão') ||
+        titLower.includes('mensagem final')
       ) {
         tipo = 'encerramento'
         dur = dur || 4
@@ -253,16 +268,35 @@ export function parseRoteiroTextToStructure(
         paragrafosEncerramentoBuffer.push(line)
       }
     } else {
-      // Bloco de perguntas regular
-      const matchPergunta = line.match(/^(\d{2})\.\s*(?:([^:]+):\s*)?(.*)$/)
+      // Bloco de perguntas regular:
+      // Formato 1: "01. Grasiele: texto" ou "1. Grasiele: texto" ou "01. texto"
+      // Formato 2: "1. Grasiele “Grasiele, você costuma...”" ou "1. ambos “Quando vocês...”"
+      // Formato 3: "4. Troca entre eles “Quando um de vocês...”"
+      const matchPergunta =
+        line.match(/^(\d{1,2})\.\s*(?:([^:“"”«»]+?)(?::\s*|\s+[“"”«»]))?(.*)$/) ||
+        line.match(/^(\d{1,2})\.\s*(.*)$/)
+
       if (matchPergunta) {
-        const numP = matchPergunta[1]
-        const dest = matchPergunta[2]?.trim() || ''
-        const textP = matchPergunta[3]?.trim() || ''
+        const numP = matchPergunta[1].padStart(2, '0')
+        let dest = (matchPergunta[2] || '').trim()
+        let textP = (matchPergunta[3] || '').trim()
+
+        // Se match simples pegou tudo no dest ou textP
+        if (!textP && dest && !line.includes(':') && !line.includes('“') && !line.includes('"')) {
+          textP = dest
+          dest = ''
+        } else if (dest && textP && (line.includes('“') || line.includes('"'))) {
+          // Recompor aspas se estavam separando dest de textP
+          const quoteChar = line.includes('“') ? '“' : '"'
+          if (!textP.startsWith(quoteChar) && !textP.startsWith('"')) {
+            textP = `${quoteChar}${textP}`
+          }
+        }
+
         perguntasBuffer.push({
           numero: numP,
           direcionadaPara: dest,
-          texto: textP,
+          texto: textP || line.replace(/^\d{1,2}\.\s*/, '').trim(),
           opcional: false,
         })
       } else if (line.toLowerCase().startsWith('se houver espaço:')) {

@@ -1020,14 +1020,44 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
     /* PÁGINAS A4 INDIVIDUAIS */
     .pdf-page {
       width: 100%;
-      min-height: 297mm;
       position: relative;
       background: #F9F6F0;
       box-sizing: border-box;
-      page-break-after: always;
-      break-after: page;
       display: flex;
       flex-direction: column;
+    }
+
+    /* A Capa é a única que tem altura exata de página inteira e quebra logo após ela */
+    .pdf-cover-page {
+      min-height: 296mm;
+      max-height: 297mm;
+      height: 296mm;
+      overflow: hidden;
+      page-break-before: auto !important;
+      break-before: auto !important;
+      page-break-after: always !important;
+      break-after: page !important;
+    }
+
+    /* Conteúdo contínuo com quebras automáticas nos blocos */
+    .pdf-content-page {
+      min-height: auto;
+      page-break-after: auto;
+      break-after: auto;
+    }
+
+    @media print {
+      .pdf-cover-page {
+        min-height: 296mm !important;
+        max-height: 296mm !important;
+        height: 296mm !important;
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+      .pdf-content-page {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
     }
 
     /* ======================================================== */
@@ -1225,176 +1255,325 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
     /* ======================================================== */
     /* PÁGINAS INTERNAS (PÁGINA 2 EM DIANTE)                     */
     /* ======================================================== */
-    .inner-page-header {
+    .inner-editorial-header {
       background: #4B1E3F;
       color: #FAF8F5;
-      padding: 10px 36px;
+      padding: 12px 36px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 16px;
       font-size: 8.5pt;
-      border-bottom: 2px solid #D4AF37;
+      border-bottom: 2.5px solid #D4AF37;
     }
     .inner-header-brand {
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-shrink: 0;
     }
     .inner-header-brand img {
-      height: 28px;
+      height: 30px;
       width: auto;
       object-fit: contain;
     }
     .inner-header-brand-title {
       font-family: 'Playfair Display', Georgia, serif;
-      font-size: 11pt;
+      font-size: 11.5pt;
       font-weight: 700;
       color: #FFFFFF;
+      letter-spacing: -0.01em;
     }
     .inner-header-guest {
-      font-size: 8pt;
+      font-size: 8.5pt;
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #D4AF37;
+      text-align: right;
     }
 
-    .inner-page-subbar {
-      padding: 6px 36px;
+    .inner-editorial-subbar {
+      padding: 8px 36px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 7.5pt;
+      font-size: 8pt;
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: rgba(75, 30, 63, 0.7);
-      border-bottom: 1px solid rgba(75, 30, 63, 0.1);
+      color: #4B1E3F;
+      border-bottom: 1.5px solid rgba(212, 175, 55, 0.4);
       background: #FAF8F5;
     }
 
     .inner-page-content {
-      padding: 24px 36px 32px 36px;
+      padding: 28px 36px 36px 36px;
       flex: 1;
     }
 
     /* FORMATAÇÃO DOS BLOCOS EDITORIAIS */
     .script-block {
-      margin-bottom: 22px;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px dashed rgba(75, 30, 63, 0.15);
       page-break-inside: avoid;
       break-inside: avoid;
+    }
+    .script-block:last-of-type {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 16px;
+    }
+
+    .script-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid rgba(75, 30, 63, 0.2);
+    }
+    .script-block-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .script-block-tag {
+      background: #4B1E3F;
+      color: #D4AF37;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 8pt;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 6px;
+      border: 1px solid #D4AF37;
     }
     .script-block-title {
       font-family: 'Playfair Display', Georgia, serif;
-      font-size: 14pt;
-      font-weight: 700;
+      font-size: 14.5pt;
+      font-weight: 800;
       color: #4B1E3F;
-      margin: 0 0 2px 0;
+      margin: 0;
       line-height: 1.25;
+      letter-spacing: -0.01em;
     }
-    .script-block-duration {
+
+    /* Pílula / Badge de Duração destacada */
+    .script-block-duration-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       font-size: 8pt;
-      font-weight: 700;
-      letter-spacing: 0.12em;
+      font-weight: 800;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #92400E;
-      margin-bottom: 10px;
-      display: inline-block;
+      color: #4B1E3F;
+      background: #FEF3C7;
+      border: 1.5px solid #D4AF37;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
+
     .script-intro-text {
-      font-size: 10pt;
-      line-height: 1.65;
-      color: #2C1820;
-      margin-bottom: 12px;
+      font-size: 10.5pt;
+      line-height: 1.7;
+      color: #1A0D15;
+      margin-bottom: 14px;
       white-space: pre-wrap;
     }
     .script-intro-text p {
-      margin: 0 0 10px 0;
+      margin: 0 0 12px 0;
+    }
+    .script-intro-quote {
+      background: #FAF8F5;
+      border-left: 3.5px solid #D4AF37;
+      padding: 12px 16px;
+      margin: 10px 0 14px 0;
+      border-radius: 0 8px 8px 0;
+      font-size: 10.5pt;
+      line-height: 1.65;
+      color: #2C1820;
+      box-shadow: 0 1px 4px rgba(75,30,63,0.04);
     }
 
-    /* PERGUNTAS NUMERADAS */
+    /* PERGUNTAS NUMERADAS COM ALTO CONTRASTE */
     .question-item {
-      margin-bottom: 12px;
-      font-size: 10pt;
-      line-height: 1.6;
-      color: #2C1820;
+      margin-bottom: 14px;
+      font-size: 10.5pt;
+      line-height: 1.65;
+      color: #1A0D15;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #FFFFFF;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(75, 30, 63, 0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .question-number-badge {
+      font-size: 9pt;
+      font-weight: 800;
+      color: #4B1E3F;
+      background: #FEF3C7;
+      border: 1.5px solid #D4AF37;
+      padding: 2px 8px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      line-height: 1.3;
+      margin-top: 1px;
+    }
+    .question-content {
+      flex: 1;
+    }
+    .question-target {
+      font-weight: 800;
+      color: #4B1E3F;
+      text-transform: uppercase;
+      font-size: 8.5pt;
+      letter-spacing: 0.05em;
+      display: inline-block;
+      margin-right: 6px;
+      background: rgba(75, 30, 63, 0.08);
+      padding: 1px 7px;
+      border-radius: 4px;
+    }
+    .question-text-strong {
+      color: #1A0D15;
+      font-weight: 500;
+    }
+
+    .question-optional-box {
+      background: #FFFDF5;
+      border-left: 3.5px solid #D4AF37;
+      padding: 10px 14px;
+      margin: 10px 0;
+      border-radius: 0 8px 8px 0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
       page-break-inside: avoid;
       break-inside: avoid;
     }
-    .question-number {
-      font-weight: 700;
-      color: #B45309;
-      margin-right: 4px;
-    }
-    .question-target {
-      font-weight: 700;
-      color: #4B1E3F;
-      margin-right: 4px;
-    }
     .question-optional-tag {
-      font-weight: 700;
-      font-style: italic;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
       color: #92400E;
       background: #FEF3C7;
+      border: 1px solid #FCD34D;
       padding: 2px 8px;
       border-radius: 4px;
-      font-size: 8.5pt;
+      font-size: 8pt;
       display: inline-block;
-      margin-bottom: 4px;
-    }
-    .question-optional-box {
-      background: #FFFDF9;
-      border-left: 3px solid #D4AF37;
-      padding: 8px 12px;
-      margin: 8px 0;
-      border-radius: 0 6px 6px 0;
+      margin-bottom: 6px;
     }
 
     /* BATE-BOLA */
     .bate-bola-list {
       list-style: none;
       padding: 0;
-      margin: 8px 0 14px 0;
+      margin: 10px 0 16px 0;
     }
     .bate-bola-list li {
       position: relative;
-      padding-left: 18px;
-      margin-bottom: 6px;
-      font-size: 10pt;
-      line-height: 1.5;
+      padding-left: 22px;
+      margin-bottom: 8px;
+      font-size: 10.5pt;
+      line-height: 1.6;
+      color: #1A0D15;
     }
     .bate-bola-list li::before {
-      content: '•';
+      content: '◆';
       position: absolute;
       left: 4px;
       color: #D4AF37;
-      font-weight: 900;
+      font-size: 9pt;
+      line-height: 1.6;
     }
 
-    /* RESUMO FINAL DE TEMPO */
-    .script-time-summary {
-      margin-top: 24px;
-      padding-top: 14px;
-      border-top: 1.5px solid rgba(212, 175, 55, 0.4);
-      font-size: 9pt;
-      font-weight: 600;
-      color: #4B1E3F;
-      text-align: center;
+    /* BOX DESTACADO DE PERGUNTA DE ASSINATURA / ENCERRAMENTO */
+    .signature-question-box {
+      background: linear-gradient(135deg, #4B1E3F 0%, #36142D 100%);
+      color: #FAF8F5;
+      border: 2px solid #D4AF37;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      box-shadow: 0 3px 10px rgba(75, 30, 63, 0.15);
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .signature-question-label {
+      font-size: 8pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #D4AF37;
+      margin-bottom: 4px;
+    }
+    .signature-question-text {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 13.5pt;
+      font-weight: 700;
+      color: #FFFFFF;
+      font-style: italic;
+      line-height: 1.35;
+      margin: 0;
+    }
+
+    .encerramento-box {
+      background: #FAF8F5;
+      border: 1.5px solid rgba(212, 175, 55, 0.6);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 12px 0;
+      font-size: 10.5pt;
+      line-height: 1.65;
+      color: #1A0D15;
       page-break-inside: avoid;
       break-inside: avoid;
     }
 
-    /* RODAPÉ DAS PÁGINAS INTERNAS */
+    /* RESUMO FINAL DE TEMPO */
+    .script-time-summary {
+      margin-top: 26px;
+      padding: 14px 20px;
+      background: #FFFFFF;
+      border: 1.5px solid #D4AF37;
+      border-radius: 10px;
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #4B1E3F;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    /* RODAPÉ DO DOCUMENTO */
     .inner-page-footer {
-      border-top: 1px solid rgba(75, 30, 63, 0.15);
-      padding: 10px 36px;
+      border-top: 1.5px solid rgba(212, 175, 55, 0.5);
+      padding: 12px 36px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 7.5pt;
-      color: rgba(75, 30, 63, 0.6);
+      font-size: 8pt;
+      color: #4B1E3F;
       background: #FAF8F5;
-      margin-top: auto;
+      margin-top: 20px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .inner-page-footer strong {
+      color: #4B1E3F;
+      font-weight: 800;
     }
   </style>
 </head>
@@ -1419,7 +1598,7 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
     <!-- ========================================== -->
     <!-- PÁGINA 1: CAPA OFICIAL (PADRÃO GRAZI & MÁRCIO) -->
     <!-- ========================================== -->
-    <div class="pdf-page">
+    <div class="pdf-page pdf-cover-page">
       <div class="cover-header-stripe">
         <div class="cover-header-brand">
           <img src="${officialLogoImg}" alt="CoffeeCast 4.0" class="cover-header-logo" />
@@ -1510,27 +1689,26 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
  * Renderiza os blocos do roteiro com quebra e diagramação profissional
  */
 function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: string): string {
-  // Distribuir os blocos em páginas de visualização (ou manter fluxo com page-break-after quando conveniente)
-  // Cada página segue o padrão de cabeçalho do modelo:
-  // "CoffeeCast 4.0" à esquerda, "GRASIELE & MÁRCIO | ORVEX" e "HISTÓRIAS QUE INSPIRAM • ROTEIRO DE GRAVAÇÃO"
+  // Evitar qualquer quebra artificial vazia: se não houver blocos, não renderizar página vazia
+  if (!est.blocos || est.blocos.length === 0) {
+    return ''
+  }
 
   let htmlPaginas = ''
-  let paginaIndex = 1
 
-  // Geramos uma sequência contínua de páginas elegantes
-  // Na impressão @page, os estilos .script-block break-inside: avoid garantem que nenhuma pergunta ou título quebre ao meio
+  // Container de conteúdo editorial: inicia após a capa sem saltos vazios
   htmlPaginas += `
-    <div class="pdf-page">
-      <div class="inner-page-header">
+    <div class="pdf-page pdf-content-page">
+      <div class="inner-editorial-header">
         <div class="inner-header-brand">
           <img src="${officialLogoImg}" alt="CoffeeCast 4.0" />
           <span class="inner-header-brand-title">CoffeeCast 4.0</span>
         </div>
         <div class="inner-header-guest">${subCabecalhoDireita}</div>
       </div>
-      <div class="inner-page-subbar">
-        <span>HISTÓRIAS QUE INSPIRAM • ROTEIRO DE GRAVAÇÃO</span>
-        <span>PÁGINA ${paginaIndex}</span>
+      <div class="inner-editorial-subbar">
+        <span>HISTÓRIAS QUE INSPIRAM • ROTEIRO DE GRAVAÇÃO OFICIAL</span>
+        <span>GUIA DE ESTÚDIO</span>
       </div>
 
       <div class="inner-page-content">
@@ -1538,22 +1716,42 @@ function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: stri
 
   for (let b = 0; b < est.blocos.length; b++) {
     const bloco = est.blocos[b]
+    const ehAbertura = bloco.tipo === 'abertura'
+    const rotuloBloco = ehAbertura ? 'Abertura' : `Bloco ${bloco.numero}`
 
     htmlPaginas += `
-      <div class="script-block">
-        <h3 class="script-block-title">${bloco.tipo === 'abertura' ? bloco.titulo : `${bloco.numero} | ${bloco.titulo}`}</h3>
-        <span class="script-block-duration">${bloco.duracaoMinutos} MINUTOS</span>
+      <section class="script-block">
+        <div class="script-block-header">
+          <div class="script-block-title-wrap">
+            <span class="script-block-tag">${escapeHtml(rotuloBloco)}</span>
+            <h3 class="script-block-title">${escapeHtml(bloco.titulo)}</h3>
+          </div>
+          <span class="script-block-duration-badge">⏱ ${bloco.duracaoMinutos} MINUTOS</span>
+        </div>
     `
 
     if (bloco.textoIntro) {
-      htmlPaginas += `
-        <div class="script-intro-text">
-          ${bloco.textoIntro
-            .split('\n\n')
-            .map((p) => `<p>${escapeHtml(p)}</p>`)
-            .join('')}
-        </div>
-      `
+      const paragrafos = bloco.textoIntro
+        .split('\n\n')
+        .map((p) => p.trim())
+        .filter(Boolean)
+
+      for (const p of paragrafos) {
+        // Se for parágrafo entre aspas (falas de abertura / introdução das apresentadoras)
+        if (p.startsWith('“') || p.startsWith('"')) {
+          htmlPaginas += `
+            <div class="script-intro-quote">
+              ${escapeHtml(p)}
+            </div>
+          `
+        } else {
+          htmlPaginas += `
+            <div class="script-intro-text">
+              <p>${escapeHtml(p)}</p>
+            </div>
+          `
+        }
+      }
     }
 
     if (bloco.tipo === 'perguntas' && bloco.perguntas && bloco.perguntas.length > 0) {
@@ -1561,8 +1759,8 @@ function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: stri
         if (q.opcional) {
           htmlPaginas += `
             <div class="question-optional-box">
-              <span class="question-optional-tag">Se houver espaço:</span>
-              <div style="font-size:10pt; line-height:1.55; color:#2C1820; margin-top:2px;">
+              <span class="question-optional-tag">Se houver espaço na pauta</span>
+              <div style="font-size:10.5pt; line-height:1.6; color:#1A0D15; margin-top:3px;">
                 ${escapeHtml(q.texto)}
               </div>
             </div>
@@ -1570,9 +1768,11 @@ function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: stri
         } else {
           htmlPaginas += `
             <div class="question-item">
-              <span class="question-number">${q.numero}.</span>
-              ${q.direcionadaPara ? `<span class="question-target">${escapeHtml(q.direcionadaPara)}:</span>` : ''}
-              <span>${escapeHtml(q.texto)}</span>
+              <span class="question-number-badge">${q.numero}.</span>
+              <div class="question-content">
+                ${q.direcionadaPara ? `<span class="question-target">${escapeHtml(q.direcionadaPara)}</span>` : ''}
+                <span class="question-text-strong">${escapeHtml(q.texto)}</span>
+              </div>
             </div>
           `
         }
@@ -1583,14 +1783,15 @@ function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: stri
       if (bloco.itensBateBola && bloco.itensBateBola.length > 0) {
         htmlPaginas += `<ul class="bate-bola-list">`
         for (const item of bloco.itensBateBola) {
-          htmlPaginas += `<li>${escapeHtml(item)}</li>`
+          htmlPaginas += `<li><strong>${escapeHtml(item)}</strong></li>`
         }
         htmlPaginas += `</ul>`
       }
       if (bloco.perguntaEspecialFinal) {
         htmlPaginas += `
-          <div class="question-item" style="margin-top:12px; font-weight:600; color:#4B1E3F;">
-            ${escapeHtml(bloco.perguntaEspecialFinal)}
+          <div class="signature-question-box">
+            <div class="signature-question-label">Pergunta de Assinatura CoffeeCast</div>
+            <p class="signature-question-text">${escapeHtml(bloco.perguntaEspecialFinal)}</p>
           </div>
         `
       }
@@ -1599,21 +1800,22 @@ function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: stri
     if (bloco.tipo === 'encerramento') {
       if (bloco.perguntaEspecialFinal) {
         htmlPaginas += `
-          <div class="question-item" style="font-weight:600; color:#4B1E3F; margin-bottom:12px;">
-            ${escapeHtml(bloco.perguntaEspecialFinal)}
+          <div class="signature-question-box">
+            <div class="signature-question-label">Momento Marcante de Fechamento</div>
+            <p class="signature-question-text">${escapeHtml(bloco.perguntaEspecialFinal)}</p>
           </div>
         `
       }
       if (bloco.paragrafosEncerramento && bloco.paragrafosEncerramento.length > 0) {
         htmlPaginas += `
-          <div class="script-intro-text">
-            ${bloco.paragrafosEncerramento.map((p) => `<p>${escapeHtml(p)}</p>`).join('')}
+          <div class="encerramento-box">
+            ${bloco.paragrafosEncerramento.map((p) => `<p style="margin:0 0 8px 0;">${escapeHtml(p)}</p>`).join('')}
           </div>
         `
       }
     }
 
-    htmlPaginas += `</div>` // fecha .script-block
+    htmlPaginas += `</section>` // fecha .script-block
   }
 
   // Resumo de tempo final
@@ -1623,14 +1825,18 @@ function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: stri
 
   htmlPaginas += `
       <div class="script-time-summary">
-        Duração: ${durRoteiro} minutos de roteiro + ${durRespiro} minutos para a conversa fluir naturalmente = ${durTotal} minutos.
+        ⏱ <strong>Duração Planejada:</strong> ${durRoteiro} minutos de roteiro + ${durRespiro} minutos para a conversa fluir naturalmente = <strong>${durTotal} minutos totais</strong>
       </div>
     </div> <!-- fecha .inner-page-content -->
 
-    <div class="inner-page-footer">
-      <span>HISTÓRIAS QUE INSPIRAM • ROTEIRO DE GRAVAÇÃO</span>
-      <span>CoffeeCast 4.0 — Mais que conversas, histórias que transformam.</span>
-    </div>
+    <footer class="inner-page-footer">
+      <div>
+        <strong>HISTÓRIAS QUE INSPIRAM</strong> • ROTEIRO DE GRAVAÇÃO
+      </div>
+      <div>
+        <strong>CoffeeCast 4.0</strong> — Mais que conversas, histórias que transformam.
+      </div>
+    </footer>
   </div> <!-- fecha .pdf-page -->
   `
 
