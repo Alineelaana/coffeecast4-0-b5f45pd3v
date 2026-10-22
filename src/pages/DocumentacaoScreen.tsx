@@ -674,16 +674,21 @@ export default function DocumentacaoScreen() {
               <div className="flex items-center justify-between">
                 <h4 className="font-serif font-bold text-sm text-[#4B1E3F] flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#D4AF37]" />
-                  Roteiros e Apresentações
+                  Roteiros e Apresentações & Editor Editorial
                 </h4>
                 <Badge variant="outline" className="text-[10px]">
                   /admin/roteiros
                 </Badge>
               </div>
               <p className="text-[#4B1E3F]/80 leading-relaxed">
-                Visualização das respostas dos convidados. Integração com a IA Nine para{' '}
-                <strong>gerar sugestões automáticas de roteiro com perguntas chave</strong>, além de
-                campo para salvar o texto aprovado e o arquivo final.
+                Visualização das respostas dos convidados e integração com a IA Nine no padrão
+                oficial de qualidade de <strong>Grazi e Márcio (Orvex)</strong>: roteiro de 60
+                minutos, 7 blocos, bate-bola e legado, sem caracteres de markdown. Inclui{' '}
+                <strong>Editor Interativo</strong> para reorganização de blocos, ajuste de minutos e
+                perguntas opcionais, fluxo de aprovação editorial e botão oficial{' '}
+                <strong>"GERAR PDF DO ROTEIRO"</strong> com capa diagramada (fotos originais,
+                endereço e link GPS clicável). Suporta episódios individuais, em dupla/casal e sem
+                convidados.
               </p>
             </div>
 

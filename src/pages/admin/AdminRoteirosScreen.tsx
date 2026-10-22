@@ -8,6 +8,7 @@ import {
   downloadRoteiroOficialPdf,
   buildRoteiroOficialPdfFileName,
 } from '@/lib/roteiroPdfExporter'
+import { RoteiroEditorModal } from '@/components/admin/RoteiroEditorModal'
 import { AuditoriaService } from '@/services/auditoria'
 import {
   Table,
@@ -52,6 +53,8 @@ import {
   Layers,
   ArrowRight,
   X,
+  Edit3,
+  Printer,
 } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
@@ -80,9 +83,10 @@ export default function AdminRoteirosScreen() {
     }
   }
 
-  // Modal de Detalhes
+  // Modal de Detalhes e Modal do Editor Editorial
   const [selectedRoteiro, setSelectedRoteiro] = useState<RoteiroConvidadoRecord | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [editorModalOpen, setEditorModalOpen] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
   const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null)
 
@@ -273,6 +277,9 @@ export default function AdminRoteirosScreen() {
       if (modalOpen && selectedRoteiro?.id === id) {
         setModalOpen(false)
       }
+      if (editorModalOpen && selectedRoteiro?.id === id) {
+        setEditorModalOpen(false)
+      }
       loadRoteiros()
     } catch (err) {
       console.error(err)
@@ -283,8 +290,10 @@ export default function AdminRoteirosScreen() {
   // Gerar roteiro com a Nine (Assistente Virtual)
   const handleGerarComIA = async (overrideId?: string) => {
     const targetId = overrideId || aiSelectedId
+    const semConvidados = targetId === 'sem_convidados'
+
     if (!targetId) {
-      toast.error('Selecione um convidado para a Nine gerar a sugestão de roteiro.')
+      toast.error('Selecione um convidado ou a opção de episódio sem convidados.')
       return
     }
 
@@ -298,7 +307,10 @@ export default function AdminRoteirosScreen() {
             'Content-Type': 'application/json',
             Authorization: pb.authStore.token,
           },
-          body: JSON.stringify({ roteiro_id: targetId }),
+          body: JSON.stringify({
+            roteiro_id: semConvidados ? undefined : targetId,
+            sem_convidados: semConvidados,
+          }),
         },
       )
 
@@ -309,7 +321,7 @@ export default function AdminRoteirosScreen() {
 
       setAiResultado(data.roteiroSugerido)
       setAiAgenteUsado(data.agenteUsado)
-      toast.success('A Nine preparou uma sugestão de roteiro inspiradora para este episódio!')
+      toast.success('A Nine preparou uma sugestão de roteiro no padrão oficial de Grazi e Márcio!')
     } catch (err: unknown) {
       console.error(err)
       const msg =
@@ -320,6 +332,13 @@ export default function AdminRoteirosScreen() {
     } finally {
       setAiLoading(false)
     }
+  }
+
+  // Abrir o Editor de Roteiro oficial dentro da plataforma
+  const handleAbrirEditor = (item: RoteiroConvidadoRecord, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setSelectedRoteiro(item)
+    setEditorModalOpen(true)
   }
 
   // Abertura do modal "Juntar Roteiros" a partir do roteiro selecionado
@@ -527,11 +546,26 @@ export default function AdminRoteirosScreen() {
     try {
       setJuntarDownloadingPdf(true)
       await downloadRoteiroOficialPdf({
-        titulo: `Roteiro Oficial: ${convidadosNomes.join(' & ')}`,
-        subtitulo: `Episódio Conjunto gravado no estúdio CoffeeCast 4.0 com Aline Lana`,
+        titulo:
+          selectedRoteiro.roteiro_conjunto_titulo ||
+          `Episódio Conjunto: ${convidadosNomes.join(' & ')}`,
+        subtitulo:
+          selectedRoteiro.subtitulo_episodio ||
+          `Episódio Especial gravado no estúdio CoffeeCast 4.0`,
         convidadosNomes,
         roteiroTexto: juntarResultado,
         ehConjunto: true,
+        dataGravacao: selectedRoteiro.data_gravacao,
+        horarioGravacao: selectedRoteiro.horario_gravacao,
+        empresaCargo: selectedRoteiro.empresa_cargo_personalizado,
+        enderecoEstudio: selectedRoteiro.endereco_personalizado,
+        linkGps: selectedRoteiro.link_gps_personalizado,
+        convidadosDetalhados: convidadosVinculados.map((c) => ({
+          nome: c.nome,
+          empresa: c.nome_empresa,
+          fotoUrl: c.foto ? getFileUrl(c, c.foto) : undefined,
+          logomarcaUrl: c.logomarca ? getFileUrl(c, c.logomarca) : undefined,
+        })),
       })
 
       AuditoriaService.registrarEvento({
@@ -919,12 +953,27 @@ export default function AdminRoteirosScreen() {
                             Roteiro Pronto
                           </Badge>
                         )}
+                        {item.status_aprovacao === 'aprovado' && (
+                          <Badge className="bg-emerald-600 text-white text-[9px] font-bold">
+                            ✓ Aprovado
+                          </Badge>
+                        )}
                         {Array.isArray(item.roteiros_vinculados_ids) &&
                           item.roteiros_vinculados_ids.length > 0 && (
                             <Badge className="bg-dourado/25 text-vinho border border-dourado/50 text-[9px] font-bold">
                               Conjunto
                             </Badge>
                           )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={(e) => handleAbrirEditor(item, e)}
+                          className="h-7 px-2 text-[11px] bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg flex items-center gap-1 shadow-2xs"
+                          title="Abrir editor editorial do roteiro (blocos, tempos, aprovação e PDF)"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          <span>Editar</span>
+                        </Button>
                         <Button
                           type="button"
                           size="sm"
@@ -938,7 +987,7 @@ export default function AdminRoteirosScreen() {
                           ) : (
                             <Download className="w-3 h-3 text-dourado" />
                           )}
-                          <span>Baixar PDF</span>
+                          <span>Respostas</span>
                         </Button>
                       </div>
                     </div>
@@ -1024,8 +1073,20 @@ export default function AdminRoteirosScreen() {
                         <TableCell>
                           <div className="flex flex-col gap-1 items-start">
                             {item.roteiro_final_texto || item.roteiro_final_arquivo ? (
-                              <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px]">
-                                Pronto
+                              <Badge
+                                className={
+                                  item.status_aprovacao === 'aprovado'
+                                    ? 'bg-emerald-600 text-white font-semibold text-[10px]'
+                                    : item.status_aprovacao === 'em_revisao'
+                                      ? 'bg-amber-100 text-amber-900 border-amber-300 text-[10px]'
+                                      : 'bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px]'
+                                }
+                              >
+                                {item.status_aprovacao === 'aprovado'
+                                  ? '✓ Aprovado'
+                                  : item.status_aprovacao === 'em_revisao'
+                                    ? 'Em Revisão'
+                                    : 'Pronto'}
                               </Badge>
                             ) : (
                               <span className="text-[11px] text-vinho/50 italic">Pendente</span>
@@ -1060,9 +1121,19 @@ export default function AdminRoteirosScreen() {
                           <div className="flex items-center justify-end gap-1">
                             <Button
                               size="sm"
+                              onClick={(e) => handleAbrirEditor(item, e)}
+                              className="h-8 px-2.5 text-xs bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg flex items-center gap-1.5 shadow-2xs"
+                              title="Abrir editor editorial do roteiro oficial do episódio"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Editar Roteiro</span>
+                            </Button>
+
+                            <Button
+                              size="sm"
                               disabled={downloadingPdfId === item.id}
                               onClick={(e) => handleDownloadPdf(item, e)}
-                              className="h-8 px-2.5 text-xs bg-vinho hover:bg-vinho-light text-white font-medium rounded-lg flex items-center gap-1.5 shadow-2xs"
+                              className="h-8 px-2 text-xs bg-vinho hover:bg-vinho-light text-white font-medium rounded-lg flex items-center gap-1 shadow-2xs"
                               title="Baixar em PDF as respostas enviadas pelo convidado"
                             >
                               {downloadingPdfId === item.id ? (
@@ -1070,7 +1141,7 @@ export default function AdminRoteirosScreen() {
                               ) : (
                                 <Download className="w-3.5 h-3.5 text-dourado" />
                               )}
-                              <span>Baixar PDF</span>
+                              <span>Respostas</span>
                             </Button>
 
                             {item.status !== 'lida' && (
@@ -1242,6 +1313,9 @@ export default function AdminRoteirosScreen() {
                   className="w-full bg-marfim/50 border border-vinho/20 focus:ring-2 focus:ring-dourado text-sm rounded-xl px-3 py-2.5 min-h-[44px] text-vinho"
                 >
                   <option value="">Selecione quem você deseja que a Nine prepare...</option>
+                  <option value="sem_convidados">
+                    ★ Episódio Sem Convidados (Mesa Redonda entre Apresentadoras)
+                  </option>
                   {roteiros.map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.nome} — {formatDateBR(r.created)}{' '}
@@ -1307,13 +1381,30 @@ export default function AdminRoteirosScreen() {
                       size="sm"
                       variant="outline"
                       onClick={() => {
+                        const targetItem = roteiros.find((r) => r.id === aiSelectedId)
+                        if (targetItem) {
+                          handleAbrirEditor(targetItem)
+                        } else {
+                          toast.info('Abra o editor a partir da lista para editar os blocos.')
+                        }
+                      }}
+                      className="text-xs h-9 border-amber-500/40 text-amber-800 dark:text-amber-300 hover:bg-amber-50 rounded-xl font-bold"
+                    >
+                      <Edit3 className="w-3.5 h-3.5 mr-1 text-amber-600" />
+                      Abrir no Editor
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
                         navigator.clipboard.writeText(aiResultado)
                         toast.success('Roteiro da Nine copiado com sucesso!')
                       }}
                       className="text-xs h-9 border-vinho/20 text-vinho hover:bg-vinho/10 rounded-xl font-medium"
                     >
                       <Copy className="w-3.5 h-3.5 mr-1 text-dourado-dark" />
-                      Copiar Roteiro
+                      Copiar
                     </Button>
 
                     <Button
@@ -1700,6 +1791,19 @@ export default function AdminRoteirosScreen() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          setModalOpen(false)
+                          setEditorModalOpen(true)
+                        }}
+                        className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl min-h-[38px] px-3.5 flex items-center gap-1.5 shadow-sm"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Abrir Editor Completo</span>
+                      </Button>
+
                       {roteiroTexto && (
                         <Button
                           type="button"
@@ -1715,16 +1819,37 @@ export default function AdminRoteirosScreen() {
                                 .map((r) => r.nome),
                             ]
                             downloadRoteiroOficialPdf({
-                              titulo: `Roteiro: ${vincNomes.join(' & ')}`,
+                              titulo:
+                                selectedRoteiro.roteiro_conjunto_titulo ||
+                                `Roteiro: ${vincNomes.join(' & ')}`,
+                              subtitulo:
+                                selectedRoteiro.subtitulo_episodio ||
+                                'O poder de transformar pessoas',
                               convidadosNomes: vincNomes,
                               roteiroTexto,
                               ehConjunto: vincNomes.length > 1,
+                              dataGravacao: selectedRoteiro.data_gravacao,
+                              horarioGravacao: selectedRoteiro.horario_gravacao,
+                              empresaCargo: selectedRoteiro.empresa_cargo_personalizado,
+                              enderecoEstudio: selectedRoteiro.endereco_personalizado,
+                              linkGps: selectedRoteiro.link_gps_personalizado,
+                              convidadosDetalhados: [
+                                selectedRoteiro,
+                                ...roteiros.filter((r) =>
+                                  (selectedRoteiro.roteiros_vinculados_ids || []).includes(r.id),
+                                ),
+                              ].map((c) => ({
+                                nome: c.nome,
+                                empresa: c.nome_empresa,
+                                fotoUrl: c.foto ? getFileUrl(c, c.foto) : undefined,
+                                logomarcaUrl: c.logomarca ? getFileUrl(c, c.logomarca) : undefined,
+                              })),
                             })
                           }}
                           className="border-vinho/20 text-vinho hover:bg-vinho/10 text-xs rounded-xl min-h-[38px] px-3 font-semibold"
                         >
-                          <Download className="w-3.5 h-3.5 mr-1 text-dourado" />
-                          Baixar PDF Oficial
+                          <Printer className="w-3.5 h-3.5 mr-1 text-dourado" />
+                          GERAR PDF DO ROTEIRO
                         </Button>
                       )}
 
@@ -2169,6 +2294,19 @@ export default function AdminRoteirosScreen() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* MODAL DO EDITOR EDITORIAL DE ROTEIROS */}
+      <RoteiroEditorModal
+        open={editorModalOpen}
+        onOpenChange={setEditorModalOpen}
+        roteiro={selectedRoteiro}
+        todosRoteiros={roteiros}
+        onRoteiroSaved={(atualizado) => {
+          setSelectedRoteiro(atualizado)
+          setRoteiroTexto(atualizado.roteiro_final_texto || '')
+          loadRoteiros()
+        }}
+      />
     </div>
   )
 }

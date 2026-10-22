@@ -426,16 +426,36 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Recebe as fichas preenchidas pelos convidados no portal público (/roteiro), permitindo criar pautas afinadas com apoio da Nine.',
         passoAPasso: [
           'Localize o convidado na lista de roteiros recebidos.',
-          'Clique em "Visualizar Roteiro" para ver os dados familiares, histórico de negócios, temas que ele quer enfatizar e temas sensíveis a evitar.',
-          'Clique no botão "Baixar PDF" (disponível tanto na lista quanto no modal de detalhes) para gerar um documento formal A4 com cabeçalho oficial CoffeeCast 4.0, logo, dados e todas as respostas do convidado já prontas para impressão ou salvamento.',
-          'Clique no botão "Gerar Sugestão com a Nine" para que a IA analise as respostas do convidado e elabore um roteiro completo individual de gravação (cabeçalho, bio de abertura para Aline Lana, pontos fortes e 4 blocos de perguntas refinadas no padrão formal da língua portuguesa).',
-          'Para entrevistas em DUPLA, CASAL ou PARCERIA (ex.: marido e mulher como Grasiele e Marcio de Azevedo, sócios de uma empresa): clique no botão "Juntar Roteiros" dentro do modal de detalhes.',
-          'Selecione os outros roteiros respondidos da lista (com busca instantânea por nome ou empresa). A Nine reunirá as respostas de todos os convidados e criará UM ÚNICO ROTEIRO OFICIAL de estúdio que entrelaça as histórias de ambos, equilibrando perguntas individuais e dinâmicas de troca mútua.',
-          'Após a geração conjunta, você pode editar o texto, salvar no registro principal com auditoria completa e baixar o PDF oficial de estúdio.',
-          'Edite o texto do roteiro livremente no editor e, se desejar, anexe o arquivo final (PDF/DOCX) aprovado pela produção.',
-          'Atualize o status para "Lido" ou "Arquivado".',
+          'Clique em "Editar" para abrir o novo Editor Editorial Interativo do CoffeeCast 4.0.',
+          'No Editor, você pode alterar título e subtítulo, data e horário da gravação, empresa/cargo, reorganizar blocos, ajustar minutos previstos de cada bloco, adicionar perguntas estratégicas ou opcionais ("Se houver espaço:"), editar bate-bola e reflexão de legado.',
+          'Acompanhe o status editorial do roteiro ("Rascunho", "Em Revisão" ou "✓ Aprovado") com aprovação formal antes da exportação final.',
+          'Clique no botão "GERAR PDF DO ROTEIRO" para exportar o documento oficial diagramado no padrão de revista (modelo Grazi & Márcio/ORVEX): capa nobre com foto original, logomarca, endereço do estúdio com rota GPS ativa e páginas internas com quebras perfeitas sem caracteres indevidos de formatação.',
+          'Clique no botão "Baixar PDF" de Respostas para obter a cópia formal das respostas brutas enviadas pelo convidado.',
+          'Para entrevistas em DUPLA, CASAL ou PARCERIA: use "Juntar Roteiros" para a Nine entrelaçar as trajetórias em uma narrativa única, preservando as fichas originais.',
+          'Para episódios SEM CONVIDADOS: selecione a opção dedicada para a Nine estruturar a mesa redonda entre Aline Lana e as co-apresentadoras.',
         ],
         botoesPrincipais: [
+          {
+            nome: 'GERAR PDF DO ROTEIRO',
+            onde: 'No topo e rodapé do Editor Editorial e no modal de detalhes',
+            paraQueServe:
+              'Exporta o documento oficial de estúdio diagramado no padrão ouro/vinho do modelo Grazi e Márcio (Capa com fotos, data/hora dinâmica, endereço do estúdio, aviso de estacionamento e link GPS + páginas internas paginadas).',
+            icone: 'Printer',
+          },
+          {
+            nome: 'Editor Editorial de Roteiros (Blocos & Tempos)',
+            onde: 'Botão "Editar" na listagem de roteiros e no modal de detalhes',
+            paraQueServe:
+              'Permite editar livremente cada bloco, perguntas dirigidas, tempo em minutos, bate-bola, encerramento de legado e status de aprovação oficial.',
+            icone: 'Edit3',
+          },
+          {
+            nome: 'Aprovar Roteiro Oficial',
+            onde: 'No cabeçalho do Editor Editorial',
+            paraQueServe:
+              'Registra a aprovação formal do roteiro pronto para estúdio com gravação na auditoria do sistema.',
+            icone: 'CheckCircle2',
+          },
           {
             nome: 'Juntar Roteiros (Casal / Parceria / 2+ Convidados)',
             onde: 'No topo e nas ações rápidas do modal de detalhes do roteiro',
@@ -454,33 +474,10 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             nome: 'Gerar Pauta com IA (Nine)',
             onde: 'Dentro do modal de detalhes do roteiro e na aba Nine · Assistente Virtual',
             paraQueServe:
-              'Analisa as respostas do convidado e gera um roteiro completo em norma-padrão do português do Brasil com 4 blocos de perguntas, bio de abertura e blindagem de temas sensíveis.',
-          },
-          {
-            nome: 'Salvar Roteiro no Registro do Convidado',
-            onde: 'Abaixo da sugestão gerada pela Nine na aba Assistente Virtual ou no modal',
-            paraQueServe:
-              'Vincula a pauta completa gerada pela IA diretamente ao campo de roteiro final do convidado (com suporte a textos amplos de até 100.000 caracteres e registro em Auditoria).',
-          },
-          {
-            nome: 'Baixar PDF Oficial do Episódio (A4 Estúdio)',
-            onde: 'No editor de roteiro pronto e após a geração conjunta no modal',
-            paraQueServe:
-              'Exporta o roteiro oficial estruturado pela Nine pronto para a bancada da apresentadora Aline Lana e da produção do estúdio.',
-            icone: 'Download',
-          },
-          {
-            nome: 'Salvar Roteiro Final',
-            onde: 'Rodapé do editor de roteiro',
-            paraQueServe: 'Grava o roteiro aprovado que poderá ser consultado durante a gravação.',
-          },
-          {
-            nome: 'Baixar Foto do Convidado',
-            onde: 'Ao lado do avatar do convidado',
-            paraQueServe: 'Faz download da imagem em alta resolução enviada pelo convidado.',
+              'Analisa as respostas do convidado e gera um roteiro completo de 60 minutos com 7 blocos, bate-bola e legado, sem asteriscos ou formatações poluídas.',
           },
         ],
-        dica: 'O recurso "Juntar Roteiros" é perfeito para entrevistas de casal (marido e mulher) ou sócios: cada um responde individualmente a sua ficha no site e a produção clica em "Juntar Roteiros" para obter um roteiro harmônico com perguntas cruzadas, mantendo as fichas originais preservadas intactas. Cada geração e download é registrado automaticamente na Auditoria do Sistema.',
+        dica: 'O modelo oficial de Grazi e Márcio (Orvex) é a referência editorial definitiva: 60 minutos de duração (55 min estruturados + 5 min respiro), perguntas que investigam o que há por trás dos fatos, capa com endereço e rota GPS clicável e preservação das fotos originais sem IA generativa nos rostos.',
       },
       {
         id: 'depoimentos-moderacao',

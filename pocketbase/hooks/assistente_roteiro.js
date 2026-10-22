@@ -139,7 +139,8 @@ routerAdd(
       for (let k = 0; k < convidadosDados.length; k++) {
         nomesArray.push(convidadosDados[k].nome)
       }
-      const nomesLista = nomesArray.length > 0 ? nomesArray.join(' & ') : 'Episódio Especial Entre Apresentadoras'
+      const nomesLista =
+        nomesArray.length > 0 ? nomesArray.join(' & ') : 'Episódio Especial Entre Apresentadoras'
 
       // Carregar configurações dinâmicas da Nine
       let customTreinamento = ''
@@ -282,7 +283,9 @@ routerAdd(
               nomesLista +
               ', seguindo a referência de qualidade de Grazi e Márcio:',
         '',
-        blocosFichas.length > 0 ? blocosFichas.join('\n\n') : 'Tema livre da bancada: conversas que transformam, liderança feminina e negócios.',
+        blocosFichas.length > 0
+          ? blocosFichas.join('\n\n')
+          : 'Tema livre da bancada: conversas que transformam, liderança feminina e negócios.',
         '',
         alertasSensiveisTodos.length > 0
           ? '=== ATENÇÃO ABSOLUTA DA PRODUÇÃO AOS TEMAS SENSÍVEIS (BLOQUEIO) ===\n' +

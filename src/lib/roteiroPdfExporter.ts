@@ -801,30 +801,118 @@ export function buildRoteiroPdfHtml(roteiro: RoteiroConvidadoRecord): string {
  * Dispara o download/impressão em PDF através de uma janela dedicada limpa,
  * com CSS @page A4 portrait, acionando o diálogo nativo do navegador.
  */
+import { parseRoteiroTextToStructure } from '@/lib/roteiroParser'
+import type { RoteiroEstruturado } from '@/types/database'
+
 export interface BuildRoteiroOficialPdfOptions {
   titulo: string
   subtitulo?: string
   convidadosNomes: string[]
   roteiroTexto: string
   ehConjunto?: boolean
+  semConvidados?: boolean
+  roteiroEstruturado?: RoteiroEstruturado | null
+  empresaCargo?: string
+  dataGravacao?: string
+  horarioGravacao?: string
+  enderecoEstudio?: string
+  linkGps?: string
+  avisoEstacionamento?: string
   convidadosDetalhados?: Array<{
     nome: string
     empresa?: string
     fotoUrl?: string
+    logomarcaUrl?: string
     temaEnfatizar?: string
   }>
 }
 
 /**
- * Monta o documento HTML completo com CSS @page A4 portrait para o roteiro oficial do estúdio
- * (gerado pela Nine — individual ou conjunto de múltiplos convidados)
+ * Constrói o HTML fiel ao PDF modelo de referência Grasiele e Márcio (ORVEX):
+ * - Página 1: Capa oficial completa (Logo central com fundo bordô, fotos originais em cards verticais com borda dourada,
+ *   logomarca da empresa, Título principal com serifa bordô, Subtítulo, Nomes dos convidados, Linha de Gravação com dia/hora,
+ *   Box de endereço do estúdio com aviso de estacionamento próprio e link clicável para rota GPS).
+ * - Páginas seguintes: Diagramação profissional de revista editorial com cabeçalho (CoffeeCast 4.0, Nomes | Empresa e
+ *   "HISTÓRIAS QUE INSPIRAM • ROTEIRO DE GRAVAÇÃO N"), blocos com títulos em negrito bordô e DURAÇÃO destacada em dourado,
+ *   perguntas numeradas (01., 02., ...), perguntas opcionais "Se houver espaço:", bate-bola e encerramento com legado.
  */
 export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOptions): string {
-  const safeTitulo = escapeHtml(options.titulo)
+  // Estrutura do roteiro vinda do editor estruturado ou derivada pelo parser
+  const estruturado: RoteiroEstruturado =
+    options.roteiroEstruturado ||
+    parseRoteiroTextToStructure(options.roteiroTexto, {
+      tituloFallback: options.titulo,
+      subtituloFallback: options.subtitulo,
+      convidadosRotulo: options.convidadosNomes.join(' & '),
+      empresaCargo: options.empresaCargo,
+      dataGravacao: options.dataGravacao,
+      horarioGravacao: options.horarioGravacao,
+      endereco: options.enderecoEstudio,
+      linkGps: options.linkGps,
+    })
+
+  const safeTitulo = escapeHtml(estruturado.tituloEpisodio || options.titulo)
   const safeSubtitulo = escapeHtml(
-    options.subtitulo || 'Roteiro Oficial de Estúdio — CoffeeCast 4.0',
+    estruturado.subtituloEpisodio || options.subtitulo || 'O poder de transformar pessoas',
   )
-  const safeConvidados = escapeHtml(options.convidadosNomes.join(' & '))
+
+  const convidadosNomesArr =
+    options.convidadosNomes && options.convidadosNomes.length > 0
+      ? options.convidadosNomes
+      : ['Episódio Especial']
+
+  const safeConvidadosLinha = escapeHtml(
+    options.semConvidados ? 'Aline Lana & Apresentadoras' : convidadosNomesArr.join(' & '),
+  )
+
+  const empresaCargo =
+    options.empresaCargo ||
+    estruturado.empresaCargoRotulo ||
+    (options.convidadosDetalhados &&
+      options.convidadosDetalhados.map((c) => c.empresa).filter(Boolean)[0]) ||
+    ''
+
+  const safeEmpresaCargo = escapeHtml(empresaCargo)
+
+  // Metadados de gravação (data e hora nunca fixas)
+  const dataGravacao = options.dataGravacao || estruturado.dataGravacaoFormatada || ''
+  const horarioGravacao = options.horarioGravacao || estruturado.horarioGravacao || ''
+
+  let linhaGravacao = ''
+  if (dataGravacao && horarioGravacao) {
+    linhaGravacao = `GRAVAÇÃO • ${dataGravacao.toUpperCase()} • ${horarioGravacao.toUpperCase()}`
+  } else if (dataGravacao) {
+    linhaGravacao = `GRAVAÇÃO • ${dataGravacao.toUpperCase()}`
+  } else if (horarioGravacao) {
+    linhaGravacao = `GRAVAÇÃO • ${horarioGravacao.toUpperCase()}`
+  } else {
+    linhaGravacao = `GRAVAÇÃO • A DEFINIR PELA PRODUÇÃO`
+  }
+
+  const enderecoEstudio =
+    options.enderecoEstudio ||
+    estruturado.enderecoEstudio ||
+    'Estúdio Filme | R. Ulisses Sarmento, 24, salas 407 e 408\nPraia do Suá, Vitória - ES | CEP 29052-320'
+
+  const linkGps =
+    options.linkGps ||
+    estruturado.linkGps ||
+    'https://www.google.com/maps/dir/?api=1&destination=R.+Ulisses+Sarmento,+24,+Praia+do+Su%C3%A1,+Vit%C3%B3ria,+ES'
+
+  const avisoEstacionamento =
+    options.avisoEstacionamento ||
+    estruturado.avisoEstacionamento ||
+    'ESTACIONAMENTO PRÓPRIO DISPONÍVEL AOS CONVIDADOS'
+
+  // Convidados com fotos para a capa
+  const convidadosComFoto = options.convidadosDetalhados || []
+  const fotosExistentes = convidadosComFoto.filter((c) => Boolean(c.fotoUrl))
+  const logosExistentes = convidadosComFoto.filter((c) => Boolean(c.logomarcaUrl))
+
+  // Renderizar o topo/header das páginas de conteúdo
+  const subCabecalhoDireita = safeEmpresaCargo
+    ? `${safeConvidadosLinha.toUpperCase()} | ${safeEmpresaCargo.toUpperCase()}`
+    : safeConvidadosLinha.toUpperCase()
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -837,7 +925,7 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
   <style>
     @page {
       size: A4 portrait;
-      margin: 14mm 14mm 16mm 14mm;
+      margin: 0;
     }
     *, *::before, *::after {
       box-sizing: border-box;
@@ -848,25 +936,27 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
     html, body {
       margin: 0;
       padding: 0;
-      background: #FAF8F5;
+      background: #F9F6F0;
       color: #2C1820;
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      font-size: 11pt;
-      line-height: 1.55;
+      font-size: 10.5pt;
+      line-height: 1.6;
     }
+
+    /* BARRA DE AÇÕES NA TELA */
     .screen-actions-bar {
       position: sticky;
       top: 0;
       z-index: 1000;
       background: #4B1E3F;
       color: #FAF8F5;
-      padding: 12px 20px;
+      padding: 12px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
       border-bottom: 2px solid #D4AF37;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
       font-family: 'Plus Jakarta Sans', sans-serif;
     }
     .screen-actions-bar .info {
@@ -881,246 +971,670 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
       border: none;
       font-weight: 700;
       font-size: 13px;
-      padding: 8px 18px;
+      padding: 8px 20px;
       border-radius: 9999px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(212,175,55,0.4);
       transition: transform 0.15s ease, background 0.15s ease;
     }
     .screen-actions-bar .btn-print:hover {
       background: #E5C358;
       transform: scale(1.02);
     }
+    .screen-actions-bar .btn-close {
+      background: rgba(255,255,255,0.12);
+      color: #FAF8F5;
+      border: 1px solid rgba(255,255,255,0.25);
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      cursor: pointer;
+    }
     @media print {
       .screen-actions-bar {
         display: none !important;
       }
       body {
-        background: #ffffff !important;
+        background: #F9F6F0 !important;
       }
     }
-    .document-wrapper {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px 24px 32px 24px;
+
+    /* CONTAINER GERAL DO DOCUMENTO */
+    .document-container {
+      max-width: 820px;
+      margin: 20px auto 40px auto;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      background: #F9F6F0;
     }
     @media print {
-      .document-wrapper {
-        max-width: 100%;
-        margin: 0;
-        padding: 0;
+      .document-container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-shadow: none !important;
       }
     }
-    .header-card {
-      background: linear-gradient(135deg, #4B1E3F 0%, #36142D 60%, #4B1E3F 100%);
-      color: #FAF8F5;
-      border-radius: 16px;
-      padding: 22px 24px;
-      border: 2px solid #D4AF37;
+
+    /* PÁGINAS A4 INDIVIDUAIS */
+    .pdf-page {
+      width: 100%;
+      min-height: 297mm;
       position: relative;
-      margin-bottom: 20px;
+      background: #F9F6F0;
+      box-sizing: border-box;
+      page-break-after: always;
+      break-after: page;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ======================================================== */
+    /* PÁGINA 1: CAPA OFICIAL (MODELO GRAZI E MÁRCIO / ORVEX)    */
+    /* ======================================================== */
+    .cover-header-stripe {
+      background: #4B1E3F;
+      color: #FAF8F5;
+      padding: 24px 36px 20px 36px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 20px;
+      border-bottom: 2px solid #D4AF37;
     }
-    .header-brand {
+    .cover-header-brand {
       display: flex;
       align-items: center;
       gap: 16px;
     }
-    .header-logo {
+    .cover-header-logo {
       height: 60px;
       width: auto;
-      max-width: 130px;
+      max-width: 140px;
       object-fit: contain;
     }
-    .header-titles h1 {
+    .cover-header-text {
+      text-align: right;
+    }
+    .cover-header-title {
       font-family: 'Playfair Display', Georgia, serif;
-      font-size: 19pt;
-      margin: 0;
+      font-size: 20pt;
       font-weight: 700;
       color: #FFFFFF;
+      margin: 0;
+      line-height: 1.1;
+    }
+    .cover-header-subtitle {
+      font-size: 8.5pt;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(250, 248, 245, 0.85);
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .cover-body {
+      padding: 28px 40px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* GRID DE FOTOS E LOGO NA CAPA */
+    .cover-photos-grid {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: stretch;
+      margin-bottom: 24px;
+      max-height: 250px;
+    }
+    .cover-photo-card {
+      flex: 1;
+      max-width: 220px;
+      height: 240px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(75, 30, 63, 0.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .cover-photo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+    .cover-logo-card {
+      background: #111111;
+      color: #FAF8F5;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .cover-logo-img {
+      max-width: 160px;
+      max-height: 80px;
+      object-fit: contain;
+      filter: brightness(1.05);
+      margin-bottom: 8px;
+    }
+    .cover-logo-caption {
+      font-size: 7pt;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #D4AF37;
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    /* BLOCO CENTRAL: TÍTULOS E NOMES */
+    .cover-titles-block {
+      text-align: center;
+      margin: 10px 0 24px 0;
+    }
+    .cover-main-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 26pt;
+      font-weight: 700;
+      color: #4B1E3F;
+      margin: 0 0 6px 0;
       line-height: 1.15;
     }
-    .header-titles .tagline {
-      font-family: 'Playfair Display', Georgia, serif;
-      font-style: italic;
-      color: #D4AF37;
-      font-size: 9.5pt;
-      margin-top: 3px;
-    }
-    .header-titles .badge-mode {
-      display: inline-block;
-      margin-top: 5px;
-      font-size: 8pt;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      padding: 2px 9px;
-      border-radius: 9999px;
-      background: rgba(212, 175, 55, 0.25);
-      border: 1px solid #D4AF37;
-      color: #FAF8F5;
-    }
-    .header-meta {
-      text-align: right;
-      font-size: 9pt;
-      color: rgba(250, 248, 245, 0.85);
-      border-left: 1px solid rgba(212, 175, 55, 0.35);
-      padding-left: 16px;
-      flex-shrink: 0;
-    }
-    .header-meta strong {
-      color: #FFFFFF;
-    }
-    .guest-summary-card {
-      background: #FFFFFF;
-      border: 1.5px solid rgba(75, 30, 63, 0.15);
-      border-radius: 14px;
-      padding: 16px 20px;
-      margin-bottom: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-    }
-    .guest-names-title {
+    .cover-main-subtitle {
       font-family: 'Playfair Display', Georgia, serif;
       font-size: 15pt;
-      font-weight: 700;
-      color: #4B1E3F;
-      margin: 0 0 4px 0;
+      font-style: italic;
+      color: #2C1820;
+      margin: 0 0 18px 0;
+      opacity: 0.9;
     }
-    .guest-names-sub {
-      font-size: 9.5pt;
-      color: rgba(75, 30, 63, 0.75);
+    .cover-divider-gold {
+      width: 80px;
+      height: 2px;
+      background: #D4AF37;
+      margin: 0 auto 18px auto;
     }
-    .badge-convidados-count {
-      background: #4B1E3F;
-      color: #D4AF37;
-      padding: 4px 12px;
-      border-radius: 9999px;
-      font-size: 8.5pt;
-      font-weight: 700;
-      border: 1px solid #D4AF37;
-    }
-    .script-content-card {
-      background: #FFFFFF;
-      border: 1px solid rgba(75, 30, 63, 0.12);
-      border-radius: 14px;
-      padding: 22px 24px;
-      margin-bottom: 20px;
-      page-break-inside: auto;
-    }
-    .script-content-header {
-      border-bottom: 1.5px solid rgba(212, 175, 55, 0.4);
-      padding-bottom: 10px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .script-content-title {
-      font-family: 'Playfair Display', Georgia, serif;
+    .cover-guests-names {
+      font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 13pt;
       font-weight: 700;
-      color: #4B1E3F;
-      margin: 0;
-    }
-    .script-content-text {
-      font-size: 10.5pt;
-      line-height: 1.7;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
       color: #2C1820;
-      white-space: pre-wrap;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0 0 4px 0;
     }
-    .document-footer {
-      border-top: 1px solid rgba(75, 30, 63, 0.15);
-      padding-top: 12px;
-      margin-top: 24px;
-      font-size: 8.5pt;
-      color: rgba(75, 30, 63, 0.65);
-      display: flex;
-      justify-content: space-between;
+    .cover-guests-company {
+      font-size: 9.5pt;
+      color: rgba(75, 30, 63, 0.85);
+      font-weight: 500;
+    }
+
+    /* CARD DE GRAVAÇÃO E ESTÚDIO NO RODAPÉ DA CAPA */
+    .cover-location-card {
+      background: #EFE9E0;
+      border: 1px solid rgba(75, 30, 63, 0.15);
+      border-radius: 12px;
+      padding: 16px 22px;
+      margin-top: auto;
+    }
+    .cover-recording-line {
+      font-size: 10.5pt;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #2C1820;
+      margin-bottom: 8px;
+    }
+    .cover-location-address {
+      font-size: 9pt;
+      color: #3D2230;
+      line-height: 1.45;
+      margin-bottom: 8px;
+      white-space: pre-line;
+    }
+    .cover-parking-tag {
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #065F46;
+      margin-bottom: 8px;
+    }
+    .cover-gps-link {
+      display: inline-flex;
       align-items: center;
-      page-break-inside: avoid;
-    }
-    .document-footer .brand {
+      gap: 6px;
+      font-size: 9pt;
       font-weight: 700;
       color: #4B1E3F;
+      text-decoration: underline;
+      text-decoration-color: #D4AF37;
+      text-underline-offset: 3px;
+    }
+
+    /* ======================================================== */
+    /* PÁGINAS INTERNAS (PÁGINA 2 EM DIANTE)                     */
+    /* ======================================================== */
+    .inner-page-header {
+      background: #4B1E3F;
+      color: #FAF8F5;
+      padding: 10px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 8.5pt;
+      border-bottom: 2px solid #D4AF37;
+    }
+    .inner-header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .inner-header-brand img {
+      height: 28px;
+      width: auto;
+      object-fit: contain;
+    }
+    .inner-header-brand-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 11pt;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+    .inner-header-guest {
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #D4AF37;
+    }
+
+    .inner-page-subbar {
+      padding: 6px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 7.5pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(75, 30, 63, 0.7);
+      border-bottom: 1px solid rgba(75, 30, 63, 0.1);
+      background: #FAF8F5;
+    }
+
+    .inner-page-content {
+      padding: 24px 36px 32px 36px;
+      flex: 1;
+    }
+
+    /* FORMATAÇÃO DOS BLOCOS EDITORIAIS */
+    .script-block {
+      margin-bottom: 22px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .script-block-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 14pt;
+      font-weight: 700;
+      color: #4B1E3F;
+      margin: 0 0 2px 0;
+      line-height: 1.25;
+    }
+    .script-block-duration {
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #92400E;
+      margin-bottom: 10px;
+      display: inline-block;
+    }
+    .script-intro-text {
+      font-size: 10pt;
+      line-height: 1.65;
+      color: #2C1820;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+    .script-intro-text p {
+      margin: 0 0 10px 0;
+    }
+
+    /* PERGUNTAS NUMERADAS */
+    .question-item {
+      margin-bottom: 12px;
+      font-size: 10pt;
+      line-height: 1.6;
+      color: #2C1820;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .question-number {
+      font-weight: 700;
+      color: #B45309;
+      margin-right: 4px;
+    }
+    .question-target {
+      font-weight: 700;
+      color: #4B1E3F;
+      margin-right: 4px;
+    }
+    .question-optional-tag {
+      font-weight: 700;
+      font-style: italic;
+      color: #92400E;
+      background: #FEF3C7;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 8.5pt;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+    .question-optional-box {
+      background: #FFFDF9;
+      border-left: 3px solid #D4AF37;
+      padding: 8px 12px;
+      margin: 8px 0;
+      border-radius: 0 6px 6px 0;
+    }
+
+    /* BATE-BOLA */
+    .bate-bola-list {
+      list-style: none;
+      padding: 0;
+      margin: 8px 0 14px 0;
+    }
+    .bate-bola-list li {
+      position: relative;
+      padding-left: 18px;
+      margin-bottom: 6px;
+      font-size: 10pt;
+      line-height: 1.5;
+    }
+    .bate-bola-list li::before {
+      content: '•';
+      position: absolute;
+      left: 4px;
+      color: #D4AF37;
+      font-weight: 900;
+    }
+
+    /* RESUMO FINAL DE TEMPO */
+    .script-time-summary {
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1.5px solid rgba(212, 175, 55, 0.4);
+      font-size: 9pt;
+      font-weight: 600;
+      color: #4B1E3F;
+      text-align: center;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    /* RODAPÉ DAS PÁGINAS INTERNAS */
+    .inner-page-footer {
+      border-top: 1px solid rgba(75, 30, 63, 0.15);
+      padding: 10px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 7.5pt;
+      color: rgba(75, 30, 63, 0.6);
+      background: #FAF8F5;
+      margin-top: auto;
     }
   </style>
 </head>
 <body>
+  <!-- BARRA DE AÇÕES FIXA EM TELA -->
   <div class="screen-actions-bar">
     <div class="info">
-      <span>🎙️ <strong>Roteiro Oficial do Episódio</strong> — CoffeeCast 4.0</span>
-      <span style="opacity: 0.7;">|</span>
-      <span>${safeConvidados}</span>
+      <strong style="color:#D4AF37;">CoffeeCast 4.0</strong>
+      <span>•</span>
+      <span>Roteiro Oficial de Gravação — <strong>${safeConvidadosLinha}</strong></span>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
       <button class="btn-print" onclick="window.print()">
-        🖨️ Imprimir / Salvar em PDF
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+        <span>GERAR PDF DO ROTEIRO</span>
       </button>
+      <button class="btn-close" onclick="window.close()">Fechar</button>
     </div>
   </div>
 
-  <div class="document-wrapper">
-    <header class="header-card">
-      <div class="header-brand">
-        <img src="${officialLogoImg}" alt="CoffeeCast 4.0" class="header-logo" />
-        <div class="header-titles">
-          <h1>CoffeeCast 4.0</h1>
-          <div class="tagline">"Mais que conversas, histórias que transformam."</div>
-          <div class="badge-mode">
-            ${options.ehConjunto ? 'Roteiro Conjunto Oficial • 2+ Convidados' : 'Roteiro Oficial de Estúdio'}
+  <div class="document-container">
+    <!-- ========================================== -->
+    <!-- PÁGINA 1: CAPA OFICIAL (PADRÃO GRAZI & MÁRCIO) -->
+    <!-- ========================================== -->
+    <div class="pdf-page">
+      <div class="cover-header-stripe">
+        <div class="cover-header-brand">
+          <img src="${officialLogoImg}" alt="CoffeeCast 4.0" class="cover-header-logo" />
+        </div>
+        <div class="cover-header-text">
+          <h1 class="cover-header-title">CoffeeCast 4.0</h1>
+          <div class="cover-header-subtitle">HISTÓRIAS QUE INSPIRAM • EPISÓDIO ESPECIAL</div>
+        </div>
+      </div>
+
+      <div class="cover-body">
+        <!-- FOTOS DOS CONVIDADOS OU DESTAQUE VISUAL -->
+        <div class="cover-photos-grid">
+          ${
+            fotosExistentes.length > 0
+              ? fotosExistentes
+                  .map(
+                    (c) => `
+              <div class="cover-photo-card">
+                <img src="${c.fotoUrl}" alt="${escapeHtml(c.nome)}" class="cover-photo-img" />
+              </div>
+            `,
+                  )
+                  .join('')
+              : `
+              <div class="cover-photo-card" style="background:#4B1E3F; color:#FAF8F5; padding:20px; text-align:center;">
+                <div style="font-family:'Playfair Display', serif; font-size:18pt; color:#D4AF37; margin-bottom:6px;">CoffeeCast 4.0</div>
+                <div style="font-size:9pt; opacity:0.85;">Mais que conversas, histórias que transformam.</div>
+              </div>
+            `
+          }
+
+          ${
+            logosExistentes.length > 0
+              ? `
+            <div class="cover-photo-card cover-logo-card">
+              <img src="${logosExistentes[0].logomarcaUrl}" alt="Logomarca" class="cover-logo-img" />
+              ${safeEmpresaCargo ? `<div class="cover-logo-caption">${safeEmpresaCargo}</div>` : ''}
+            </div>
+          `
+              : safeEmpresaCargo
+                ? `
+            <div class="cover-photo-card cover-logo-card">
+              <div style="font-family:'Playfair Display', serif; font-size:16pt; color:#FFFFFF; margin-bottom:4px;">
+                ${safeEmpresaCargo.split('|')[0] || safeEmpresaCargo}
+              </div>
+              <div class="cover-logo-caption">${safeEmpresaCargo}</div>
+            </div>
+          `
+                : ''
+          }
+        </div>
+
+        <!-- TÍTULOS E NOMES -->
+        <div class="cover-titles-block">
+          <h2 class="cover-main-title">${safeTitulo}</h2>
+          <div class="cover-main-subtitle">${safeSubtitulo}</div>
+          <div class="cover-divider-gold"></div>
+
+          <div class="cover-guests-names">${safeConvidadosLinha}</div>
+          ${safeEmpresaCargo ? `<div class="cover-guests-company">${safeEmpresaCargo}</div>` : ''}
+        </div>
+
+        <!-- BOX DE GRAVAÇÃO E ESTÚDIO COM GPS CLICÁVEL -->
+        <div class="cover-location-card">
+          <div class="cover-recording-line">${linhaGravacao}</div>
+          <div class="cover-location-address">${formatMultilineHtml(enderecoEstudio)}</div>
+          <div class="cover-parking-tag">${escapeHtml(avisoEstacionamento)}</div>
+          <div>
+            <a href="${escapeHtml(linkGps)}" target="_blank" rel="noopener noreferrer" class="cover-gps-link">
+              TOQUE AQUI PARA ABRIR A ROTA NO GPS ↗
+            </a>
           </div>
         </div>
       </div>
-      <div class="header-meta">
-        <div>Apresentadora: <strong>Aline Lana</strong></div>
-        <div style="margin-top:3px;">Roteirista: <strong>Nine (IA)</strong></div>
-        <div style="margin-top:3px;font-size:8pt;opacity:0.8;">${new Date().toLocaleDateString('pt-BR')}</div>
-      </div>
-    </header>
-
-    <div class="guest-summary-card">
-      <div>
-        <h2 class="guest-names-title">${safeConvidados}</h2>
-        <div class="guest-names-sub">
-          ${safeSubtitulo}
-        </div>
-      </div>
-      <div class="badge-convidados-count">
-        ${options.ehConjunto ? `${options.convidadosNomes.length} Convidados Vinculados` : 'Entrevista Individual'}
-      </div>
     </div>
 
-    <section class="script-content-card">
-      <div class="script-content-header">
-        <h3 class="script-content-title">Pauta Estruturada & Roteiro de Gravação</h3>
-        <span style="font-size:8.5pt;font-weight:600;color:#4B1E3F;background:rgba(212,175,55,0.2);padding:2px 8px;border-radius:9999px;">
-          Norma-Padrão • 4 Blocos
-        </span>
-      </div>
-      <div class="script-content-text">${escapeHtml(options.roteiroTexto)}</div>
-    </section>
-
-    <footer class="document-footer">
-      <div>
-        <span class="brand">CoffeeCast 4.0</span> • Sistema de Gestão Audiovisual & Podcasts
-      </div>
-      <div>
-        Documento gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-      </div>
-    </footer>
+    <!-- ========================================== -->
+    <!-- PÁGINAS DE CONTEÚDO EDITORIAL DIAGRAMADAS   -->
+    <!-- ========================================== -->
+    ${renderConteudoBlocos(estruturado, subCabecalhoDireita)}
   </div>
 </body>
 </html>`
+}
+
+/**
+ * Renderiza os blocos do roteiro com quebra e diagramação profissional
+ */
+function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: string): string {
+  // Distribuir os blocos em páginas de visualização (ou manter fluxo com page-break-after quando conveniente)
+  // Cada página segue o padrão de cabeçalho do modelo:
+  // "CoffeeCast 4.0" à esquerda, "GRASIELE & MÁRCIO | ORVEX" e "HISTÓRIAS QUE INSPIRAM • ROTEIRO DE GRAVAÇÃO"
+
+  let htmlPaginas = ''
+  let paginaIndex = 1
+
+  // Geramos uma sequência contínua de páginas elegantes
+  // Na impressão @page, os estilos .script-block break-inside: avoid garantem que nenhuma pergunta ou título quebre ao meio
+  htmlPaginas += `
+    <div class="pdf-page">
+      <div class="inner-page-header">
+        <div class="inner-header-brand">
+          <img src="${officialLogoImg}" alt="CoffeeCast 4.0" />
+          <span class="inner-header-brand-title">CoffeeCast 4.0</span>
+        </div>
+        <div class="inner-header-guest">${subCabecalhoDireita}</div>
+      </div>
+      <div class="inner-page-subbar">
+        <span>HISTÓRIAS QUE INSPIRAM • ROTEIRO DE GRAVAÇÃO</span>
+        <span>PÁGINA ${paginaIndex}</span>
+      </div>
+
+      <div class="inner-page-content">
+  `
+
+  for (let b = 0; b < est.blocos.length; b++) {
+    const bloco = est.blocos[b]
+
+    htmlPaginas += `
+      <div class="script-block">
+        <h3 class="script-block-title">${bloco.tipo === 'abertura' ? bloco.titulo : `${bloco.numero} | ${bloco.titulo}`}</h3>
+        <span class="script-block-duration">${bloco.duracaoMinutos} MINUTOS</span>
+    `
+
+    if (bloco.textoIntro) {
+      htmlPaginas += `
+        <div class="script-intro-text">
+          ${bloco.textoIntro
+            .split('\n\n')
+            .map((p) => `<p>${escapeHtml(p)}</p>`)
+            .join('')}
+        </div>
+      `
+    }
+
+    if (bloco.tipo === 'perguntas' && bloco.perguntas && bloco.perguntas.length > 0) {
+      for (const q of bloco.perguntas) {
+        if (q.opcional) {
+          htmlPaginas += `
+            <div class="question-optional-box">
+              <span class="question-optional-tag">Se houver espaço:</span>
+              <div style="font-size:10pt; line-height:1.55; color:#2C1820; margin-top:2px;">
+                ${escapeHtml(q.texto)}
+              </div>
+            </div>
+          `
+        } else {
+          htmlPaginas += `
+            <div class="question-item">
+              <span class="question-number">${q.numero}.</span>
+              ${q.direcionadaPara ? `<span class="question-target">${escapeHtml(q.direcionadaPara)}:</span>` : ''}
+              <span>${escapeHtml(q.texto)}</span>
+            </div>
+          `
+        }
+      }
+    }
+
+    if (bloco.tipo === 'bate_bola') {
+      if (bloco.itensBateBola && bloco.itensBateBola.length > 0) {
+        htmlPaginas += `<ul class="bate-bola-list">`
+        for (const item of bloco.itensBateBola) {
+          htmlPaginas += `<li>${escapeHtml(item)}</li>`
+        }
+        htmlPaginas += `</ul>`
+      }
+      if (bloco.perguntaEspecialFinal) {
+        htmlPaginas += `
+          <div class="question-item" style="margin-top:12px; font-weight:600; color:#4B1E3F;">
+            ${escapeHtml(bloco.perguntaEspecialFinal)}
+          </div>
+        `
+      }
+    }
+
+    if (bloco.tipo === 'encerramento') {
+      if (bloco.perguntaEspecialFinal) {
+        htmlPaginas += `
+          <div class="question-item" style="font-weight:600; color:#4B1E3F; margin-bottom:12px;">
+            ${escapeHtml(bloco.perguntaEspecialFinal)}
+          </div>
+        `
+      }
+      if (bloco.paragrafosEncerramento && bloco.paragrafosEncerramento.length > 0) {
+        htmlPaginas += `
+          <div class="script-intro-text">
+            ${bloco.paragrafosEncerramento.map((p) => `<p>${escapeHtml(p)}</p>`).join('')}
+          </div>
+        `
+      }
+    }
+
+    htmlPaginas += `</div>` // fecha .script-block
+  }
+
+  // Resumo de tempo final
+  const durRoteiro = est.duracaoRoteiroMinutos || 55
+  const durRespiro = est.duracaoRespiroMinutos || 5
+  const durTotal = est.duracaoTotalMinutos || durRoteiro + durRespiro
+
+  htmlPaginas += `
+      <div class="script-time-summary">
+        Duração: ${durRoteiro} minutos de roteiro + ${durRespiro} minutos para a conversa fluir naturalmente = ${durTotal} minutos.
+      </div>
+    </div> <!-- fecha .inner-page-content -->
+
+    <div class="inner-page-footer">
+      <span>HISTÓRIAS QUE INSPIRAM • ROTEIRO DE GRAVAÇÃO</span>
+      <span>CoffeeCast 4.0 — Mais que conversas, histórias que transformam.</span>
+    </div>
+  </div> <!-- fecha .pdf-page -->
+  `
+
+  return htmlPaginas
 }
 
 /**
