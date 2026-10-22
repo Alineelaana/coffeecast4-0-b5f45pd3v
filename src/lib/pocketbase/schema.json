@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T00:12:15.567Z",
+  "generatedAt": "2026-10-22T01:19:18.431Z",
   "collections": [
     {
       "name": "users",
@@ -1182,6 +1182,18 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "roteiros_vinculados_ids",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "roteiro_conjunto_titulo",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [

@@ -19,6 +19,23 @@ export function buildRoteiroPdfFileName(nome: string): string {
 }
 
 /**
+ * Utilitário para geração de nome de arquivo PDF de roteiro oficial do episódio
+ * (individual ou conjunto gerado pela Nine)
+ */
+export function buildRoteiroOficialPdfFileName(tituloOuNomes: string): string {
+  const safeSlug =
+    tituloOuNomes
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'episodio'
+
+  return `roteiro-oficial-${safeSlug}.pdf`
+}
+
+/**
  * Converte strings para HTML seguro contra injeção de script
  */
 function escapeHtml(text: string | null | undefined): string {
@@ -782,6 +799,374 @@ export function buildRoteiroPdfHtml(roteiro: RoteiroConvidadoRecord): string {
 
 /**
  * Dispara o download/impressão em PDF através de uma janela dedicada limpa,
+ * com CSS @page A4 portrait, acionando o diálogo nativo do navegador.
+ */
+export interface BuildRoteiroOficialPdfOptions {
+  titulo: string
+  subtitulo?: string
+  convidadosNomes: string[]
+  roteiroTexto: string
+  ehConjunto?: boolean
+  convidadosDetalhados?: Array<{
+    nome: string
+    empresa?: string
+    fotoUrl?: string
+    temaEnfatizar?: string
+  }>
+}
+
+/**
+ * Monta o documento HTML completo com CSS @page A4 portrait para o roteiro oficial do estúdio
+ * (gerado pela Nine — individual ou conjunto de múltiplos convidados)
+ */
+export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOptions): string {
+  const safeTitulo = escapeHtml(options.titulo)
+  const safeSubtitulo = escapeHtml(
+    options.subtitulo || 'Roteiro Oficial de Estúdio — CoffeeCast 4.0',
+  )
+  const safeConvidados = escapeHtml(options.convidadosNomes.join(' & '))
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Roteiro Oficial - ${safeTitulo}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 14mm 14mm 16mm 14mm;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #FAF8F5;
+      color: #2C1820;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.55;
+    }
+    .screen-actions-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #4B1E3F;
+      color: #FAF8F5;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 2px solid #D4AF37;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .screen-actions-bar .info {
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .screen-actions-bar .btn-print {
+      background: #D4AF37;
+      color: #4B1E3F;
+      border: none;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .screen-actions-bar .btn-print:hover {
+      background: #E5C358;
+      transform: scale(1.02);
+    }
+    @media print {
+      .screen-actions-bar {
+        display: none !important;
+      }
+      body {
+        background: #ffffff !important;
+      }
+    }
+    .document-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px 24px 32px 24px;
+    }
+    @media print {
+      .document-wrapper {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    }
+    .header-card {
+      background: linear-gradient(135deg, #4B1E3F 0%, #36142D 60%, #4B1E3F 100%);
+      color: #FAF8F5;
+      border-radius: 16px;
+      padding: 22px 24px;
+      border: 2px solid #D4AF37;
+      position: relative;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-logo {
+      height: 60px;
+      width: auto;
+      max-width: 130px;
+      object-fit: contain;
+    }
+    .header-titles h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 19pt;
+      margin: 0;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1.15;
+    }
+    .header-titles .tagline {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      color: #D4AF37;
+      font-size: 9.5pt;
+      margin-top: 3px;
+    }
+    .header-titles .badge-mode {
+      display: inline-block;
+      margin-top: 5px;
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 2px 9px;
+      border-radius: 9999px;
+      background: rgba(212, 175, 55, 0.25);
+      border: 1px solid #D4AF37;
+      color: #FAF8F5;
+    }
+    .header-meta {
+      text-align: right;
+      font-size: 9pt;
+      color: rgba(250, 248, 245, 0.85);
+      border-left: 1px solid rgba(212, 175, 55, 0.35);
+      padding-left: 16px;
+      flex-shrink: 0;
+    }
+    .header-meta strong {
+      color: #FFFFFF;
+    }
+    .guest-summary-card {
+      background: #FFFFFF;
+      border: 1.5px solid rgba(75, 30, 63, 0.15);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .guest-names-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 15pt;
+      font-weight: 700;
+      color: #4B1E3F;
+      margin: 0 0 4px 0;
+    }
+    .guest-names-sub {
+      font-size: 9.5pt;
+      color: rgba(75, 30, 63, 0.75);
+    }
+    .badge-convidados-count {
+      background: #4B1E3F;
+      color: #D4AF37;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 8.5pt;
+      font-weight: 700;
+      border: 1px solid #D4AF37;
+    }
+    .script-content-card {
+      background: #FFFFFF;
+      border: 1px solid rgba(75, 30, 63, 0.12);
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+      page-break-inside: auto;
+    }
+    .script-content-header {
+      border-bottom: 1.5px solid rgba(212, 175, 55, 0.4);
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .script-content-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 13pt;
+      font-weight: 700;
+      color: #4B1E3F;
+      margin: 0;
+    }
+    .script-content-text {
+      font-size: 10.5pt;
+      line-height: 1.7;
+      color: #2C1820;
+      white-space: pre-wrap;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .document-footer {
+      border-top: 1px solid rgba(75, 30, 63, 0.15);
+      padding-top: 12px;
+      margin-top: 24px;
+      font-size: 8.5pt;
+      color: rgba(75, 30, 63, 0.65);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      page-break-inside: avoid;
+    }
+    .document-footer .brand {
+      font-weight: 700;
+      color: #4B1E3F;
+    }
+  </style>
+</head>
+<body>
+  <div class="screen-actions-bar">
+    <div class="info">
+      <span>🎙️ <strong>Roteiro Oficial do Episódio</strong> — CoffeeCast 4.0</span>
+      <span style="opacity: 0.7;">|</span>
+      <span>${safeConvidados}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="btn-print" onclick="window.print()">
+        🖨️ Imprimir / Salvar em PDF
+      </button>
+    </div>
+  </div>
+
+  <div class="document-wrapper">
+    <header class="header-card">
+      <div class="header-brand">
+        <img src="${officialLogoImg}" alt="CoffeeCast 4.0" class="header-logo" />
+        <div class="header-titles">
+          <h1>CoffeeCast 4.0</h1>
+          <div class="tagline">"Mais que conversas, histórias que transformam."</div>
+          <div class="badge-mode">
+            ${options.ehConjunto ? 'Roteiro Conjunto Oficial • 2+ Convidados' : 'Roteiro Oficial de Estúdio'}
+          </div>
+        </div>
+      </div>
+      <div class="header-meta">
+        <div>Apresentadora: <strong>Aline Lana</strong></div>
+        <div style="margin-top:3px;">Roteirista: <strong>Nine (IA)</strong></div>
+        <div style="margin-top:3px;font-size:8pt;opacity:0.8;">${new Date().toLocaleDateString('pt-BR')}</div>
+      </div>
+    </header>
+
+    <div class="guest-summary-card">
+      <div>
+        <h2 class="guest-names-title">${safeConvidados}</h2>
+        <div class="guest-names-sub">
+          ${safeSubtitulo}
+        </div>
+      </div>
+      <div class="badge-convidados-count">
+        ${options.ehConjunto ? `${options.convidadosNomes.length} Convidados Vinculados` : 'Entrevista Individual'}
+      </div>
+    </div>
+
+    <section class="script-content-card">
+      <div class="script-content-header">
+        <h3 class="script-content-title">Pauta Estruturada & Roteiro de Gravação</h3>
+        <span style="font-size:8.5pt;font-weight:600;color:#4B1E3F;background:rgba(212,175,55,0.2);padding:2px 8px;border-radius:9999px;">
+          Norma-Padrão • 4 Blocos
+        </span>
+      </div>
+      <div class="script-content-text">${escapeHtml(options.roteiroTexto)}</div>
+    </section>
+
+    <footer class="document-footer">
+      <div>
+        <span class="brand">CoffeeCast 4.0</span> • Sistema de Gestão Audiovisual & Podcasts
+      </div>
+      <div>
+        Documento gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+      </div>
+    </footer>
+  </div>
+</body>
+</html>`
+}
+
+/**
+ * Dispara o download/impressão em PDF do roteiro oficial estruturado (individual ou conjunto)
+ */
+export async function downloadRoteiroOficialPdf(
+  options: BuildRoteiroOficialPdfOptions,
+): Promise<void> {
+  const fileName = buildRoteiroOficialPdfFileName(
+    options.titulo || options.convidadosNomes.join('-'),
+  )
+  const htmlContent = buildRoteiroOficialPdfHtml(options)
+
+  const printWindow = window.open('', '_blank', 'width=900,height=1000,menubar=no,toolbar=no')
+  if (!printWindow) {
+    throw new Error('Abertura de nova janela bloqueada pelo navegador.')
+  }
+
+  printWindow.document.open()
+  printWindow.document.write(htmlContent)
+  printWindow.document.close()
+
+  printWindow.document.title = fileName.replace(/\.pdf$/i, '')
+
+  await new Promise((resolve) => {
+    let resolved = false
+    const finish = () => {
+      if (!resolved) {
+        resolved = true
+        resolve(true)
+      }
+    }
+    printWindow.onload = () => setTimeout(finish, 250)
+    setTimeout(finish, 800)
+  })
+
+  try {
+    printWindow.focus()
+    printWindow.print()
+  } catch (err) {
+    console.error('Falha ao abrir diálogo de impressão da janela do PDF:', err)
+  }
+}
+
+/**
+ * Dispara o download/impressão em PDF das respostas originais do convidado através de uma janela dedicada limpa,
  * com CSS @page A4 portrait, acionando o diálogo nativo do navegador.
  */
 export async function downloadRoteiroPdf(roteiro: RoteiroConvidadoRecord): Promise<void> {

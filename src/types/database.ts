@@ -275,6 +275,8 @@ export interface RoteiroConvidadoRecord {
   visualizado?: boolean
   roteiro_final_texto?: string
   roteiro_final_arquivo?: string
+  roteiros_vinculados_ids?: string[]
+  roteiro_conjunto_titulo?: string
   created: string
   updated: string
 }

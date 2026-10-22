@@ -2,7 +2,12 @@ import React, { useState, useEffect, useRef } from 'react'
 import pb from '@/lib/pocketbase/client'
 import { getFileUrl, formatDateBR } from '@/lib/formatters'
 import type { RoteiroConvidadoRecord, RoteiroConvidadoStatus } from '@/types/database'
-import { downloadRoteiroPdf, buildRoteiroPdfFileName } from '@/lib/roteiroPdfExporter'
+import {
+  downloadRoteiroPdf,
+  buildRoteiroPdfFileName,
+  downloadRoteiroOficialPdf,
+  buildRoteiroOficialPdfFileName,
+} from '@/lib/roteiroPdfExporter'
 import { AuditoriaService } from '@/services/auditoria'
 import {
   Table,
@@ -43,7 +48,12 @@ import {
   Trash2,
   RefreshCw,
   Share2,
+  Search,
+  Layers,
+  ArrowRight,
+  X,
 } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
 
@@ -130,6 +140,16 @@ export default function AdminRoteirosScreen() {
   const [aiResultado, setAiResultado] = useState<string>('')
   const [aiAgenteUsado, setAiAgenteUsado] = useState<string>('')
   const [aiSavingToGuest, setAiSavingToGuest] = useState(false)
+
+  // MODAL / ESTADO: Juntar Roteiros (Episódios Conjuntos / Casal / Parcerias)
+  const [modalJuntarOpen, setModalJuntarOpen] = useState(false)
+  const [juntarBusca, setJuntarBusca] = useState('')
+  const [juntarSelecionados, setJuntarSelecionados] = useState<string[]>([])
+  const [juntarGerando, setJuntarGerando] = useState(false)
+  const [juntarResultado, setJuntarResultado] = useState<string>('')
+  const [juntarAgenteUsado, setJuntarAgenteUsado] = useState<string>('')
+  const [juntarSalvando, setJuntarSalvando] = useState(false)
+  const [juntarDownloadingPdf, setJuntarDownloadingPdf] = useState(false)
 
   const loadRoteiros = async () => {
     try {
@@ -299,6 +319,248 @@ export default function AdminRoteirosScreen() {
       toast.error(msg)
     } finally {
       setAiLoading(false)
+    }
+  }
+
+  // Abertura do modal "Juntar Roteiros" a partir do roteiro selecionado
+  const handleAbrirJuntarRoteiros = () => {
+    if (!selectedRoteiro) return
+    // Pré-carregar os já vinculados se existirem
+    const vinculadosExistentes = Array.isArray(selectedRoteiro.roteiros_vinculados_ids)
+      ? selectedRoteiro.roteiros_vinculados_ids
+      : []
+    setJuntarSelecionados(vinculadosExistentes)
+    setJuntarBusca('')
+    setJuntarResultado(selectedRoteiro.roteiro_final_texto || '')
+    setJuntarAgenteUsado('')
+    setModalJuntarOpen(true)
+  }
+
+  // Alternar seleção de um roteiro na lista de junção
+  const toggleSelecaoJuntar = (id: string) => {
+    setJuntarSelecionados((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    )
+  }
+
+  // Ação: Gerar Roteiro Conjunto com a Nine
+  const handleGerarRoteiroConjunto = async () => {
+    if (!selectedRoteiro) return
+    if (juntarSelecionados.length === 0) {
+      toast.error('Selecione pelo menos mais um roteiro respondido para juntar.')
+      return
+    }
+
+    try {
+      setJuntarGerando(true)
+      const res = await fetch(
+        `${import.meta.env.VITE_POCKETBASE_URL}/backend/v1/roteiro-assistente`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: pb.authStore.token,
+          },
+          body: JSON.stringify({
+            roteiro_id: selectedRoteiro.id,
+            roteiros_vinculados_ids: juntarSelecionados,
+          }),
+        },
+      )
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(
+          data.error || 'A Nine encontrou uma instabilidade ao gerar o roteiro conjunto.',
+        )
+      }
+
+      setJuntarResultado(data.roteiroSugerido)
+      setJuntarAgenteUsado(data.agenteUsado)
+
+      const convidadosAlvos = [
+        selectedRoteiro.nome,
+        ...roteiros.filter((r) => juntarSelecionados.includes(r.id)).map((r) => r.nome),
+      ].join(' & ')
+
+      // Registrar auditoria da geração
+      AuditoriaService.registrarEvento({
+        tipo_acao: 'criacao',
+        area_sistema: 'Roteiros & Pautas',
+        descricao: `Geração de roteiro conjunto pela Nine para o episódio com [${convidadosAlvos}].`,
+        registro_afetado: selectedRoteiro.id,
+        tabela_afetada: 'roteiros_convidados',
+        resultado: 'sucesso',
+        metadata: {
+          roteiro_principal_id: selectedRoteiro.id,
+          convidado_principal: selectedRoteiro.nome,
+          roteiros_vinculados_ids: juntarSelecionados,
+          agente_usado: data.agenteUsado,
+          tamanho_caracteres: (data.roteiroSugerido || '').length,
+        },
+      }).catch((auditErr) => {
+        console.warn('[AdminRoteirosScreen] Falha ao registrar auditoria de junção:', auditErr)
+      })
+
+      toast.success(`A Nine criou com sucesso o roteiro oficial conjunto para ${convidadosAlvos}!`)
+    } catch (err: unknown) {
+      console.error('Erro ao gerar roteiro conjunto:', err)
+      const msg =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: string }).message)
+          : 'A Nine não pôde concluir a junção neste momento. Tente novamente em instantes.'
+      toast.error(msg)
+    } finally {
+      setJuntarGerando(false)
+    }
+  }
+
+  // Ação: Salvar Roteiro Conjunto no registro principal
+  const handleSalvarRoteiroConjunto = async () => {
+    if (!selectedRoteiro || !juntarResultado) return
+
+    const convidadosVinculadosNomes = [
+      selectedRoteiro.nome,
+      ...roteiros.filter((r) => juntarSelecionados.includes(r.id)).map((r) => r.nome),
+    ]
+    const tituloConjunto = `Episódio Conjunto: ${convidadosVinculadosNomes.join(' & ')}`
+
+    try {
+      setJuntarSalvando(true)
+      let salvoComSucesso = false
+
+      // 1. Tentar endpoint oficial com auditoria
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_POCKETBASE_URL}/backend/v1/roteiro-assistente/salvar`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: pb.authStore.token,
+            },
+            body: JSON.stringify({
+              roteiro_id: selectedRoteiro.id,
+              roteiro_texto: juntarResultado,
+              roteiros_vinculados_ids: juntarSelecionados,
+              roteiro_conjunto_titulo: tituloConjunto,
+            }),
+          },
+        )
+
+        if (res.ok) {
+          salvoComSucesso = true
+        } else {
+          const errData = await res.json().catch(() => ({}))
+          console.warn(
+            '[AdminRoteirosScreen] Endpoint oficial de salvar conjunto retornou erro:',
+            errData,
+          )
+        }
+      } catch (endpointErr) {
+        console.warn(
+          '[AdminRoteirosScreen] Falha de rede ao salvar conjunto no endpoint oficial:',
+          endpointErr,
+        )
+      }
+
+      // 2. Fallback via SDK PocketBase
+      if (!salvoComSucesso) {
+        await pb.collection('roteiros_convidados').update(selectedRoteiro.id, {
+          roteiro_final_texto: juntarResultado,
+          roteiros_vinculados_ids: juntarSelecionados,
+          roteiro_conjunto_titulo: tituloConjunto,
+        })
+
+        AuditoriaService.registrarEvento({
+          tipo_acao: 'edicao',
+          area_sistema: 'Roteiros & Pautas',
+          descricao: `Roteiro conjunto salvo no registro principal (${selectedRoteiro.nome}) reunindo [${convidadosVinculadosNomes.join(' & ')}].`,
+          registro_afetado: selectedRoteiro.id,
+          tabela_afetada: 'roteiros_convidados',
+          resultado: 'sucesso',
+          metadata: {
+            roteiro_principal_id: selectedRoteiro.id,
+            roteiros_vinculados_ids: juntarSelecionados,
+            convidados_todos: convidadosVinculadosNomes,
+            tamanho_caracteres: juntarResultado.length,
+          },
+        }).catch((err) => console.warn(err))
+      }
+
+      // Atualizar o estado local
+      const roteiroAtualizado: RoteiroConvidadoRecord = {
+        ...selectedRoteiro,
+        roteiro_final_texto: juntarResultado,
+        roteiros_vinculados_ids: juntarSelecionados,
+        roteiro_conjunto_titulo: tituloConjunto,
+      }
+      setSelectedRoteiro(roteiroAtualizado)
+      setRoteiroTexto(juntarResultado)
+
+      toast.success(
+        `Roteiro oficial conjunto salvo no registro de ${selectedRoteiro.nome} com sucesso!`,
+      )
+      loadRoteiros()
+    } catch (err: unknown) {
+      console.error('Erro ao salvar roteiro conjunto:', err)
+      const msg =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: string }).message)
+          : 'Não foi possível salvar o roteiro conjunto no registro.'
+      toast.error(msg)
+    } finally {
+      setJuntarSalvando(false)
+    }
+  }
+
+  // Ação: Baixar Roteiro Oficial Conjunto em PDF (A4)
+  const handleDownloadRoteiroConjuntoPdf = async () => {
+    if (!selectedRoteiro || !juntarResultado) return
+
+    const convidadosVinculados = [
+      selectedRoteiro,
+      ...roteiros.filter((r) => juntarSelecionados.includes(r.id)),
+    ]
+    const convidadosNomes = convidadosVinculados.map((c) => c.nome)
+
+    try {
+      setJuntarDownloadingPdf(true)
+      await downloadRoteiroOficialPdf({
+        titulo: `Roteiro Oficial: ${convidadosNomes.join(' & ')}`,
+        subtitulo: `Episódio Conjunto gravado no estúdio CoffeeCast 4.0 com Aline Lana`,
+        convidadosNomes,
+        roteiroTexto: juntarResultado,
+        ehConjunto: true,
+      })
+
+      AuditoriaService.registrarEvento({
+        tipo_acao: 'download',
+        area_sistema: 'Roteiros & Pautas',
+        descricao: `Download em PDF do roteiro oficial conjunto de [${convidadosNomes.join(' & ')}].`,
+        registro_afetado: selectedRoteiro.id,
+        tabela_afetada: 'roteiros_convidados',
+        resultado: 'sucesso',
+        metadata: {
+          convidados: convidadosNomes,
+          roteiro_id: selectedRoteiro.id,
+          tipo: 'roteiro_conjunto_oficial',
+        },
+      }).catch((err) => console.warn(err))
+
+      toast.success('PDF do roteiro conjunto gerado com sucesso!')
+    } catch (err: unknown) {
+      console.error('Erro ao baixar PDF conjunto:', err)
+      const msg =
+        err &&
+        typeof err === 'object' &&
+        'message' in err &&
+        String((err as { message: string }).message).includes('bloqueada')
+          ? 'O navegador bloqueou a abertura da janela. Permita pop-ups para gerar o PDF.'
+          : 'Não foi possível gerar o PDF conjunto — tente novamente.'
+      toast.error(msg)
+    } finally {
+      setJuntarDownloadingPdf(false)
     }
   }
 
@@ -657,6 +919,12 @@ export default function AdminRoteirosScreen() {
                             Roteiro Pronto
                           </Badge>
                         )}
+                        {Array.isArray(item.roteiros_vinculados_ids) &&
+                          item.roteiros_vinculados_ids.length > 0 && (
+                            <Badge className="bg-dourado/25 text-vinho border border-dourado/50 text-[9px] font-bold">
+                              Conjunto
+                            </Badge>
+                          )}
                         <Button
                           type="button"
                           size="sm"
@@ -754,13 +1022,22 @@ export default function AdminRoteirosScreen() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {item.roteiro_final_texto || item.roteiro_final_arquivo ? (
-                            <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px]">
-                              Pronto
-                            </Badge>
-                          ) : (
-                            <span className="text-[11px] text-vinho/50 italic">Pendente</span>
-                          )}
+                          <div className="flex flex-col gap-1 items-start">
+                            {item.roteiro_final_texto || item.roteiro_final_arquivo ? (
+                              <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px]">
+                                Pronto
+                              </Badge>
+                            ) : (
+                              <span className="text-[11px] text-vinho/50 italic">Pendente</span>
+                            )}
+                            {Array.isArray(item.roteiros_vinculados_ids) &&
+                              item.roteiros_vinculados_ids.length > 0 && (
+                                <Badge className="bg-dourado/20 text-vinho border border-dourado/40 text-[9px] font-bold">
+                                  <Users className="w-2.5 h-2.5 mr-1" />
+                                  Conjunto (+{item.roteiros_vinculados_ids.length})
+                                </Badge>
+                              )}
+                          </div>{' '}
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -1121,6 +1398,16 @@ export default function AdminRoteirosScreen() {
 
                     <Button
                       size="sm"
+                      onClick={handleAbrirJuntarRoteiros}
+                      className="bg-gradient-to-r from-vinho via-[#4B1E3F] to-vinho-dark hover:from-vinho-light hover:to-vinho text-white text-xs font-bold rounded-xl h-9 px-3.5 flex items-center gap-1.5 border border-dourado/60 shadow-sm active:scale-95"
+                      title="Juntar respostas deste convidado com outros convidados respondidos para um episódio em casal ou parceria"
+                    >
+                      <Users className="w-3.5 h-3.5 text-dourado" />
+                      <span>Juntar Roteiros</span>
+                    </Button>
+
+                    <Button
+                      size="sm"
                       disabled={downloadingPdfId === selectedRoteiro.id}
                       onClick={() => handleDownloadPdf(selectedRoteiro)}
                       className="bg-vinho hover:bg-vinho-light text-white text-xs font-bold rounded-xl h-9 px-3 flex items-center gap-1.5 shadow-sm active:scale-95"
@@ -1343,10 +1630,10 @@ export default function AdminRoteirosScreen() {
                       )}
                     </div>
 
-                    {/* Autorização */}
+                    {/* Autorização & Ações Rápidas de IA */}
                     <div className="space-y-2">
                       <span className="text-[11px] font-bold text-vinho block">
-                        Direito de Imagem
+                        Direito de Imagem & Ações de IA
                       </span>
                       <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs space-y-1">
                         <div className="flex items-center gap-1 font-bold">
@@ -1359,47 +1646,99 @@ export default function AdminRoteirosScreen() {
                         </p>
                       </div>
 
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          setModalOpen(false)
-                          setActiveTab('assistente')
-                          setAiSelectedId(selectedRoteiro.id)
-                          handleGerarComIA(selectedRoteiro.id)
-                        }}
-                        className="w-full bg-vinho hover:bg-vinho-light text-white font-bold text-xs rounded-xl h-10 flex items-center justify-center gap-1.5 shadow-sm mt-2"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-dourado" />
-                        <span>Gerar Roteiro com a Nine</span>
-                      </Button>
+                      <div className="grid grid-cols-1 gap-2 pt-1">
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setModalOpen(false)
+                            setActiveTab('assistente')
+                            setAiSelectedId(selectedRoteiro.id)
+                            handleGerarComIA(selectedRoteiro.id)
+                          }}
+                          className="w-full bg-vinho hover:bg-vinho-light text-white font-bold text-xs rounded-xl h-9 flex items-center justify-center gap-1.5 shadow-sm"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-dourado" />
+                          <span>Gerar Roteiro Individual</span>
+                        </Button>
+
+                        <Button
+                          type="button"
+                          onClick={handleAbrirJuntarRoteiros}
+                          className="w-full bg-gradient-to-r from-vinho via-[#4B1E3F] to-vinho-dark hover:from-vinho-light hover:to-vinho text-white font-bold text-xs rounded-xl h-9 flex items-center justify-center gap-1.5 border border-dourado/50 shadow-sm"
+                        >
+                          <Users className="w-3.5 h-3.5 text-dourado" />
+                          <span>Juntar Roteiros (Casal/Parceria)</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
-
                 {/* BLOCO: ANEXAR / ESCREVER ROTEIRO PRONTO DO EPISÓDIO */}
                 <div className="md:col-span-2 bg-gradient-to-b from-white to-marfim/80 p-5 rounded-3xl border-2 border-dourado/60 space-y-4 shadow-sm">
-                  <div className="flex items-center justify-between border-b border-vinho/10 pb-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-vinho/10 pb-2">
                     <div className="space-y-0.5">
-                      <h4 className="font-serif font-bold text-base text-vinho flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-dourado" /> Roteiro Final do Episódio
-                        (Apresentadora & Produção)
-                      </h4>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-serif font-bold text-base text-vinho flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-dourado" /> Roteiro Final do Episódio
+                          (Apresentadora & Produção)
+                        </h4>
+                        {Array.isArray(selectedRoteiro.roteiros_vinculados_ids) &&
+                          selectedRoteiro.roteiros_vinculados_ids.length > 0 && (
+                            <Badge className="bg-dourado/20 text-vinho border border-dourado/40 text-[10px] font-bold">
+                              <Users className="w-3 h-3 mr-1 text-dourado-dark" />
+                              Roteiro Conjunto ({selectedRoteiro.roteiros_vinculados_ids.length +
+                                1}{' '}
+                              convidados)
+                            </Badge>
+                          )}
+                      </div>
                       <p className="text-[11px] text-vinho/70">
-                        Escreva ou anexe aqui o roteiro pronto alinhado para a gravação no estúdio.
+                        {selectedRoteiro.roteiro_conjunto_titulo
+                          ? selectedRoteiro.roteiro_conjunto_titulo
+                          : 'Escreva ou anexe aqui o roteiro pronto alinhado para a gravação no estúdio.'}
                       </p>
                     </div>
 
-                    <Button
-                      size="sm"
-                      onClick={handleSalvarRoteiroPronto}
-                      disabled={savingRoteiro}
-                      className="bg-vinho hover:bg-vinho-light text-white font-bold text-xs rounded-xl min-h-[38px] px-4"
-                    >
-                      <Save className="w-3.5 h-3.5 mr-1 text-dourado" />
-                      {savingRoteiro ? 'Salvando...' : 'Salvar Roteiro'}
-                    </Button>
-                  </div>
+                    <div className="flex items-center gap-2">
+                      {roteiroTexto && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const vincNomes = [
+                              selectedRoteiro.nome,
+                              ...roteiros
+                                .filter((r) =>
+                                  (selectedRoteiro.roteiros_vinculados_ids || []).includes(r.id),
+                                )
+                                .map((r) => r.nome),
+                            ]
+                            downloadRoteiroOficialPdf({
+                              titulo: `Roteiro: ${vincNomes.join(' & ')}`,
+                              convidadosNomes: vincNomes,
+                              roteiroTexto,
+                              ehConjunto: vincNomes.length > 1,
+                            })
+                          }}
+                          className="border-vinho/20 text-vinho hover:bg-vinho/10 text-xs rounded-xl min-h-[38px] px-3 font-semibold"
+                        >
+                          <Download className="w-3.5 h-3.5 mr-1 text-dourado" />
+                          Baixar PDF Oficial
+                        </Button>
+                      )}
 
+                      <Button
+                        size="sm"
+                        onClick={handleSalvarRoteiroPronto}
+                        disabled={savingRoteiro}
+                        className="bg-vinho hover:bg-vinho-light text-white font-bold text-xs rounded-xl min-h-[38px] px-4"
+                      >
+                        <Save className="w-3.5 h-3.5 mr-1 text-dourado" />
+                        {savingRoteiro ? 'Salvando...' : 'Salvar Roteiro'}
+                      </Button>
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="rot-final-texto" className="text-xs font-bold text-vinho">
                       Texto do Roteiro / Pauta Estruturada
@@ -1478,6 +1817,354 @@ export default function AdminRoteirosScreen() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: JUNTAR ROTEIROS (EPISÓDIOS CONJUNTOS / CASAL / PARCERIA) */}
+      <Dialog open={modalJuntarOpen} onOpenChange={setModalJuntarOpen}>
+        <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto bg-marfim border-2 border-dourado p-6 sm:p-8 rounded-3xl">
+          {selectedRoteiro && (
+            <div className="space-y-6">
+              <DialogHeader className="border-b border-vinho/15 pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-vinho/10 border border-vinho/20 text-vinho text-xs font-bold">
+                      <Users className="w-3.5 h-3.5 text-dourado-dark" />
+                      <span>Juntar Roteiros • Episódio Conjunto</span>
+                    </div>
+                    <DialogTitle className="font-serif text-2xl font-bold text-vinho">
+                      Juntar Roteiros de Convidados
+                    </DialogTitle>
+                    <p className="text-xs text-vinho/75 leading-relaxed max-w-2xl">
+                      Selecione outros roteiros respondidos para criar com a Nine{' '}
+                      <strong>UM ÚNICO roteiro oficial do episódio</strong> que entrelaça as
+                      respostas de todos os convidados (ideal para casais, sócios ou duplas). Os
+                      roteiros individuais de cada convidado permanecem intactos.
+                    </p>
+                  </div>
+
+                  <Badge className="bg-dourado/20 text-vinho border border-dourado/40 text-xs px-3 py-1 self-start sm:self-auto font-bold shrink-0">
+                    {juntarSelecionados.length + 1} convidado
+                    {juntarSelecionados.length > 0 ? 's no total' : ' (selecione mais)'}
+                  </Badge>
+                </div>
+              </DialogHeader>
+
+              {/* ROTEIRO PRINCIPAL FIXO (ORIGEM) */}
+              <div className="bg-gradient-to-r from-vinho/10 via-marfim to-vinho/5 p-4 rounded-2xl border-2 border-dourado/50 space-y-2">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-dourado-dark block">
+                  Convidado Principal (Roteiro em foco)
+                </span>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    {selectedRoteiro.foto ? (
+                      <img
+                        src={getFileUrl(selectedRoteiro, selectedRoteiro.foto, '100x100')}
+                        alt={selectedRoteiro.nome}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-dourado"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-vinho text-dourado font-bold flex items-center justify-center text-sm">
+                        {selectedRoteiro.nome.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <h4 className="font-bold text-sm text-vinho">{selectedRoteiro.nome}</h4>
+                      <p className="text-xs text-vinho/70">
+                        {selectedRoteiro.tem_empresa && selectedRoteiro.nome_empresa
+                          ? selectedRoteiro.nome_empresa
+                          : selectedRoteiro.estado_civil}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-xs font-semibold">
+                    Respostas Recebidas
+                  </Badge>
+                </div>
+              </div>
+
+              {/* LISTA DE OUTROS ROTEIROS DISPONÍVEIS PARA JUNÇÃO */}
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-vinho/15 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h4 className="font-serif font-bold text-sm text-vinho flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-dourado" /> Selecione outros roteiros
+                      respondidos
+                    </h4>
+                    <p className="text-[11px] text-vinho/65">
+                      Mostrando apenas outros convidados que já enviaram suas respostas completas.
+                    </p>
+                  </div>
+
+                  {/* Busca rápida */}
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-vinho/40" />
+                    <input
+                      type="text"
+                      placeholder="Buscar por nome ou empresa..."
+                      value={juntarBusca}
+                      onChange={(e) => setJuntarBusca(e.target.value)}
+                      className="w-full bg-marfim/50 border border-vinho/20 text-xs rounded-xl pl-8 pr-3 py-1.5 text-vinho focus:outline-none focus:ring-1 focus:ring-dourado"
+                    />
+                  </div>
+                </div>
+
+                {/* Listagem com Checkboxes */}
+                {(() => {
+                  const outrosRoteirosRespondidos = roteiros.filter((r) => {
+                    // Não incluir o próprio roteiro principal
+                    if (r.id === selectedRoteiro.id) return false
+                    // Deve ter respostas enviadas (ex.: nome preenchido, biografia ou tema ou cônjuge)
+                    const temRespostas =
+                      Boolean(r.biografia?.trim()) ||
+                      Boolean(r.tema_enfatizar?.trim()) ||
+                      Boolean(r.data_nascimento?.trim()) ||
+                      Boolean(r.estado_civil?.trim()) ||
+                      r.status === 'lida' ||
+                      r.status === 'pendente'
+                    if (!temRespostas) return false
+
+                    // Filtro de busca
+                    if (juntarBusca.trim()) {
+                      const termo = juntarBusca.toLowerCase().trim()
+                      const matchNome = r.nome.toLowerCase().includes(termo)
+                      const matchEmpresa = (r.nome_empresa || '').toLowerCase().includes(termo)
+                      return matchNome || matchEmpresa
+                    }
+                    return true
+                  })
+
+                  if (outrosRoteirosRespondidos.length === 0) {
+                    return (
+                      <div className="text-center py-8 bg-marfim/40 rounded-xl border border-dashed border-vinho/20 space-y-1">
+                        <Users className="w-8 h-8 text-vinho/30 mx-auto" />
+                        <p className="text-xs font-semibold text-vinho">
+                          Nenhum outro roteiro respondido encontrado
+                        </p>
+                        <p className="text-[11px] text-vinho/60">
+                          {juntarBusca
+                            ? 'Nenhum resultado para esta busca.'
+                            : 'Envie o link do formulário para o segundo convidado antes de realizar a junção.'}
+                        </p>
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <div className="divide-y divide-vinho/10 max-h-56 overflow-y-auto pr-1 border border-vinho/10 rounded-xl">
+                      {outrosRoteirosRespondidos.map((outro) => {
+                        const isChecked = juntarSelecionados.includes(outro.id)
+                        const outroFoto = outro.foto ? getFileUrl(outro, outro.foto, '80x80') : ''
+
+                        return (
+                          <label
+                            key={outro.id}
+                            className={`flex items-center justify-between p-3 cursor-pointer transition-colors ${
+                              isChecked ? 'bg-dourado/10' : 'hover:bg-vinho/5'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                checked={isChecked}
+                                onCheckedChange={() => toggleSelecaoJuntar(outro.id)}
+                                className="data-[state=checked]:bg-vinho data-[state=checked]:border-vinho border-vinho/40"
+                              />
+                              {outroFoto ? (
+                                <img
+                                  src={outroFoto}
+                                  alt={outro.nome}
+                                  className="w-9 h-9 rounded-full object-cover border border-dourado shrink-0"
+                                />
+                              ) : (
+                                <div className="w-9 h-9 rounded-full bg-vinho/10 text-vinho font-bold flex items-center justify-center text-xs shrink-0">
+                                  {outro.nome.slice(0, 2).toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <span className="font-bold text-xs text-vinho block">
+                                  {outro.nome}
+                                </span>
+                                <span className="text-[10px] text-vinho/65">
+                                  {outro.tem_empresa && outro.nome_empresa
+                                    ? outro.nome_empresa
+                                    : outro.estado_civil}{' '}
+                                  • Enviado em {formatDateBR(outro.created)}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {outro.tem_tema_sensivel && (
+                                <Badge className="bg-red-50 text-red-800 border-red-200 text-[9px]">
+                                  Tema Sensível
+                                </Badge>
+                              )}
+                              <Badge
+                                className={`text-[9px] ${
+                                  outro.status === 'pendente'
+                                    ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                    : outro.status === 'lida'
+                                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                      : 'bg-slate-100 text-slate-700 border-slate-300'
+                                }`}
+                              >
+                                {outro.status === 'pendente'
+                                  ? 'Pendente'
+                                  : outro.status === 'lida'
+                                    ? 'Lida'
+                                    : 'Arquivada'}
+                              </Badge>
+                            </div>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
+
+                {/* Resumo dos convidados selecionados para o roteiro conjunto */}
+                {juntarSelecionados.length > 0 && (
+                  <div className="pt-2 flex items-center justify-between text-xs text-vinho/80 bg-marfim/60 p-2.5 rounded-xl border border-vinho/10">
+                    <span className="font-medium flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
+                      <span>
+                        Episódio oficial reunirá:{' '}
+                        <strong>
+                          {[
+                            selectedRoteiro.nome,
+                            ...roteiros
+                              .filter((r) => juntarSelecionados.includes(r.id))
+                              .map((r) => r.nome),
+                          ].join(' & ')}
+                        </strong>
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setJuntarSelecionados([])}
+                      className="text-[11px] text-red-700 hover:underline"
+                    >
+                      Limpar seleção
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* BOTÃO DE AÇÃO PRINCIPAL: GERAR COM A NINE */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-gradient-to-r from-vinho via-[#4B1E3F] to-vinho-dark p-4 rounded-2xl text-white shadow-md">
+                <div className="space-y-0.5 text-center sm:text-left">
+                  <div className="flex items-center gap-2 justify-center sm:justify-start">
+                    <Sparkles className="w-4 h-4 text-dourado" />
+                    <h4 className="font-serif font-bold text-sm text-white">
+                      Nine · Geração do Roteiro Oficial Conjunto
+                    </h4>
+                  </div>
+                  <p className="text-[11px] text-marfim/80">
+                    A Nine entrelaçará as histórias em 4 blocos dinâmicos com perguntas dirigidas e
+                    troca mútua.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleGerarRoteiroConjunto}
+                  disabled={juntarSelecionados.length === 0 || juntarGerando}
+                  className="w-full sm:w-auto bg-dourado hover:bg-dourado-dark text-vinho font-bold text-xs h-10 px-5 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-95 disabled:opacity-50"
+                >
+                  {juntarGerando ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-vinho" />
+                      <span>Nine criando roteiro conjunto...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 text-vinho" />
+                      <span>Criar Roteiro Oficial com a Nine</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* CAIXA DO ROTEIRO OFICIAL GERADO */}
+              {juntarResultado && (
+                <div className="space-y-3 pt-2 border-t border-vinho/15">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3 rounded-2xl border border-vinho/15">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-vinho text-dourado flex items-center justify-center shrink-0">
+                        <Sparkles className="w-3.5 h-3.5 text-dourado" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xs text-vinho">
+                          Roteiro Oficial do Episódio Conjunto
+                        </h4>
+                        <span className="text-[10px] text-vinho/60">
+                          Bio conjunta para Aline Lana • 4 Blocos • Bate-Bola com Café
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          navigator.clipboard.writeText(juntarResultado)
+                          toast.success('Roteiro conjunto copiado!')
+                        }}
+                        className="text-xs h-8 border-vinho/20 text-vinho hover:bg-vinho/10 rounded-xl"
+                      >
+                        <Copy className="w-3 h-3 mr-1 text-dourado-dark" /> Copiar
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleDownloadRoteiroConjuntoPdf}
+                        disabled={juntarDownloadingPdf}
+                        className="text-xs h-8 border-vinho/20 text-vinho hover:bg-vinho/10 rounded-xl font-semibold"
+                        title="Baixar em PDF o roteiro conjunto pronto para o estúdio"
+                      >
+                        {juntarDownloadingPdf ? (
+                          <RefreshCw className="w-3 h-3 animate-spin text-dourado mr-1" />
+                        ) : (
+                          <Download className="w-3 h-3 mr-1 text-dourado" />
+                        )}
+                        Baixar PDF Oficial
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        onClick={handleSalvarRoteiroConjunto}
+                        disabled={juntarSalvando}
+                        className="text-xs h-8 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow-xs"
+                      >
+                        <Save className="w-3 h-3 mr-1" />
+                        {juntarSalvando ? 'Salvando...' : 'Salvar no Registro'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Textarea
+                    rows={16}
+                    value={juntarResultado}
+                    onChange={(e) => setJuntarResultado(e.target.value)}
+                    className="bg-white border-vinho/20 text-xs sm:text-sm rounded-2xl p-4 leading-relaxed font-sans text-vinho shadow-xs"
+                    placeholder="O roteiro conjunto gerado pela Nine aparecerá aqui..."
+                  />
+
+                  <div className="flex items-center justify-between text-[11px] text-vinho/70 bg-marfim/60 p-2.5 rounded-xl border border-vinho/10">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Coffee className="w-3.5 h-3.5 text-dourado-dark" />
+                      <span>
+                        Você pode editar o texto acima antes de salvar no registro principal ou
+                        baixar em PDF.
+                      </span>
+                    </span>
+                    <span className="text-vinho/50">{juntarResultado.length} caracteres</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

@@ -428,11 +428,21 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Localize o convidado na lista de roteiros recebidos.',
           'Clique em "Visualizar Roteiro" para ver os dados familiares, histórico de negócios, temas que ele quer enfatizar e temas sensíveis a evitar.',
           'Clique no botão "Baixar PDF" (disponível tanto na lista quanto no modal de detalhes) para gerar um documento formal A4 com cabeçalho oficial CoffeeCast 4.0, logo, dados e todas as respostas do convidado já prontas para impressão ou salvamento.',
-          'Clique no botão "Gerar Sugestão com a Nine" para que a IA analise as respostas do convidado e elabore um roteiro completo de gravação (cabeçalho, bio de abertura para Aline Lana, pontos fortes e 4 blocos de perguntas refinadas no padrão formal da língua portuguesa).',
+          'Clique no botão "Gerar Sugestão com a Nine" para que a IA analise as respostas do convidado e elabore um roteiro completo individual de gravação (cabeçalho, bio de abertura para Aline Lana, pontos fortes e 4 blocos de perguntas refinadas no padrão formal da língua portuguesa).',
+          'Para entrevistas em DUPLA, CASAL ou PARCERIA (ex.: marido e mulher como Grasiele e Marcio de Azevedo, sócios de uma empresa): clique no botão "Juntar Roteiros" dentro do modal de detalhes.',
+          'Selecione os outros roteiros respondidos da lista (com busca instantânea por nome ou empresa). A Nine reunirá as respostas de todos os convidados e criará UM ÚNICO ROTEIRO OFICIAL de estúdio que entrelaça as histórias de ambos, equilibrando perguntas individuais e dinâmicas de troca mútua.',
+          'Após a geração conjunta, você pode editar o texto, salvar no registro principal com auditoria completa e baixar o PDF oficial de estúdio.',
           'Edite o texto do roteiro livremente no editor e, se desejar, anexe o arquivo final (PDF/DOCX) aprovado pela produção.',
           'Atualize o status para "Lido" ou "Arquivado".',
         ],
         botoesPrincipais: [
+          {
+            nome: 'Juntar Roteiros (Casal / Parceria / 2+ Convidados)',
+            onde: 'No topo e nas ações rápidas do modal de detalhes do roteiro',
+            paraQueServe:
+              'Abre a modalidade de episódio conjunto: permite selecionar um ou mais roteiros respondidos para que a Nine crie um roteiro oficial unificado para gravação no estúdio, sem apagar os roteiros individuais de cada pessoa.',
+            icone: 'Users',
+          },
           {
             nome: 'Baixar PDF das Respostas',
             onde: 'Na coluna de ações de cada roteiro e no topo do modal de detalhes',
@@ -453,6 +463,13 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
               'Vincula a pauta completa gerada pela IA diretamente ao campo de roteiro final do convidado (com suporte a textos amplos de até 100.000 caracteres e registro em Auditoria).',
           },
           {
+            nome: 'Baixar PDF Oficial do Episódio (A4 Estúdio)',
+            onde: 'No editor de roteiro pronto e após a geração conjunta no modal',
+            paraQueServe:
+              'Exporta o roteiro oficial estruturado pela Nine pronto para a bancada da apresentadora Aline Lana e da produção do estúdio.',
+            icone: 'Download',
+          },
+          {
             nome: 'Salvar Roteiro Final',
             onde: 'Rodapé do editor de roteiro',
             paraQueServe: 'Grava o roteiro aprovado que poderá ser consultado durante a gravação.',
@@ -463,7 +480,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             paraQueServe: 'Faz download da imagem em alta resolução enviada pelo convidado.',
           },
         ],
-        dica: 'O PDF das respostas gerado possui o cabeçalho e as cores da marca (#4B1E3F e #D4AF37), organiza os temas sensíveis com destaque de alerta visual para a produção e salva o arquivo com o nome personalizado "roteiro-[nome-do-convidado].pdf". Cada download é registrado automaticamente na Auditoria do Sistema.',
+        dica: 'O recurso "Juntar Roteiros" é perfeito para entrevistas de casal (marido e mulher) ou sócios: cada um responde individualmente a sua ficha no site e a produção clica em "Juntar Roteiros" para obter um roteiro harmônico com perguntas cruzadas, mantendo as fichas originais preservadas intactas. Cada geração e download é registrado automaticamente na Auditoria do Sistema.',
       },
       {
         id: 'depoimentos-moderacao',
