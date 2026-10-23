@@ -42,9 +42,45 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
   {
     id: 'primeiros-passos',
     titulo: '1. Primeiros Passos & Boas-Vindas',
-    descricao: 'Como acessar, navegar pela barra superior e encontrar o que você precisa.',
+    descricao:
+      'Como acessar, pesquisar telas, navegar pela barra superior e encontrar o que você precisa.',
     icone: 'Compass',
     itens: [
+      {
+        id: 'pesquisa-de-telas-menu',
+        titulo: 'Pesquisa de Telas no Menu Lateral',
+        subtitulo: 'Localização instantânea de qualquer tela e atalho de teclado',
+        icone: 'Search',
+        perfisPermitidos: ['master', 'adm', 'gerencial'],
+        ondeClicar:
+          'No topo do menu lateral (sidebar vinho), logo abaixo da logomarca oficial e acima da lista de módulos.',
+        paraQueServe:
+          'Filtra em tempo real todos os módulos e telas do painel administrativo enquanto você digita, respeitando estritamente o seu nível de acesso e permissões.',
+        passoAPasso: [
+          'Clique no campo "Pesquisar telas..." no topo do menu lateral ou pressione a tecla de atalho "/" (ou Ctrl+K / Cmd+K) no teclado.',
+          'Digite o nome da tela desejada (ex.: "Financeiro", "Episódios", "Agenda", "Roteiros") ou termos associados e palavras-chave (ex.: "dinheiro" encontra Financeiro, "fotos" encontra Nossos Momentos, "vídeos" encontra Episódios, "leads" encontra Contatos, "segurança" encontra Auditoria).',
+          'A lista é filtrada instantaneamente: apenas os itens correspondentes permanecem visíveis, e as seções sem itens são recolhidas.',
+          'Um contador exibe a quantidade exata de telas encontradas.',
+          'Para limpar a pesquisa e voltar a ver todos os módulos organizados em ordem alfabética: pressione Esc, clique no ícone "X" no canto do campo ou clique em "Limpar".',
+          'No celular ou tablet: a pesquisa fica no topo da gaveta do menu móvel; ao tocar em uma tela correspondente, o menu é fechado e a tela se abre na hora.',
+        ],
+        botoesPrincipais: [
+          {
+            nome: 'Campo de Pesquisa de Telas',
+            onde: 'Acima da lista de itens da barra lateral',
+            paraQueServe:
+              'Filtra os módulos em tempo real por nome, selo ou palavras-chave conceituais.',
+            icone: 'Search',
+          },
+          {
+            nome: 'Limpar Pesquisa (X ou Esc)',
+            onde: 'Canto direito do campo de pesquisa ou atalho Esc',
+            paraQueServe: 'Restaura a exibição de todas as telas em ordem alfabética.',
+            icone: 'X',
+          },
+        ],
+        dica: 'Você pode usar o atalho de teclado "/" de qualquer lugar da tela (quando não estiver digitando em outro campo de texto) para focar a pesquisa instantaneamente sem precisar do mouse.',
+      },
       {
         id: 'primeiro-acesso',
         titulo: 'Primeiro Acesso ao Sistema',
@@ -120,7 +156,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             icone: 'Store',
           },
         ],
-        dica: 'No celular, a barra superior conta com botão de sino de notificações e botão hamburguer que abre o menu lateral completo.',
+        dica: 'No celular, a barra superior conta com botão de sino de notificações e botão hamburguer que abre o menu lateral completo com o campo de pesquisa de telas integrado.',
       },
       {
         id: 'meu-perfil-e-seguranca',

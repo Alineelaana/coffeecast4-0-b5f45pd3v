@@ -35,6 +35,7 @@ import {
   Activity,
   BookOpen,
   HelpCircle,
+  Search,
 } from 'lucide-react'
 import { getFileUrl } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
@@ -50,6 +51,9 @@ export default function AdminLayout() {
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [ninePendingCount, setNinePendingCount] = useState(0)
   const [chatUnreadCount, setChatUnreadCount] = useState(0)
+  const [menuSearchQuery, setMenuSearchQuery] = useState('')
+  const desktopSearchInputRef = React.useRef<HTMLInputElement>(null)
+  const mobileSearchInputRef = React.useRef<HTMLInputElement>(null)
 
   // Submenu exclusivo Master / Gestão Avançada colapsável
   const isMasterPathActive = [
@@ -234,6 +238,7 @@ export default function AdminLayout() {
       label: 'Agenda de Gravação',
       path: '/admin/agenda',
       icon: CalendarDays,
+      keywords: ['calendario', 'gravacoes', 'estudio', 'horario', 'data', 'agendamento'],
     },
     {
       key: 'chat',
@@ -242,30 +247,41 @@ export default function AdminLayout() {
       icon: MessageSquare,
       badgeCount: chatUnreadCount,
       highlight: true,
+      keywords: ['mensagens', 'conversa', 'stickers', 'figurinhas', 'grupos', 'comunicacao'],
     },
     {
       key: 'contatos',
       label: 'Contatos & Leads',
       path: '/admin/contatos',
       icon: Inbox,
+      keywords: ['leads', 'crm', 'mensagens do site', 'formulario', 'visitantes', 'prospects'],
     },
     {
       key: 'horas',
       label: 'Controle de Horas',
       path: '/admin/horas',
       icon: Clock,
+      keywords: [
+        'saldo de horas',
+        'banco de horas',
+        'estudio horas',
+        'tempo de gravacao',
+        'pacote',
+      ],
     },
     {
       key: 'depoimentos',
       label: 'Depoimentos',
       path: '/admin/depoimentos',
       icon: MessageSquareQuote,
+      keywords: ['avaliacoes', 'feedbacks', 'depoimento do convidado', 'relatos', 'testemunhos'],
     },
     {
       key: 'episodios',
       label: 'Episódios',
       path: '/admin/episodios',
       icon: Tv,
+      keywords: ['videos', 'youtube', 'programacao', 'lancamento', 'podcasts', 'gravados'],
     },
     {
       key: 'financeiro',
@@ -273,6 +289,16 @@ export default function AdminLayout() {
       path: '/admin/financeiro',
       icon: DollarSign,
       highlight: true,
+      keywords: [
+        'dinheiro',
+        'custos',
+        'receitas',
+        'despesas',
+        'contas',
+        'pagamentos',
+        'fluxo de caixa',
+        'gastos',
+      ],
     },
     {
       key: 'convites',
@@ -280,6 +306,7 @@ export default function AdminLayout() {
       path: '/admin/convites',
       icon: FileCheck2,
       badge: 'PDF',
+      keywords: ['convite', 'pdf a5', 'convidar convidado', 'arte', 'cartao', 'impressao'],
     },
     {
       key: 'nine',
@@ -288,12 +315,22 @@ export default function AdminLayout() {
       icon: Bot,
       badgeCount: ninePendingCount,
       highlight: true,
+      keywords: [
+        'ia',
+        'inteligencia artificial',
+        'bot',
+        'atendimento',
+        'modo humano',
+        'prompt',
+        'faq',
+      ],
     },
     {
       key: 'momentos',
       label: 'Nossos Momentos',
       path: '/admin/momentos',
       icon: Camera,
+      keywords: ['fotos', 'galeria', 'carrossel', 'bastidores', 'imagens', 'fotografia'],
     },
     {
       key: 'notificacoes',
@@ -301,12 +338,22 @@ export default function AdminLayout() {
       path: '/admin/notificacoes',
       icon: Bell,
       badgeCount: unreadNotificationsCount,
+      keywords: ['alertas', 'avisos', 'pendencias', 'sino', 'novidades'],
     },
     {
       key: 'roteiros',
       label: 'Roteiros e Apresentações',
       path: '/admin/roteiros',
       icon: FileText,
+      keywords: [
+        'pauta',
+        'perguntas',
+        'fichas',
+        'apresentacao',
+        'pdf',
+        'roteiro oficial',
+        'entrevista',
+      ],
     },
     {
       key: 'dashboard',
@@ -314,6 +361,7 @@ export default function AdminLayout() {
       path: '/admin',
       icon: LayoutDashboard,
       exact: true,
+      keywords: ['dashboard', 'inicio', 'home', 'painel', 'metricas', 'resumo'],
     },
   ]
 
@@ -326,6 +374,7 @@ export default function AdminLayout() {
       icon: Globe,
       badge: 'DNS',
       exact: false,
+      keywords: ['dns', 'dominio', 'url', 'site link', 'configuracao de rede', 'cname'],
     },
     {
       key: 'auditoria',
@@ -334,6 +383,15 @@ export default function AdminLayout() {
       icon: Activity,
       badge: 'Segurança',
       exact: false,
+      keywords: [
+        'logs',
+        'seguranca',
+        'historico',
+        'atividades',
+        'rastreamento',
+        'eventos',
+        'alteracoes',
+      ],
     },
     {
       key: 'backups',
@@ -343,6 +401,7 @@ export default function AdminLayout() {
       masterOnly: true, // Exclusivo Master para proteção contra perda de dados
       badge: 'Master',
       exact: false,
+      keywords: ['backup', 'copia de seguranca', 'dump', 'restaurar', 'exportar banco', 'download'],
     },
     {
       key: 'documentacao',
@@ -351,6 +410,7 @@ export default function AdminLayout() {
       icon: BookOpen,
       badge: 'Dossiê',
       exact: false,
+      keywords: ['dossie', 'manual', 'especificacao', 'arquitetura', 'regras', 'docs'],
     },
     {
       key: 'conteudo',
@@ -358,6 +418,15 @@ export default function AdminLayout() {
       path: '/admin/conteudo',
       icon: FileText,
       exact: false,
+      keywords: [
+        'textos',
+        'banner',
+        'redes sociais',
+        'links',
+        'rodape',
+        'home editavel',
+        'conteudo',
+      ],
     },
     {
       key: 'chat_gestao',
@@ -367,6 +436,13 @@ export default function AdminLayout() {
       masterOnly: true,
       badge: 'Master',
       exact: false,
+      keywords: [
+        'moderacao',
+        'conversas master',
+        'apagar mensagens',
+        'gerenciar grupos',
+        'historico chat',
+      ],
     },
     {
       key: 'guia_ajuda',
@@ -375,6 +451,7 @@ export default function AdminLayout() {
       icon: HelpCircle,
       badge: 'Ajuda',
       exact: false,
+      keywords: ['tutorial', 'primeiro acesso', 'faq', 'manual de uso', 'duvidas', 'botoes'],
     },
     {
       key: 'integrantes',
@@ -382,6 +459,7 @@ export default function AdminLayout() {
       path: '/admin/integrantes',
       icon: Users2,
       exact: false,
+      keywords: ['equipe', 'apresentadoras', 'membros do time', 'aline lana', 'hosts', 'staff'],
     },
     {
       key: 'politicas',
@@ -389,6 +467,7 @@ export default function AdminLayout() {
       path: '/admin/politicas',
       icon: ShieldAlert,
       exact: false,
+      keywords: ['lgpd', 'privacidade', 'termos de uso', 'juridico', 'cookies'],
     },
     {
       key: 'storefront',
@@ -397,6 +476,7 @@ export default function AdminLayout() {
       icon: Store,
       badge: 'Multi-Loja',
       exact: false,
+      keywords: ['loja', 'parceiros', 'marcas', 'subdominio', 'multi-tenant', 'canais'],
     },
     {
       key: 'usuarios',
@@ -405,29 +485,116 @@ export default function AdminLayout() {
       icon: UserCheck,
       masterOnly: true, // Apenas o Master pode ver e editar usuários & permissões
       exact: false,
+      keywords: [
+        'acessos',
+        'perfis',
+        'cargos',
+        'bloquear',
+        'nova senha',
+        'master',
+        'adm',
+        'gerencial',
+      ],
     },
   ]
 
+  // Normalizador de texto para pesquisa (case-insensitive e sem acentos)
+  const normalizeSearchTerm = (str: string): string => {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+  }
+
   // Filtragem dinâmica de itens do menu conforme as permissões do perfil autenticado
   // Aplica ordenação alfabética resiliente (pt-BR, sem acento, case-insensitive)
-  const mainMenuItems = sortAlphabeticallyByLabel(
+  const allowedMainMenuItems = sortAlphabeticallyByLabel(
     rawMainMenuItems.filter((item) => hasScreenPermission(item.key)),
   )
 
-  const masterMenuItems = sortAlphabeticallyByLabel(
+  const allowedMasterMenuItems = sortAlphabeticallyByLabel(
     rawMasterMenuItems.filter((item) => {
       if (item.masterOnly && !isMaster) return false
       return hasScreenPermission(item.key)
     }),
   )
 
+  // Filtro de pesquisa de telas em tempo real
+  const normalizedQuery = normalizeSearchTerm(menuSearchQuery)
+  const isFiltering = normalizedQuery.length > 0
+
+  interface MenuItemDefinition {
+    key: string
+    label: string
+    path: string
+    icon: React.ComponentType<{ className?: string }>
+    badgeCount?: number
+    highlight?: boolean
+    badge?: string
+    exact?: boolean
+    masterOnly?: boolean
+    keywords?: string[]
+  }
+
+  const matchesSearch = (item: MenuItemDefinition): boolean => {
+    if (!isFiltering) return true
+    const normLabel = normalizeSearchTerm(item.label)
+    if (normLabel.includes(normalizedQuery)) return true
+    if (item.badge && normalizeSearchTerm(item.badge).includes(normalizedQuery)) return true
+    if (
+      item.keywords &&
+      item.keywords.some((k) => normalizeSearchTerm(k).includes(normalizedQuery))
+    ) {
+      return true
+    }
+    return false
+  }
+
+  const filteredMainMenuItems = allowedMainMenuItems.filter((item) => matchesSearch(item))
+  const filteredMasterMenuItems = allowedMasterMenuItems.filter((item) => matchesSearch(item))
+
+  const totalFilteredCount = filteredMainMenuItems.length + filteredMasterMenuItems.length
+  const hasNoResults = isFiltering && totalFilteredCount === 0
+
+  // Atalho de teclado global: '/' ou 'Ctrl+K' / 'Cmd+K' foca o campo de pesquisa
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement
+      const isInputFocused =
+        activeEl &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          (activeEl as HTMLElement).isContentEditable)
+
+      if ((e.key === 'k' && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !isInputFocused)) {
+        e.preventDefault()
+        if (window.innerWidth < 768) {
+          setMobileSidebarOpen(true)
+          setTimeout(() => mobileSearchInputRef.current?.focus(), 80)
+        } else {
+          desktopSearchInputRef.current?.focus()
+        }
+      } else if (e.key === 'Escape' && menuSearchQuery) {
+        setMenuSearchQuery('')
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [menuSearchQuery])
+
   // Exibe o submenu "Exclusivo Master" / "Gestão da Loja / Master" se houver itens autorizados
-  const showMasterSection = isMaster || masterMenuItems.length > 0
+  const showMasterSection = isFiltering
+    ? filteredMasterMenuItems.length > 0
+    : isMaster || allowedMasterMenuItems.length > 0
 
   const getPageTitle = () => {
-    const allItems = [...mainMenuItems, ...masterMenuItems]
+    const allItems = [...allowedMainMenuItems, ...allowedMasterMenuItems]
     const current = allItems.find((m) =>
-      m.exact ? location.pathname === m.path : location.pathname.startsWith(m.path),
+      m.exact
+        ? location.pathname === m.path
+        : m.path !== '/admin' && location.pathname.startsWith(m.path),
     )
     return current ? current.label : 'Painel de Controle'
   }
@@ -448,7 +615,7 @@ export default function AdminLayout() {
       {/* SIDEBAR DESKTOP */}
       <aside className="hidden md:flex flex-col w-72 bg-vinho border-r border-vinho-dark text-marfim shadow-2xl shrink-0 sticky top-0 h-screen overflow-y-auto">
         {/* Topo da Sidebar com Logo Oficial Clicável */}
-        <div className="p-5 border-b border-vinho-light/40">
+        <div className="p-4 border-b border-vinho-light/40">
           <NavLink
             to="/admin"
             end
@@ -459,146 +626,231 @@ export default function AdminLayout() {
             <img
               src={officialLogo}
               alt="CoffeeCast 4.0 — Painel Administrativo"
-              className="h-16 w-auto max-w-[210px] object-contain drop-shadow-[0_3px_10px_rgba(212,175,55,0.35)] transition-transform duration-200 group-hover:scale-105 cursor-pointer"
+              className="h-14 w-auto max-w-[200px] object-contain drop-shadow-[0_3px_10px_rgba(212,175,55,0.35)] transition-transform duration-200 group-hover:scale-105 cursor-pointer"
             />
-            <span className="text-[10px] uppercase tracking-widest text-dourado-light font-medium mt-2 group-hover:text-white transition-colors">
+            <span className="text-[10px] uppercase tracking-widest text-dourado-light font-medium mt-1.5 group-hover:text-white transition-colors">
               Painel Administrativo
             </span>
           </NavLink>
         </div>
 
-        {/* Menu de Navegação */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5">
-          <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-marfim/60 mb-2">
-            Gestão Operacional
-          </p>
-
-          {mainMenuItems.map((item) => {
-            const isActive = item.exact
-              ? location.pathname === item.path
-              : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
-
-            const Icon = item.icon
-
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all relative ${
-                  isActive
-                    ? 'bg-vinho-light text-white shadow-md border-l-4 border-dourado pl-3'
-                    : 'text-marfim/80 hover:text-white hover:bg-vinho-light/50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-dourado' : 'text-marfim/70'}`} />
-                    {item.badgeCount && item.badgeCount > 0 ? (
-                      <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-                    ) : null}
-                  </div>
-                  <span>{item.label}</span>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  {item.badgeCount !== undefined && item.badgeCount > 0 && (
-                    <Badge className="bg-amber-500 text-white font-bold text-[10px] px-1.5 py-0 rounded-full shadow-xs">
-                      {item.badgeCount}
-                    </Badge>
-                  )}
-
-                  {item.badge && (
-                    <Badge
-                      className={`text-[9px] px-1.5 py-0.5 rounded ${
-                        isActive
-                          ? 'bg-dourado text-vinho font-bold'
-                          : 'bg-vinho-dark/80 text-dourado-light border border-dourado/30'
-                      }`}
-                    >
-                      {item.badge}
-                    </Badge>
-                  )}
-                </div>
-              </NavLink>
-            )
-          })}
-
-          {/* SUBMENU EXCLUSIVO MASTER / GESTÃO AVANÇADA */}
-          {showMasterSection && (
-            <div className="pt-4 mt-4 border-t border-vinho-light/40">
+        {/* CAMPO DE PESQUISA DE TELAS NO MENU (ACIMA DA LISTA DE ITENS) */}
+        <div className="px-4 pt-3.5 pb-2 border-b border-vinho-light/25 bg-vinho-dark/30">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-dourado-light/70 pointer-events-none transition-colors" />
+            <input
+              ref={desktopSearchInputRef}
+              type="text"
+              value={menuSearchQuery}
+              onChange={(e) => setMenuSearchQuery(e.target.value)}
+              placeholder="Pesquisar telas... (/)"
+              className="w-full bg-vinho-dark/80 text-marfim placeholder:text-marfim/45 text-xs pl-8 pr-7 py-2 rounded-xl border border-dourado/30 focus:outline-none focus:border-dourado focus:ring-2 focus:ring-dourado/30 shadow-inner transition-all"
+              aria-label="Pesquisar telas do menu"
+            />
+            {menuSearchQuery ? (
               <button
                 type="button"
-                onClick={() => setMasterSubmenuOpen(!masterSubmenuOpen)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  isMasterPathActive
-                    ? 'bg-vinho-dark/90 text-dourado border border-dourado/40 shadow-xs'
-                    : 'text-dourado-light/90 hover:text-dourado hover:bg-vinho-light/40'
-                }`}
+                onClick={() => {
+                  setMenuSearchQuery('')
+                  desktopSearchInputRef.current?.focus()
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-vinho-light text-marfim/80 hover:text-white hover:bg-vinho flex items-center justify-center transition-colors"
+                title="Limpar pesquisa (Esc)"
+                aria-label="Limpar pesquisa"
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-5 h-5 rounded-md bg-dourado/20 flex items-center justify-center text-dourado">
-                    <Shield className="w-3.5 h-3.5 text-dourado" />
-                  </div>
-                  <span className="tracking-wide">
-                    {isMaster ? 'Exclusivo Master' : 'Gestão do Site & Loja'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Badge className="bg-dourado text-vinho font-bold text-[9px] px-1.5 py-0 rounded">
-                    {isMaster ? 'Master' : 'ADM'}
-                  </Badge>
-                  <ChevronDown
-                    className={`w-4 h-4 text-dourado transition-transform duration-200 ${
-                      masterSubmenuOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </div>
+                <X className="w-2.5 h-2.5" />
               </button>
+            ) : (
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-dourado-light/50 border border-dourado/20 px-1 py-0.2 rounded pointer-events-none">
+                /
+              </span>
+            )}
+          </div>
+          {isFiltering && (
+            <div className="flex items-center justify-between mt-1.5 px-1 text-[10px] text-dourado-light/80">
+              <span>
+                {totalFilteredCount} tela{totalFilteredCount === 1 ? '' : 's'} encontrada
+                {totalFilteredCount === 1 ? '' : 's'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setMenuSearchQuery('')}
+                className="hover:text-white underline transition-colors"
+              >
+                Limpar
+              </button>
+            </div>
+          )}
+        </div>
 
-              {/* Itens do Submenu Colapsável com Animação Suave */}
-              {masterSubmenuOpen && (
-                <div className="pl-3 pr-1 pt-1.5 space-y-1 border-l-2 border-dourado/30 ml-4 mt-1 transition-all">
-                  {masterMenuItems.map((item) => {
-                    const isActive =
-                      location.pathname === item.path ||
-                      location.pathname.startsWith(`${item.path}/`)
+        {/* Menu de Navegação */}
+        <nav className="flex-1 px-4 py-4 space-y-1.5 coffeecast-scrollbar overflow-y-auto">
+          {hasNoResults ? (
+            <div className="py-8 px-2 text-center space-y-2">
+              <div className="w-10 h-10 rounded-full bg-vinho-dark/80 border border-dourado/30 flex items-center justify-center mx-auto text-dourado">
+                <Search className="w-5 h-5 text-dourado-light/70" />
+              </div>
+              <p className="text-xs font-semibold text-white">Nenhuma tela encontrada</p>
+              <p className="text-[11px] text-marfim/60 max-w-[200px] mx-auto leading-relaxed">
+                Nenhum resultado para "{menuSearchQuery}". Tente outro termo (ex: "financeiro",
+                "chat", "perfil", "roteiro").
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setMenuSearchQuery('')
+                  desktopSearchInputRef.current?.focus()
+                }}
+                className="text-[11px] h-7 px-3 bg-vinho-light/40 border-dourado/40 text-dourado hover:bg-vinho-light hover:text-white hover:border-dourado mt-2"
+              >
+                Limpar busca
+              </Button>
+            </div>
+          ) : (
+            <>
+              {filteredMainMenuItems.length > 0 && (
+                <>
+                  <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-marfim/60 mb-2">
+                    {isFiltering ? 'Telas Encontradas' : 'Gestão Operacional'}
+                  </p>
+
+                  {filteredMainMenuItems.map((item) => {
+                    const isActive = item.exact
+                      ? location.pathname === item.path
+                      : location.pathname === item.path ||
+                        location.pathname.startsWith(`${item.path}/`)
+
                     const Icon = item.icon
 
                     return (
                       <NavLink
                         key={item.path}
                         to={item.path}
-                        className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all relative ${
                           isActive
-                            ? 'bg-vinho-light text-white shadow-xs border-l-3 border-dourado pl-2.5'
-                            : 'text-marfim/75 hover:text-white hover:bg-vinho-light/40'
+                            ? 'bg-vinho-light text-white shadow-md border-l-4 border-dourado pl-3'
+                            : 'text-marfim/80 hover:text-white hover:bg-vinho-light/50'
                         }`}
                       >
-                        <div className="flex items-center gap-2.5 truncate">
-                          <Icon
-                            className={`w-3.5 h-3.5 shrink-0 ${
-                              isActive ? 'text-dourado' : 'text-dourado-light/70'
-                            }`}
-                          />
-                          <span className="truncate">{item.label}</span>
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <Icon
+                              className={`w-4 h-4 ${isActive ? 'text-dourado' : 'text-marfim/70'}`}
+                            />
+                            {item.badgeCount && item.badgeCount > 0 ? (
+                              <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                            ) : null}
+                          </div>
+                          <span>{item.label}</span>
                         </div>
-                        {item.badge && (
-                          <Badge
-                            className={`text-[8px] px-1 py-0 rounded ${
-                              isActive
-                                ? 'bg-dourado text-vinho font-bold'
-                                : 'bg-vinho-dark text-dourado-light border border-dourado/20'
-                            }`}
-                          >
-                            {item.badge}
-                          </Badge>
-                        )}
+
+                        <div className="flex items-center gap-1.5">
+                          {item.badgeCount !== undefined && item.badgeCount > 0 && (
+                            <Badge className="bg-amber-500 text-white font-bold text-[10px] px-1.5 py-0 rounded-full shadow-xs">
+                              {item.badgeCount}
+                            </Badge>
+                          )}
+
+                          {item.badge && (
+                            <Badge
+                              className={`text-[9px] px-1.5 py-0.5 rounded ${
+                                isActive
+                                  ? 'bg-dourado text-vinho font-bold'
+                                  : 'bg-vinho-dark/80 text-dourado-light border border-dourado/30'
+                              }`}
+                            >
+                              {item.badge}
+                            </Badge>
+                          )}
+                        </div>
                       </NavLink>
                     )
                   })}
+                </>
+              )}
+
+              {/* SUBMENU EXCLUSIVO MASTER / GESTÃO AVANÇADA */}
+              {showMasterSection && (
+                <div
+                  className={`${filteredMainMenuItems.length > 0 ? 'pt-4 mt-4 border-t border-vinho-light/40' : ''}`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setMasterSubmenuOpen(!masterSubmenuOpen)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                      isMasterPathActive
+                        ? 'bg-vinho-dark/90 text-dourado border border-dourado/40 shadow-xs'
+                        : 'text-dourado-light/90 hover:text-dourado hover:bg-vinho-light/40'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-5 h-5 rounded-md bg-dourado/20 flex items-center justify-center text-dourado">
+                        <Shield className="w-3.5 h-3.5 text-dourado" />
+                      </div>
+                      <span className="tracking-wide">
+                        {isMaster ? 'Exclusivo Master' : 'Gestão do Site & Loja'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Badge className="bg-dourado text-vinho font-bold text-[9px] px-1.5 py-0 rounded">
+                        {isMaster ? 'Master' : 'ADM'}
+                      </Badge>
+                      <ChevronDown
+                        className={`w-4 h-4 text-dourado transition-transform duration-200 ${
+                          masterSubmenuOpen || isFiltering ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </div>
+                  </button>
+
+                  {/* Itens do Submenu Colapsável (sempre aberto quando filtrando com resultados) */}
+                  {(masterSubmenuOpen || isFiltering) && (
+                    <div className="pl-3 pr-1 pt-1.5 space-y-1 border-l-2 border-dourado/30 ml-4 mt-1 transition-all">
+                      {filteredMasterMenuItems.map((item) => {
+                        const isActive =
+                          location.pathname === item.path ||
+                          location.pathname.startsWith(`${item.path}/`)
+                        const Icon = item.icon
+
+                        return (
+                          <NavLink
+                            key={item.path}
+                            to={item.path}
+                            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                              isActive
+                                ? 'bg-vinho-light text-white shadow-xs border-l-3 border-dourado pl-2.5'
+                                : 'text-marfim/75 hover:text-white hover:bg-vinho-light/40'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 truncate">
+                              <Icon
+                                className={`w-3.5 h-3.5 shrink-0 ${
+                                  isActive ? 'text-dourado' : 'text-dourado-light/70'
+                                }`}
+                              />
+                              <span className="truncate">{item.label}</span>
+                            </div>
+                            {item.badge && (
+                              <Badge
+                                className={`text-[8px] px-1 py-0 rounded ${
+                                  isActive
+                                    ? 'bg-dourado text-vinho font-bold'
+                                    : 'bg-vinho-dark text-dourado-light border border-dourado/20'
+                                }`}
+                              >
+                                {item.badge}
+                              </Badge>
+                            )}
+                          </NavLink>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+            </>
           )}
         </nav>
 
@@ -764,114 +1016,197 @@ export default function AdminLayout() {
               </button>
             </div>
 
-            <nav className="flex-1 py-3 space-y-1">
-              <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-marfim/60 mb-1">
-                Gestão Geral
-              </p>
-
-              {mainMenuItems.map((item) => {
-                const isActive = item.exact
-                  ? location.pathname === item.path
-                  : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
-                const Icon = item.icon
-
-                return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setMobileSidebarOpen(false)}
-                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold min-h-[44px] transition-all active:scale-[0.98] ${
-                      isActive
-                        ? 'bg-vinho-light text-white border-l-4 border-dourado shadow-sm font-bold'
-                        : 'text-marfim/85 hover:bg-vinho-light/40'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon className="w-4 h-4 text-dourado shrink-0" />
-                      <span>{item.label}</span>
-                    </div>
-
-                    {item.badgeCount !== undefined && item.badgeCount > 0 && (
-                      <Badge className="bg-amber-500 text-white font-bold text-[10px] px-2 py-0.5 rounded-full">
-                        {item.badgeCount}
-                      </Badge>
-                    )}
-                  </NavLink>
-                )
-              })}
-
-              {/* Submenu Exclusivo Master / Gestão Avançada no Mobile */}
-              {showMasterSection && (
-                <div className="pt-3 mt-3 border-t border-vinho-light/40">
+            {/* CAMPO DE PESQUISA DE TELAS NO MOBILE (ACIMA DO MENU) */}
+            <div className="pt-3 pb-2 border-b border-vinho-light/25">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-dourado-light/70 pointer-events-none" />
+                <input
+                  ref={mobileSearchInputRef}
+                  type="text"
+                  value={menuSearchQuery}
+                  onChange={(e) => setMenuSearchQuery(e.target.value)}
+                  placeholder="Pesquisar telas..."
+                  className="w-full bg-vinho-dark/80 text-marfim placeholder:text-marfim/45 text-xs pl-8 pr-7 py-2 rounded-xl border border-dourado/30 focus:outline-none focus:border-dourado focus:ring-2 focus:ring-dourado/30 shadow-inner"
+                  aria-label="Pesquisar telas do menu"
+                />
+                {menuSearchQuery && (
                   <button
                     type="button"
-                    onClick={() => setMasterSubmenuOpen(!masterSubmenuOpen)}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold min-h-[44px] transition-all ${
-                      isMasterPathActive
-                        ? 'bg-vinho-dark text-dourado border border-dourado/40 shadow-xs'
-                        : 'text-dourado-light hover:bg-vinho-light/40'
-                    }`}
+                    onClick={() => {
+                      setMenuSearchQuery('')
+                      mobileSearchInputRef.current?.focus()
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-vinho-light text-marfim/80 flex items-center justify-center"
+                    title="Limpar pesquisa"
+                    aria-label="Limpar pesquisa"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Shield className="w-4 h-4 text-dourado" />
-                      <span>{isMaster ? 'Exclusivo Master' : 'Gestão do Site & Loja'}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Badge className="bg-dourado text-vinho font-bold text-[9px] px-1.5 py-0 rounded">
-                        {isMaster ? 'Master' : 'ADM'}
-                      </Badge>
-                      <ChevronDown
-                        className={`w-4 h-4 text-dourado transition-transform duration-200 ${
-                          masterSubmenuOpen ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </div>
+                    <X className="w-3 h-3" />
                   </button>
+                )}
+              </div>
+              {isFiltering && (
+                <div className="flex items-center justify-between mt-1 px-1 text-[10px] text-dourado-light/80">
+                  <span>
+                    {totalFilteredCount} tela{totalFilteredCount === 1 ? '' : 's'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setMenuSearchQuery('')}
+                    className="hover:text-white underline"
+                  >
+                    Limpar
+                  </button>
+                </div>
+              )}
+            </div>
 
-                  {masterSubmenuOpen && (
-                    <div className="pl-3 pr-1 pt-1.5 space-y-1 border-l-2 border-dourado/30 ml-4 mt-1">
-                      {masterMenuItems.map((item) => {
-                        const isActive =
-                          location.pathname === item.path ||
-                          location.pathname.startsWith(`${item.path}/`)
+            <nav className="flex-1 py-3 space-y-1 overflow-y-auto">
+              {hasNoResults ? (
+                <div className="py-6 px-2 text-center space-y-2">
+                  <div className="w-9 h-9 rounded-full bg-vinho-dark/80 border border-dourado/30 flex items-center justify-center mx-auto text-dourado">
+                    <Search className="w-4 h-4 text-dourado-light/70" />
+                  </div>
+                  <p className="text-xs font-semibold text-white">Nenhuma tela encontrada</p>
+                  <p className="text-[11px] text-marfim/60 max-w-[180px] mx-auto leading-tight">
+                    Nenhum resultado para "{menuSearchQuery}".
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setMenuSearchQuery('')
+                      mobileSearchInputRef.current?.focus()
+                    }}
+                    className="text-[11px] h-7 px-3 bg-vinho-light/40 border-dourado/40 text-dourado hover:bg-vinho-light hover:text-white mt-1"
+                  >
+                    Limpar busca
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {filteredMainMenuItems.length > 0 && (
+                    <>
+                      <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-marfim/60 mb-1">
+                        {isFiltering ? 'Telas Encontradas' : 'Gestão Geral'}
+                      </p>
+
+                      {filteredMainMenuItems.map((item) => {
+                        const isActive = item.exact
+                          ? location.pathname === item.path
+                          : location.pathname === item.path ||
+                            location.pathname.startsWith(`${item.path}/`)
                         const Icon = item.icon
 
                         return (
                           <NavLink
                             key={item.path}
                             to={item.path}
-                            onClick={() => setMobileSidebarOpen(false)}
-                            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold min-h-[40px] transition-all ${
+                            onClick={() => {
+                              setMobileSidebarOpen(false)
+                              setMenuSearchQuery('')
+                            }}
+                            className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold min-h-[44px] transition-all active:scale-[0.98] ${
                               isActive
-                                ? 'bg-vinho-light text-white border-l-3 border-dourado pl-2.5 font-bold'
-                                : 'text-marfim/80 hover:bg-vinho-light/40'
+                                ? 'bg-vinho-light text-white border-l-4 border-dourado shadow-sm font-bold'
+                                : 'text-marfim/85 hover:bg-vinho-light/40'
                             }`}
                           >
-                            <div className="flex items-center gap-2.5 truncate">
-                              <Icon
-                                className={`w-3.5 h-3.5 shrink-0 ${
-                                  isActive ? 'text-dourado' : 'text-dourado-light/70'
-                                }`}
-                              />
-                              <span className="truncate">{item.label}</span>
+                            <div className="flex items-center gap-3">
+                              <Icon className="w-4 h-4 text-dourado shrink-0" />
+                              <span>{item.label}</span>
                             </div>
-                            {item.badge && (
-                              <Badge
-                                className={`text-[8px] px-1.5 py-0 rounded ${
-                                  isActive
-                                    ? 'bg-dourado text-vinho font-bold'
-                                    : 'bg-vinho-dark text-dourado-light border border-dourado/20'
-                                }`}
-                              >
-                                {item.badge}
+
+                            {item.badgeCount !== undefined && item.badgeCount > 0 && (
+                              <Badge className="bg-amber-500 text-white font-bold text-[10px] px-2 py-0.5 rounded-full">
+                                {item.badgeCount}
                               </Badge>
                             )}
                           </NavLink>
                         )
                       })}
+                    </>
+                  )}
+
+                  {/* Submenu Exclusivo Master / Gestão Avançada no Mobile */}
+                  {showMasterSection && (
+                    <div
+                      className={`${filteredMainMenuItems.length > 0 ? 'pt-3 mt-3 border-t border-vinho-light/40' : ''}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setMasterSubmenuOpen(!masterSubmenuOpen)}
+                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold min-h-[44px] transition-all ${
+                          isMasterPathActive
+                            ? 'bg-vinho-dark text-dourado border border-dourado/40 shadow-xs'
+                            : 'text-dourado-light hover:bg-vinho-light/40'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Shield className="w-4 h-4 text-dourado" />
+                          <span>{isMaster ? 'Exclusivo Master' : 'Gestão do Site & Loja'}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Badge className="bg-dourado text-vinho font-bold text-[9px] px-1.5 py-0 rounded">
+                            {isMaster ? 'Master' : 'ADM'}
+                          </Badge>
+                          <ChevronDown
+                            className={`w-4 h-4 text-dourado transition-transform duration-200 ${
+                              masterSubmenuOpen || isFiltering ? 'rotate-180' : ''
+                            }`}
+                          />
+                        </div>
+                      </button>
+
+                      {(masterSubmenuOpen || isFiltering) && (
+                        <div className="pl-3 pr-1 pt-1.5 space-y-1 border-l-2 border-dourado/30 ml-4 mt-1">
+                          {filteredMasterMenuItems.map((item) => {
+                            const isActive =
+                              location.pathname === item.path ||
+                              location.pathname.startsWith(`${item.path}/`)
+                            const Icon = item.icon
+
+                            return (
+                              <NavLink
+                                key={item.path}
+                                to={item.path}
+                                onClick={() => {
+                                  setMobileSidebarOpen(false)
+                                  setMenuSearchQuery('')
+                                }}
+                                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold min-h-[40px] transition-all ${
+                                  isActive
+                                    ? 'bg-vinho-light text-white border-l-3 border-dourado pl-2.5 font-bold'
+                                    : 'text-marfim/80 hover:bg-vinho-light/40'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 truncate">
+                                  <Icon
+                                    className={`w-3.5 h-3.5 shrink-0 ${
+                                      isActive ? 'text-dourado' : 'text-dourado-light/70'
+                                    }`}
+                                  />
+                                  <span className="truncate">{item.label}</span>
+                                </div>
+                                {item.badge && (
+                                  <Badge
+                                    className={`text-[8px] px-1.5 py-0 rounded ${
+                                      isActive
+                                        ? 'bg-dourado text-vinho font-bold'
+                                        : 'bg-vinho-dark text-dourado-light border border-dourado/20'
+                                    }`}
+                                  >
+                                    {item.badge}
+                                  </Badge>
+                                )}
+                              </NavLink>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
+                </>
               )}
             </nav>
 
