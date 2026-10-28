@@ -33,8 +33,12 @@ routerAdd(
       let userRecord = null
       try {
         userRecord = $app.findFirstRecordByData('_pb_users_auth_', 'id', authUser.id)
-      } catch (_) {
-        return e.notFoundError('Usuário não encontrado.')
+      } catch (findErr) {
+        try {
+          userRecord = $app.findRecordById('_pb_users_auth_', authUser.id)
+        } catch (_) {
+          return e.notFoundError('Usuário não encontrado.')
+        }
       }
 
       // Atualizar a senha e desativar a flag forcar_troca_senha

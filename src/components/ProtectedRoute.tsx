@@ -32,6 +32,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
+  // Se o usuário precisa redefinir a senha obrigatoriamente, a tela é renderizada pelo AppAuthenticatedGate,
+  // mas para prevenir qualquer escape visual de conteúdo restrito em ProtectedRoute, barramos também aqui:
+  const forcarTroca = Boolean(user?.forcar_troca_senha)
+  if (forcarTroca) {
+    return null
+  }
+
   // Se a rota for a Área de Membros (/membros), qualquer usuário autenticado pode acessar
   if (requireMembersOnly) {
     return <>{children}</>

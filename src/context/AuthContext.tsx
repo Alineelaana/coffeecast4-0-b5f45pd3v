@@ -118,6 +118,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (pb.authStore.record) {
       ;(pb.authStore.record as any).forcar_troca_senha = false
     }
+    if (pb.authStore.model) {
+      ;(pb.authStore.model as any).forcar_troca_senha = false
+    }
   }
 
   useEffect(() => {
