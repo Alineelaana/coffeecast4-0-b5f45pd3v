@@ -60,6 +60,12 @@ const AVAILABLE_SCREENS = [
     group: 'Operacional',
   },
   {
+    key: 'relatorios',
+    label: 'Relatórios de Engajamento',
+    description: 'Métricas de audiência, leads, depoimentos, roteiros e acessos ao painel',
+    group: 'Operacional',
+  },
+  {
     key: 'notificacoes',
     label: 'Central de Notificações',
     description: 'Avisos e pendências em tempo real',

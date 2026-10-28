@@ -595,6 +595,49 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
         dica: 'Contatos captados pela Nine já têm conta Prata criada automaticamente no sistema, o que facilita oferecer upgrades para membro Ouro ou patrocinador.',
       },
       {
+        id: 'relatorios-engajamento',
+        titulo: 'Relatórios de Engajamento',
+        subtitulo:
+          'Métricas de audiência, leads, depoimentos, roteiros e acessos ao painel com exportação em PDF',
+        icone: 'BarChart3',
+        rota: '/admin/relatorios',
+        perfisPermitidos: ['master', 'adm', 'gerencial'],
+        ondeClicar: 'Menu lateral ➔ "Relatórios de Engajamento".',
+        paraQueServe:
+          'Consolida indicadores de desempenho operacional da plataforma com dados reais do banco PocketBase: novos contatos e leads, depoimentos recebidos, roteiros respondidos por convidados, acessos/logins na auditoria e episódios do período, acompanhados de gráficos e exportação oficial em PDF.',
+        passoAPasso: [
+          'Selecione o período desejado no seletor do topo: Últimos 7 dias, Últimos 30 dias, Últimos 90 dias ou Personalizado.',
+          'No modo Personalizado, informe a Data Inicial e Data Final desejadas.',
+          'Analise os 5 cards de KPIs principais com cálculo automático de variação percentual (▲/▼ %) comparado ao período imediatamente anterior equivalente.',
+          'Consulte o gráfico de barras da evolução temporal de contatos no período (agrupado por dia ou semana).',
+          'Verifique o Ranking das Telas Mais Acessadas do painel extraído dos registros imutáveis de Auditoria.',
+          'Consulte o Ranking dos Usuários com Mais Acessos (logins) ao sistema.',
+          'Acompanhe a Distribuição de Roteiros por Status (Aprovados, Em Revisão e Rascunho).',
+          'Veja a listagem detalhada dos episódios lançados ou programados no intervalo.',
+          'Clique em "Exportar PDF" no topo direito para abrir a janela oficial com layout requintado da marca CoffeeCast 4.0 (vinho/dourado/marfim) para impressão ou salvamento.',
+        ],
+        botoesPrincipais: [
+          {
+            nome: 'Filtro de Período (7d, 30d, 90d, Personalizado)',
+            onde: 'Barra superior do relatório',
+            paraQueServe:
+              'Recalcula instantaneamente todos os totais, variações e gráficos do intervalo.',
+          },
+          {
+            nome: 'Exportar PDF',
+            onde: 'Topo direito da tela',
+            paraQueServe:
+              'Gera o documento executivo em PDF com o logotipo oficial, totais e gráficos visuais.',
+          },
+          {
+            nome: 'Atualizar',
+            onde: 'Ao lado do botão de exportação',
+            paraQueServe: 'Recarrega os dados mais recentes das coleções do PocketBase.',
+          },
+        ],
+        dica: 'O relatório utiliza estritamente dados reais já existentes no sistema (sem números simulados) e registra cada visualização e exportação na Auditoria.',
+      },
+      {
         id: 'financeiro-e-rateio',
         titulo: 'Financeiro & Divisão de Valores',
         subtitulo: 'Receitas, despesas, sincronização de pacotes de horas e rateio entre sócios',

@@ -36,6 +36,7 @@ import {
   BookOpen,
   HelpCircle,
   Search,
+  BarChart3,
 } from 'lucide-react'
 import { getFileUrl } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
@@ -353,6 +354,25 @@ export default function AdminLayout() {
         'pdf',
         'roteiro oficial',
         'entrevista',
+      ],
+    },
+    {
+      key: 'relatorios',
+      label: 'Relatórios de Engajamento',
+      path: '/admin/relatorios',
+      icon: BarChart3,
+      highlight: true,
+      keywords: [
+        'relatorio',
+        'relatorios',
+        'engajamento',
+        'metricas',
+        'audiencia',
+        'graficos',
+        'desempenho',
+        'estatisticas',
+        'leads',
+        'acessos',
       ],
     },
     {

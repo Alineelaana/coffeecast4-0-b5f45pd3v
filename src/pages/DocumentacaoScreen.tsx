@@ -615,6 +615,28 @@ export default function DocumentacaoScreen() {
               </p>
             </div>
 
+            {/* Relatórios de Engajamento */}
+            <div className="border-2 border-[#D4AF37]/50 rounded-2xl p-5 bg-[#D4AF37]/5 space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="font-serif font-bold text-sm text-[#4B1E3F] flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#D4AF37]" />
+                  Relatórios de Engajamento & Audiência
+                </h4>
+                <Badge className="bg-[#4B1E3F] text-[#D4AF37] text-[10px] font-bold">
+                  /admin/relatorios
+                </Badge>
+              </div>
+              <p className="text-[#4B1E3F]/80 leading-relaxed">
+                Painel consolidado com dados 100% reais do sistema: evolução de contatos e leads
+                comerciais, depoimentos recebidos, roteiros respondidos por convidados, acessos
+                reais de usuários (auditoria de logins) e episódios publicados. Inclui{' '}
+                <strong>filtros de período (7, 30, 90 dias ou datas personalizadas)</strong>,{' '}
+                <strong>variação percentual automática em relação ao período anterior</strong>,
+                rankings e <strong>exportação oficial em PDF</strong> com layout requintado da marca
+                CoffeeCast.
+              </p>
+            </div>
+
             {/* Financeiro */}
             <div className="border border-[#4B1E3F]/10 rounded-2xl p-5 bg-[#FAF8F5]/40 space-y-2">
               <div className="flex items-center justify-between">
