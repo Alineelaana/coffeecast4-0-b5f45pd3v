@@ -958,6 +958,7 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Cria novos operadores, redefine senhas, bloqueia acessos, monitora dia e horário exatos do último login e define com precisão cirúrgica quais telas e lojas cada ADM pode acessar.',
         passoAPasso: [
           'Visualize o dia e horário do Último Acesso de cada usuário tanto na tabela desktop (coluna dedicada "Último Acesso") quanto nos cards mobile: exibido no formato oficial brasileiro "DD/MM/AAAA às HH:mm" (ou "Nunca acessou" caso o usuário ainda não tenha realizado login).',
+          'Para definir uma nova senha de acesso: clique no botão "Senha" (ícone de chave, moldura dourada) na coluna de ações do usuário. No modal "Definir Nova Senha", digite a nova senha, repita no campo de confirmação (os dois campos têm ícone de olho para mostrar/ocultar) e confirme. A senha entra em vigor imediatamente no próximo login e a ação fica registrada na Auditoria do Sistema como "Master definiu nova senha para X".',
           'Clique em "+ Novo Usuário" para cadastrar um novo integrante.',
           'Preencha nome, e-mail, senha inicial e selecione a categoria: Master, ADM, Gerencial, Ouro ou Prata.',
           'Defina o Tempo de Inatividade em Minutos: configure individualmente quantos minutos sem interação (cliques, teclado, scroll) provocam o logout automático (o padrão é 10 minutos).',
@@ -997,10 +998,10 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             paraQueServe: 'Abre a matriz de telas para ativar/desativar acessos modulares.',
           },
           {
-            nome: 'Redefinir Senha do Usuário',
-            onde: 'Menu de ações do usuário',
+            nome: 'Definir Nova Senha (botão "Senha")',
+            onde: 'Coluna de ações da tabela desktop e do menu de ações dos cards móveis — exclusivo do Master',
             paraQueServe:
-              'Permite ao Master definir uma nova senha direta caso o usuário tenha esquecido.',
+              'Abre o modal "Definir Nova Senha", onde o Master cadastra e confirma uma nova senha para o usuário (mínimo 8 caracteres, com botões de olho para exibir/ocultar os campos). A nova senha vale imediatamente no próximo login e a ação é registrada na Auditoria como "Master definiu nova senha para X".',
           },
           {
             nome: 'Bloquear / Ativar Conta',

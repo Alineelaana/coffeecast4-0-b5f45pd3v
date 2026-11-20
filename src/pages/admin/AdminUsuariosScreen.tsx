@@ -46,6 +46,11 @@ import {
   Filter,
   Clock,
   RotateCcw,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Lock,
+  AlertTriangle,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
@@ -234,6 +239,17 @@ export default function AdminUsuariosScreen() {
   const [editForcarTrocaSenha, setEditForcarTrocaSenha] = useState<boolean>(false)
   const [editPassword, setEditPassword] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
+
+  // Modal "Definir nova senha" (ação exclusiva do Master)
+  const [senhaModalOpen, setSenhaModalOpen] = useState(false)
+  const [senhaTargetUser, setSenhaTargetUser] = useState<UserRecord | null>(null)
+  const [novaSenha, setNovaSenha] = useState('')
+  const [confirmarNovaSenha, setConfirmarNovaSenha] = useState('')
+  const [showNovaSenha, setShowNovaSenha] = useState(false)
+  const [showConfirmarSenha, setShowConfirmarSenha] = useState(false)
+  const [savingSenha, setSavingSenha] = useState(false)
+  const senhasIguais = novaSenha.length > 0 && novaSenha === confirmarNovaSenha
+  const senhasNaoConferem = confirmarNovaSenha.length > 0 && novaSenha !== confirmarNovaSenha
 
   const loadUsersAndStores = async () => {
     try {
@@ -518,6 +534,63 @@ export default function AdminUsuariosScreen() {
     }
   }
 
+  const handleOpenSenha = (user: UserRecord) => {
+    setSenhaTargetUser(user)
+    setNovaSenha('')
+    setConfirmarNovaSenha('')
+    setShowNovaSenha(false)
+    setShowConfirmarSenha(false)
+    setSenhaModalOpen(true)
+  }
+
+  const handleSalvarNovaSenha = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!senhaTargetUser) return
+
+    if (!novaSenha.trim()) {
+      toast.error('O campo Nova senha não pode estar em branco.')
+      return
+    }
+    if (novaSenha.trim().length < 8) {
+      toast.error('A nova senha deve conter no mínimo 8 caracteres.')
+      return
+    }
+    if (novaSenha.trim() !== confirmarNovaSenha.trim()) {
+      toast.error('A nova senha e a confirmação não coincidem.')
+      return
+    }
+
+    setSavingSenha(true)
+    try {
+      const res = await pb.send<{ success: boolean; message?: string; error?: string }>(
+        '/backend/v1/admin/users/set-password',
+        {
+          method: 'POST',
+          body: {
+            id: senhaTargetUser.id,
+            novaSenha: novaSenha.trim(),
+            confirmarNovaSenha: confirmarNovaSenha.trim(),
+          },
+        },
+      )
+      if (res?.error) {
+        throw new Error(res.error)
+      }
+
+      toast.success(
+        `Nova senha definida para ${senhaTargetUser.name || senhaTargetUser.email} com sucesso!`,
+      )
+      setSenhaModalOpen(false)
+      loadUsersAndStores()
+    } catch (err: any) {
+      console.error(err)
+      const msg = err?.data?.message || err?.message || 'Erro ao definir a nova senha do usuário.'
+      toast.error(msg)
+    } finally {
+      setSavingSenha(false)
+    }
+  }
+
   const handleDelete = async (userId: string, userEmail: string) => {
     if (userEmail === 'alineelaana@gmail.com') {
       toast.error('A conta do Superadministrador Master não pode ser excluída.')
@@ -666,6 +739,18 @@ export default function AdminUsuariosScreen() {
                       )}
                     </div>
                     <div className="flex items-center gap-1">
+                      {currentUser?.role === 'master' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenSenha(u)}
+                          className="h-8 px-2.5 text-xs text-vinho border-dourado/50 hover:bg-dourado/10 flex items-center gap-1 font-semibold rounded-lg"
+                          title="Definir nova senha para este usuário"
+                        >
+                          <KeyRound className="w-3.5 h-3.5 text-dourado-dark" />
+                          Senha
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -897,6 +982,18 @@ export default function AdminUsuariosScreen() {
                       </TableCell>
 
                       <TableCell className="text-right space-x-1">
+                        {currentUser?.role === 'master' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenSenha(u)}
+                            className="h-7 px-2.5 text-[11px] font-semibold text-vinho border-dourado/50 hover:bg-dourado/10 inline-flex items-center gap-1 rounded-md"
+                            title="Definir nova senha para este usuário"
+                          >
+                            <KeyRound className="w-3 h-3 text-dourado-dark" />
+                            Senha
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -1657,6 +1754,138 @@ export default function AdminUsuariosScreen() {
                   className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
                 >
                   {savingEdit ? 'Salvando...' : 'Salvar Alterações'}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal "Definir nova senha" — ação exclusiva do Master */}
+      <Dialog open={senhaModalOpen} onOpenChange={setSenhaModalOpen}>
+        <DialogContent className="w-[94vw] max-w-md max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-6 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-xl font-bold text-vinho flex items-center gap-2">
+              <Lock className="w-5 h-5 text-dourado-dark" />
+              Definir Nova Senha
+            </DialogTitle>
+          </DialogHeader>
+
+          {senhaTargetUser && (
+            <form onSubmit={handleSalvarNovaSenha} className="space-y-4 pt-2">
+              <div className="p-3 bg-white/80 rounded-xl border border-vinho/15">
+                <p className="text-xs font-bold text-vinho">{senhaTargetUser.name || 'Usuário'}</p>
+                <p className="text-[11px] text-vinho/60 font-mono">{senhaTargetUser.email}</p>
+                <p className="text-[10px] text-vinho/65 mt-1.5 leading-relaxed">
+                  A nova senha entra em vigor imediatamente: o usuário deverá utilizá-la no próximo
+                  login. A ação fica registrada na Auditoria do Sistema.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="definir-nova-senha"
+                  className="text-xs font-bold text-vinho flex items-center gap-1.5"
+                >
+                  <Key className="w-3.5 h-3.5 text-dourado-dark" />
+                  Nova senha *
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="definir-nova-senha"
+                    type={showNovaSenha ? 'text' : 'password'}
+                    required
+                    autoComplete="new-password"
+                    placeholder="Digite a nova senha (mínimo 8 dígitos)"
+                    value={novaSenha}
+                    onChange={(e) => setNovaSenha(e.target.value)}
+                    className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm rounded-xl py-2.5 pr-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNovaSenha(!showNovaSenha)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-vinho/60 hover:text-vinho p-1 rounded-md transition-colors"
+                    aria-label={showNovaSenha ? 'Ocultar nova senha' : 'Exibir nova senha'}
+                    title={showNovaSenha ? 'Ocultar nova senha' : 'Exibir nova senha'}
+                  >
+                    {showNovaSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="definir-confirmar-senha"
+                  className="text-xs font-bold text-vinho flex items-center gap-1.5"
+                >
+                  <KeyRound className="w-3.5 h-3.5 text-dourado-dark" />
+                  Confirmar nova senha *
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="definir-confirmar-senha"
+                    type={showConfirmarSenha ? 'text' : 'password'}
+                    required
+                    autoComplete="new-password"
+                    placeholder="Repita a nova senha exatamente igual"
+                    value={confirmarNovaSenha}
+                    onChange={(e) => setConfirmarNovaSenha(e.target.value)}
+                    className="bg-white border-vinho/20 focus-visible:ring-dourado text-sm rounded-xl py-2.5 pr-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmarSenha(!showConfirmarSenha)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-vinho/60 hover:text-vinho p-1 rounded-md transition-colors"
+                    aria-label={
+                      showConfirmarSenha
+                        ? 'Ocultar confirmação da senha'
+                        : 'Exibir confirmação da senha'
+                    }
+                    title={
+                      showConfirmarSenha
+                        ? 'Ocultar confirmação da senha'
+                        : 'Exibir confirmação da senha'
+                    }
+                  >
+                    {showConfirmarSenha ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {novaSenha && confirmarNovaSenha && (
+                  <div className="pt-1">
+                    {senhasIguais ? (
+                      <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        As duas senhas são idênticas!
+                      </p>
+                    ) : senhasNaoConferem ? (
+                      <p className="text-[11px] text-red-600 font-medium flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                        A nova senha e a confirmação não coincidem.
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSenhaModalOpen(false)}
+                  className="w-full sm:w-auto min-h-[44px] text-xs"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={savingSenha}
+                  className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
+                >
+                  {savingSenha ? 'Salvando...' : 'Definir Nova Senha'}
                 </Button>
               </div>
             </form>

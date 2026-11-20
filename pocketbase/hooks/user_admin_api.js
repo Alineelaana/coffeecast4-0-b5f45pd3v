@@ -224,6 +224,100 @@ routerAdd(
   $apis.requireAuth(),
 )
 
+// Endpoint exclusivo do Master para definir uma nova senha de qualquer usuário
+// (incluindo a própria conta Master principal). Registra a ação na Auditoria.
+routerAdd(
+  'POST',
+  '/backend/v1/admin/users/set-password',
+  (e) => {
+    try {
+      const user = e.auth
+      if (!user) {
+        return e.unauthorizedError('Acesso restrito ao painel administrativo.')
+      }
+
+      const userRole = user.getString('role')
+      if (userRole !== 'master') {
+        return e.forbiddenError('Apenas o Superadministrador Master pode definir novas senhas.')
+      }
+
+      const body = e.requestInfo().body || {}
+      const targetUserId = (body.id || '').trim()
+      const novaSenha = (body.novaSenha || '').trim()
+      const confirmarNovaSenha = (body.confirmarNovaSenha || '').trim()
+
+      if (!targetUserId) {
+        return e.badRequestError('ID do usuário é obrigatório.')
+      }
+      if (!novaSenha) {
+        return e.badRequestError('O campo Nova senha não pode estar em branco.')
+      }
+      if (novaSenha.length < 8) {
+        return e.badRequestError('A nova senha deve conter no mínimo 8 caracteres.')
+      }
+      if (novaSenha !== confirmarNovaSenha) {
+        return e.badRequestError('A nova senha e a confirmação não coincidem.')
+      }
+
+      let targetRecord = null
+      try {
+        targetRecord = $app.findFirstRecordByData('_pb_users_auth_', 'id', targetUserId)
+      } catch (_) {
+        return e.notFoundError('Usuário não encontrado.')
+      }
+
+      targetRecord.setPassword(novaSenha)
+      // A senha acaba de ser definida pelo Master: não exigir troca no próximo login.
+      targetRecord.set('forcar_troca_senha', false)
+      $app.save(targetRecord)
+
+      // Registrar na Auditoria, no mesmo padrão das demais ações do painel.
+      try {
+        const colAudit = $app.findCollectionByNameOrId('auditoria_eventos')
+        const logRec = new Record(colAudit)
+        logRec.set('usuario_id', user.id)
+        logRec.set('usuario_email', user.getString('email'))
+        logRec.set('usuario_nome', user.getString('name') || user.getString('email'))
+        logRec.set('usuario_role', user.getString('role'))
+        logRec.set('tipo_acao', 'alteracao_senha')
+        logRec.set('area_sistema', 'Usuários & Permissões')
+        logRec.set(
+          'descricao',
+          'Master definiu nova senha para ' +
+            targetRecord.getString('name') +
+            ' (' +
+            targetRecord.getString('email') +
+            ')',
+        )
+        logRec.set('registro_afetado', targetRecord.id)
+        logRec.set('tabela_afetada', '_pb_users_auth_')
+        logRec.set('resultado', 'sucesso')
+        $app.save(logRec)
+      } catch (errAudit) {
+        console.log('Aviso ao auditar definição de nova senha:', errAudit)
+      }
+
+      return e.json(200, {
+        success: true,
+        message: 'Nova senha definida com sucesso!',
+        user: {
+          id: targetRecord.id,
+          name: targetRecord.getString('name'),
+          email: targetRecord.getString('email'),
+          forcar_troca_senha: targetRecord.getBool('forcar_troca_senha'),
+          updated: targetRecord.getString('updated'),
+        },
+      })
+    } catch (err) {
+      console.log('Erro ao definir nova senha via user_admin_api:', err)
+      return e.json(500, {
+        error: 'Falha ao definir nova senha: ' + (err.message || String(err)),
+      })
+    }
+  },
+  $apis.requireAuth(),
+)
+
 // Endpoint administrativo para listar usuários com email e dados completos para Master
 routerAdd(
   'GET',
