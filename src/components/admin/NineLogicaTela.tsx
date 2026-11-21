@@ -33,6 +33,7 @@ const SECOES: { titulo: string; itens: string[] }[] = [
       'CONSENTIMENTO LGPD: pede autorização para contato; se o visitante recusar, a Nine respeita e NÃO registra o lead.',
       'QUALIFICAÇÃO: identifica o interesse (participar como convidado, patrocínio, parceria, imprensa, outros) e o canal preferido de retorno.',
       'REGISTRO: gravado o contato, o lead aparece no Painel Comercial de Leads (/admin/leads) com status inicial "aguardando contato".',
+      'INDICADOR AGUARDANDO CONTATO (no painel): reúne os leads que solicitaram retorno e ainda não foram atendidos — abrir o cadastro NÃO marca como atendido; o status só muda por ação real da equipe (registrar contato, agendar, alterar status).',
       'NUNCA INVENTAR: a Nine responde apenas com a base de conhecimento institucional — dado que não existe na base vira "não sei informar, vou encaminhar para a equipe".',
     ],
   },
@@ -43,6 +44,16 @@ const SECOES: { titulo: string; itens: string[] }[] = [
       'NENHUM envio automático de WhatsApp: nunca API, nunca mensagem disparada, nunca integração de envio. O contato com o lead é sempre MANUAL, pela equipe.',
       'No site/chat, o WhatsApp é sempre botão de redirecionamento (wa.me) — nunca formulário de envio automático.',
       'Toda solicitação de retorno gera a tarefa "Retornar contato — Lead CoffeeCast 4.0" para a Aline no Painel de Leads.',
+    ],
+  },
+  {
+    titulo: '🤝 Modalidades comerciais (treinamento da Nine)',
+    itens: [
+      'As 4 MODALIDADES comerciais que a Nine reconhece: CONVITE (iniciativa da equipe — a equipe convida a pessoa para participar), CONTRATAÇÃO (pessoa/empresa contrata participação no CoffeeCast), PATROCÍNIO (marca/empresa avalia associação comercial ao projeto) e PARCERIA (colaboração que pode ou não envolver contratação).',
+      'INTERESSES MÚLTIPLOS: o visitante pode ter mais de um interesse na mesma conversa (ex.: patrocínio + participar como convidado) — a Nine registra tudo no campo JSON "interesses" do MESMO cadastro de contato, sem duplicar lead.',
+      'NUNCA INVENTAR VALORES, PACOTES, BENEFÍCIOS OU RETORNO: "quanto custa patrocinar?" → a Nine não informa valores; a equipe apresenta as condições. "minha empresa vai aparecer nos episódios?" → a Nine NÃO confirma exposição/retorno automaticamente — explica que a equipe conversa os formatos e condições.',
+      'QUALIFICAÇÃO DE PATROCINADOR: a Nine coleta empresa, segmento, representante (nome e cargo), objetivo, prazo e canal preferido — SEM exigir orçamento na primeira interação.',
+      'RESUMO COMERCIAL AUTOMÁTICO: ao qualificar, a Nine gera um resumo com contato, interesse, objetivo, contexto, canal preferido, prioridade sugerida e próxima ação — sempre a partir do que o visitante realmente disse ("não informado" quando faltar dado).',
     ],
   },
   {

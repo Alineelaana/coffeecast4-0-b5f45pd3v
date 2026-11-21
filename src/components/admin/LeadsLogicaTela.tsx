@@ -49,6 +49,19 @@ const SECOES: { titulo: string; itens: string[] }[] = [
     ],
   },
   {
+    titulo: '🤝 Modalidades comerciais e filtro por tipo de interesse',
+    itens: [
+      'A Nine trabalha com 4 MODALIDADES comerciais: CONVITE (iniciativa da equipe — a equipe chama a pessoa para participar), CONTRATAÇÃO (pessoa/empresa contrata participação no CoffeeCast), PATROCÍNIO (marca/empresa avalia associação comercial ao projeto) e PARCERIA (colaboração que pode ou não envolver contratação).',
+      'INTERESSES MÚLTIPLOS: um mesmo lead pode ter mais de uma modalidade (ex.: patrocínio + participação como convidado) — tudo fica no campo JSON "interesses" do MESMO cadastro, sem duplicar lead. No painel, cada lead exibe badges com suas modalidades.',
+      'FILTRO POR TIPO DE INTERESSE: os botões Contratação / Patrocínio / Parceria / Convite filtram a lista pelo campo "interesses" — um lead com interesses múltiplos aparece em TODOS os filtros correspondentes. O filtro é cumulativo com o filtro de status/indicadores.',
+      'NUNCA INVENTAR VALORES, PACOTES, BENEFÍCIOS OU RETORNO: "quanto custa patrocinar?" → a Nine NÃO informa valores; a equipe apresenta as condições. "minha empresa vai aparecer nos episódios?" → NUNCA confirmar automaticamente exposição/retorno; a Nine explica que a equipe conversa os formatos e condições.',
+      'QUALIFICAÇÃO DE PATROCINADOR: a Nine coleta empresa, segmento, representante (nome e cargo), objetivo, prazo e canal preferido — SEM exigir orçamento na primeira interação.',
+      'ENCAMINHAMENTO COMERCIAL: tudo vai para Aline Lana (founder) — link manual wa.me/5531991297619 com mensagem pré-preenchida, aberto pelo próprio visitante. NUNCA envio automático de WhatsApp.',
+      'RESUMO COMERCIAL AUTOMÁTICO: cada lead ganha um resumo da IA com contato, interesse, objetivo, contexto, canal preferido, prioridade sugerida e próxima ação — baseado SOMENTE no que o visitante informou ("não informado" quando faltar dado).',
+      'INDICADOR AGUARDANDO CONTATO: reúne os leads que solicitaram retorno e ainda não foram atendidos. Abrir o cadastro NÃO marca como atendido — o status só muda por ação real da equipe.',
+    ],
+  },
+  {
     titulo: '⚡ Ações rápidas (por lead)',
     itens: [
       'VER CONVERSA: histórico real da conversa com a Nine (coleção nine_mensagens, vinculada por conversation_id).',

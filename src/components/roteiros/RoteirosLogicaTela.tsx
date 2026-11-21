@@ -91,6 +91,7 @@ const SECOES: { titulo: string; itens: string[] }[] = [
       'Fluxo de aprovação mantido: Rascunho → Revisão → Aprovado, com versionamento já existente — nada é substituído sem revisão.',
       'Permissões seguem o sistema existente: ADM gerencia tudo; EDITOR gera e edita; VISUALIZADOR consulta — sem autenticação paralela.',
       'Integrações: formulário público /roteiro (entrada de dados), Estúdio Criativo IA (capas, mesmos serviços), Divulgação Inteligente (mesma base de dados) e auditoria de eventos.',
+      'JORNADA DO CONVIDADO E ACERVO: o roteiro trata somente a etapa editorial; episódios em edição NÃO são tratados como publicados — a Nine (chat e roteirista) só apresenta no acervo episódios realmente publicados, com dados reais (título, convidado, links), nunca inventando conteúdo ou status.',
     ],
   },
 ]

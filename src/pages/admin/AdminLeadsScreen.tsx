@@ -44,9 +44,14 @@ import {
   ROTULO_INTERESSE,
   ROTULO_CANAL,
   LINK_WHATSAPP_ALINE,
+  MODALIDADES_COMERCIAIS,
+  leadCumpreModalidades,
+  interessesDoLead,
+  interessesParaModalidades,
   montarLinkWhatsappLead,
   montarLinkTel,
   NineLeadsContagens,
+  InteresseModalidade,
 } from '@/services/nineComercial'
 import {
   NineLeadResumo,
@@ -198,6 +203,9 @@ export default function AdminLeadsScreen() {
   >('pendentes')
   const [ordenacao, setOrdenacao] = useState<NineLeadsOrdenacao>('created')
   const [filtroStatus, setFiltroStatus] = useState('aguardando_contato')
+  // Filtro por tipo de interesse (modalidade comercial) — client-side, cumulativo
+  // com o filtro de status. Lead com interesses múltiplos aparece em todos.
+  const [filtroModalidades, setFiltroModalidades] = useState<InteresseModalidade[]>([])
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [leadDetalhe, setLeadDetalhe] = useState<NineLeadDetalhe | null>(null)
@@ -239,9 +247,12 @@ export default function AdminLeadsScreen() {
 
   // Lista exibida: quando o filtro ativo é "atrasados", filtra localmente
   const leadsExibidos = useMemo(() => {
-    if (filtroStatus === '__atrasados') return leadsAtrasados
-    return leads
-  }, [leads, leadsAtrasados, filtroStatus])
+    let base = filtroStatus === '__atrasados' ? leadsAtrasados : leads
+    if (filtroModalidades.length > 0) {
+      base = base.filter((l) => leadCumpreModalidades(l, filtroModalidades))
+    }
+    return base
+  }, [leads, leadsAtrasados, filtroStatus, filtroModalidades])
 
   const tarefasExibidas = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10)
@@ -426,6 +437,41 @@ export default function AdminLeadsScreen() {
         ))}
       </div>
 
+      {/* Filtro por tipo de interesse (modalidade comercial) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold uppercase text-vinho/60">Tipo de interesse:</span>
+        {MODALIDADES_COMERCIAIS.map((m) => {
+          const ativo = filtroModalidades.includes(m.valor)
+          return (
+            <Button
+              key={m.valor}
+              size="sm"
+              variant={ativo ? 'default' : 'outline'}
+              onClick={() =>
+                setFiltroModalidades((atual) =>
+                  atual.includes(m.valor)
+                    ? atual.filter((v) => v !== m.valor)
+                    : [...atual, m.valor],
+                )
+              }
+              className={cn(ativo && 'bg-vinho text-white hover:bg-vinho-dark')}
+            >
+              {m.rotulo}
+            </Button>
+          )
+        })}
+        {filtroModalidades.length > 0 && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setFiltroModalidades([])}
+            className="text-vinho/60"
+          >
+            Limpar
+          </Button>
+        )}
+      </div>
+
       {/* Lista de leads */}
       {carregando ? (
         <div className="flex items-center justify-center rounded-xl border border-vinho/10 bg-white p-10 text-sm text-vinho/60">
@@ -500,6 +546,54 @@ export default function AdminLeadsScreen() {
                           {ROTULO_CANAL[lead.canal_preferido] || 'Não informado'}
                         </span>
                       </div>
+                      {(() => {
+                        const inters = interessesDoLead(lead)
+                        if (inters.length === 0) return null
+                        const modalidades = interessesParaModalidades(inters)
+                        return (
+                          <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                            <span className="text-[10px] font-bold uppercase text-vinho/50">
+                              Modalidades:
+                            </span>
+                            {modalidades.map((m) => (
+                              <Badge
+                                key={m}
+                                variant="outline"
+                                className="border-dourado/50 bg-dourado/10 text-[10px] text-[#8a6d10]"
+                              >
+                                {MODALIDADES_COMERCIAIS.find((x) => x.valor === m)?.rotulo || m}
+                              </Badge>
+                            ))}
+                            {inters
+                              .filter(
+                                (i) =>
+                                  !['contratacao', 'patrocinio', 'parceria', 'convite'].includes(i),
+                              )
+                              .filter(
+                                (i) =>
+                                  !(
+                                    (i === 'proposta_comercial' &&
+                                      modalidades.includes('contratacao')) ||
+                                    (i === 'apresentar_empresa' &&
+                                      modalidades.includes('patrocinio')) ||
+                                    (i === 'divulgacao' && modalidades.includes('parceria')) ||
+                                    ((i === 'participar_como_convidado' ||
+                                      i === 'indicar_convidado') &&
+                                      modalidades.includes('convite'))
+                                  ),
+                              )
+                              .map((i) => (
+                                <Badge
+                                  key={i}
+                                  variant="outline"
+                                  className="border-vinho/20 bg-white text-[10px] text-vinho/70"
+                                >
+                                  {ROTULO_INTERESSE[i] || i}
+                                </Badge>
+                              ))}
+                          </div>
+                        )
+                      })()}
                       <div className="flex flex-wrap gap-x-4 gap-y-0.5">
                         <span>
                           <strong>Entrada:</strong> {formatDateTimeBR(lead.created)}

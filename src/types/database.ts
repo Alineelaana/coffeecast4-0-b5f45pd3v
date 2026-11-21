@@ -203,6 +203,7 @@ export interface NineLeadResumo {
   telefone: string
   whatsapp: string
   interesse: string
+  interesses: string[] | string
   empresa_projeto: string
   resumo_necessidade: string
   canal_preferido: string
