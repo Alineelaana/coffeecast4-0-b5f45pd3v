@@ -347,6 +347,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'convites',
         'relatorios',
         'estudio',
+        'portfolios',
       ]
       return gerencialAllowed.includes(screenKey)
     }

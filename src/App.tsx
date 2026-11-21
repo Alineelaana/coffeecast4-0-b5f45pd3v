@@ -30,6 +30,7 @@ import AdminEpisodesScreen from '@/pages/admin/AdminEpisodesScreen'
 import AdminIntegrantesScreen from '@/pages/admin/AdminIntegrantesScreen'
 import AdminDepoimentosScreen from '@/pages/admin/AdminDepoimentosScreen'
 import AdminMomentosScreen from '@/pages/admin/AdminMomentosScreen'
+import AdminPortfoliosScreen from '@/pages/admin/AdminPortfoliosScreen'
 import AdminContatosScreen from '@/pages/admin/AdminContatosScreen'
 import AdminLeadsScreen from '@/pages/admin/AdminLeadsScreen'
 import AdminFinanceiroScreen from '@/pages/admin/AdminFinanceiroScreen'
@@ -293,6 +294,16 @@ export default function App() {
                 element={
                   <ProtectedRoute screenKey="depoimentos">
                     <AdminDepoimentosScreen />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Portfolios (Repositório de PDFs da equipe) */}
+              <Route
+                path="portfolios"
+                element={
+                  <ProtectedRoute screenKey="portfolios">
+                    <AdminPortfoliosScreen />
                   </ProtectedRoute>
                 }
               />

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-21T19:49:56.537Z",
+  "generatedAt": "2026-11-21T20:34:45.181Z",
   "collections": [
     {
       "name": "users",
@@ -3325,6 +3325,59 @@
         }
       ],
       "indexes": []
+    },
+    {
+      "name": "portfolios",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role = \"master\" || @request.auth.role = \"adm\" || @request.auth.role = \"gerencial\")",
+        "view": "@request.auth.id != '' && (@request.auth.role = \"master\" || @request.auth.role = \"adm\" || @request.auth.role = \"gerencial\")",
+        "create": "@request.auth.id != '' && (@request.auth.role = \"master\" || @request.auth.role = \"adm\" || @request.auth.role = \"gerencial\") && enviado_por = @request.auth.id",
+        "update": null,
+        "delete": null
+      },
+      "fields": [
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "arquivo",
+          "type": "file",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "enviado_por",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "tamanho",
+          "type": "number",
+          "required": false,
+          "system": false
+        }
+      ],
+      "indexes": ["CREATE INDEX idx_portfolios_created ON portfolios (created DESC)"]
     }
   ]
 }

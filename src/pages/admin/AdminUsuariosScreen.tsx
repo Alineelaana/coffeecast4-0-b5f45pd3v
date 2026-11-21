@@ -143,6 +143,12 @@ const AVAILABLE_SCREENS = [
     group: 'Conteúdo do Site',
   },
   {
+    key: 'portfolios',
+    label: 'Portfolios (Repositório de PDFs)',
+    description: 'Importar, guardar e baixar portfólios em PDF da equipe',
+    group: 'Conteúdo do Site',
+  },
+  {
     key: 'auditoria',
     label: 'Auditoria do Sistema',
     description: 'Rastreamento de atividades, segurança, regras e central de alertas',

@@ -889,6 +889,48 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
         dica: 'Dica para salvar o PDF perfeito: ao clicar em "Gerar PDF", o sistema abre uma janela dedicada configurada com CSS @page A5 oficial. Na janela de impressão do navegador, certifique-se de que a opção "Gráficos de segundo plano" (Background graphics) esteja marcada para preservar todos os gradientes de vinho e dourado. Caso o navegador bloqueie novas abas, um fallback automático de impressão é acionado com aviso visual.',
       },
       {
+        id: 'portfolios-repositorio',
+        titulo: 'Portfolios (Repositório de PDFs)',
+        subtitulo: 'Importar, nomear, guardar e baixar portfólios em PDF da equipe',
+        icone: 'FolderOpen',
+        rota: '/admin/portfolios',
+        perfisPermitidos: ['master', 'adm', 'gerencial'],
+        ondeClicar: 'Menu lateral ➔ "Portfolios".',
+        paraQueServe:
+          'Funciona como um arquivo morto digital da equipe: guarda documentos em PDF (portfólios, mídia kits, propostas) para serem baixados por qualquer usuário administrativo autorizado, a qualquer momento. Nada é enviado automaticamente — é apenas repositório de arquivos.',
+        passoAPasso: [
+          'Clique em "Importar Portfólio (PDF)".',
+          'Selecione o arquivo no seu computador (aceito apenas PDF, até 25 MB).',
+          'Digite o nome do documento — é assim que ele aparecerá na lista e como o arquivo será baixado.',
+          'Clique em "Salvar Portfólio". Ele entra imediatamente na lista, ordenado do mais recente para o mais antigo.',
+          'Para baixar, clique em "Baixar" na linha do portfólio: o PDF original é baixado com o nome do documento.',
+        ],
+        botoesPrincipais: [
+          {
+            nome: 'Importar Portfólio (PDF)',
+            onde: 'Topo direito da tela',
+            paraQueServe:
+              'Abre o formulário para selecionar o arquivo PDF e informar o nome do documento.',
+            icone: 'Upload',
+          },
+          {
+            nome: 'Baixar',
+            onde: 'Coluna de ações de cada linha da lista',
+            paraQueServe: 'Baixa o PDF original guardado no sistema, com o nome do documento.',
+            icone: 'Download',
+          },
+          {
+            nome: 'Excluir (ícone de lixeira)',
+            onde: 'Coluna de ações de cada linha da lista',
+            paraQueServe:
+              'Remove definitivamente o portfólio do repositório (somente Master, com confirmação).',
+            icone: 'Trash2',
+          },
+        ],
+        atencao:
+          'Somente arquivos em PDF são aceitos (até 25 MB); outros formatos são recusados com aviso. O nome do documento é obrigatório e deve ser preenchido no momento da importação — não é possível editar o registro depois, apenas excluir (Master) e importar novamente.',
+      },
+      {
         id: 'auditoria-sistema',
         titulo: 'Auditoria do Sistema & Segurança',
         subtitulo: 'Logs imutáveis, visualizador de antes/depois, alertas e exportação CSV',

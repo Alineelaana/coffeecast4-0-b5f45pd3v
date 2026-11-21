@@ -109,6 +109,19 @@ export interface MomentoRecord {
   updated: string
 }
 
+export interface PortfolioRecord {
+  id: string
+  nome: string
+  arquivo: string
+  tamanho?: number
+  enviado_por?: string
+  expand?: {
+    enviado_por?: { id: string; name: string }
+  }
+  created: string
+  updated: string
+}
+
 export type ContatoStatusComercial =
   | 'novo_lead'
   | 'aguardando_contato'
