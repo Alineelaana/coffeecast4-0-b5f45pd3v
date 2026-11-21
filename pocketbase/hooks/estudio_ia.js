@@ -1,0 +1,275 @@
+// pocketbase/hooks/estudio_ia.js
+// Estúdio Criativo IA + Divulgação Inteligente — CoffeeCast 4.0
+// Agente único "CoffeeCast Creative AI" via OpenAI (segredo GCHAT_GPT, gpt-4.1).
+// Reutiliza a MESMA chave da integração existente (roteiro + capa de episódio), sem criar
+// integração paralela. Não toca na rota única /backend/v1/episodios/capa-ia (episodio_capa_ia.js).
+//
+// Rotas:
+//   POST /backend/v1/estudio/divulgacao   — análise estratégica do roteiro (JSON estruturado)
+//   POST /backend/v1/estudio/templates    — propostas de novos templates (Laboratório)
+// Padrão de resposta: { sucesso, chatgptAtivo, ... } com fallback silencioso sem erro técnico.
+
+function estudioObterApiKey() {
+  return ($os.getenv('GCHAT_GPT') || '').trim()
+}
+
+function estudioChamarOpenAI(apiKey, prompt, maxTokens) {
+  const res = $http.send({
+    url: 'https://api.openai.com/v1/chat/completions',
+    method: 'POST',
+    timeout: 60,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + apiKey,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4.1',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Você é o CoffeeCast Creative AI, agente oficial do podcast brasileiro CoffeeCast 4.0. ' +
+            'Identidade visual: vinho #4B1E3F, dourado, rosé e marfim; tipografia serifada elegante (Playfair Display); ' +
+            'slogan oficial: "Mais que conversas, histórias que transformam." ' +
+            'REGRA ABSOLUTA: NUNCA mencione temporada ("4ª Temporada", "Quarta Temporada" etc.) — apenas "CoffeeCast 4.0". ' +
+            'Nunca invente fatos, citações literais ou declarações dos convidados; use apenas o conteúdo fornecido. ' +
+            'Responda SEMPRE apenas com JSON válido, sem markdown, sem cercas de código.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.75,
+      max_tokens: maxTokens || 3000,
+    }),
+  })
+  let parsed = null
+  try {
+    parsed = JSON.parse(res.body)
+  } catch (_) {
+    parsed = null
+  }
+  const ok = res.statusCode >= 200 && res.statusCode < 300
+  const content =
+    parsed && parsed.choices && parsed.choices[0] && parsed.choices[0].message
+      ? String(parsed.choices[0].message.content || '')
+      : ''
+  return { ok: ok, content: content, status: res.statusCode }
+}
+
+function estudioExtrairJson(content) {
+  if (!content) return null
+  let txt = String(content).trim()
+  txt = txt
+    .replace(/```json/gi, '')
+    .replace(/```/g, '')
+    .trim()
+  const ini = txt.indexOf('{')
+  const fim = txt.lastIndexOf('}')
+  if (ini === -1 || fim === -1 || fim <= ini) return null
+  try {
+    return JSON.parse(txt.slice(ini, fim + 1))
+  } catch (_) {
+    return null
+  }
+}
+
+function estudioContextoRoteiro(body) {
+  const convidados = Array.isArray(body.convidados) ? body.convidados : []
+  const linhas = []
+  convidados.forEach((c, i) => {
+    linhas.push(
+      'Convidado ' +
+        (i + 1) +
+        ': ' +
+        (c.nome || '') +
+        (c.empresa ? ' | Empresa/Projeto: ' + c.empresa : '') +
+        (c.biografia ? ' | Biografia: ' + String(c.biografia).slice(0, 1200) : '') +
+        (c.tema ? ' | Tema desejado: ' + c.tema : ''),
+    )
+  })
+  return {
+    episodioTitulo: (body.titulo_episodio || '').trim(),
+    subtitulo: (body.subtitulo || '').trim(),
+    convidadosTexto: linhas.join('\n'),
+    roteiroTexto: String(body.roteiro_texto || '').slice(0, 14000),
+    observacoes: String(body.observacoes || '').slice(0, 1000),
+  }
+}
+
+// ---------- ROTA 1: Análise de divulgação do roteiro ----------
+routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
+  try {
+    const authUser = e.auth
+    if (!authUser) return e.unauthorizedError('Autenticação necessária')
+    const userRole = authUser.getString('role')
+    if (!['master', 'gerencial', 'adm', 'editor'].includes(userRole)) {
+      return e.forbiddenError('Acesso restrito à equipe autorizada.')
+    }
+
+    const apiKey = estudioObterApiKey()
+    if (!apiKey) {
+      return e.json(200, {
+        sucesso: false,
+        chatgptAtivo: false,
+        mensagem:
+          'O ChatGPT (OpenAI) não está configurado neste ambiente. Configure a chave GCHAT_GPT para gerar a divulgação com IA.',
+      })
+    }
+
+    const body = e.requestInfo().body || {}
+    const modo = (body.modo || 'completo').trim() // completo | gancho | titulos | thumbnail
+    const ctx = estudioContextoRoteiro(body)
+
+    let instrucao = ''
+    if (modo === 'gancho') {
+      instrucao =
+        'Encontre o MELHOR GANCHO do episódio para divulgação. Analise o conteúdo real e responda JSON: ' +
+        '{"tema_principal":"...","diferencial":"...","gancho_emocional":"...","gancho_informativo":"...",' +
+        '"gancho_curiosidade":"...","titulo_youtube":"...","texto_thumbnail":"... (máx 28 caracteres, caixa alta sem gritar)"}'
+    } else if (modo === 'titulos') {
+      instrucao =
+        'Gere 3 NOVOS títulos para YouTube (diferentes dos anteriores), um por estilo. Responda JSON apenas com {"titulos":[...]} no mesmo formato anterior.'
+    } else if (modo === 'thumbnail') {
+      instrucao =
+        'Gere 3 NOVOS títulos curtos de thumbnail (máx 28 caracteres, caixa alta quando fizer sentido, alto impacto). Responda JSON apenas com {"thumbnails":[...]} no mesmo formato anterior.'
+    } else {
+      instrucao =
+        'Analise o roteiro/ficha abaixo (conteúdo REAL, sem inventar fatos) e produza o kit de divulgação. Responda JSON com estas chaves: ' +
+        '{"analise":{"tema_principal":"...","temas_secundarios":["..."],"diferenciais":["..."],' +
+        '"pontos_interesse":["..."],"publico_alvo":"...","mensagens_chave":["..."],"palavras_chave":["..."]}, ' +
+        '"titulos":[{"estilo":"emocional","titulo":"...","justificativa":"...","palavras_chave":["..."]},' +
+        '{"estilo":"informativo","titulo":"...","justificativa":"...","palavras_chave":["..."]},' +
+        '{"estilo":"curiosidade","titulo":"...","justificativa":"...","palavras_chave":["..."]}], ' +
+        '"thumbnails":[{"titulo":"...","razao":"..."}] (3 itens, máx 28 caracteres), ' +
+        '"descricao":"descrição completa do episódio para YouTube (abertura envolvente, apresentação dos convidados, temas, convite, chamada para inscrição, slogan oficial e hashtags no final)", ' +
+        '"tags":"tag1, tag2, ...", "hashtags":"#tag1 #tag2 ...", ' +
+        '"frases":[{"categoria":"inspiradora|emocional|profissional|reflexiva|curiosidade","frase":"..."}] (5 a 8 itens, NUNCA apresentadas como citação literal dos convidados), ' +
+        '"redes":{"instagram":"...","whatsapp":"mensagem curta com link do episódio...","stories":"chamada breve","reels":"texto de divulgação","lancamento":"anúncio de disponibilidade","agradecimento":"mensagem profissional e carinhosa ao convidado"}, ' +
+        '"gancho":{"tema_principal":"...","diferencial":"...","gancho_emocional":"...","gancho_informativo":"...","gancho_curiosidade":"...","titulo_youtube":"...","texto_thumbnail":"..."}}'
+    }
+
+    const prompt =
+      instrucao +
+      '\n\n--- DADOS DO EPISÓDIO (CoffeeCast 4.0) ---\n' +
+      'Título atual do episódio: ' +
+      (ctx.episodioTitulo || '(a definir)') +
+      '\nSubtítulo: ' +
+      (ctx.subtitulo || '(nenhum)') +
+      '\nSlogan oficial: "Mais que conversas, histórias que transformam."\n' +
+      'CONVIDADOS:\n' +
+      (ctx.convidadosTexto || '(sem convidados — episódio de mesa redonda entre apresentadoras)') +
+      '\n\nROTEIRO / FICHA:\n' +
+      (ctx.roteiroTexto || '(sem roteiro anexado)') +
+      (ctx.observacoes ? '\n\nOBSERVAÇÕES DA PRODUÇÃO: ' + ctx.observacoes : '')
+
+    const r = estudioChamarOpenAI(apiKey, prompt, 3500)
+    if (!r.ok || !r.content) {
+      console.log(
+        '[estudio_ia] OpenAI falhou (status ' + r.status + ') — retornando fallback amigável',
+      )
+      return e.json(200, {
+        sucesso: false,
+        chatgptAtivo: true,
+        mensagem:
+          'A IA não conseguiu concluir a análise agora (instabilidade ou limite atingido). Tente novamente em instantes.',
+      })
+    }
+
+    const dados = estudioExtrairJson(r.content)
+    if (!dados) {
+      return e.json(200, {
+        sucesso: false,
+        chatgptAtivo: true,
+        mensagem: 'A IA respondeu em formato inesperado. Tente gerar novamente.',
+      })
+    }
+
+    return e.json(200, {
+      sucesso: true,
+      chatgptAtivo: true,
+      agente: 'CoffeeCast Creative AI',
+      dados,
+    })
+  } catch (err) {
+    console.log('[estudio_ia] erro em /estudio/divulgacao: ' + err)
+    return e.json(200, {
+      sucesso: false,
+      chatgptAtivo: true,
+      mensagem: 'Não foi possível concluir a geração agora. Tente novamente em instantes.',
+    })
+  }
+})
+
+// ---------- ROTA 2: Propostas de novos templates (Laboratório) ----------
+routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
+  try {
+    const authUser = e.auth
+    if (!authUser) return e.unauthorizedError('Autenticação necessária')
+    const userRole = authUser.getString('role')
+    if (!['master', 'gerencial', 'adm', 'editor'].includes(userRole)) {
+      return e.forbiddenError('Acesso restrito à equipe autorizada.')
+    }
+
+    const apiKey = estudioObterApiKey()
+    if (!apiKey) {
+      return e.json(200, {
+        sucesso: false,
+        chatgptAtivo: false,
+        mensagem:
+          'O ChatGPT (OpenAI) não está configurado neste ambiente. Configure a chave GCHAT_GPT para gerar propostas de templates.',
+      })
+    }
+
+    const body = e.requestInfo().body || {}
+    const estilo = String(body.estilo || 'Premium Dourado').slice(0, 60)
+    const paleta = String(body.paleta || 'vinho #4B1E3F, dourado, rosé, marfim').slice(0, 200)
+    const descricao = String(body.descricao || '').slice(0, 1000)
+    const elementos = String(body.elementos_obrigatorios || '').slice(0, 1000)
+
+    const prompt =
+      'Proponha 3 variações de template de capa para o podcast CoffeeCast 4.0 ' +
+      '(formato YouTube 16:9, 1280x720). Estilo desejado: ' +
+      estilo +
+      '. Paleta: ' +
+      paleta +
+      '. Elementos obrigatórios que toda capa deve preservar: logomarca CoffeeCast 4.0 no cabeçalho, slogan "Mais que conversas, histórias que transformam." no rodapé, área para fotografia do convidado, área para título em destaque, área para logomarca do convidado, rodapé "CURTA | INSCREVA-SE | ATIVE O SININHO". NUNCA mencionar temporada. ' +
+      (descricao ? 'Descrição criativa do usuário: ' + descricao + '. ' : '') +
+      (elementos ? 'Elementos extras: ' + elementos + '. ' : '') +
+      'Responda JSON: {"propostas":[{"nome":"...","estilo":"...","paleta":"...","descricao":"...", ' +
+      '"estrutura":"descrição da estrutura visual em camadas (fundo, cabeçalho, área de foto, área de título, rodapé)", ' +
+      '"camadas":[{"nome":"...","tipo":"fundo|logo|texto|foto|logo_convidado|rodape","bloqueado":true|false,' +
+      '"x":0..1,"y":0..1,"w":0..1,"h":0..1,"cor":"#hex","fonte":"serif|sans","tamanho":0..1}]}]}. ' +
+      'Coordenadas x,y,w,h normalizadas (0 a 1) sobre o canvas 16:9.'
+
+    const r = estudioChamarOpenAI(apiKey, prompt, 2500)
+    if (!r.ok || !r.content) {
+      return e.json(200, {
+        sucesso: false,
+        chatgptAtivo: true,
+        mensagem: 'A IA não conseguiu propor templates agora. Tente novamente em instantes.',
+      })
+    }
+
+    const dados = estudioExtrairJson(r.content)
+    if (!dados || !Array.isArray(dados.propostas)) {
+      return e.json(200, {
+        sucesso: false,
+        chatgptAtivo: true,
+        mensagem: 'A IA respondeu em formato inesperado. Tente gerar novamente.',
+      })
+    }
+
+    return e.json(200, {
+      sucesso: true,
+      chatgptAtivo: true,
+      agente: 'CoffeeCast Creative AI',
+      dados,
+    })
+  } catch (err) {
+    console.log('[estudio_ia] erro em /estudio/templates: ' + err)
+    return e.json(200, {
+      sucesso: false,
+      chatgptAtivo: true,
+      mensagem: 'Não foi possível gerar as propostas agora. Tente novamente em instantes.',
+    })
+  }
+})

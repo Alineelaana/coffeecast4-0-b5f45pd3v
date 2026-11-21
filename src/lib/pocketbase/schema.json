@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-21T15:18:12.679Z",
+  "generatedAt": "2026-11-21T15:58:16.236Z",
   "collections": [
     {
       "name": "users",
@@ -1247,6 +1247,24 @@
         {
           "name": "link_gps_personalizado",
           "type": "url",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "divulgacao_ia",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "divulgacao_gerada_em",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "divulgacao_historico",
+          "type": "json",
           "required": false,
           "system": false
         }
@@ -2830,6 +2848,32 @@
         "CREATE INDEX idx_backups_tipo ON backups (tipo)",
         "CREATE INDEX idx_backups_status ON backups (status)"
       ]
+    },
+    {
+      "name": "capas_templates",
+      "type": "base",
+      "apiRules": {
+        "list": null,
+        "view": null,
+        "create": null,
+        "update": "@request.auth.id != \"\"",
+        "delete": "@request.auth.id != \"\""
+      },
+      "fields": [],
+      "indexes": []
+    },
+    {
+      "name": "capas_estudio",
+      "type": "base",
+      "apiRules": {
+        "list": null,
+        "view": null,
+        "create": null,
+        "update": null,
+        "delete": "@request.auth.id != \"\""
+      },
+      "fields": [],
+      "indexes": []
     }
   ]
 }
