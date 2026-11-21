@@ -1,11 +1,14 @@
 // src/components/roteiros/PrepararEpisodioIA.tsx
-// Botão de destaque "PREPARAR EPISÓDIO COM IA" da tela de Roteiros.
-// Fluxo em 3 etapas: (1) Preparação do Roteiro — Nine analisa os dados do convidado vindos
-// do formulário público /roteiro (biografia, empresa, tema prioritário, temas a evitar —
-// NUNCA inventa dados); (2) Divulgação Inteligente (seção A, componente real);
-// (3) Criação da Capa (Estúdio Criativo, com fotografia e logomarcas ORIGINAIS do convidado).
+// Painel "PREPARAR EPISÓDIO COM IA" da tela de Roteiros — fluxo guiado em 3 etapas.
+// Etapa 1: a Nine analisa os dados reais do convidado (ficha do formulário /roteiro) e sugere
+//          uma estrutura de roteiro — SOMENTE PARA REVISÃO, nunca substituindo o roteiro aprovado.
+// Etapa 2: Divulgação Inteligente (componente real, compartilhado com a tela — sem duplicação).
+// Etapa 3: Criação da Capa via Estúdio Criativo IA (fotografia e logomarcas ORIGINAIS preservadas).
+// API real usada: src/services/estudio.ts (gerarDivulgacao / montarContextoRoteiro via hook
+// /backend/v1/estudio/*, segredo GCHAT_GPT). Cliente PocketBase: default export apenas.
 
 import { useMemo, useState } from 'react'
+import pb from '@/lib/pocketbase/client'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -17,12 +20,11 @@ import {
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { RoteiroConvidadoRecord } from '@/types/database'
-import { DivulgacaoInteligente } from '@/components/roteiros/DivulgacaoInteligente'
-import { gerarSugestaoRoteiroIA } from '@/components/roteiros/prepararEpisodioIA'
-import type { DivulgacaoRoteiroDados } from '@/components/roteiros/DivulgacaoInteligente'
+import DivulgacaoInteligente from '@/components/roteiros/DivulgacaoInteligente'
+import { gerarDivulgacao, type DivulgacaoDados } from '@/services/estudio'
 import { Coffee, Loader2, ShieldCheck, Sparkles, Wand2 } from 'lucide-react'
 
 type Etapa = 0 | 1 | 2
@@ -31,7 +33,7 @@ const ETAPAS: { id: Etapa; titulo: string; desc: string }[] = [
   {
     id: 0,
     titulo: 'Preparação do Roteiro',
-    desc: 'A Nine analisa os dados reais do convidado (bio, empresa, temas) e sugere ajustes para revisão.',
+    desc: 'A IA analisa os dados reais do convidado (bio, empresa, temas) e sugere ajustes para revisão.',
   },
   {
     id: 1,
@@ -52,8 +54,12 @@ interface Props {
   onRoteiroAtualizado?: (r: RoteiroConvidadoRecord) => void
 }
 
-export function PrepararEpisodioIA({ open, onOpenChange, roteiro, onRoteiroAtualizado }: Props) {
-  const { toast } = useToast()
+export default function PrepararEpisodioIA({
+  open,
+  onOpenChange,
+  roteiro,
+  onRoteiroAtualizado,
+}: Props) {
   const [etapa, setEtapa] = useState<Etapa>(0)
   const [sugestao, setSugestao] = useState('')
   const [gerando, setGerando] = useState(false)
@@ -69,30 +75,66 @@ export function PrepararEpisodioIA({ open, onOpenChange, roteiro, onRoteiroAtual
     onOpenChange(v)
   }
 
-  const convidado = useMemo(() => roteiro, [roteiro])
-
   const temasEvitar = useMemo(() => {
-    if (!convidado) return [] as string[]
-    const cru =
-      (convidado.tema_evitar && String(convidado.tema_evitar)) ||
-      (convidado.tema_evitar_extra && String(convidado.tema_evitar_extra)) ||
-      ''
+    const rec = roteiro as unknown as Record<string, unknown>
+    const cru = (typeof rec.tema_sensivel_detalhes === 'string' && rec.tema_sensivel_detalhes) || ''
     return cru
       .split(/[,;\n]/)
       .map((t) => t.trim())
       .filter(Boolean)
-  }, [convidado])
+  }, [roteiro])
 
+  /** Etapa 1 — análise dos dados reais via serviço do Estúdio (hook /estudio/divulgacao). */
   const gerarPreparacao = async () => {
-    if (!convidado) return
+    if (!roteiro) return
     setGerando(true)
     try {
-      const res = await gerarSugestaoRoteiroIA(convidado)
-      setSugestao(res.texto)
-      toast.success(
-        'Análise da Nine concluída — revise as sugestões antes de aplicar ao roteiro final.',
-      )
+      const res = await gerarDivulgacao({
+        roteiro_id: roteiro.id,
+        titulo_episodio: roteiro.tema_enfatizar || roteiro.nome,
+        roteiro_texto: (roteiro.roteiro_final_texto || '').slice(0, 12000),
+        convidados: [
+          {
+            nome: roteiro.nome,
+            empresa: roteiro.tem_empresa ? roteiro.nome_empresa : '',
+            biografia: roteiro.biografia || '',
+            tema: roteiro.tema_enfatizar || '',
+          },
+        ],
+        observacoes: [
+          roteiro.tem_tema_sensivel && roteiro.tema_sensivel_detalhes
+            ? `Temas a EVITAR (definidos pelo convidado — nunca sugerir): ${roteiro.tema_sensivel_detalhes}`
+            : '',
+          'Sugira a ESTRUTURA do roteiro (apresentação, blocos, encerramento) para REVISÃO — nunca substitua o roteiro aprovado.',
+          'NUNCA mencionar temporada ("Quarta Temporada", "4ª Temporada" etc.) — o nome oficial é CoffeeCast 4.0.',
+        ]
+          .filter(Boolean)
+          .join(' '),
+        modo: 'gancho',
+      })
+      if (!res.sucesso || !res.dados) {
+        toast.error(
+          res.chatgptAtivo
+            ? res.mensagem || 'A IA não respondeu agora. Tente novamente em instantes.'
+            : 'ChatGPT (GCHAT_GPT) não configurado no backend — nada foi simulado.',
+        )
+        return
+      }
+      const d: DivulgacaoDados = res.dados
+      const g = d.gancho || {}
+      const partes = [
+        g.gancho_emocional ? `GANCHO EMOCIONAL\n${g.gancho_emocional}` : '',
+        g.gancho_informativo ? `\nGANCHO INFORMATIVO\n${g.gancho_informativo}` : '',
+        g.gancho_curiosidade ? `\nCURIOSIDADE\n${g.gancho_curiosidade}` : '',
+        d.descricao ? `\nSUGESTÃO DE ESTRUTURA / ABERTURA\n${d.descricao}` : '',
+        d.frases?.length
+          ? `\nFRASES DE IMPACTO\n${d.frases.map((f) => `• ${f.categoria}: ${f.frase}`).join('\n')}`
+          : '',
+      ].filter(Boolean)
+      setSugestao(partes.join('\n'))
+      toast.success('Análise concluída — revise as sugestões antes de aplicar ao roteiro final.')
     } catch (e) {
+      console.error('[PrepararEpisodioIA] erro na análise:', e)
       toast.error(
         e instanceof Error
           ? e.message
@@ -103,29 +145,36 @@ export function PrepararEpisodioIA({ open, onOpenChange, roteiro, onRoteiroAtual
     }
   }
 
-  const divulgacaoInicial: DivulgacaoRoteiroDados | null = useMemo(() => {
-    if (!convidado) return null
-    return {
-      roteiroId: convidado.id,
-      nome: convidado.nome,
-      empresa: convidado.tem_empresa ? convidado.nome_empresa || '' : '',
-      tema: convidado.tema_enfatizar || '',
-      roteiroTexto: convidado.roteiro_final_texto || '',
+  /** Guarda a sugestão em roteiro_sugerido_nine (revisável no editor) — sem tocar no aprovado. */
+  const guardarParaRevisao = async () => {
+    if (!roteiro || !sugestao) return
+    try {
+      await pb.collection('roteiros_convidados').update(roteiro.id, {
+        roteiro_sugerido_nine: sugestao,
+      })
+      onRoteiroAtualizado?.({
+        ...roteiro,
+        roteiro_sugerido_nine: sugestao,
+      } as RoteiroConvidadoRecord)
+      toast.success('Sugestão registrada para revisão no editor (roteiro aprovado preservado).')
+    } catch (err) {
+      console.error('[PrepararEpisodioIA] erro ao guardar sugestão:', err)
+      toast.error('Não foi possível guardar a sugestão. Verifique suas permissões.')
     }
-  }, [convidado])
+  }
 
   if (!roteiro) return null
 
   return (
     <Dialog open={open} onOpenChange={handleAbrir}>
-      <DialogContent className="max-w-3xl w-[95vw] max-h-[92vh] bg-marfim border-2 border-dourado rounded-3xl p-5 sm:p-7 flex flex-col">
+      <DialogContent className="max-w-3xl w-[95vw] max-h-[92vh] bg-[#FBF6EC] border-2 border-[#C9971F] rounded-3xl p-5 sm:p-7 flex flex-col">
         <DialogHeader className="space-y-1.5">
-          <DialogTitle className="font-serif text-xl sm:text-2xl text-vinho flex items-center gap-2">
-            <Wand2 className="w-5 h-5 text-dourado-dark" />
+          <DialogTitle className="font-serif text-xl sm:text-2xl text-[#4B1E3F] flex items-center gap-2">
+            <Wand2 className="w-5 h-5 text-[#8a6d1c]" />
             Preparar Episódio com IA
           </DialogTitle>
           <DialogDescription asChild>
-            <p className="text-xs text-vinho/70">
+            <p className="text-xs text-[#4B1E3F]/70">
               Fluxo guiado em 3 etapas — Preparação do Roteiro, Divulgação Inteligente e Criação da
               Capa. Nenhum dado do convidado é inventado e nenhum roteiro aprovado é substituído
               automaticamente.
@@ -135,7 +184,7 @@ export function PrepararEpisodioIA({ open, onOpenChange, roteiro, onRoteiroAtual
 
         {/* Indicador de etapas */}
         <div className="mt-1 space-y-2">
-          <Progress value={((etapa + 1) / 3) * 100} className="h-1.5 bg-vinho/10" />
+          <Progress value={((etapa + 1) / 3) * 100} className="h-1.5" />
           <div className="grid grid-cols-3 gap-2">
             {ETAPAS.map((e) => (
               <button
@@ -146,22 +195,24 @@ export function PrepararEpisodioIA({ open, onOpenChange, roteiro, onRoteiroAtual
                 className={cn(
                   'text-left rounded-xl border px-3 py-2 transition-all disabled:opacity-50',
                   etapa === e.id
-                    ? 'border-dourado bg-white shadow-sm'
-                    : 'border-vinho/15 bg-white/60 hover:bg-white',
+                    ? 'border-[#C9971F] bg-white shadow-sm'
+                    : 'border-[#4B1E3F]/15 bg-white/60 hover:bg-white',
                 )}
               >
                 <div className="flex items-center gap-1.5">
                   <span
                     className={cn(
                       'w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0',
-                      etapa === e.id ? 'bg-vinho text-dourado' : 'bg-vinho/15 text-vinho',
+                      etapa === e.id
+                        ? 'bg-[#4B1E3F] text-[#F5E9D7]'
+                        : 'bg-[#4B1E3F]/15 text-[#4B1E3F]',
                     )}
                   >
                     {e.id + 1}
                   </span>
-                  <span className="text-[11px] font-bold text-vinho truncate">{e.titulo}</span>
+                  <span className="text-[11px] font-bold text-[#4B1E3F] truncate">{e.titulo}</span>
                 </div>
-                <p className="text-[10px] text-vinho/60 mt-1 line-clamp-2">{e.desc}</p>
+                <p className="text-[10px] text-[#4B1E3F]/60 mt-1 line-clamp-2">{e.desc}</p>
               </button>
             ))}
           </div>
@@ -169,27 +220,27 @@ export function PrepararEpisodioIA({ open, onOpenChange, roteiro, onRoteiroAtual
 
         <ScrollArea className="flex-1 max-h-[52vh] pr-2 mt-4">
           {/* ETAPA 1 — Preparação do Roteiro */}
-          {etapa === 0 && convidado && (
+          {etapa === 0 && (
             <div className="space-y-4">
-              <div className="bg-white rounded-2xl border border-vinho/10 p-4 space-y-2 shadow-2xs">
-                <h4 className="text-xs font-bold text-vinho flex items-center gap-2">
-                  <Coffee className="w-4 h-4 text-dourado-dark" /> Dados do convidado (formulário
+              <div className="bg-white rounded-2xl border border-[#4B1E3F]/10 p-4 space-y-2">
+                <h4 className="text-xs font-bold text-[#4B1E3F] flex items-center gap-2">
+                  <Coffee className="w-4 h-4 text-[#8a6d1c]" /> Dados do convidado (formulário
                   público /roteiro)
                 </h4>
-                <div className="text-[11px] text-vinho/80 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                <div className="text-[11px] text-[#4B1E3F]/80 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
                   <p>
-                    <strong>Nome:</strong> {convidado.nome}
+                    <strong>Nome:</strong> {roteiro.nome}
                   </p>
                   <p>
                     <strong>Empresa:</strong>{' '}
-                    {convidado.tem_empresa ? convidado.nome_empresa || '—' : '—'}
+                    {roteiro.tem_empresa ? roteiro.nome_empresa || '—' : '—'}
                   </p>
                   <p className="sm:col-span-2">
-                    <strong>Tema prioritário:</strong> {convidado.tema_enfatizar || 'não informado'}
+                    <strong>Tema prioritário:</strong> {roteiro.tema_enfatizar || 'não informado'}
                   </p>
-                  {convidado.biografia && (
+                  {roteiro.biografia && (
                     <p className="sm:col-span-2 line-clamp-4">
-                      <strong>Biografia:</strong> {convidado.biografia}
+                      <strong>Biografia:</strong> {roteiro.biografia}
                     </p>
                   )}
                   {temasEvitar.length > 0 && (
@@ -203,8 +254,8 @@ export function PrepararEpisodioIA({ open, onOpenChange, roteiro, onRoteiroAtual
               <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3">
                 <ShieldCheck className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                 <p className="text-[11px] text-amber-800">
-                  As sugestões da Nine são <strong>somente para revisão</strong> — nada substitui o
-                  roteiro aprovado. Temas marcados pelo convidado como "evitar" nunca são sugeridos.
+                  As sugestões são <strong>somente para revisão</strong> — nada substitui o roteiro
+                  aprovado. Temas marcados pelo convidado como "evitar" nunca são sugeridos.
                 </p>
               </div>
 
@@ -212,35 +263,36 @@ export function PrepararEpisodioIA({ open, onOpenChange, roteiro, onRoteiroAtual
                 type="button"
                 disabled={gerando}
                 onClick={gerarPreparacao}
-                className="w-full bg-vinho hover:bg-vinho-light text-white font-bold rounded-xl h-11 flex items-center justify-center gap-2"
+                className="w-full bg-[#4B1E3F] hover:bg-[#5d2650] text-white font-bold rounded-xl h-11"
               >
                 {gerando ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-dourado" /> A Nine está analisando
-                    os dados do convidado...
+                    <Loader2 className="w-4 h-4 animate-spin" /> A IA está analisando os dados do
+                    convidado...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4 text-dourado" /> Analisar dados e sugerir estrutura
-                    de roteiro
+                    <Sparkles className="w-4 h-4" /> Analisar dados e sugerir estrutura de roteiro
                   </>
                 )}
               </Button>
 
               {sugestao && (
-                <div className="space-y-2 animate-fade-in">
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Badge className="bg-dourado/20 text-vinho border border-dourado/40 text-[10px]">
-                      Sugestão da Nine (editável)
+                    <Badge className="bg-[#C9971F]/20 text-[#4B1E3F] border border-[#C9971F]/40 text-[10px]">
+                      Sugestão da IA (editável)
                     </Badge>
                     <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-8 text-[11px] border-vinho/20 text-vinho hover:bg-vinho/10"
+                        className="h-8 text-[11px]"
                         onClick={() => {
-                          navigator.clipboard.writeText(sugestao)
-                          toast.success('Sugestão copiada.')
+                          void navigator.clipboard
+                            .writeText(sugestao)
+                            .then(() => toast.success('Sugestão copiada.'))
+                            .catch(() => toast.error('Não foi possível copiar.'))
                         }}
                       >
                         Copiar
@@ -248,15 +300,7 @@ export function PrepararEpisodioIA({ open, onOpenChange, roteiro, onRoteiroAtual
                       <Button
                         size="sm"
                         className="h-8 text-[11px] bg-emerald-700 hover:bg-emerald-800 text-white font-bold"
-                        onClick={() => {
-                          if (onRoteiroAtualizado && convidado) {
-                            onRoteiroAtualizado({
-                              ...convidado,
-                              roteiro_sugerido_nine: sugestao,
-                            })
-                          }
-                          toast.success('Sugestão registrada para revisão no editor.')
-                        }}
+                        onClick={guardarParaRevisao}
                       >
                         Guardar para revisão
                       </Button>
@@ -266,7 +310,7 @@ export function PrepararEpisodioIA({ open, onOpenChange, roteiro, onRoteiroAtual
                     rows={10}
                     value={sugestao}
                     onChange={(e) => setSugestao(e.target.value)}
-                    className="w-full bg-white border border-vinho/20 rounded-2xl p-3.5 text-xs text-vinho focus:ring-2 focus:ring-dourado font-sans leading-relaxed"
+                    className="w-full bg-white border border-[#4B1E3F]/20 rounded-2xl p-3.5 text-xs text-[#4B1E3F] focus:ring-2 focus:ring-[#C9971F] font-sans leading-relaxed"
                   />
                 </div>
               )}
@@ -276,7 +320,7 @@ export function PrepararEpisodioIA({ open, onOpenChange, roteiro, onRoteiroAtual
                   type="button"
                   disabled={!sugestao}
                   onClick={() => setEtapa(1)}
-                  className="bg-dourado-dark hover:bg-dourado text-white font-bold rounded-xl h-10 px-5 text-xs"
+                  className="bg-[#C9971F] hover:bg-[#b8891b] text-white font-bold rounded-xl h-10 px-5 text-xs"
                 >
                   Avançar para Divulgação →
                 </Button>
@@ -284,24 +328,11 @@ export function PrepararEpisodioIA({ open, onOpenChange, roteiro, onRoteiroAtual
             </div>
           )}
 
-          {/* ETAPA 2 — Divulgação Inteligente (seção real, mesma da tela) */}
-          {etapa === 1 && divulgacaoInicial && (
-            <DivulgacaoInteligente
-              roteiro={divulgacaoInicial}
-              onRoteiroAtualizado={onRoteiroAtualizado}
-              compacto
-            />
-          )}
+          {/* ETAPA 2 — Divulgação Inteligente (mesmo componente da tela — sem duplicação) */}
+          {etapa === 1 && <DivulgacaoInteligente roteiro={roteiro} compacto />}
 
           {/* ETAPA 3 — Criação da Capa (Estúdio Criativo real) */}
-          {etapa === 2 && divulgacaoInicial && (
-            <DivulgacaoInteligente
-              roteiro={divulgacaoInicial}
-              onRoteiroAtualizado={onRoteiroAtualizado}
-              compacto
-              focoCapa
-            />
-          )}
+          {etapa === 2 && <DivulgacaoInteligente roteiro={roteiro} compacto />}
         </ScrollArea>
       </DialogContent>
     </Dialog>
