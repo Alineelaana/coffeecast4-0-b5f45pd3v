@@ -570,6 +570,60 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
               tarefaCriada = true
             }
 
+            // -------------------------------------------------------------------
+            // RESUMO ESTRUTURADO DO LEAD (resumo_ia) — gerado no backend pelo
+            // motor LLM no momento da qualificação, no mesmo padrão do endpoint
+            // resumo-ia do nine_comercial.js. Idempotente: só gera se vazio.
+            // Fidelidade absoluta: dado ausente na conversa vira "não informado".
+            // -------------------------------------------------------------------
+            if (!leadContato.getString('resumo_ia')) {
+              try {
+                let transcriptResumo = ''
+                try {
+                  const msgsResumo = $app.findRecordsByFilter(
+                    'nine_mensagens',
+                    `conversation_id = "${conversationId}"`,
+                    'created',
+                    200,
+                    0,
+                  )
+                  for (let ir = 0; ir < (msgsResumo || []).length; ir++) {
+                    const mr = msgsResumo[ir]
+                    const quem = mr.getString('remetente') === 'visitante' ? 'Visitante' : 'Nine'
+                    transcriptResumo += `${quem}: ${mr.getString('conteudo')}\n`
+                  }
+                } catch (_) {}
+                if (!transcriptResumo) transcriptResumo = 'Visitante: ' + rawMessage
+
+                let resumoIa = ''
+                const chatResumo = $ai.chat({
+                  model: 'fast',
+                  messages: [
+                    {
+                      role: 'system',
+                      content:
+                        'Você é assistente comercial do CoffeeCast 4.0. Resuma a conversa em português do Brasil, fielmente, SEM inventar nada. Use exatamente esta estrutura com quebras de linha:\nQuem é o visitante: ...\nO que deseja: ...\nInformações relevantes: ...\nExpectativa: ...\nCanal preferido: ...\nPróxima ação: ...\nQuando um dado não aparece na conversa, escreva "não informado". Seja objetivo.',
+                    },
+                    { role: 'user', content: transcriptResumo.slice(0, 12000) },
+                  ],
+                })
+                if (
+                  chatResumo &&
+                  chatResumo.choices &&
+                  chatResumo.choices[0] &&
+                  chatResumo.choices[0].message
+                ) {
+                  resumoIa = chatResumo.choices[0].message.content || ''
+                }
+                if (resumoIa) {
+                  leadContato.set('resumo_ia', resumoIa)
+                  leadNeedsSave = true
+                }
+              } catch (resumoErr) {
+                console.log('Aviso ao gerar resumo_ia no hook do chat:', resumoErr)
+              }
+            }
+
             // Confirmação ao visitante SÓ depois de gravar de verdade
             confirmacaoComercial =
               '\n\nPerfeito! Já registrei seu interesse e deixei sua solicitação sinalizada para nossa equipe. A Aline poderá dar continuidade ao atendimento assim que possível. ☕💛'

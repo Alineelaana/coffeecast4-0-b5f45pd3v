@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import LeadsLogicaTela from '@/components/admin/LeadsLogicaTela'
 import {
   NineComercialService,
   NINE_LEADS_ORDENACOES,
@@ -66,40 +67,48 @@ interface Indicador {
   icone: React.ComponentType<{ className?: string }>
 }
 
+// `valor` é o placeholder inicial: na renderização cada indicador recebe a
+// contagem real do backend (contagens do hook nine_comercial) — nunca estático.
 const INDICADORES: Indicador[] = [
   {
     chave: 'aguardando',
     rotulo: 'AGUARDANDO CONTATO',
+    valor: 0,
     filtro: 'aguardando_contato',
     icone: Clock,
   },
   {
     chave: 'novos',
     rotulo: 'Novos Leads',
+    valor: 0,
     filtro: 'novo_lead',
     icone: Sparkles,
   },
   {
     chave: 'agendados',
     rotulo: 'Contatos Agendados',
+    valor: 0,
     filtro: 'contato_agendado',
     icone: CalendarClock,
   },
   {
     chave: 'atendimento',
     rotulo: 'Em Atendimento',
+    valor: 0,
     filtro: 'em_atendimento',
     icone: MessageCircle,
   },
   {
     chave: 'convertidos',
     rotulo: 'Convertidos',
+    valor: 0,
     filtro: 'convertido',
     icone: Check,
   },
   {
     chave: 'atrasados',
     rotulo: 'Contatos Atrasados',
+    valor: 0,
     filtro: '__atrasados',
     icone: AlertTriangle,
   },
@@ -345,6 +354,7 @@ export default function AdminLeadsScreen() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <LeadsLogicaTela />
           <Button variant="outline" size="sm" onClick={carregar} disabled={carregando}>
             <RefreshCw className={cn('mr-2 h-4 w-4', carregando && 'animate-spin')} />
             Atualizar
@@ -731,7 +741,7 @@ export default function AdminLeadsScreen() {
             </div>
           ) : leadDetalhe ? (
             <div className="whitespace-pre-wrap rounded-lg border border-dourado/40 bg-dourado/10 p-4 text-sm text-vinho">
-              {leadDetalhe.resumo_ia || 'Sem resumo ainda — gere em "Ver Resumo".'}
+              {leadDetalhe.lead.resumo_ia || 'Sem resumo ainda — gere em "Ver Resumo".'}
             </div>
           ) : null}
         </DialogContent>

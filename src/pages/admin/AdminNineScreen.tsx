@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/dialog'
 import pb from '@/lib/pocketbase/client'
 import { NineAvatar } from '@/components/NineAvatar'
+import NineLogicaTela from '@/components/admin/NineLogicaTela'
 import { useAuth } from '@/context/AuthContext'
 import {
   NineConfigRecord,
@@ -982,6 +983,7 @@ export default function AdminNineScreen() {
             onCheckedChange={handleToggleAutoService}
             className="data-[state=checked]:bg-emerald-600"
           />
+          <NineLogicaTela />
         </div>
       </div>
 

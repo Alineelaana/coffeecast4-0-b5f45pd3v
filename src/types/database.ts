@@ -236,6 +236,11 @@ export interface NineLeadDetalhe {
   tarefas: Array<{
     id: string
     titulo: string
+    lead?: string
+    conversation_id?: string
+    nome?: string
+    telefone?: string
+    email?: string
     status: string
     prioridade: string
     prazo: string
