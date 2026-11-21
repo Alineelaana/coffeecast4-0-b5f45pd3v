@@ -62,7 +62,6 @@ import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
 import { DivulgacaoInteligente } from '@/components/roteiros/DivulgacaoInteligente'
 import { PrepararEpisodioIA } from '@/components/roteiros/PrepararEpisodioIA'
-import { gerarSugestaoRoteiroIA } from '@/components/roteiros/prepararEpisodioIA'
 import { EstudioLogicaTela } from '@/components/estudio/EstudioLogicaTela'
 
 export default function AdminRoteirosScreen() {
