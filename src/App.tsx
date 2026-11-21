@@ -45,6 +45,7 @@ import AdminBackupsScreen from '@/pages/admin/AdminBackupsScreen'
 import AdminAuditoriaScreen from '@/pages/admin/AdminAuditoriaScreen'
 import AdminNotificacoesScreen from '@/pages/admin/AdminNotificacoesScreen'
 import AdminRoteirosScreen from '@/pages/admin/AdminRoteirosScreen'
+import AdminEstudioScreen from '@/pages/admin/AdminEstudioScreen'
 import AdminNineScreen from '@/pages/admin/AdminNineScreen'
 import AdminChatManagementScreen from '@/pages/admin/AdminChatManagementScreen'
 import DocumentacaoScreen from '@/pages/DocumentacaoScreen'
@@ -201,6 +202,14 @@ export default function App() {
                 element={
                   <ProtectedRoute screenKey="roteiros">
                     <AdminRoteirosScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="estudio"
+                element={
+                  <ProtectedRoute screenKey="estudio">
+                    <AdminEstudioScreen />
                   </ProtectedRoute>
                 }
               />

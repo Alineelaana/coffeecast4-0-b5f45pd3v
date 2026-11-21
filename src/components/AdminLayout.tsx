@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import pb from '@/lib/pocketbase/client'
 import officialLogo from '@/assets/sem-nome-1350-x-1080-px-1-c4c50.png'
+import officialCoverLogo from '@/assets/coffeecast-4.0-historias-que-inspiram-a5f6c.png'
 import {
   LayoutDashboard,
   Bell,
@@ -354,6 +355,27 @@ export default function AdminLayout() {
         'pdf',
         'roteiro oficial',
         'entrevista',
+      ],
+    },
+    {
+      key: 'estudio',
+      label: 'Estúdio Criativo IA',
+      path: '/admin/estudio',
+      icon: Sparkles,
+      highlight: true,
+      keywords: [
+        'estudio criativo ia',
+        'estudio',
+        'capas',
+        'capa do episodio',
+        'template',
+        'templates',
+        'gerador de capas',
+        'laboratorio de templates',
+        'biblioteca criativa',
+        'premium dourado',
+        'divulgacao inteligente',
+        'ia',
       ],
     },
     {

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-21T15:59:32.843Z",
+  "generatedAt": "2026-11-21T16:19:29.135Z",
   "collections": [
     {
       "name": "users",
@@ -2853,26 +2853,227 @@
       "name": "capas_templates",
       "type": "base",
       "apiRules": {
-        "list": null,
-        "view": null,
-        "create": null,
-        "update": "@request.auth.id != \"\"",
-        "delete": "@request.auth.id != \"\""
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"adm\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"adm\"",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"adm\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"adm\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"adm\""
       },
-      "fields": [],
+      "fields": [
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "estilo",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": [
+            "Premium Dourado",
+            "Black Gold",
+            "Minimalista",
+            "Cinematográfico",
+            "Corporativo",
+            "Moderno",
+            "Tecnológico",
+            "Editorial",
+            "Luxo Contemporâneo",
+            "Personalizado"
+          ]
+        },
+        {
+          "name": "descricao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "paleta",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "formato",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["16:9", "1:1", "9:16"]
+        },
+        {
+          "name": "template_json",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["ativo", "inativo", "rascunho"]
+        },
+        {
+          "name": "bloqueado",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "mestre",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "versao",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "autor",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "thumbnail",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
       "indexes": []
     },
     {
       "name": "capas_estudio",
       "type": "base",
       "apiRules": {
-        "list": null,
-        "view": null,
-        "create": null,
-        "update": null,
-        "delete": "@request.auth.id != \"\""
+        "list": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"adm\"",
+        "view": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"adm\"",
+        "create": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"adm\"",
+        "update": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"adm\"",
+        "delete": "@request.auth.role = \"master\" || @request.auth.role = \"gerencial\" || @request.auth.role = \"adm\""
       },
-      "fields": [],
+      "fields": [
+        {
+          "name": "episodio_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "roteiro_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "titulo",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "titulo_thumbnail",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "template_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "template_nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "convidados",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "arquivo_capa",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "resolucao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["rascunho", "oficial", "arquivada"]
+        },
+        {
+          "name": "versao",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "dados_ia",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "usuario",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "oficial",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
       "indexes": []
     }
   ]
