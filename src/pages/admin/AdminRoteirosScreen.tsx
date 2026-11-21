@@ -63,6 +63,7 @@ import { useAuth } from '@/context/AuthContext'
 import DivulgacaoInteligente from '@/components/roteiros/DivulgacaoInteligente'
 import PrepararEpisodioIA from '@/components/roteiros/PrepararEpisodioIA'
 import EstudioLogicaTela from '@/components/estudio/EstudioLogicaTela'
+import RoteirosLogicaTela from '@/components/roteiros/RoteirosLogicaTela'
 
 export default function AdminRoteirosScreen() {
   const { isMaster, isGerencial } = useAuth()
@@ -165,8 +166,10 @@ export default function AdminRoteirosScreen() {
   const [confirmRegenerarConjuntoOpen, setConfirmRegenerarConjuntoOpen] = useState(false)
 
   // DIVULGAÇÃO INTELIGENTE COM IA + PREPARAR EPISÓDIO COM IA + Lógica da Tela
+  // (Roteiros usa RoteirosLogicaTela; Estúdio continua com EstudioLogicaTela)
   const [prepararIAOpen, setPrepararIAOpen] = useState(false)
   const [logicaTelaOpen, setLogicaTelaOpen] = useState(false)
+  const [logicaTelaRoteirosOpen, setLogicaTelaRoteirosOpen] = useState(false)
   const [divulgacaoRoteiro, setDivulgacaoRoteiro] = useState<RoteiroConvidadoRecord | null>(null)
   const [divulgacaoOpen, setDivulgacaoOpen] = useState(false)
 
@@ -2024,7 +2027,7 @@ export default function AdminRoteirosScreen() {
                         type="button"
                         size="sm"
                         variant="outline"
-                        onClick={() => setLogicaTelaOpen(true)}
+                        onClick={() => setLogicaTelaRoteirosOpen(true)}
                         className="border-dourado/60 text-vinho hover:bg-dourado/15 font-bold text-xs rounded-xl min-h-[38px] px-3 flex items-center gap-1.5"
                       >
                         <Layers className="w-3.5 h-3.5 text-dourado-dark" />
@@ -2635,6 +2638,7 @@ export default function AdminRoteirosScreen() {
       />
 
       <EstudioLogicaTela open={logicaTelaOpen} onOpenChange={setLogicaTelaOpen} />
+      <RoteirosLogicaTela open={logicaTelaRoteirosOpen} onOpenChange={setLogicaTelaRoteirosOpen} />
 
       {/* MODAL DO EDITOR EDITORIAL DE ROTEIROS */}
       <RoteiroEditorModal

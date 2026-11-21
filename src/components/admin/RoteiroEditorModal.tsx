@@ -441,6 +441,92 @@ export function RoteiroEditorModal({
     }
   }
 
+  // Regenerar um único bloco pela Nine, preservando os demais blocos já aprovados
+  const handleRegenerarBlocoPelaNine = async (blocoId: string) => {
+    if (!roteiro) return
+    setRegenerating(true)
+    try {
+      const blocoAlvo = blocos.find((b) => b.id === blocoId)
+      if (!blocoAlvo) throw new Error('Bloco não encontrado para regeneração.')
+
+      const payloadBody: Record<string, unknown> = {
+        roteiro_id: roteiro.id,
+        regenerar_bloco: {
+          numero: blocoAlvo.numero,
+          titulo: blocoAlvo.titulo,
+          textoIntro: blocoAlvo.textoIntro || '',
+          perguntas: (blocoAlvo.perguntas || [])
+            .map((p) => `${p.numero}. ${p.texto}${p.opcional ? ' (se houver espaço)' : ''}`)
+            .join('\n'),
+        },
+      }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_POCKETBASE_URL}/backend/v1/roteiro-assistente`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: pb.authStore.token,
+          },
+          body: JSON.stringify(payloadBody),
+        },
+      )
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'A Nine não pôde regenerar este bloco neste momento.')
+      }
+
+      const novoConteudo = cleanMarkdownSyntax(data.roteiroSugerido || '')
+      if (!novoConteudo.trim()) {
+        throw new Error('A Nine não retornou conteúdo para este bloco. Tente novamente.')
+      }
+
+      // Reescrever SOMENTE o bloco alvo; os demais permanecem intactos
+      setBlocos((prev) =>
+        prev.map((b) => {
+          if (b.id !== blocoId) return b
+          return {
+            ...b,
+            textoIntro: novoConteudo,
+          }
+        }),
+      )
+
+      AuditoriaService.registrarEvento({
+        tipo_acao: 'edicao',
+        area_sistema: 'Roteiros & Pautas',
+        descricao: `Bloco "${blocoAlvo.numero} — ${blocoAlvo.titulo}" regenerado pela Nine para "${nomesConvidados.join(' & ')}"; demais blocos preservados.`,
+        registro_afetado: roteiro.id,
+        tabela_afetada: 'roteiros_convidados',
+        resultado: 'sucesso',
+        metadata: {
+          roteiro_id: roteiro.id,
+          bloco_regenerado: blocoAlvo.titulo,
+          convidados: nomesConvidados,
+        },
+      }).catch((auditErr) => {
+        console.warn('[RoteiroEditorModal] Erro ao auditar regeneração de bloco:', auditErr)
+      })
+
+      toast({
+        title: 'Bloco Regenerado pela Nine!',
+        description: `"${blocoAlvo.titulo}" foi reescrito. Os demais blocos foram preservados — salve para confirmar.`,
+      })
+    } catch (err: unknown) {
+      console.error('Erro ao regenerar bloco:', err)
+      const msg = err instanceof Error ? err.message : 'Falha ao regenerar bloco'
+      toast({
+        title: 'Erro na Regeneração do Bloco',
+        description: msg,
+        variant: 'destructive',
+      })
+    } finally {
+      setRegenerating(false)
+    }
+  }
+
   // Regenerar roteiro do zero pela Nine com base nas respostas dos convidados
   const handleRegenerarRoteiroPelaNine = async () => {
     if (!roteiro) return
@@ -868,6 +954,16 @@ export function RoteiroEditorModal({
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                          title="Regenerar este bloco pela Nine (os demais blocos são preservados)"
+                          disabled={regenerating}
+                          onClick={() => handleRegenerarBlocoPelaNine(bloco.id)}
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-7 w-7 text-muted-foreground"
                           disabled={idx === 0}
                           onClick={() => handleMoverBloco(idx, 'cima')}
@@ -1085,6 +1181,22 @@ export function RoteiroEditorModal({
                             <label className="text-xs font-bold text-foreground block">
                               Itens de Resposta Rápida (1 por linha):
                             </label>
+                            <div className="flex items-center justify-end">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs gap-1 border-amber-300 text-amber-800 dark:text-amber-300"
+                                disabled={regenerating}
+                                onClick={() => handleRegenerarBlocoPelaNine(bloco.id)}
+                              >
+                                <Sparkles className="w-3 h-3" />
+                                <span>
+                                  {regenerating
+                                    ? 'Regenerando...'
+                                    : 'Regenerar Bate-Bola pela Nine'}
+                                </span>
+                              </Button>
+                            </div>
                             <Textarea
                               value={(bloco.itensBateBola || []).join('\n')}
                               onChange={(e) =>
@@ -1121,6 +1233,20 @@ export function RoteiroEditorModal({
                         {/* Bloco de Encerramento (Legado) */}
                         {bloco.tipo === 'encerramento' && (
                           <div className="space-y-3 pt-2 border-t">
+                            <div className="flex items-center justify-end">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs gap-1 border-amber-300 text-amber-800 dark:text-amber-300"
+                                disabled={regenerating}
+                                onClick={() => handleRegenerarBlocoPelaNine(bloco.id)}
+                              >
+                                <Sparkles className="w-3 h-3" />
+                                <span>
+                                  {regenerating ? 'Regenerando...' : 'Regenerar Bloco pela Nine'}
+                                </span>
+                              </Button>
+                            </div>
                             <div>
                               <label className="text-xs font-bold text-foreground mb-1 block">
                                 Pergunta Marcante sobre LEGADO:
