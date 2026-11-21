@@ -10,19 +10,34 @@
 //    (controle de custos de IA, sem degradar o atendimento).
 // 3) Seeds idempotentes em nine_conhecimento (categoria "Comercial"):
 //    modalidades (convite / contratação / patrocínio / parceria), estrutura
-//    de patrocínio SEM preços (campos pendentes = aguardando aprovação da
-//    equipe), jornada do convidado, confidencialidade e as RESPOSTAS MODELO
-//    do usuário entre aspas — nunca inventadas pela IA.
+//    de patrocínio SEM preços, jornada do convidado, confidencialidade e
+//    acervo de episódios.
+//
+// CORREÇÃO DO PANIC "nil pointer dereference" da versão anterior:
+// • o construtor genérico `new Field({...})` é DESCARTADO pela JSVM do
+//   PocketBase (campo vazio → nil no Go). Aqui usamos construtores TIPADOS
+//   (TextField / JSONField / SelectField) — padrão funcional do projeto
+//   (migrations 0057 e 1753000100001).
+// • `new Record('nine_conversas')` (string) dereferencia nil — sempre
+//   `new Record(collectionObj)`.
+// • `collection.fields.some(...)` não existe na JSVM (fields é lista Go) —
+//   usamos `fields.getByName(...)` / loop.
+// • select alterado via `field.values = [...]` em NOVA instância SelectField
+//   buscada pelo nome, e só quando o valor ainda não existe.
 //
 // Idempotente: localiza registros existentes por título exato antes de criar
-// (Estúdio Filme já tem 12+ registros na base — nada é duplicado); up/down
+// (Estúdio Filme já tem registros na base — nada é duplicado); up/down
 // reversíveis; colunas só são criadas se não existirem.
 //
 // Regras permanentes preservadas: nunca inventar preços/condições/benefícios/
 // audiência; sem envio automático de WhatsApp (link manual wa.me da Aline);
 // CoffeeCast ≠ Estúdio Filme.
 
+/// <reference path="../pb_data/types.d.ts" />
+
 const CATEGORIA = 'Comercial'
+
+const INTERESSES_COMERCIAIS_EXTRAS = ['contratacao']
 
 // Cada seed: título-âncora exato + conteúdo completo (tipo "orientacao").
 const SEEDS = [
@@ -33,8 +48,8 @@ const SEEDS = [
       '(1) Participação mediante CONVITE — a EQUIPE do CoffeeCast convida pessoalmente; a Nine NÃO emite convite, NÃO garante aprovação e NÃO confirma listas; se a pessoa quer ser convidada, registrar interesse "participar como convidado" para a equipe avaliar (avaliação ≠ confirmação). ' +
       '(2) Participação mediante CONTRATAÇÃO — a pessoa ou empresa CONTRATA a participação; a Nine NÃO inventa valores, pacotes, datas nem resultados; interesse registrado como "contratacao" para a equipe apresentar condições. ' +
       '(3) PATROCÍNIO — a marca/empresa APÓIA o projeto; é DIFERENTE de participação: patrocinar NÃO garante participação e participar NÃO inclui patrocínio (podem coexistir no mesmo lead como interesses distintos). ' +
-      'PARCERIA — colaboração de interesse mútuo, também diferente de participação e patrocínio; a Nine registra o objetivo descrito e não promete contrapartidas. ' +
-      'Nenhuma modalidade é confirmada pela Nine — registro e encaminhamento à equipe (retorno manual).',
+      '(4) PARCERIA — colaboração de interesse mútuo, também diferente de participação e patrocínio; a Nine registra o objetivo descrito e não promete contrapartidas. ' +
+      'Nenhuma modalidade é confirmada pela Nine — registro e encaminhamento à equipe (retorno manual pela Aline, link wa.me exibido na tela — nunca envio automático).',
   },
   {
     titulo: 'Comercial — Qualificação de patrocinadores (roteiro natural, sem interrogatório)',
@@ -58,7 +73,7 @@ const SEEDS = [
       'Benefícios/formatos ainda não cadastrados → "Estamos finalizando a estrutura de formatos e benefícios. Posso registrar seu interesse para a equipe apresentar os detalhes assim que estiverem disponíveis?" (nunca descrever benefício inexistente). ' +
       '"Garantem retorno?" → "Não é possível garantir resultados comerciais específicos. O que podemos fazer é registrar seu interesse para que a equipe apresente o projeto e as condições disponíveis." ' +
       '"Posso patrocinar e também participar?" → "Sim, são interesses distintos e podem coexistir no mesmo cadastro. Vou registrar os dois interesses no seu contato para a equipe apresentar as condições de cada um." ' +
-      '"Quem já participou?" / "Onde assisto?" → responder com o ACERVO REAL de episódios PUBLICADOS (nunca inventar episódio, participante ou número; episódio em edição/gravado NÃO é publicado). ' +
+      '"Quem já participou?" / "Onde assisto?" → responder com o ACERVO REAL de episódios PUBLICADOS (nunca inventar episódio, participante ou número; episódio gravado/programado/em edição NÃO é publicado). ' +
       '"Quanto custa o estúdio?" / preços, condições, negociações, dados de outros leads, contratos ou histórico privado → "Essas informações são tratadas diretamente entre a equipe e cada interessado, com privacidade."',
   },
   {
@@ -87,7 +102,7 @@ const SEEDS = [
     titulo: 'Comercial — Preparação para gravação (convidados confirmados)',
     conteudo:
       'Preparação para gravação — usar APENAS dados cadastrados e SOMENTE com convidado CONFIRMADO pela equipe: ' +
-      '• LOCAL: gravações no Estúdio Filme, Unidade Vitória/ES, Praia do Suá (Rua Ulisses Sarmento, nº 24, salas 407 e 408, CEP 29052-320) — ver categoria "Local de Gravação" (registro já existente; dado editável pela equipe); ' +
+      '• LOCAL: gravações no Estúdio Filme, Unidade Vitória/ES, Praia do Suá (Rua Ulisses Sarmento, nº 24, salas 407 e 408, CEP 29052-320) — ver categoria "Local de Gravação" (dado editável pela equipe); ' +
       '• ESTACIONAMENTO PRÓPRIO CONFIRMADO: disponível para os convidados do CoffeeCast — segurança e conforto do início ao fim da gravação; ' +
       '• NÃO confundir horário do estúdio (seg–sáb, 8h–20h) com o horário das gravações do CoffeeCast — data/hora do episódio é sempre a agendada pela equipe; ' +
       '• CoffeeCast ≠ Estúdio Filme — o estúdio é espaço profissional utilizado para as gravações, não é do CoffeeCast; ' +
@@ -105,7 +120,7 @@ const SEEDS = [
       'ACERVO DE EPISÓDIOS: para perguntas sobre quem participou, temas tratados e onde assistir, a Nine consulta o acervo REAL de episódios do site (coleção de episódios, status "publicado"), episódio a episódio, pelo número, título e tema. ' +
       'Regras: ' +
       '• NÃO inventar episódio, participante, número ou tema; ' +
-      '• NÃO tratar episódio gravado ou em edição como publicado — só o publicado pode ser indicado para assistir; ' +
+      '• NÃO tratar episódio gravado, programado ou em edição como publicado — só o publicado pode ser indicado para assistir; ' +
       '• NÃO expor dados privados de formulários de convidados (telefone, e-mail, respostas do formulário); ' +
       '• Recomendar episódios publicados relacionados ao interesse do visitante (tema, área, história); ' +
       '• Se o dado não existe no acervo → dizer que não sabe informar e oferecer registrar interesse/indicação à equipe.',
@@ -124,88 +139,187 @@ const SEEDS = [
   },
 ]
 
-function buscarPorTitulo(app, titulo) {
-  try {
-    return app.findRecordsByFilter('nine_conhecimento', `titulo = "${titulo}"`, '-created', 50, 0)
-  } catch (_) {
-    return []
-  }
-}
-
-function campoExiste(app, colecao, coluna) {
-  try {
-    const col = app.findCollectionByNameOrId(colecao)
-    return col.fields.some((f) => f.name === coluna)
-  } catch (_) {
-    return true // coleção inexistente ou erro: não criar campo defensivamente
-  }
-}
-
 migrate(
   (app) => {
     let inseridos = 0
 
-    // ---- 1. contatos.interesses (JSON, múltiplos interesses no mesmo lead) ----
-    if (!campoExiste(app, 'contatos', 'interesses')) {
-      const col = app.findCollectionByNameOrId('contatos')
-      col.fields.add(new Field({ type: 'json', name: 'interesses', maxSize: 2000000 }))
-      app.save(col)
+    // ---- 1. contatos.interesses (JSON) + "contratacao" no select interesse ----
+    try {
+      const colContatos = app.findCollectionByNameOrId('contatos')
+
+      if (!colContatos.fields.getByName('interesses')) {
+        colContatos.fields.add(new JSONField({ name: 'interesses', maxSize: 2000000 }))
+      }
+
+      // SelectField NÃO pode ser editado em campo já existente (edção de
+      // "values" de select não persiste na JSVM — tentativa comprovada nos
+      // testes anteriores). Padrão robusto: SUBSTITUIR o select por um novo
+      // SelectField com TODOS os valores (atuais + extras) na mesma posição.
+      const fInteresse = colContatos.fields.getByName('interesse')
+      if (fInteresse && String(fInteresse.type) === 'select') {
+        const valoresAtuais = []
+        if (fInteresse.values) {
+          for (let i = 0; i < fInteresse.values.length; i++) {
+            valoresAtuais.push(String(fInteresse.values[i]))
+          }
+        }
+        let mudou = false
+        for (let j = 0; j < INTERESSES_COMERCIAIS_EXTRAS.length; j++) {
+          const v = INTERESSES_COMERCIAIS_EXTRAS[j]
+          if (valoresAtuais.indexOf(v) === -1) {
+            valoresAtuais.push(v)
+            mudou = true
+          }
+        }
+        if (mudou) {
+          const novoSelect = new SelectField({
+            name: 'interesse',
+            values: valoresAtuais,
+          })
+          colContatos.fields.removeByName('interesse')
+          colContatos.fields.add(novoSelect)
+        }
+      }
+
+      app.save(colContatos)
+
+      // VERIFICAÇÃO: se o valor não entrou no select, a migration falha
+      // (em vez de falhar silenciosamente como antes).
+      const reChecagem = app.findCollectionByNameOrId('contatos')
+      const fChecagem = reChecagem.fields.getByName('interesse')
+      let valoresFinais = []
+      if (fChecagem) {
+        const crusF = fChecagem.values !== undefined ? fChecagem.values : fChecagem.Values
+        if (crusF) {
+          for (let i = 0; i < crusF.length; i++) {
+            valoresFinais.push(String(crusF[i]))
+          }
+        }
+      }
+      for (let j = 0; j < INTERESSES_COMERCIAIS_EXTRAS.length; j++) {
+        if (valoresFinais.indexOf(INTERESSES_COMERCIAIS_EXTRAS[j]) === -1) {
+          throw new Error(
+            'select contatos.interesse sem o valor "' +
+              INTERESSES_COMERCIAIS_EXTRAS[j] +
+              '" após o save',
+          )
+        }
+      }
+    } catch (errC) {
+      console.log('[1753000100006] ajuste contatos:', errC)
+      throw errC
     }
 
     // ---- 2. nine_conversas.resumo_contexto (controle de custos de IA) ----
-    if (!campoExiste(app, 'nine_conversas', 'resumo_contexto')) {
-      const col = app.findCollectionByNameOrId('nine_conversas')
-      col.fields.add(new Field({ type: 'text', name: 'resumo_contexto', maxSize: 8000 }))
-      app.save(col)
+    try {
+      const colConv = app.findCollectionByNameOrId('nine_conversas')
+      if (!colConv.fields.getByName('resumo_contexto')) {
+        colConv.fields.add(new TextField({ name: 'resumo_contexto', max: 8000 }))
+        app.save(colConv)
+      }
+    } catch (errV) {
+      console.log('[1753000100006] ajuste nine_conversas:', errV)
     }
 
-    // ---- 3. interesse "contratacao" no select existente ----
-    const colContatos = app.findCollectionByNameOrId('contatos')
-    const fInteresse = colContatos.fields.find((f) => f.name === 'interesse')
-    if (fInteresse && fInteresse.type === 'select' && !fInteresse.values.includes('contratacao')) {
-      fInteresse.values.push('contratacao')
-      app.save(colContatos)
+    // ---- 3. seeds da categoria "Comercial" (idempotentes por título) ----
+    let colConhecimento = null
+    try {
+      colConhecimento = app.findCollectionByNameOrId('nine_conhecimento')
+    } catch (_) {
+      colConhecimento = null
     }
 
-    // ---- 4. seeds da categoria "Comercial" (idempotentes por título) ----
-    for (const s of SEEDS) {
-      if (buscarPorTitulo(app, s.titulo).length > 0) continue
-      const rec = new Record('nine_conhecimento')
-      rec.set('tipo', 'orientacao')
-      rec.set('categoria', CATEGORIA)
-      rec.set('titulo', s.titulo)
-      rec.set('conteudo', s.conteudo)
-      rec.set('ativo', true)
-      rec.set('ordem', 100 + inseridos)
-      app.save(rec)
-      inseridos++
-    }
+    if (colConhecimento) {
+      for (let s = 0; s < SEEDS.length; s++) {
+        const seed = SEEDS[s]
+        let existentes = []
+        try {
+          existentes = app.findRecordsByFilter(
+            'nine_conhecimento',
+            'titulo = "' + seed.titulo.replace(/"/g, '\\"') + '"',
+            '-created',
+            1,
+            0,
+          )
+        } catch (_) {
+          existentes = []
+        }
+        if (existentes && existentes.length > 0) continue
 
-    console.log(`[1753000100006] Seeds Comercial inseridos: ${inseridos}`)
-  },
-  (app) => {
-    // ---- down: remover seeds, "contratacao" e campos criados ----
-    for (const s of SEEDS) {
-      for (const rec of buscarPorTitulo(app, s.titulo)) {
-        app.delete(rec)
+        try {
+          const rec = new Record(colConhecimento)
+          rec.set('tipo', 'orientacao')
+          rec.set('categoria', CATEGORIA)
+          rec.set('titulo', seed.titulo)
+          rec.set('conteudo', seed.conteudo)
+          rec.set('ativo', true)
+          rec.set('ordem', 100 + inseridos)
+          app.save(rec)
+          inseridos++
+        } catch (errSeed) {
+          console.log('[1753000100006] seed falhou: ' + seed.titulo, errSeed)
+        }
       }
     }
 
-    const colContatos = app.findCollectionByNameOrId('contatos')
-    const fInteresse = colContatos.fields.find((f) => f.name === 'interesse')
-    if (fInteresse && fInteresse.type === 'select') {
-      fInteresse.values = fInteresse.values.filter((v) => v !== 'contratacao')
-      app.save(colContatos)
+    console.log('[1753000100006] Seeds Comercial inseridos: ' + inseridos)
+  },
+  (app) => {
+    // ---- down: remover seeds, "contratacao" e campos criados ----
+    for (let s = 0; s < SEEDS.length; s++) {
+      const seed = SEEDS[s]
+      let existentes = []
+      try {
+        existentes = app.findRecordsByFilter(
+          'nine_conhecimento',
+          'titulo = "' + seed.titulo.replace(/"/g, '\\"') + '"',
+          '-created',
+          50,
+          0,
+        )
+      } catch (_) {
+        existentes = []
+      }
+      for (let i = 0; i < existentes.length; i++) {
+        try {
+          app.delete(existentes[i])
+        } catch (_) {}
+      }
     }
 
-    const removerCampo = (colecao, campo) => {
-      const col = app.findCollectionByNameOrId(colecao)
-      const antes = col.fields.length
-      col.fields = col.fields.filter((f) => f.name !== campo)
-      if (col.fields.length !== antes) app.save(col)
-    }
-    removerCampo('nine_conversas', 'resumo_contexto')
-    removerCampo('contatos', 'interesses')
+    try {
+      const colContatos = app.findCollectionByNameOrId('contatos')
+      const fInteresse = colContatos.fields.getByName('interesse')
+      if (fInteresse && fInteresse.type === 'select' && fInteresse.values) {
+        const semExtra = []
+        for (let i = 0; i < fInteresse.values.length; i++) {
+          if (INTERESSES_COMERCIAIS_EXTRAS.indexOf(String(fInteresse.values[i])) === -1) {
+            semExtra.push(fInteresse.values[i])
+          }
+        }
+        if (semExtra.length !== fInteresse.values.length) {
+          fInteresse.values = semExtra
+          colContatos.fields.add(fInteresse)
+          app.save(colContatos)
+        }
+      }
+    } catch (_) {}
+
+    try {
+      const colC = app.findCollectionByNameOrId('contatos')
+      if (colC.fields.getByName('interesses')) {
+        colC.fields.removeByName('interesses')
+        app.save(colC)
+      }
+    } catch (_) {}
+
+    try {
+      const colV = app.findCollectionByNameOrId('nine_conversas')
+      if (colV.fields.getByName('resumo_contexto')) {
+        colV.fields.removeByName('resumo_contexto')
+        app.save(colV)
+      }
+    } catch (_) {}
 
     console.log('[1753000100006] Revertido')
   },

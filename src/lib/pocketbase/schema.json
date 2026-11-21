@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-21T19:01:44.782Z",
+  "generatedAt": "2026-11-21T19:30:16.710Z",
   "collections": [
     {
       "name": "users",
@@ -597,6 +597,12 @@
         },
         {
           "name": "historico_atendimento",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "interesses",
           "type": "json",
           "required": false,
           "system": false
@@ -1539,6 +1545,12 @@
         },
         {
           "name": "visitante_telefone",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "resumo_contexto",
           "type": "text",
           "required": false,
           "system": false
