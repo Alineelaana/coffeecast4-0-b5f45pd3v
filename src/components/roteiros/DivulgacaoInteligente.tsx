@@ -61,11 +61,7 @@ function roteiroJson(roteiro: RoteiroConvidadoRecord): DivulgacaoSalva {
   }
 }
 
-export default function DivulgacaoInteligente({
-  roteiro,
-  compacto,
-  onRoteiroAtualizado,
-}: Props) {
+export default function DivulgacaoInteligente({ roteiro, compacto, onRoteiroAtualizado }: Props) {
   const [gerando, setGerando] = useState(false)
   const [salvando, setSalvando] = useState('')
   const [dadosIA, setDadosIA] = useState<DivulgacaoDados | null>(null)
@@ -598,13 +594,22 @@ export default function DivulgacaoInteligente({
                   <EstudioGeradorCapas
                     preset={{
                       episodio: {
-                        id: '',
-                        titulo: tituloEpisodio,
+                        id: roteiro.id,
+                        titulo:
+                          tituloEpisodio ||
+                          roteiro.tema_enfatizar ||
+                          roteiro.nome ||
+                          `Roteiro ${roteiro.id.slice(0, 6)}`,
+                        convidado: roteiro.nome,
+                        empresa: roteiro.tem_empresa ? String(roteiro.nome_empresa || '') : '',
                         convidados: [
                           {
                             nome: roteiro.nome,
-                            nomeExibicao: '',
-                            empresa: roteiro.tem_empresa ? roteiro.nome_empresa : '',
+                            nomeExibicao: String(
+                              (roteiro as unknown as Record<string, unknown>)
+                                .empresa_cargo_personalizado || '',
+                            ),
+                            empresa: roteiro.tem_empresa ? String(roteiro.nome_empresa || '') : '',
                             foto: roteiro.foto ? pb.files.getURL(roteiro, roteiro.foto) : '',
                             logo: roteiro.logomarca
                               ? pb.files.getURL(roteiro, roteiro.logomarca)

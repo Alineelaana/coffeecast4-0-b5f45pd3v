@@ -34,23 +34,27 @@ import {
 } from '@/lib/estudioMotor'
 import { EstudioService, type CapaTemplateRecord, urlArquivoCapa } from '@/services/estudio'
 
-interface EpisodioOpcao {
+/** Opção do seletor: um ROTEIRO/Apresentação respondido pelo convidado (coleção roteiros_convidados). */
+interface RoteiroOpcao {
   id: string
   titulo: string
-  numero?: string | number
+  convidado: string
+  empresa: string
   convidados: EstudioConvidado[]
 }
 
 interface Props {
   preset?: {
-    episodio?: EpisodioOpcao | null
+    episodio?: RoteiroOpcao | null
     tituloCapa?: string
     tituloThumbnail?: string
     templateId?: string
   } | null
+  /** Chamado após salvar capa/rascunho (para a Biblioteca Criativa recarregar). */
+  onSalvo?: () => void
 }
 
-type EpisodioRaw = Record<string, unknown>
+type RoteiroRaw = Record<string, unknown>
 
 function urlArquivo(record: unknown, campo: string): string {
   try {
@@ -60,13 +64,28 @@ function urlArquivo(record: unknown, campo: string): string {
   }
 }
 
-export default function EstudioGeradorCapas({ preset }: Props) {
+/** Mapeia a resposta do formulário público (roteiros_convidados) para os dados da capa:
+ *  nome(s), fotografia original (campo foto) e logomarca da empresa (campo logomarca). */
+function mapearConvidadoDoRoteiro(f: RoteiroRaw): EstudioConvidado[] {
+  return [
+    {
+      nome: String(f.nome || ''),
+      nomeExibicao: String(f.empresa_cargo_personalizado || ''),
+      empresa: String(f.nome_empresa || ''),
+      foto: f.foto ? urlArquivo(f, 'foto') : '',
+      logo: f.logomarca ? urlArquivo(f, 'logomarca') : '',
+      ordem: 0,
+    },
+  ].filter((c) => c.nome || c.foto || c.logo)
+}
+
+export default function EstudioGeradorCapas({ preset, onSalvo }: Props) {
   const { toast } = useToast()
-  const [episodios, setEpisodios] = useState<EpisodioOpcao[]>([])
+  const [roteiros, setRoteiros] = useState<RoteiroOpcao[]>([])
   const [templates, setTemplates] = useState<CapaTemplateRecord[]>([])
-  const [buscaEpisodio, setBuscaEpisodio] = useState('')
-  const [episodioSel, setEpisodioSel] = useState<EpisodioOpcao | null>(null)
-  const [semEpisodio, setSemEpisodio] = useState(false)
+  const [buscaRoteiro, setBuscaRoteiro] = useState('')
+  const [roteiroSel, setRoteiroSel] = useState<RoteiroOpcao | null>(null)
+  const [semRoteiro, setSemRoteiro] = useState(false)
   const [templateSel, setTemplateSel] = useState<string>('')
   const [tituloCapa, setTituloCapa] = useState('')
   const [tituloThumbnail, setTituloThumbnail] = useState('')
@@ -86,25 +105,28 @@ export default function EstudioGeradorCapas({ preset }: Props) {
     let vivo = true
     ;(async () => {
       try {
-        const eps = await pb.collection('episodios').getList(1, 80, { sort: '-created' })
-        const itens = eps.items as unknown as EpisodioRaw[]
-        const mapeados: EpisodioOpcao[] = await Promise.all(
-          itens.map(async (e) => {
-            const convidados = await carregarConvidadosDoEpisodio(String(e.id))
-            return {
-              id: String(e.id),
-              titulo: String(
-                e.titulo || e.titulo_episodio || `Episódio ${String(e.id).slice(0, 6)}`,
-              ),
-              numero: e.numero as string | number | undefined,
-              convidados,
-            }
-          }),
-        )
+        // ROTEIROS / APRESENTAÇÕES respondidos pelos convidados (formulário público /roteiro)
+        const res = await pb.collection('roteiros_convidados').getList(1, 120, {
+          filter: 'status != "arquivada"',
+          sort: '-created',
+        })
+        const itens = res.items as unknown as RoteiroRaw[]
+        const mapeados: RoteiroOpcao[] = itens.map((f) => ({
+          id: String(f.id),
+          titulo: String(
+            f.roteiro_conjunto_titulo ||
+              f.tema_enfatizar ||
+              f.nome ||
+              `Roteiro ${String(f.id).slice(0, 6)}`,
+          ),
+          convidado: String(f.nome || ''),
+          empresa: String(f.nome_empresa || ''),
+          convidados: mapearConvidadoDoRoteiro(f),
+        }))
         if (!vivo) return
-        setEpisodios(mapeados)
+        setRoteiros(mapeados)
       } catch (_) {
-        /* episódios indisponíveis — usuário pode criar capa sem episódio */
+        /* roteiros indisponíveis — usuário pode criar capa sem roteiro */
       }
       try {
         const tpl = await EstudioService.templates.listar(['status = "ativo"'])
@@ -126,54 +148,27 @@ export default function EstudioGeradorCapas({ preset }: Props) {
   useEffect(() => {
     if (!preset) return
     if (preset.episodio) {
-      setEpisodioSel(preset.episodio)
-      setSemEpisodio(false)
+      setRoteiroSel(preset.episodio)
+      setSemRoteiro(false)
       setConvidados(preset.episodio.convidados || [])
     }
     if (preset.tituloCapa) setTituloCapa(preset.tituloCapa)
     if (preset.tituloThumbnail) setTituloThumbnail(preset.tituloThumbnail)
   }, [preset])
 
-  // ---------- helpers ----------
-  async function carregarConvidadosDoEpisodio(epId: string): Promise<EstudioConvidado[]> {
-    try {
-      const res = await pb.collection('roteiros_convidados').getList(1, 20, {
-        filter: `episodio_id = "${epId}"`,
-        sort: 'created',
-      })
-      return (res.items as unknown as Record<string, unknown>[]).map((f) => ({
-        nome: String(f.nome_convidado || f.nome || ''),
-        nomeExibicao: String(f.nome_exibicao || ''),
-        empresa: String(f.empresa || f.projeto || ''),
-        foto: f.foto_convidado
-          ? urlArquivo(f, 'foto_convidado')
-          : f.foto
-            ? urlArquivo(f, 'foto')
-            : '',
-        logo: f.logo_convidado
-          ? urlArquivo(f, 'logo_convidado')
-          : f.logo
-            ? urlArquivo(f, 'logo')
-            : '',
-        ordem: Number(f.ordem || 0),
-      }))
-    } catch (_) {
-      return []
-    }
-  }
-
-  function selecionarEpisodio(id: string) {
+  function selecionarRoteiro(id: string) {
     if (id === '__sem__') {
-      setSemEpisodio(true)
-      setEpisodioSel(null)
+      setSemRoteiro(true)
+      setRoteiroSel(null)
       setConvidados([])
       return
     }
-    setSemEpisodio(false)
-    const ep = episodios.find((e) => e.id === id) || null
-    setEpisodioSel(ep)
-    setConvidados(ep ? ep.convidados.map((c) => ({ ...c })) : [])
-    if (ep && !tituloCapa) setTituloCapa(ep.titulo)
+    setSemRoteiro(false)
+    const r = roteiros.find((x) => x.id === id) || null
+    setRoteiroSel(r)
+    // Preenche automaticamente nomes, fotografias e logomarcas da resposta selecionada
+    setConvidados(r ? r.convidados.map((c) => ({ ...c })) : [])
+    if (r && !tituloCapa) setTituloCapa(r.titulo)
   }
 
   function adicionarConvidado() {
@@ -255,11 +250,8 @@ export default function EstudioGeradorCapas({ preset }: Props) {
   const podeGerar = useMemo(
     () =>
       !gerando &&
-      (tituloCapa.trim() ||
-        tituloThumbnail.trim() ||
-        episodioSel ||
-        convidados.some((c) => c.nome)),
-    [gerando, tituloCapa, tituloThumbnail, episodioSel, convidados],
+      (tituloCapa.trim() || tituloThumbnail.trim() || roteiroSel || convidados.some((c) => c.nome)),
+    [gerando, tituloCapa, tituloThumbnail, roteiroSel, convidados],
   )
 
   // ---------- geração da capa (motor gráfico real; sem chamada de API de imagem) ----------
@@ -269,7 +261,7 @@ export default function EstudioGeradorCapas({ preset }: Props) {
     try {
       const templateSelRec = templates.find((t) => t.id === templateSel)
       const input: EstudioCapaInput = {
-        episodioTitulo: episodioSel?.titulo || '',
+        episodioTitulo: roteiroSel?.titulo || '',
         tituloCapa: tituloCapa.trim() || tituloThumbnail.trim(),
         tituloThumbnail: tituloThumbnail.trim(),
         convidados: convidados.filter((c) => c.nome || c.foto || c.logo),
@@ -309,7 +301,7 @@ export default function EstudioGeradorCapas({ preset }: Props) {
     try {
       const templateSelRec = templates.find((t) => t.id === templateSel)
       const input: EstudioCapaInput = {
-        episodioTitulo: episodioSel?.titulo || '',
+        episodioTitulo: roteiroSel?.titulo || '',
         tituloCapa: tituloCapa.trim() || tituloThumbnail.trim(),
         tituloThumbnail: tituloThumbnail.trim(),
         convidados: convidados.filter((c) => c.nome || c.foto || c.logo),
@@ -355,10 +347,10 @@ export default function EstudioGeradorCapas({ preset }: Props) {
     setSalvando(true)
     try {
       const blob = dataUrlParaBlob(capaGerada)
-      const nome = nomeArquivoCapa(tituloCapa || episodioSel?.titulo || 'capa', 'png')
+      const nome = nomeArquivoCapa(tituloCapa || roteiroSel?.titulo || 'capa', 'png')
       const rec = await EstudioService.capas.criar({
-        episodio_id: semEpisodio ? '' : episodioSel?.id || '',
-        roteiro_id: '',
+        episodio_id: '',
+        roteiro_id: roteiroSel?.id || '',
         titulo: tituloCapa.trim() || tituloThumbnail.trim(),
         titulo_thumbnail: tituloThumbnail.trim(),
         template_id: templateSel || '',
@@ -376,6 +368,7 @@ export default function EstudioGeradorCapas({ preset }: Props) {
         title: status === 'oficial' ? 'Capa oficial salva!' : 'Rascunho salvo!',
         description: 'A capa está na Biblioteca Criativa (Minhas Capas) com histórico de versão.',
       })
+      onSalvo?.()
     } catch (err) {
       toast({ title: 'Erro ao salvar', description: String(err), variant: 'destructive' })
     } finally {
@@ -383,9 +376,15 @@ export default function EstudioGeradorCapas({ preset }: Props) {
     }
   }
 
-  const epFiltrados = episodios.filter((e) =>
-    buscaEpisodio.trim() ? e.titulo.toLowerCase().includes(buscaEpisodio.toLowerCase()) : true,
-  )
+  const roteirosFiltrados = roteiros.filter((r) => {
+    if (!buscaRoteiro.trim()) return true
+    const q = buscaRoteiro.toLowerCase()
+    return (
+      r.titulo.toLowerCase().includes(q) ||
+      r.convidado.toLowerCase().includes(q) ||
+      r.empresa.toLowerCase().includes(q)
+    )
+  })
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
@@ -394,33 +393,36 @@ export default function EstudioGeradorCapas({ preset }: Props) {
         <Card className="border-0 shadow-md">
           <CardContent className="space-y-4 p-5">
             <div>
-              <Label className="text-sm font-semibold">Episódio</Label>
+              <Label className="text-sm font-semibold">
+                Roteiro / Apresentação respondido pelo convidado
+              </Label>
               <Select
-                value={semEpisodio ? '__sem__' : episodioSel?.id || ''}
-                onValueChange={selecionarEpisodio}
+                value={semRoteiro ? '__sem__' : roteiroSel?.id || ''}
+                onValueChange={selecionarRoteiro}
               >
                 <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Selecione o episódio…" />
+                  <SelectValue placeholder="Selecione o roteiro/apresentação…" />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
-                  <SelectItem value="__sem__">➕ Criar capa sem episódio</SelectItem>
-                  {epFiltrados.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.titulo}
+                  <SelectItem value="__sem__">➕ Criar capa sem roteiro</SelectItem>
+                  {roteirosFiltrados.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.titulo}
+                      {r.convidado ? ` — ${r.convidado}` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Input
                 className="mt-2"
-                placeholder="🔍 Buscar episódio por título…"
-                value={buscaEpisodio}
-                onChange={(ev) => setBuscaEpisodio(ev.target.value)}
+                placeholder="🔍 Buscar por tema, convidado ou empresa…"
+                value={buscaRoteiro}
+                onChange={(ev) => setBuscaRoteiro(ev.target.value)}
               />
-              {episodioSel && (
+              {roteiroSel && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {episodioSel.convidados.length} convidado(s) carregado(s) com fotos, empresas e
-                  logomarcas do episódio.
+                  {roteiroSel.convidados.length} convidado(s) carregado(s) automaticamente com as
+                  fotos, empresas e logomarcas da resposta selecionada.
                 </p>
               )}
             </div>
@@ -487,7 +489,7 @@ export default function EstudioGeradorCapas({ preset }: Props) {
               </div>
               {convidados.length === 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Nenhum convidado. Capas sem episódio podem incluir convidados manualmente.
+                  Nenhum convidado. Capas sem roteiro podem incluir convidados manualmente.
                 </p>
               )}
               {convidados.map((c, i) => (
@@ -736,8 +738,8 @@ export default function EstudioGeradorCapas({ preset }: Props) {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Capas salvas ficam na <strong>Biblioteca Criativa</strong> com histórico de
-                  versões e vínculo ao episódio{' '}
-                  {episodioSel ? `#${episodioSel.id.slice(0, 6)}` : '(sem episódio)'}.
+                  versões e vínculo ao roteiro{' '}
+                  {roteiroSel ? `#${roteiroSel.id.slice(0, 6)}` : '(sem roteiro)'}.
                 </p>
               </>
             )}

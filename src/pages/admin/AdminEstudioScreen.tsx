@@ -14,7 +14,20 @@ import EstudioLogicaTela from '@/components/estudio/EstudioLogicaTela'
 import { templateMestrePremiumDourado } from '@/lib/estudioMotor'
 
 interface EstudioPreset {
-  episodio?: { id: string; titulo: string; convidados: never[] } | null
+  episodio?: {
+    id: string
+    titulo: string
+    convidado: string
+    empresa: string
+    convidados: {
+      nome: string
+      nomeExibicao?: string
+      empresa?: string
+      foto?: string
+      logo?: string
+      ordem?: number
+    }[]
+  } | null
   tituloCapa?: string
   tituloThumbnail?: string
 }
@@ -62,7 +75,7 @@ export default function AdminEstudioScreen({ preset, onAbrirBiblioteca }: Props)
 
         <TabsContent value="gerador" className="mt-5">
           <EstudioGeradorCapas
-            preset={preset as never}
+            preset={preset}
             onSalvo={() => setBibliotecaAtualizadaEm(Date.now())}
           />
         </TabsContent>
