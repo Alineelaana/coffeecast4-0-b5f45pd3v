@@ -30,7 +30,7 @@ function formatarTamanho(bytes: number | null | undefined): string {
 }
 
 export default function AdminPortfoliosScreen() {
-  const { user } = useAuth()
+  const { user, isMaster } = useAuth()
   const [portfolios, setPortfolios] = useState<PortfolioRecord[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -265,15 +265,17 @@ export default function AdminPortfoliosScreen() {
                           <Download className="w-3.5 h-3.5 text-dourado-dark" />
                           <span>{baixandoId === item.id ? 'Baixando...' : 'Baixar'}</span>
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleExcluir(item)}
-                          className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          title="Excluir portfólio (somente Master)"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                        {isMaster && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleExcluir(item)}
+                            className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            title="Excluir portfólio (somente Master)"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
