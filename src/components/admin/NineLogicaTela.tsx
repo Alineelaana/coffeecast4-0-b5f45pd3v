@@ -62,6 +62,18 @@ const SECOES: { titulo: string; itens: string[] }[] = [
       'O resumo da IA (resumo_ia) é gerado no backend no momento da qualificação, a partir da conversa real — sem inventar dados.',
     ],
   },
+  {
+    titulo: '🏢 Local de Gravação — Estúdio Filme (base "Local de Gravação")',
+    itens: [
+      'Base de conhecimento da categoria "Local de Gravação" (aba Base de Conhecimento): local de gravação ATUAL do CoffeeCast — Estúdio Filme, Unidade Vitória/ES, Praia do Suá (Rua Ulisses Sarmento, nº 24, salas 407 e 408, CEP 29052-320). Horário divulgado: seg–sáb, 8h às 20h.',
+      'Fontes oficiais: site do estúdio https://www.estudiofilme.com.br/vitoria/ e link de localização https://www.google.com/maps/search/?api=1&query=Rua+Ulisses+Sarmento+24+Praia+do+Sua+Vitoria+ES.',
+      'DIFERENCIAÇÃO: CoffeeCast ≠ Estúdio Filme. O estúdio é um espaço profissional utilizado para as gravações — NUNCA dizer que o CoffeeCast é dono do estúdio nem que ele pertence à Aline Lana. Tom modelo: "Atualmente, nossas gravações acontecem no Estúdio Filme, em Vitória, um espaço profissional preparado para produções audiovisuais. ☕✨".',
+      'Nunca inventar: equipamentos (marcas, 4K, quantidade de câmeras), preços, agenda, estacionamento, premiações. Estacionamento → "essa informação eu prefiro confirmar". Preços do estúdio → equipe do estúdio/site oficial; dúvidas do CoffeeCast → Aline (link manual).',
+      'Horário do estúdio (seg–sáb 8h–20h) NÃO é o horário das gravações do CoffeeCast — programação própria, confirmada pela equipe.',
+      'Interesse EXCLUSIVAMENTE nos serviços do estúdio (alugar, gravar seu conteúdo) → site oficial do estúdio, NÃO é lead do CoffeeCast. Interesse relacionado ao CoffeeCast (participar, gravar episódio) → fluxo de lead normal.',
+      'EDITÁVEL: o local de gravação é dado institucional configurável — se mudar de estúdio, a equipe atualiza os registros da categoria "Local de Gravação" na base de conhecimento, sem reescrever o treinamento.',
+    ],
+  },
 ]
 
 export default function NineLogicaTela() {
