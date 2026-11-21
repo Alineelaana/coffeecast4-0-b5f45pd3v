@@ -454,6 +454,10 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
             ['parceria', /parcer/i],
             ['patrocinio', /patroc[íi]n/i],
             [
+              'contratacao',
+              /(contratar|contrata[çc][aã]o|pagar para (participar|gravar)|custo para (participar|gravar))/i,
+            ],
+            [
               'estudio',
               /(usar|alugar|conhecer|locar).{0,20}est[úu]dio|loca[cç][aã]o do est[úu]dio/i,
             ],
@@ -463,10 +467,32 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
               /(falar com (a |o )?(aline|equipe|algu[eé]m|atendente|respons[áa]vel|produ[cç][aã]o)|entrar em contato|me contatem|retornar contato|me liguem)/i,
             ],
           ]
-          let interesseDetectado = ''
+          // Múltiplos interesses: todos os modalidades detectados na mensagem
+          // (ex.: patrocínio + contratação) são acumulados no JSON `interesses`;
+          // o select antigo `interesse` guarda só o interesse PRIMÁRIO válido.
+          const INTERESSE_SELECT_VALIDOS = [
+            'participar_como_convidado',
+            'indicar_convidado',
+            'apresentar_empresa',
+            'divulgacao',
+            'parceria',
+            'patrocinio',
+            'estudio',
+            'proposta_comercial',
+            'falar_com_equipe',
+          ]
+          let interessesDetectados = []
           for (let ii = 0; ii < INTERESSES.length; ii++) {
             if (INTERESSES[ii][1].test(rawMessage)) {
-              interesseDetectado = INTERESSES[ii][0]
+              if (interessesDetectados.indexOf(INTERESSES[ii][0]) === -1) {
+                interessesDetectados.push(INTERESSES[ii][0])
+              }
+            }
+          }
+          let interesseDetectado = ''
+          for (let iv = 0; iv < interessesDetectados.length; iv++) {
+            if (INTERESSE_SELECT_VALIDOS.indexOf(interessesDetectados[iv]) !== -1) {
+              interesseDetectado = interessesDetectados[iv]
               break
             }
           }
@@ -487,6 +513,30 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
           if (interesseDetectado && !leadContato.getString('interesse')) {
             leadContato.set('interesse', interesseDetectado)
             leadNeedsSave = true
+          }
+          // Múltiplos interesses no campo JSON `interesses` — SEM duplicar cadastro
+          if (interessesDetectados.length > 0) {
+            try {
+              let atuais = []
+              const rawInt = leadContato.getString('interesses')
+              if (rawInt) {
+                const parsed = JSON.parse(rawInt)
+                if (Array.isArray(parsed)) atuais = parsed
+              }
+              let mudou = false
+              for (let mi = 0; mi < interessesDetectados.length; mi++) {
+                if (atuais.indexOf(interessesDetectados[mi]) === -1) {
+                  atuais.push(interessesDetectados[mi])
+                  mudou = true
+                }
+              }
+              if (mudou) {
+                leadContato.set('interesses', JSON.stringify(atuais))
+                leadNeedsSave = true
+              }
+            } catch (intErr) {
+              console.log('Aviso ao salvar interesses múltiplos do lead:', intErr)
+            }
           }
           if (canalDetectado && leadContato.getString('canal_preferido') !== canalDetectado) {
             leadContato.set('canal_preferido', canalDetectado)
@@ -618,11 +668,40 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
                 if (resumoIa) {
                   leadContato.set('resumo_ia', resumoIa)
                   leadNeedsSave = true
+                  // Resumo comercial também no histórico da conversa
+                  // (nine_conversas.resumo_contexto — exibido no painel de Leads)
+                  try {
+                    conversaRecord.set('resumo_contexto', resumoIa.slice(0, 8000))
+                  } catch (_) {}
                 }
               } catch (resumoErr) {
                 console.log('Aviso ao gerar resumo_ia no hook do chat:', resumoErr)
               }
             }
+
+            // Fallback determinístico do resumo quando a IA não responde —
+            // nunca bloqueia o fluxo e nunca inventa dado (usa "não informado")
+            try {
+              if (!conversaRecord.getString('resumo_contexto')) {
+                const resumoFallback =
+                  'Contato: ' +
+                  (leadContato.getString('nome_completo') || 'não informado') +
+                  ' (' +
+                  (leadContato.getString('email') || 'não informado') +
+                  ')' +
+                  '\nInteresse: ' +
+                  (interessesDetectados.join(', ') || 'não informado') +
+                  '\nObjetivo: ' +
+                  (leadContato.getString('resumo_necessidade') || 'não informado').slice(0, 300) +
+                  '\nCanal preferido: ' +
+                  (leadContato.getString('canal_preferido') || 'não informado') +
+                  '\nPrioridade sugerida: ' +
+                  (leadContato.getString('prioridade') || 'media') +
+                  '\nPróxima ação: ' +
+                  (leadContato.getString('proxima_acao') || 'Retornar contato')
+                conversaRecord.set('resumo_contexto', resumoFallback.slice(0, 8000))
+              }
+            } catch (_) {}
 
             // Confirmação ao visitante SÓ depois de gravar de verdade
             confirmacaoComercial =
@@ -888,6 +967,8 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
         '\n\n[DADOS COMERCIAIS REGISTRADOS DO LEAD]\n' +
         'Interesse principal: ' +
         (leadContato.getString('interesse') || 'não informado') +
+        '\nInteresses registrados (JSON): ' +
+        (leadContato.getString('interesses') || 'não informado') +
         '\nEmpresa/Projeto: ' +
         (leadContato.getString('empresa_projeto') || 'não informado') +
         '\nCanal preferido: ' +
@@ -896,7 +977,7 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
         (leadContato.getString('melhor_horario') || 'não informado') +
         '\nStatus comercial: ' +
         (leadContato.getString('status_comercial') || 'novo_lead') +
-        '\n[REGRA: ao identificar interesse, pergunte com naturalidade qual é a melhor forma de contato (WhatsApp, ligação ou e-mail) e o melhor horário — sem interrogatório. Se o visitante demonstrar que quer falar com a equipe, informe que o interesse já foi registrado e sinalizado para a Aline. Nunca prometa horários ou agendamentos: apenas registre. Escolher WhatsApp NÃO significa envio automático — o contato é sempre manual pela equipe.]'
+        '\n[REGRA: ao identificar interesse, pergunte com naturalidade qual é a melhor forma de contato (WhatsApp, ligação ou e-mail) e o melhor horário — sem interrogatório. Se o visitante demonstrar que quer falar com a equipe, informe que o interesse já foi registrado e sinalizado para a Aline. Nunca prometa horários ou agendamentos: apenas registre. Escolher WhatsApp NÃO significa envio automático — o contato é sempre manual pela equipe. Quando o visitante pedir para falar com a equipe, ofereça o link manual de abertura da conversa: https://wa.me/5531991297619?text=Venho%20pelo%20CHAT%20do%20site%20do%20Coffeecast4.0%2C%20gostaria%20de%20falar%20com%20a%20Aline — é apenas um LINK para a pessoa abrir a conversa dela mesma; ZERO envio automático de WhatsApp.]'
     }
 
     // Diretrizes essenciais de NORMA-PADRÃO, LÍNGUA, TOM NATURAL E PERSONALIZAÇÃO
