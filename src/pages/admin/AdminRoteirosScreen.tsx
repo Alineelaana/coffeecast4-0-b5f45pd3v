@@ -60,6 +60,10 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
+import { DivulgacaoInteligente } from '@/components/roteiros/DivulgacaoInteligente'
+import { PrepararEpisodioIA } from '@/components/roteiros/PrepararEpisodioIA'
+import { gerarSugestaoRoteiroIA } from '@/components/roteiros/prepararEpisodioIA'
+import { EstudioLogicaTela } from '@/components/estudio/EstudioLogicaTela'
 
 export default function AdminRoteirosScreen() {
   const { isMaster, isGerencial } = useAuth()
@@ -160,6 +164,41 @@ export default function AdminRoteirosScreen() {
   const [regeneratingIndividual, setRegeneratingIndividual] = useState(false)
   const [confirmRegenerarIndividualOpen, setConfirmRegenerarIndividualOpen] = useState(false)
   const [confirmRegenerarConjuntoOpen, setConfirmRegenerarConjuntoOpen] = useState(false)
+
+  // DIVULGAÇÃO INTELIGENTE COM IA + PREPARAR EPISÓDIO COM IA + Lógica da Tela
+  const [prepararIAOpen, setPrepararIAOpen] = useState(false)
+  const [logicaTelaOpen, setLogicaTelaOpen] = useState(false)
+  const [divulgacaoRoteiro, setDivulgacaoRoteiro] = useState<RoteiroConvidadoRecord | null>(null)
+  const [divulgacaoOpen, setDivulgacaoOpen] = useState(false)
+
+  const abrirDivulgacaoIA = (item: RoteiroConvidadoRecord) => {
+    setDivulgacaoRoteiro(item)
+    setDivulgacaoOpen(true)
+  }
+
+  const handleDivulgacaoRoteiroAtualizado = (atualizado: RoteiroConvidadoRecord) => {
+    setRoteiros((prev) => prev.map((r) => (r.id === atualizado.id ? atualizado : r)))
+    setDivulgacaoRoteiro((prev) => (prev && prev.id === atualizado.id ? atualizado : prev))
+    setSelectedRoteiro((prev) => (prev && prev.id === atualizado.id ? atualizado : prev))
+  }
+
+  // Preparação do roteiro pela Nine (Etapa 1 do "Preparar Episódio com IA")
+  const handleSugestaoPreparacao = async (texto: string) => {
+    if (!divulgacaoRoteiro || !texto) return
+    try {
+      await pb.collection('roteiros_convidados').update(divulgacaoRoteiro.id, {
+        roteiro_final_texto: texto,
+      })
+      handleDivulgacaoRoteiroAtualizado({
+        ...divulgacaoRoteiro,
+        roteiro_final_texto: texto,
+      })
+      toast.success('Sugestão da Nine salva no roteiro final do convidado (revisável no editor).')
+    } catch (err) {
+      console.error('[AdminRoteirosScreen] erro ao salvar sugestão da preparação IA:', err)
+      toast.error('Não foi possível salvar a sugestão no roteiro. Verifique suas permissões.')
+    }
+  }
 
   const loadRoteiros = async () => {
     try {
