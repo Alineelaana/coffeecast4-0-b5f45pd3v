@@ -141,7 +141,7 @@ routerAdd('GET', '/backend/v1/nine/leads', (e) => {
 routerAdd('GET', '/backend/v1/nine/leads/{id}', (e) => {
   if (!isStaffAuth(e)) return staffOnly(e)
   try {
-    const rec = findContato(e.requestInfo().pathVars.id)
+    const rec = findContato(e.request.pathValue('id'))
     if (!rec) return e.json(404, { error: 'Lead não encontrado.' })
 
     const conversationId = rec.getString('conversation_id') || ''
@@ -497,7 +497,7 @@ routerAdd('PATCH', '/backend/v1/nine/tarefas/{id}', (e) => {
   try {
     let rec = null
     try {
-      rec = $app.findRecordById('nine_tarefas', e.requestInfo().pathVars.id)
+      rec = $app.findRecordById('nine_tarefas', e.request.pathValue('id'))
     } catch (_) {}
     if (!rec) return e.json(404, { error: 'Tarefa não encontrada.' })
 
