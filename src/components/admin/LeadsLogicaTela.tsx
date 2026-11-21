@@ -74,7 +74,8 @@ const SECOES: { titulo: string; itens: string[] }[] = [
     itens: [
       'A base de conhecimento da Nine tem a categoria "Local de Gravação": local atual das gravações do CoffeeCast — Estúdio Filme, Unidade Vitória/ES, Praia do Suá (Rua Ulisses Sarmento, nº 24, salas 407 e 408, CEP 29052-320). Fonte oficial: https://www.estudiofilme.com.br/vitoria/.',
       'CoffeeCast ≠ Estúdio Filme: o estúdio é um espaço profissional utilizado para as gravações — o CoffeeCast NÃO é proprietário e o estúdio NÃO pertence à Aline Lana. A Nine nunca afirma o contrário.',
-      'Nenhuma invenção: equipamentos, preços, agenda, estacionamento e números de clientes não são afirmados pela Nine — preços do estúdio vão para a equipe do estúdio (site oficial); dúvidas sobre participação no CoffeeCast vão para a Aline via link manual wa.me.',
+      'Nenhuma invenção: equipamentos, preços, agenda e números de clientes não são afirmados pela Nine — preços do estúdio vão para a equipe do estúdio (site oficial); dúvidas sobre participação no CoffeeCast vão para a Aline via link manual wa.me.',
+      'ESTACIONAMENTO CONFIRMADO: o Estúdio Filme tem estacionamento PRÓPRIO, disponível para os convidados do CoffeeCast, com segurança e conforto durante toda a gravação — a Nine pode afirmar isso (resposta modelo na base "Local de Gravação").',
       'Horário do estúdio (seg–sáb, 8h às 20h) é horário de funcionamento do espaço — NÃO confundir com a programação das gravações do CoffeeCast.',
       'Quem demonstra interesse EXCLUSIVAMENTE nos serviços comerciais do estúdio (gravar seu próprio conteúdo) NÃO vira lead do CoffeeCast: é direcionado ao site oficial do estúdio.',
       'Leads relacionados ao CoffeeCast seguem o fluxo normal: dados confirmados, resumo da IA, tarefa interna de retorno, status "AGUARDANDO CONTATO" e responsável vinculado.',
