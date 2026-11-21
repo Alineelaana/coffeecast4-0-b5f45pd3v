@@ -26,6 +26,7 @@ import {
   Sliders,
   Database,
   Info,
+  Cpu,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -122,6 +123,34 @@ export default function AdminNineScreen() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const isDraggingScrollbarRef = useRef<boolean>(false)
+
+  // ==========================================
+  // MOTOR DE IA (ChatGPT/OpenAI ou motor padrão)
+  // ==========================================
+  const [motorRotulo, setMotorRotulo] = useState<string>('')
+  const [motorChatgptAtivo, setMotorChatgptAtivo] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    let cancelado = false
+    const carregarMotor = async () => {
+      try {
+        const res = await pb.send<{ chatgptAtivo?: boolean; rotulo?: string }>(
+          '/backend/v1/nine/motor-status',
+          { method: 'POST' },
+        )
+        if (!cancelado) {
+          setMotorRotulo(res?.rotulo || '')
+          setMotorChatgptAtivo(Boolean(res?.chatgptAtivo))
+        }
+      } catch {
+        // Sem o status (ex.: sessão expirada), mantém sem badge — fallback silencioso
+      }
+    }
+    carregarMotor()
+    return () => {
+      cancelado = true
+    }
+  }, [])
 
   // Desativa estado de arrasto quando o mouse for liberado globalmente
   useEffect(() => {
@@ -904,6 +933,23 @@ export default function AdminNineScreen() {
               <Badge className="bg-vinho text-dourado border border-dourado/40 text-xs px-2.5 py-0.5 font-bold">
                 IA Oficial CoffeeCast 4.0
               </Badge>
+              {motorRotulo && (
+                <Badge
+                  className={`text-xs flex items-center gap-1 font-semibold border ${
+                    motorChatgptAtivo
+                      ? 'bg-dourado/15 text-vinho border-dourado/50'
+                      : 'bg-[#FAF8F5] text-vinho/70 border-vinho/20'
+                  }`}
+                  title={
+                    motorChatgptAtivo
+                      ? 'A Nine está gerando roteiros e respostas com o ChatGPT (OpenAI).'
+                      : 'O ChatGPT (OpenAI) não está ativo agora; a Nine usa o motor padrão.'
+                  }
+                >
+                  <Cpu className="w-3.5 h-3.5 text-dourado-dark" />
+                  {motorRotulo}
+                </Badge>
+              )}
               {atendimentoAutomatico ? (
                 <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-xs flex items-center gap-1 font-semibold">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />

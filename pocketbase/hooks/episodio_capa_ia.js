@@ -54,22 +54,10 @@ routerAdd(
       }
 
       const titulo = (episodio.getString('titulo') || '').trim()
-      const tema = (episodio.getString('tema') || '').trim()
-      const convidados = episodio.getString('convidados') || ''
-      let nomesConvidados = ''
-      try {
-        const listaConvidados = JSON.parse(convidados)
-        if (Array.isArray(listaConvidados)) {
-          nomesConvidados = listaConvidados.filter((n) => typeof n === 'string').join(', ')
-        }
-      } catch (_) {
-        nomesConvidados = ''
-      }
 
       const promptImagem = [
         'Capa editorial premium para um episódio do podcast brasileiro CoffeeCast 4.0.',
-        'Tema do episódio: ' + (titulo || tema || 'Histórias que inspiram'),
-        nomesConvidados ? 'Convidados do episódio: ' + nomesConvidados : '',
+        'Tema do episódio: ' + (titulo || 'Histórias que inspiram'),
         'Identidade visual oficial: paleta vinho profundo (#4B1E3F), dourado, rosé e marfim; elegância premium e sofisticada; iluminação suave; composição limpa e moderna, sem texto e sem letras.',
         'NÃO recrie logomarcas, letras ou símbolos do podcast — apenas elementos visuais abstratos e elegantes (xícaras estilizadas, texturas, luz e formas orgânicas são bem-vindos).',
       ]
@@ -122,7 +110,6 @@ routerAdd(
       const arquivo = $filesystem.fileFromBytes(bytes, nomeArquivo)
 
       episodio.set('capa_ia', arquivo)
-      episodio.set('capa_ia_gerada_em', new Date().toISOString().replace('T', ' ').slice(0, 19))
       $app.save(episodio)
 
       // Auditoria
@@ -138,9 +125,7 @@ routerAdd(
           auditRec.set('area_sistema', 'Episódios')
           auditRec.set(
             'descricao',
-            'Capa gerada com IA (ChatGPT/OpenAI) para o episódio "' +
-              (titulo || tema || episodioId) +
-              '".',
+            'Capa gerada com IA (ChatGPT/OpenAI) para o episódio "' + (titulo || episodioId) + '".',
           )
           auditRec.set('registro_afetado', episodioId)
           auditRec.set('tabela_afetada', 'episodios')
@@ -149,7 +134,6 @@ routerAdd(
             motor: 'chatgpt-openai',
             modelo_imagem: 'gpt-image-1',
             titulo: titulo || null,
-            convidados: nomesConvidados || null,
           })
           $app.save(auditRec)
         }
