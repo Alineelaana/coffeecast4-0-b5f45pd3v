@@ -38,6 +38,7 @@ import {
   HelpCircle,
   Search,
   BarChart3,
+  Target,
 } from 'lucide-react'
 import { getFileUrl } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
@@ -52,6 +53,7 @@ export default function AdminLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [ninePendingCount, setNinePendingCount] = useState(0)
+  const [leadsPendentes, setLeadsPendentes] = useState(0)
   const [chatUnreadCount, setChatUnreadCount] = useState(0)
   const [menuSearchQuery, setMenuSearchQuery] = useState('')
   const desktopSearchInputRef = React.useRef<HTMLInputElement>(null)
@@ -129,6 +131,18 @@ export default function AdminLayout() {
     }
   }
 
+  // Carrega badge do painel comercial de Leads (status "Aguardando contato")
+  const fetchLeadsPendentes = async () => {
+    try {
+      const res = await pb
+        .collection('contatos')
+        .getList(1, 1, { filter: 'status_comercial = "aguardando_contato"', fields: 'id' })
+      setLeadsPendentes(res.totalItems)
+    } catch (e) {
+      console.warn('Erro ao contar leads aguardando contato:', e)
+    }
+  }
+
   // Carrega total de mensagens de chat não lidas para o usuário autenticado
   const fetchChatUnreadCount = async () => {
     if (!user) return
@@ -159,6 +173,7 @@ export default function AdminLayout() {
   React.useEffect(() => {
     fetchUnreadCount()
     fetchNinePendingCount()
+    fetchLeadsPendentes()
     fetchChatUnreadCount()
 
     let unsubChat: (() => void) | undefined
@@ -256,7 +271,23 @@ export default function AdminLayout() {
       label: 'Contatos & Leads',
       path: '/admin/contatos',
       icon: Inbox,
-      keywords: ['leads', 'crm', 'mensagens do site', 'formulario', 'visitantes', 'prospects'],
+      keywords: ['crm', 'mensagens do site', 'formulario', 'visitantes', 'prospects'],
+    },
+    {
+      key: 'leads',
+      label: 'Leads (Painel Comercial)',
+      path: '/admin/leads',
+      icon: Target,
+      badgeCount: leadsPendentes,
+      highlight: true,
+      keywords: [
+        'leads',
+        'painel comercial',
+        'nine',
+        'retornar contato',
+        'aguardando contato',
+        'tarefas',
+      ],
     },
     {
       key: 'horas',

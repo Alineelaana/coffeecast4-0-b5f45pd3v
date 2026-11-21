@@ -2,49 +2,23 @@
 // Hooks comerciais da Nine: endpoints autenticados (staff) para leads da área de Leads
 // (coleção `contatos`) e tarefas de retorno (`nine_tarefas`).
 // O contato com leads é sempre MANUAL (wa.me / tel: / mailto:) — nunca envio automático.
-
-const STAFF_ROLE_RULE =
-  '@request.auth.role = "master" || @request.auth.role = "gerencial" || @request.auth.role = "adm"'
-
-function isStaffAuth(e) {
-  try {
-    const auth = e.auth
-    if (!auth || !auth.id) return false
-    const role = auth.getString('role') || ''
-    return role === 'master' || role === 'gerencial' || role === 'adm'
-  } catch (_) {
-    return false
-  }
-}
-
-function staffOnly(e) {
-  return e.json(401, { error: 'Acesso restrito à equipe autorizada.' })
-}
-
-function findContato(id) {
-  try {
-    return $app.findRecordById('contatos', id)
-  } catch (_) {
-    return null
-  }
-}
-
-function safeSave(rec) {
-  try {
-    $app.save(rec)
-    return true
-  } catch (saveErr) {
-    console.log('nine_comercial: falha ao salvar registro:', saveErr)
-    return false
-  }
-}
+// Nota JSVM: TODAS as funções auxiliares vivem DENTRO de cada callback (escopo próprio).
 
 // ---------------------------------------------------------------------------
 // GET /backend/v1/nine/leads?status_comercial=aguardando_contato
 // Lista leads com contagens por status (indicadores do painel comercial).
 // ---------------------------------------------------------------------------
 routerAdd('GET', '/backend/v1/nine/leads', (e) => {
-  if (!isStaffAuth(e)) return staffOnly(e)
+  const isStaff = () => {
+    try {
+      const auth = e.auth
+      if (!auth || !auth.id) return false
+      return ['master', 'gerencial', 'adm'].indexOf(auth.getString('role') || '') !== -1
+    } catch (_) {
+      return false
+    }
+  }
+  if (!isStaff()) return e.json(401, { error: 'Acesso restrito à equipe autorizada.' })
   try {
     const q = e.requestInfo().query || {}
     const statusFilter = (q.status_comercial || '').trim()
@@ -139,9 +113,23 @@ routerAdd('GET', '/backend/v1/nine/leads', (e) => {
 // GET /backend/v1/nine/leads/{id} — detalhe com histórico de atendimento
 // ---------------------------------------------------------------------------
 routerAdd('GET', '/backend/v1/nine/leads/{id}', (e) => {
-  if (!isStaffAuth(e)) return staffOnly(e)
+  const isStaff = () => {
+    try {
+      const auth = e.auth
+      if (!auth || !auth.id) return false
+      return ['master', 'gerencial', 'adm'].indexOf(auth.getString('role') || '') !== -1
+    } catch (_) {
+      return false
+    }
+  }
+  if (!isStaff()) return e.json(401, { error: 'Acesso restrito à equipe autorizada.' })
   try {
-    const rec = findContato(e.request.pathValue('id'))
+    let rec = null
+    try {
+      rec = $app.findRecordById('contatos', e.request.pathValue('id'))
+    } catch (_) {
+      rec = null
+    }
     if (!rec) return e.json(404, { error: 'Lead não encontrado.' })
 
     const conversationId = rec.getString('conversation_id') || ''
@@ -169,13 +157,7 @@ routerAdd('GET', '/backend/v1/nine/leads/{id}', (e) => {
 
     let tarefas = []
     try {
-      const ts = $app.findRecordsByFilter(
-        'nine_tarefas',
-        rec.getString('id') ? `lead = "${rec.getString('id')}"` : '',
-        '-created',
-        50,
-        0,
-      )
+      const ts = $app.findRecordsByFilter('nine_tarefas', `lead = "${rec.id}"`, '-created', 50, 0)
       tarefas = (ts || []).map((t) => ({
         id: t.id,
         titulo: t.getString('titulo'),
@@ -238,16 +220,38 @@ routerAdd('GET', '/backend/v1/nine/leads/{id}', (e) => {
 //         status_comercial, prioridade, responsavel }
 // ---------------------------------------------------------------------------
 routerAdd('PATCH', '/backend/v1/nine/leads/{id}', (e) => {
-  if (!isStaffAuth(e)) return staffOnly(e)
+  const isStaff = () => {
+    try {
+      const auth = e.auth
+      if (!auth || !auth.id) return false
+      return ['master', 'gerencial', 'adm'].indexOf(auth.getString('role') || '') !== -1
+    } catch (_) {
+      return false
+    }
+  }
+  if (!isStaff()) return e.json(401, { error: 'Acesso restrito à equipe autorizada.' })
+  const safeSave = (rec) => {
+    try {
+      $app.save(rec)
+      return true
+    } catch (saveErr) {
+      console.log('nine_comercial: falha ao salvar registro:', saveErr)
+      return false
+    }
+  }
   try {
-    const rec = findContato(e.requestInfo().pathVars.id)
+    let rec = null
+    try {
+      rec = $app.findRecordById('contatos', e.request.pathValue('id'))
+    } catch (_) {
+      rec = null
+    }
     if (!rec) return e.json(404, { error: 'Lead não encontrado.' })
 
     const body = e.requestInfo().body || {}
     const acao = (body.acao || '').trim()
     const responsavel = (body.responsavel || e.auth.getString('name') || 'Equipe CoffeeCast').trim()
-    const agora = new Date()
-    const agoraIso = agora.toISOString()
+    const agoraIso = new Date().toISOString()
 
     if (!acao) return e.badRequestError('A ação é obrigatória.')
 
@@ -277,17 +281,23 @@ routerAdd('PATCH', '/backend/v1/nine/leads/{id}', (e) => {
 
       rec.set('historico_atendimento', JSON.stringify(historico))
       rec.set('data_contato', agoraIso)
-      if (resultado) rec.set('proxima_acao', (body.proxima_acao || '').trim() || resultado)
-      if (body.proxima_acao) rec.set('proxima_acao', body.proxima_acao.trim())
+      if (body.proxima_acao && body.proxima_acao.trim()) {
+        rec.set('proxima_acao', body.proxima_acao.trim())
+      } else if (resultado) {
+        rec.set('proxima_acao', resultado)
+      }
       if (body.data_proximo_retorno) rec.set('data_proximo_retorno', body.data_proximo_retorno)
       // Status só muda se a ação real indicar isso
-      if (body.status_comercial) rec.set('status_comercial', body.status_comercial)
+      if (body.status) rec.set('status_comercial', body.status)
     } else if (acao === 'agendar_retorno') {
-      const dataRetorno = (body.data_proximo_retorno || '').trim()
+      const dataRetorno = (body.data || body.data_proximo_retorno || '').trim()
       if (!dataRetorno) return e.badRequestError('Informe a data do próximo retorno.')
       rec.set('data_proximo_retorno', dataRetorno)
-      rec.set('proxima_acao', (body.proxima_acao || 'Retorno agendado pela equipe').trim())
-      if (body.status_comercial) rec.set('status_comercial', body.status_comercial)
+      rec.set(
+        'proxima_acao',
+        (body.observacao || body.proxima_acao || 'Retorno agendado pela equipe').trim(),
+      )
+      if (body.status) rec.set('status_comercial', body.status)
       else if (rec.getString('status_comercial') === 'novo_lead') {
         rec.set('status_comercial', 'contato_agendado')
       }
@@ -318,13 +328,20 @@ routerAdd('PATCH', '/backend/v1/nine/leads/{id}', (e) => {
           t.set('responsavel', rec.getString('responsavel') || 'Aline Lana')
           t.set('prioridade', rec.getString('prioridade') || 'media')
           t.set('status', 'pendente')
+          t.set('prazo', dataRetorno)
+          $app.save(t)
+        } else {
+          // Atualiza a tarefa pendente existente em vez de duplicar
+          const t = existentes[0]
+          t.set('prazo', dataRetorno)
+          t.set('status', 'pendente')
           $app.save(t)
         }
       } catch (tErr) {
         console.log('nine_comercial agendar_retorno tarefa:', tErr)
       }
     } else if (acao === 'alterar_status') {
-      const novoStatus = (body.status_comercial || '').trim()
+      const novoStatus = (body.status || body.status_comercial || '').trim()
       const validos = [
         'novo_lead',
         'aguardando_contato',
@@ -374,9 +391,32 @@ routerAdd('PATCH', '/backend/v1/nine/leads/{id}', (e) => {
 // GET /backend/v1/nine/leads/{id}/resumo-ia — resumo objetivo via IA
 // ---------------------------------------------------------------------------
 routerAdd('GET', '/backend/v1/nine/leads/{id}/resumo-ia', (e) => {
-  if (!isStaffAuth(e)) return staffOnly(e)
+  const isStaff = () => {
+    try {
+      const auth = e.auth
+      if (!auth || !auth.id) return false
+      return ['master', 'gerencial', 'adm'].indexOf(auth.getString('role') || '') !== -1
+    } catch (_) {
+      return false
+    }
+  }
+  if (!isStaff()) return e.json(401, { error: 'Acesso restrito à equipe autorizada.' })
+  const safeSave = (rec) => {
+    try {
+      $app.save(rec)
+      return true
+    } catch (saveErr) {
+      console.log('nine_comercial: falha ao salvar registro:', saveErr)
+      return false
+    }
+  }
   try {
-    const rec = findContato(e.requestInfo().pathVars.id)
+    let rec = null
+    try {
+      rec = $app.findRecordById('contatos', e.request.pathValue('id'))
+    } catch (_) {
+      rec = null
+    }
     if (!rec) return e.json(404, { error: 'Lead não encontrado.' })
 
     const conversationId = rec.getString('conversation_id') || ''
@@ -441,7 +481,16 @@ routerAdd('GET', '/backend/v1/nine/leads/{id}/resumo-ia', (e) => {
 // GET /backend/v1/nine/tarefas — tarefas internas de retorno (área de Leads)
 // ---------------------------------------------------------------------------
 routerAdd('GET', '/backend/v1/nine/tarefas', (e) => {
-  if (!isStaffAuth(e)) return staffOnly(e)
+  const isStaff = () => {
+    try {
+      const auth = e.auth
+      if (!auth || !auth.id) return false
+      return ['master', 'gerencial', 'adm'].indexOf(auth.getString('role') || '') !== -1
+    } catch (_) {
+      return false
+    }
+  }
+  if (!isStaff()) return e.json(401, { error: 'Acesso restrito à equipe autorizada.' })
   try {
     let registros = []
     try {
@@ -493,12 +542,23 @@ routerAdd('GET', '/backend/v1/nine/tarefas', (e) => {
 // PATCH /backend/v1/nine/tarefas/{id} — concluir/reabrir tarefa
 // ---------------------------------------------------------------------------
 routerAdd('PATCH', '/backend/v1/nine/tarefas/{id}', (e) => {
-  if (!isStaffAuth(e)) return staffOnly(e)
+  const isStaff = () => {
+    try {
+      const auth = e.auth
+      if (!auth || !auth.id) return false
+      return ['master', 'gerencial', 'adm'].indexOf(auth.getString('role') || '') !== -1
+    } catch (_) {
+      return false
+    }
+  }
+  if (!isStaff()) return e.json(401, { error: 'Acesso restrito à equipe autorizada.' })
   try {
     let rec = null
     try {
       rec = $app.findRecordById('nine_tarefas', e.request.pathValue('id'))
-    } catch (_) {}
+    } catch (_) {
+      rec = null
+    }
     if (!rec) return e.json(404, { error: 'Tarefa não encontrada.' })
 
     const body = e.requestInfo().body || {}
@@ -513,7 +573,10 @@ routerAdd('PATCH', '/backend/v1/nine/tarefas/{id}', (e) => {
     } else {
       rec.set('concluida_em', null)
     }
-    if (!safeSave(rec)) {
+    try {
+      $app.save(rec)
+    } catch (saveErr) {
+      console.log('nine_comercial: falha ao salvar tarefa:', saveErr)
       return e.json(500, { error: 'Não foi possível salvar a tarefa.' })
     }
 

@@ -109,6 +109,36 @@ export interface MomentoRecord {
   updated: string
 }
 
+export type ContatoStatusComercial =
+  | 'novo_lead'
+  | 'aguardando_contato'
+  | 'contato_agendado'
+  | 'em_atendimento'
+  | 'convertido'
+  | 'encerrado'
+
+export type ContatoInteresse =
+  | 'participar_como_convidado'
+  | 'indicar_convidado'
+  | 'apresentar_empresa'
+  | 'divulgacao'
+  | 'parceria'
+  | 'patrocinio'
+  | 'estudio'
+  | 'proposta_comercial'
+  | 'falar_com_equipe'
+
+export type ContatoCanalPreferido = 'whatsapp' | 'ligacao' | 'email' | 'nao_informado'
+
+export interface ContatoHistoricoItem {
+  data: string
+  data_hora: string
+  responsavel: string
+  canal: string
+  resultado: string
+  observacoes: string
+}
+
 export interface ContatoRecord {
   id: string
   nome_completo: string
@@ -125,8 +155,97 @@ export interface ContatoRecord {
   conversation_id?: string
   notas_comerciais?: string
   status: 'novo' | 'visualizado' | 'contatado'
+  interesse?: ContatoInteresse | ''
+  empresa_projeto?: string
+  resumo_necessidade?: string
+  canal_preferido?: ContatoCanalPreferido | ''
+  melhor_horario?: string
+  responsavel?: string
+  prioridade?: 'baixa' | 'media' | 'alta' | ''
+  status_comercial?: ContatoStatusComercial | ''
+  autorizacao_contato?: boolean
+  nao_contatar?: boolean
+  data_contato?: string
+  proxima_acao?: string
+  data_proximo_retorno?: string
+  resumo_ia?: string
+  historico_atendimento?: string
   created: string
   updated: string
+}
+
+export interface NineTarefaRecord {
+  id: string
+  titulo: string
+  lead?: string
+  conversation_id?: string
+  nome?: string
+  telefone?: string
+  email?: string
+  motivo?: string
+  resumo_conversa?: string
+  canal_preferido?: ContatoCanalPreferido | ''
+  horario_preferido?: string
+  link_historico?: string
+  responsavel?: string
+  prioridade?: 'baixa' | 'media' | 'alta'
+  status: 'pendente' | 'concluida'
+  prazo?: string
+  concluida_em?: string
+  created: string
+  updated: string
+}
+
+export interface NineLeadResumo {
+  id: string
+  nome_completo: string
+  email: string
+  telefone: string
+  whatsapp: string
+  interesse: string
+  empresa_projeto: string
+  resumo_necessidade: string
+  canal_preferido: string
+  melhor_horario: string
+  responsavel: string
+  prioridade: string
+  status: string
+  status_comercial: string
+  origem: string
+  conversation_id: string
+  resumo_ia: string
+  data_contato: string
+  data_proximo_retorno: string
+  proxima_acao: string
+  nao_contatar: boolean
+  autorizacao_contato: boolean
+  notas_comerciais: string
+  created: string
+  updated: string
+}
+
+export interface NineLeadDetalhe {
+  lead: NineLeadResumo
+  mensagens: Array<{
+    id: string
+    remetente: string
+    remetente_nome: string
+    conteudo: string
+    created: string
+  }>
+  tarefas: Array<{
+    id: string
+    titulo: string
+    status: string
+    prioridade: string
+    prazo: string
+    canal_preferido: string
+    horario_preferido: string
+    responsavel: string
+    motivo: string
+    resumo_conversa: string
+    created: string
+  }>
 }
 
 export type TransacaoMovimentacao = 'receita' | 'despesa'

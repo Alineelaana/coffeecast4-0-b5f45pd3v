@@ -31,6 +31,7 @@ import AdminIntegrantesScreen from '@/pages/admin/AdminIntegrantesScreen'
 import AdminDepoimentosScreen from '@/pages/admin/AdminDepoimentosScreen'
 import AdminMomentosScreen from '@/pages/admin/AdminMomentosScreen'
 import AdminContatosScreen from '@/pages/admin/AdminContatosScreen'
+import AdminLeadsScreen from '@/pages/admin/AdminLeadsScreen'
 import AdminFinanceiroScreen from '@/pages/admin/AdminFinanceiroScreen'
 import AdminRelatoriosScreen from '@/pages/admin/AdminRelatoriosScreen'
 import AdminAgendaScreen from '@/pages/admin/AdminAgendaScreen'
@@ -218,6 +219,14 @@ export default function App() {
                 element={
                   <ProtectedRoute screenKey="contatos">
                     <AdminContatosScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="leads"
+                element={
+                  <ProtectedRoute screenKey="contatos">
+                    <AdminLeadsScreen />
                   </ProtectedRoute>
                 }
               />
