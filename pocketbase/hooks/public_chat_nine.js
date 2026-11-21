@@ -81,6 +81,12 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       console.log('Aviso ao salvar mensagem do visitante:', saveMsgErr)
     }
 
+    // LGPD: o visitante pode recusar fornecer dados — a Nine respeita e segue com informações gerais
+    const refusouDados =
+      /(prefiro n[aã]o informar|n[aã]o quero informar|n[aã]o quero passar meus dados|sem informar meus dados|n[aã]o vou informar meus dados)/i.test(
+        rawMessage,
+      )
+
     const currentMode = conversaRecord.getString('modo_atendimento')
 
     // SE MODO FOR HUMANO OU ATENDIMENTO AUTOMÁTICO GLOBAL DESLIGADO:
@@ -174,7 +180,7 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       for (let li = 0; li < lines.length; li++) {
         const lineCandidate = lines[li].replace(/[^a-zA-ZÀ-ÿ\s]/g, ' ').trim()
         const words = lineCandidate.split(/\s+/).filter((w) => w.length >= 2)
-        // Nome plausível: 2 a 5 palavras, começando com maiúscula ou letras comuns, sem palavras-chave comuns de pergunta
+        // Nome plausível: 1 a 6 palavras; palavra única só se começar com maiúscula (ex.: "Mariana")
         const blacklistedWords = [
           'ola',
           'olá',
@@ -191,9 +197,32 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
           'sobre',
           'nine',
           'coffeecast',
+          'eu',
+          'sou',
+          'obrigado',
+          'obrigada',
+          'valeu',
+          'tudo',
+          'bem',
+          'sim',
+          'nao',
+          'não',
+          'ok',
+          'oi',
+          'tenho',
+          'meu',
+          'minha',
+          'nome',
+          'eh',
+          'é',
         ]
         const filteredWords = words.filter((w) => !blacklistedWords.includes(w.toLowerCase()))
-        if (filteredWords.length >= 2 && filteredWords.length <= 6) {
+        const ehNomeUnico = filteredWords.length === 1 && /^[A-ZÀ-Þ]/.test(filteredWords[0])
+        if (
+          filteredWords.length >= 1 &&
+          filteredWords.length <= 6 &&
+          (filteredWords.length >= 2 || ehNomeUnico)
+        ) {
           storedName = filteredWords
             .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
             .join(' ')
@@ -212,9 +241,13 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       storedEmail && storedEmail.includes('@') && storedEmail.includes('.'),
     )
     const hasValidPhone = Boolean(storedPhone && storedPhone.replace(/\D/g, '').length >= 8)
-    const hasFullName = Boolean(storedName && storedName.trim().split(/\s+/).length >= 2)
+    // Nome aceito com 1 palavra só (ex.: "Mariana") — suficiente para o atendimento
+    const hasFullName = Boolean(storedName && storedName.trim().length >= 2)
 
-    const isFullyIdentified = hasValidEmail && hasValidPhone && hasFullName
+    let confirmacaoComercial = ''
+    let tarefaCriada = false
+
+    const isFullyIdentified = hasValidEmail && hasValidPhone && hasFullName && !refusouDados
 
     if (isFullyIdentified) {
       // 1. Procurar no banco por e-mail OU telefone
@@ -303,6 +336,8 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       // Todo usuário criado ou identificado pela Nine deve aparecer em contatos.
       // Sem duplicar contatos: se e-mail ou telefone já existirem, atualiza.
       // -----------------------------------------------------------------------
+      let leadContato = null
+      let visitanteRetornou = false
       try {
         const contatosCol = $app.findCollectionByNameOrId('contatos')
         let matchedContato = null
@@ -332,6 +367,13 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
         }
 
         if (matchedContato) {
+          leadContato = matchedContato
+          if (
+            matchedContato.getString('conversation_id') &&
+            matchedContato.getString('conversation_id') !== conversationId
+          ) {
+            visitanteRetornou = true
+          }
           // Atualiza dados faltantes no contato existente
           let contatoNeedsSave = false
           if (!matchedContato.getString('user') && linkedUserId) {
@@ -344,6 +386,14 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
           }
           if (!matchedContato.getString('conversation_id')) {
             matchedContato.set('conversation_id', conversationId)
+            contatoNeedsSave = true
+          }
+          if (!matchedContato.getString('responsavel')) {
+            matchedContato.set('responsavel', 'Aline Lana')
+            contatoNeedsSave = true
+          }
+          if (!matchedContato.getString('status_comercial')) {
+            matchedContato.set('status_comercial', 'aguardando_contato')
             contatoNeedsSave = true
           }
           if (!matchedContato.getString('whatsapp') && storedPhone) {
@@ -371,14 +421,166 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
             `Lead captado pela Nine no chat do site. Mensagem inicial: "${rawMessage.slice(0, 300)}"`,
           )
           newContato.set('status', 'novo')
+          newContato.set('status_comercial', 'aguardando_contato')
+          newContato.set('responsavel', 'Aline Lana')
+          newContato.set('prioridade', 'media')
+          newContato.set('canal_preferido', 'nao_informado')
+          newContato.set('autorizacao_contato', true)
           if (linkedUserId) {
             newContato.set('user', linkedUserId)
           }
           newContato.set('conversation_id', conversationId)
           $app.save(newContato)
+          leadContato = newContato
         }
       } catch (syncContatoErr) {
         console.log('Aviso ao sincronizar lead com contatos:', syncContatoErr)
+      }
+
+      // -----------------------------------------------------------------------
+      // QUALIFICAÇÃO COMERCIAL E TAREFA DE RETORNO — regras reais no backend
+      // (não depende apenas do prompt do LLM para gravar dados)
+      // -----------------------------------------------------------------------
+      if (leadContato) {
+        try {
+          const INTERESSES = [
+            [
+              'participar_como_convidado',
+              /(participar|ser convidad|aparecer no podcast|gravar um epis[óo]dio|compartilhar.*hist[óo]ria)/i,
+            ],
+            ['indicar_convidado', /(indicar|sugerir).{0,30}(convidad|pessoa|empresa)/i],
+            ['apresentar_empresa', /(apresentar|mostrar).{0,30}empresa/i],
+            ['divulgacao', /(divulg|publicidade|publicar|impulsionar)/i],
+            ['parceria', /parcer/i],
+            ['patrocinio', /patroc[íi]n/i],
+            [
+              'estudio',
+              /(usar|alugar|conhecer|locar).{0,20}est[úu]dio|loca[cç][aã]o do est[úu]dio/i,
+            ],
+            ['proposta_comercial', /(proposta|or[cç]amento|pre[çc]o|valores?)/i],
+            [
+              'falar_com_equipe',
+              /(falar com (a |o )?(aline|equipe|algu[eé]m|atendente|respons[áa]vel|produ[cç][aã]o)|entrar em contato|me contatem|retornar contato|me liguem)/i,
+            ],
+          ]
+          let interesseDetectado = ''
+          for (let ii = 0; ii < INTERESSES.length; ii++) {
+            if (INTERESSES[ii][1].test(rawMessage)) {
+              interesseDetectado = INTERESSES[ii][0]
+              break
+            }
+          }
+
+          let canalDetectado = ''
+          if (/whatsapp|\bzap\b/i.test(rawMessage)) canalDetectado = 'whatsapp'
+          else if (/liga[cç][aã]o|ligacao|telefone|me liguem/i.test(rawMessage))
+            canalDetectado = 'ligacao'
+          else if (/e-?mail/i.test(rawMessage)) canalDetectado = 'email'
+
+          let horarioDetectado = ''
+          const horarioMatch = rawMessage.match(
+            /(\d{1,2}\s?[h:]\s?\d{0,2}h?|de manh[ãa]|[àa] tarde|de noite)/i,
+          )
+          if (horarioMatch) horarioDetectado = horarioMatch[0]
+
+          let leadNeedsSave = false
+          if (interesseDetectado && !leadContato.getString('interesse')) {
+            leadContato.set('interesse', interesseDetectado)
+            leadNeedsSave = true
+          }
+          if (canalDetectado && leadContato.getString('canal_preferido') !== canalDetectado) {
+            leadContato.set('canal_preferido', canalDetectado)
+            leadNeedsSave = true
+          }
+          if (horarioDetectado && !leadContato.getString('melhor_horario')) {
+            leadContato.set('melhor_horario', horarioDetectado)
+            leadNeedsSave = true
+          }
+          if (!leadContato.getString('resumo_necessidade')) {
+            leadContato.set('resumo_necessidade', rawMessage.slice(0, 500))
+            leadNeedsSave = true
+          }
+
+          // Solicitação de contato → status "aguardando_contato" + tarefa interna idempotente
+          const pediuContato =
+            /(quero participar|gostaria de participar|quero (falar|conversar)|entrar em contato|me contatem|retornar contato|pode me ligar|me liguem|agendar|falar com a aline|falar com a equipe)/i.test(
+              rawMessage,
+            )
+          if (pediuContato) {
+            const statusAtual = leadContato.getString('status_comercial')
+            if (statusAtual !== 'convertido' && statusAtual !== 'encerrado') {
+              leadContato.set('status_comercial', 'aguardando_contato')
+              leadNeedsSave = true
+            }
+            if (!leadContato.getString('proxima_acao')) {
+              leadContato.set(
+                'proxima_acao',
+                'Retornar contato do lead — solicitação feita no chat do site',
+              )
+              leadNeedsSave = true
+            }
+
+            const tarefaTitulo = 'Retornar contato — Lead CoffeeCast 4.0'
+            let tarefaExistente = []
+            try {
+              tarefaExistente = $app.findRecordsByFilter(
+                'nine_tarefas',
+                `lead = "${leadContato.id}" && titulo = "${tarefaTitulo}" && status = "pendente"`,
+                '-created',
+                1,
+                0,
+              )
+            } catch (_) {}
+            if (!tarefaExistente || tarefaExistente.length === 0) {
+              const tarefasCol = $app.findCollectionByNameOrId('nine_tarefas')
+              const tarefa = new Record(tarefasCol)
+              tarefa.set('titulo', tarefaTitulo)
+              tarefa.set('lead', leadContato.id)
+              tarefa.set('conversation_id', conversationId)
+              tarefa.set('nome', leadContato.getString('nome_completo'))
+              tarefa.set(
+                'telefone',
+                leadContato.getString('whatsapp') || leadContato.getString('telefone'),
+              )
+              tarefa.set('email', leadContato.getString('email'))
+              tarefa.set(
+                'motivo',
+                interesseDetectado ||
+                  leadContato.getString('interesse') ||
+                  'Solicitação de contato via chat do site',
+              )
+              tarefa.set(
+                'resumo_conversa',
+                leadContato.getString('resumo_necessidade') || rawMessage.slice(0, 500),
+              )
+              tarefa.set(
+                'canal_preferido',
+                canalDetectado || leadContato.getString('canal_preferido') || 'nao_informado',
+              )
+              tarefa.set(
+                'horario_preferido',
+                horarioDetectado || leadContato.getString('melhor_horario'),
+              )
+              tarefa.set('link_historico', '/admin/contatos')
+              tarefa.set('responsavel', 'Aline Lana')
+              tarefa.set('prioridade', leadContato.getString('prioridade') || 'media')
+              tarefa.set('status', 'pendente')
+              tarefa.set('prazo', new Date().toISOString().slice(0, 10))
+              $app.save(tarefa)
+              tarefaCriada = true
+            }
+
+            // Confirmação ao visitante SÓ depois de gravar de verdade
+            confirmacaoComercial =
+              '\n\nPerfeito! Já registrei seu interesse e deixei sua solicitação sinalizada para nossa equipe. A Aline poderá dar continuidade ao atendimento assim que possível. ☕💛'
+          }
+
+          if (leadNeedsSave) {
+            $app.save(leadContato)
+          }
+        } catch (comercialErr) {
+          console.log('Aviso na qualificação comercial da Nine:', comercialErr)
+        }
       }
     }
 
@@ -396,25 +598,31 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
     // Se o visitante tiver feito uma pergunta na primeira mensagem, a Nine acolhe com gentileza e pede os dados.
     if (!isFullyIdentified) {
       const missingFields = []
-      if (!hasFullName) missingFields.push('seu nome completo')
+      if (!hasValidPhone) missingFields.push('seu WhatsApp (com DDD)')
       if (!hasValidEmail) missingFields.push('seu melhor e-mail')
-      if (!hasValidPhone) missingFields.push('seu telefone ou WhatsApp com DDD')
 
       let askReply = ''
 
-      if (isFirstMessageOfConversation || conversaRecord.getInt('total_mensagens') <= 2) {
+      if (!hasFullName) {
+        // Abertura oficial (apresentação única; nas mensagens seguintes não se reapresenta)
+        if (isFirstMessageOfConversation || conversaRecord.getInt('total_mensagens') <= 2) {
+          askReply =
+            'Olá! Que alegria receber você por aqui! ☕✨\n\n' +
+            'Seja muito bem-vindo(a) ao CoffeeCast 4.0! Eu sou a Nine, assistente virtual do CoffeeCast, e estou aqui para te ajudar com tudo o que precisar.\n\n' +
+            'Antes de começarmos, como posso te chamar?'
+        } else {
+          askReply = 'Claro! Antes de continuarmos, me conta: como posso te chamar? ☕'
+        }
+      } else if (missingFields.length > 0) {
         askReply =
-          'Olá! Que alegria receber você aqui no CoffeeCast 4.0! ☕✨\n\n' +
-          'Antes de mergulharmos no nosso papo, me conta: qual é o ' +
-          missingFields.join(', ') +
-          '? Assim eu já preparo um café bem quentinho e personalizo todo o seu atendimento com o maior carinho.'
-      } else {
-        // Mensagem subsequente enquanto ainda faltam dados
-        const firstNameGreeting = firstName ? `${firstName}, ` : ''
-        askReply =
-          `Com certeza! ${firstNameGreeting}Para eu te passar todos os detalhes certinhos e registrar nosso contato com carinho, só me confirma, por favor: ` +
+          'Prazer em conhecer você, ' +
+          firstName +
+          '! 😊\n\n' +
+          'Para deixar seu atendimento registrado e facilitar nosso contato, pode me passar ' +
           missingFields.join(' e ') +
-          '? ☕'
+          '?\n\n' +
+          'Esses dados ajudam nossa equipe a dar continuidade ao seu atendimento e entrar em contato, caso você deseje. 😊\n\n' +
+          'E se preferir, pode ficar tranquilo(a): a gente também pode seguir só conversando, sem compromisso! ☕'
       }
 
       // Salvar a resposta da Nine
@@ -478,6 +686,28 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
             agentUserId = rec.id
           } catch (_) {}
         }
+      }
+    }
+
+    // Saudação de retorno — memória de atendimento (identificação já validada por e-mail/telefone)
+    if (visitanteRetornou && firstName) {
+      try {
+        const saudacaoRetorno = new Record(mensagensCol)
+        saudacaoRetorno.set('conversation_id', conversationId)
+        saudacaoRetorno.set('remetente', 'nine')
+        saudacaoRetorno.set('remetente_nome', 'Nine')
+        saudacaoRetorno.set(
+          'conteudo',
+          'Que bom ter você novamente por aqui, ' + firstName + '! 😊☕',
+        )
+        $app.save(saudacaoRetorno)
+        conversaRecord.set(
+          'ultima_mensagem',
+          'Que bom ter você novamente por aqui, ' + firstName + '! 😊☕',
+        )
+        conversaRecord.set('ultimo_remetente', 'nine')
+      } catch (saudErr) {
+        console.log('Aviso ao registrar saudação de retorno:', saudErr)
       }
     }
 
@@ -597,6 +827,24 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
 
     const dynamicContextBlock = dynamicContextParts.join('\n\n')
 
+    // Dados comerciais do lead para o prompt (qualificação fiel, sem inventar)
+    let leadCommercialInfo = ''
+    if (leadContato) {
+      leadCommercialInfo =
+        '\n\n[DADOS COMERCIAIS REGISTRADOS DO LEAD]\n' +
+        'Interesse principal: ' +
+        (leadContato.getString('interesse') || 'não informado') +
+        '\nEmpresa/Projeto: ' +
+        (leadContato.getString('empresa_projeto') || 'não informado') +
+        '\nCanal preferido: ' +
+        (leadContato.getString('canal_preferido') || 'não informado') +
+        '\nMelhor horário: ' +
+        (leadContato.getString('melhor_horario') || 'não informado') +
+        '\nStatus comercial: ' +
+        (leadContato.getString('status_comercial') || 'novo_lead') +
+        '\n[REGRA: ao identificar interesse, pergunte com naturalidade qual é a melhor forma de contato (WhatsApp, ligação ou e-mail) e o melhor horário — sem interrogatório. Se o visitante demonstrar que quer falar com a equipe, informe que o interesse já foi registrado e sinalizado para a Aline. Nunca prometa horários ou agendamentos: apenas registre. Escolher WhatsApp NÃO significa envio automático — o contato é sempre manual pela equipe.]'
+    }
+
     // Diretrizes essenciais de NORMA-PADRÃO, LÍNGUA, TOM NATURAL E PERSONALIZAÇÃO
     const naturalHumanGuidelines =
       'DIRETRIZES DE LÍNGUA, NORMA-PADRÃO E ACORDO ORTOGRÁFICO (OBRIGATÓRIO E RIGOROSO):\n' +
@@ -629,7 +877,8 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
       'INSTRUÇÃO FINAL DE RESPOSTA:\n' +
       'Responda em português do Brasil padrão (Acordo Ortográfico vigente), sem erros de concordância ou pontuação. Chame ' +
       (firstName || 'a pessoa') +
-      ' pelo primeiro nome com calor humano, como à mesa tomando café. Use pronomes adequados se souber o gênero ou linguagem neutra e natural se incerto. Use estritamente os fatos das fontes acima. Se faltar algum dado, indique com carinho o WhatsApp da Aline Lana (31) 99129-7619.'
+      ' pelo primeiro nome com calor humano, como à mesa tomando café. Use pronomes adequados se souber o gênero ou linguagem neutra e natural se incerto. Use estritamente os fatos das fontes acima. Se faltar algum dado, indique com carinho o WhatsApp da Aline Lana (31) 99129-7619.' +
+      leadCommercialInfo
 
     let responseContent = ''
     let returnedMessageId = ''
@@ -705,6 +954,11 @@ routerAdd('POST', '/backend/v1/nine/chat', (e) => {
         welcomeFallback +
         'Obrigada por compartilhar seus dados. Como posso te ajudar hoje sobre os episódios, integrantes ou gravações do CoffeeCast 4.0?'
       modeUsed = 'fallback-greeting'
+    }
+
+    // Confirmação de registro/tarefa SÓ quando a gravação de verdade aconteceu
+    if (confirmacaoComercial) {
+      responseContent = responseContent + confirmacaoComercial
     }
 
     // Salvar a resposta da Nine em nine_mensagens
