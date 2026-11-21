@@ -8,92 +8,10 @@
 //   POST /backend/v1/estudio/divulgacao   — análise estratégica do roteiro (JSON estruturado)
 //   POST /backend/v1/estudio/templates    — propostas de novos templates (Laboratório)
 // Padrão de resposta: { sucesso, chatgptAtivo, ... } com fallback silencioso sem erro técnico.
-
-function estudioObterApiKey() {
-  return ($os.getenv('GCHAT_GPT') || '').trim()
-}
-
-function estudioChamarOpenAI(apiKey, prompt, maxTokens) {
-  const res = $http.send({
-    url: 'https://api.openai.com/v1/chat/completions',
-    method: 'POST',
-    timeout: 60,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + apiKey,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4.1',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Você é o CoffeeCast Creative AI, agente oficial do podcast brasileiro CoffeeCast 4.0. ' +
-            'Identidade visual: vinho #4B1E3F, dourado, rosé e marfim; tipografia serifada elegante (Playfair Display); ' +
-            'slogan oficial: "Mais que conversas, histórias que transformam." ' +
-            'REGRA ABSOLUTA: NUNCA mencione temporada ("4ª Temporada", "Quarta Temporada" etc.) — apenas "CoffeeCast 4.0". ' +
-            'Nunca invente fatos, citações literais ou declarações dos convidados; use apenas o conteúdo fornecido. ' +
-            'Responda SEMPRE apenas com JSON válido, sem markdown, sem cercas de código.',
-        },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.75,
-      max_tokens: maxTokens || 3000,
-    }),
-  })
-  let parsed = null
-  try {
-    parsed = JSON.parse(res.body)
-  } catch (_) {
-    parsed = null
-  }
-  const ok = res.statusCode >= 200 && res.statusCode < 300
-  const content =
-    parsed && parsed.choices && parsed.choices[0] && parsed.choices[0].message
-      ? String(parsed.choices[0].message.content || '')
-      : ''
-  return { ok: ok, content: content, status: res.statusCode }
-}
-
-function estudioExtrairJson(content) {
-  if (!content) return null
-  let txt = String(content).trim()
-  txt = txt
-    .replace(/```json/gi, '')
-    .replace(/```/g, '')
-    .trim()
-  const ini = txt.indexOf('{')
-  const fim = txt.lastIndexOf('}')
-  if (ini === -1 || fim === -1 || fim <= ini) return null
-  try {
-    return JSON.parse(txt.slice(ini, fim + 1))
-  } catch (_) {
-    return null
-  }
-}
-
-function estudioContextoRoteiro(body) {
-  const convidados = Array.isArray(body.convidados) ? body.convidados : []
-  const linhas = []
-  convidados.forEach((c, i) => {
-    linhas.push(
-      'Convidado ' +
-        (i + 1) +
-        ': ' +
-        (c.nome || '') +
-        (c.empresa ? ' | Empresa/Projeto: ' + c.empresa : '') +
-        (c.biografia ? ' | Biografia: ' + String(c.biografia).slice(0, 1200) : '') +
-        (c.tema ? ' | Tema desejado: ' + c.tema : ''),
-    )
-  })
-  return {
-    episodioTitulo: (body.titulo_episodio || '').trim(),
-    subtitulo: (body.subtitulo || '').trim(),
-    convidadosTexto: linhas.join('\n'),
-    roteiroTexto: String(body.roteiro_texto || '').slice(0, 14000),
-    observacoes: String(body.observacoes || '').slice(0, 1000),
-  }
-}
+//
+// IMPORTANTE (JSVM do PocketBase): callbacks rodam em um pool de VM separado — NENHUMA
+// declaração top-level pode ser referenciada dentro deles. Toda a lógica vive inline no
+// corpo de cada callback (helpers duplicados de propósito).
 
 // ---------- ROTA 1: Análise de divulgação do roteiro ----------
 routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
@@ -105,7 +23,8 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
       return e.forbiddenError('Acesso restrito à equipe autorizada.')
     }
 
-    const apiKey = estudioObterApiKey()
+    // -- inline: obter chave da API --
+    const apiKey = ($os.getenv('GCHAT_GPT') || '').trim()
     if (!apiKey) {
       return e.json(200, {
         sucesso: false,
@@ -117,7 +36,26 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
 
     const body = e.requestInfo().body || {}
     const modo = (body.modo || 'completo').trim() // completo | gancho | titulos | thumbnail
-    const ctx = estudioContextoRoteiro(body)
+
+    // -- inline: contexto do roteiro --
+    const convidados = Array.isArray(body.convidados) ? body.convidados : []
+    const linhas = []
+    convidados.forEach((c, i) => {
+      linhas.push(
+        'Convidado ' +
+          (i + 1) +
+          ': ' +
+          (c.nome || '') +
+          (c.empresa ? ' | Empresa/Projeto: ' + c.empresa : '') +
+          (c.biografia ? ' | Biografia: ' + String(c.biografia).slice(0, 1200) : '') +
+          (c.tema ? ' | Tema desejado: ' + c.tema : ''),
+      )
+    })
+    const episodioTitulo = (body.titulo_episodio || '').trim()
+    const subtitulo = (body.subtitulo || '').trim()
+    const convidadosTexto = linhas.join('\n')
+    const roteiroTexto = String(body.roteiro_texto || '').slice(0, 14000)
+    const observacoes = String(body.observacoes || '').slice(0, 1000)
 
     let instrucao = ''
     if (modo === 'gancho') {
@@ -151,20 +89,59 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
       instrucao +
       '\n\n--- DADOS DO EPISÓDIO (CoffeeCast 4.0) ---\n' +
       'Título atual do episódio: ' +
-      (ctx.episodioTitulo || '(a definir)') +
+      (episodioTitulo || '(a definir)') +
       '\nSubtítulo: ' +
-      (ctx.subtitulo || '(nenhum)') +
+      (subtitulo || '(nenhum)') +
       '\nSlogan oficial: "Mais que conversas, histórias que transformam."\n' +
       'CONVIDADOS:\n' +
-      (ctx.convidadosTexto || '(sem convidados — episódio de mesa redonda entre apresentadoras)') +
+      (convidadosTexto || '(sem convidados — episódio de mesa redonda entre apresentadoras)') +
       '\n\nROTEIRO / FICHA:\n' +
-      (ctx.roteiroTexto || '(sem roteiro anexado)') +
-      (ctx.observacoes ? '\n\nOBSERVAÇÕES DA PRODUÇÃO: ' + ctx.observacoes : '')
+      (roteiroTexto || '(sem roteiro anexado)') +
+      (observacoes ? '\n\nOBSERVAÇÕES DA PRODUÇÃO: ' + observacoes : '')
 
-    const r = estudioChamarOpenAI(apiKey, prompt, 3500)
-    if (!r.ok || !r.content) {
+    // -- inline: chamada OpenAI (gpt-4.1) --
+    const res = $http.send({
+      url: 'https://api.openai.com/v1/chat/completions',
+      method: 'POST',
+      timeout: 60,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + apiKey,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Você é o CoffeeCast Creative AI, agente oficial do podcast brasileiro CoffeeCast 4.0. ' +
+              'Identidade visual: vinho #4B1E3F, dourado, rosé e marfim; tipografia serifada elegante (Playfair Display); ' +
+              'slogan oficial: "Mais que conversas, histórias que transformam." ' +
+              'REGRA ABSOLUTA: NUNCA mencione temporada ("4ª Temporada", "Quarta Temporada" etc.) — apenas "CoffeeCast 4.0". ' +
+              'Nunca invente fatos, citações literais ou declarações dos convidados; use apenas o conteúdo fornecido. ' +
+              'Responda SEMPRE apenas com JSON válido, sem markdown, sem cercas de código.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.75,
+        max_tokens: 3500,
+      }),
+    })
+    let parsed = null
+    try {
+      parsed = JSON.parse(res.body)
+    } catch (_) {
+      parsed = null
+    }
+    const ok = res.statusCode >= 200 && res.statusCode < 300
+    const content =
+      parsed && parsed.choices && parsed.choices[0] && parsed.choices[0].message
+        ? String(parsed.choices[0].message.content || '')
+        : ''
+
+    if (!ok || !content) {
       console.log(
-        '[estudio_ia] OpenAI falhou (status ' + r.status + ') — retornando fallback amigável',
+        '[estudio_ia] OpenAI falhou (status ' + res.statusCode + ') — retornando fallback amigável',
       )
       return e.json(200, {
         sucesso: false,
@@ -174,7 +151,22 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
       })
     }
 
-    const dados = estudioExtrairJson(r.content)
+    // -- inline: extrair JSON da resposta --
+    let txt = String(content).trim()
+    txt = txt
+      .replace(/```json/gi, '')
+      .replace(/```/g, '')
+      .trim()
+    const ini = txt.indexOf('{')
+    const fim = txt.lastIndexOf('}')
+    let dados = null
+    if (ini !== -1 && fim > ini) {
+      try {
+        dados = JSON.parse(txt.slice(ini, fim + 1))
+      } catch (_) {
+        dados = null
+      }
+    }
     if (!dados) {
       return e.json(200, {
         sucesso: false,
@@ -209,7 +201,8 @@ routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
       return e.forbiddenError('Acesso restrito à equipe autorizada.')
     }
 
-    const apiKey = estudioObterApiKey()
+    // -- inline: obter chave da API --
+    const apiKey = ($os.getenv('GCHAT_GPT') || '').trim()
     if (!apiKey) {
       return e.json(200, {
         sucesso: false,
@@ -240,8 +233,47 @@ routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
       '"x":0..1,"y":0..1,"w":0..1,"h":0..1,"cor":"#hex","fonte":"serif|sans","tamanho":0..1}]}]}. ' +
       'Coordenadas x,y,w,h normalizadas (0 a 1) sobre o canvas 16:9.'
 
-    const r = estudioChamarOpenAI(apiKey, prompt, 2500)
-    if (!r.ok || !r.content) {
+    // -- inline: chamada OpenAI (gpt-4.1) --
+    const res = $http.send({
+      url: 'https://api.openai.com/v1/chat/completions',
+      method: 'POST',
+      timeout: 60,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + apiKey,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Você é o CoffeeCast Creative AI, agente oficial do podcast brasileiro CoffeeCast 4.0. ' +
+              'Identidade visual: vinho #4B1E3F, dourado, rosé e marfim; tipografia serifada elegante (Playfair Display); ' +
+              'slogan oficial: "Mais que conversas, histórias que transformam." ' +
+              'REGRA ABSOLUTA: NUNCA mencione temporada ("4ª Temporada", "Quarta Temporada" etc.) — apenas "CoffeeCast 4.0". ' +
+              'Nunca invente fatos, citações literais ou declarações dos convidados; use apenas o conteúdo fornecido. ' +
+              'Responda SEMPRE apenas com JSON válido, sem markdown, sem cercas de código.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.75,
+        max_tokens: 2500,
+      }),
+    })
+    let parsed = null
+    try {
+      parsed = JSON.parse(res.body)
+    } catch (_) {
+      parsed = null
+    }
+    const ok = res.statusCode >= 200 && res.statusCode < 300
+    const content =
+      parsed && parsed.choices && parsed.choices[0] && parsed.choices[0].message
+        ? String(parsed.choices[0].message.content || '')
+        : ''
+
+    if (!ok || !content) {
       return e.json(200, {
         sucesso: false,
         chatgptAtivo: true,
@@ -249,7 +281,22 @@ routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
       })
     }
 
-    const dados = estudioExtrairJson(r.content)
+    // -- inline: extrair JSON da resposta --
+    let txt = String(content).trim()
+    txt = txt
+      .replace(/```json/gi, '')
+      .replace(/```/g, '')
+      .trim()
+    const ini = txt.indexOf('{')
+    const fim = txt.lastIndexOf('}')
+    let dados = null
+    if (ini !== -1 && fim > ini) {
+      try {
+        dados = JSON.parse(txt.slice(ini, fim + 1))
+      } catch (_) {
+        dados = null
+      }
+    }
     if (!dados || !Array.isArray(dados.propostas)) {
       return e.json(200, {
         sucesso: false,
