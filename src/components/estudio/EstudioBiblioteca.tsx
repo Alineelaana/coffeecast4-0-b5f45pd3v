@@ -30,8 +30,11 @@ export default function EstudioBiblioteca({ atualizadoEm }: Props) {
     setCarregando(true)
     try {
       const [tpl, cp] = await Promise.all([
-        EstudioService.templates.listar(['status != "arquivado"'], { sort: '-created' }),
-        EstudioService.capas.listar([], { sort: '-created' }),
+        EstudioService.templates.listar(
+          ['status = "ativo" || status = "rascunho" || status = "inativo"'],
+          '-created',
+        ),
+        EstudioService.capas.listar([], '-created'),
       ])
       setTemplates(tpl.items)
       setCapas(cp.items)
@@ -49,7 +52,7 @@ export default function EstudioBiblioteca({ atualizadoEm }: Props) {
   async function alternarStatusTemplate(t: CapaTemplateRecord) {
     try {
       await EstudioService.templates.atualizar(t.id, {
-        status: t.status === 'ativo' ? 'arquivado' : 'ativo',
+        status: t.status === 'ativo' ? 'inativo' : 'ativo',
       })
       toast({ title: t.status === 'ativo' ? 'Template arquivado' : 'Template reativado' })
       void carregar()
@@ -90,7 +93,7 @@ export default function EstudioBiblioteca({ atualizadoEm }: Props) {
   async function excluirCapa(c: CapaEstudioRecord) {
     if (!window.confirm(`Excluir a capa "${c.titulo}"? Esta ação não pode ser desfeita.`)) return
     try {
-      await EstudioService.capas.excluir(c.id)
+      await EstudioService.capas.remover(c.id)
       toast({ title: 'Capa excluída' })
       void carregar()
     } catch (err) {
@@ -100,11 +103,11 @@ export default function EstudioBiblioteca({ atualizadoEm }: Props) {
 
   async function baixarCapa(c: CapaEstudioRecord, formato: 'png' | 'jpg') {
     try {
-      const url = urlArquivoCapa(c, c.arquivo)
+      const url = urlArquivoCapa(c, c.arquivo_capa)
       if (!url) throw new Error('Arquivo não disponível')
       const resp = await fetch(url)
       const blob = await resp.blob()
-      const ext = c.arquivo.split('.').pop() || formato
+      const ext = (c.arquivo_capa || '').split('.').pop() || formato
       const a = document.createElement('a')
       a.href = URL.createObjectURL(blob)
       a.download = `capa-coffeecast-${c.id.slice(0, 8)}.${ext}`
@@ -209,7 +212,7 @@ export default function EstudioBiblioteca({ atualizadoEm }: Props) {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {capas.map((c) => {
-              const url = urlArquivoCapa(c, c.arquivo)
+              const url = urlArquivoCapa(c, c.arquivo_capa)
               return (
                 <Card key={c.id} className="border shadow-sm overflow-hidden">
                   <div className="aspect-video bg-muted">
@@ -245,7 +248,7 @@ export default function EstudioBiblioteca({ atualizadoEm }: Props) {
                       {c.usuario || ''}
                     </p>
                     <div className="flex flex-wrap gap-1 pt-1">
-                      {c.arquivo && (
+                      {c.arquivo_capa && (
                         <>
                           <Button size="sm" variant="outline" onClick={() => baixarCapa(c, 'png')}>
                             ⬇ PNG

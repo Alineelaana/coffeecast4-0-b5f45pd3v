@@ -6,7 +6,7 @@
 // Persistência: campos divulgacao_ia / divulgacao_gerada_em / divulgacao_historico
 // da coleção roteiros_convidados (o título original do roteiro NUNCA é sobrescrito).
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import pb from '@/lib/pocketbase/client'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -26,6 +26,8 @@ interface Props {
   roteiro: RoteiroConvidadoRecord
   /** Esconde o cabeçalho próprio quando embutido no fluxo "Preparar Episódio com IA". */
   compacto?: boolean
+  /** Notifica a tela de Roteiros quando um material é salvo no registro (para sincronizar listas). */
+  onRoteiroAtualizado?: (r: RoteiroConvidadoRecord) => void
 }
 
 type CampoRede = 'instagram' | 'whatsapp' | 'stories' | 'reels' | 'lancamento' | 'agradecimento'
@@ -59,7 +61,11 @@ function roteiroJson(roteiro: RoteiroConvidadoRecord): DivulgacaoSalva {
   }
 }
 
-export default function DivulgacaoInteligente({ roteiro, compacto }: Props) {
+export default function DivulgacaoInteligente({
+  roteiro,
+  compacto,
+  onRoteiroAtualizado,
+}: Props) {
   const [gerando, setGerando] = useState(false)
   const [salvando, setSalvando] = useState('')
   const [dadosIA, setDadosIA] = useState<DivulgacaoDados | null>(null)

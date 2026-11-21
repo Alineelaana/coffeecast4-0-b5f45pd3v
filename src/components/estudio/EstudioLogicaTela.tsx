@@ -74,6 +74,22 @@ const SECOES: { titulo: string; itens: string[] }[] = [
     ],
   },
   {
+    titulo: '🎬 Fluxo Roteiros → IA → Divulgação → Capa (integração com a tela de Roteiros)',
+    itens: [
+      'O formulário público /convidado alimenta os registros da coleção roteiros_convidados — tema, empresa, respostas, datas e mídias originais.',
+      'A IA trabalha sempre com dados recuperados do banco (registros reais do convidado) — nunca a partir de PDF anexado ou texto avulso.',
+      '"Preparar Episódio com IA" guia 3 etapas: Preparação do Roteiro, Divulgação Inteligente e Criação da Capa.',
+      'Temas sensíveis informados pelo convidado são respeitados: a IA não aborda, sugere ou enfatiza o que foi marcado para não tratar.',
+      'A autorização de uso de imagem é verificada no registro — sem autorização confirmada, os materiais visuais não são gerados.',
+      'Fotografias e logomarcas ORIGINAIS (enviadas no formulário) são usadas por composição gráfica — nunca recriadas, editadas ou geradas por IA.',
+      'A divulgação gerada (títulos, descrição, tags, redes sociais) é salva no registro do roteiro (divulgacao_ia) com histórico/versionamento — o roteiro aprovado nunca é sobrescrito sem revisão.',
+      'A capa é composta pelo MESMO serviço do Estúdio Criativo (motor gráfico canvas + Template Mestre), reutilizando EstudioGeradorCapas com o título escolhido.',
+      'O material final é salvo no episódio com histórico/versionamento — versões anteriores permanecem acessíveis na Biblioteca Criativa.',
+      '"Atualizar dados do convidado" sincroniza os registros sem sobrescrever material aprovado (roteiro final, divulgação salva e capa oficial preservados).',
+      'Permissões seguem o sistema existente: ADM gerencia tudo; EDITOR gera e salva; VISUALIZADOR consulta — sem autenticação paralela.',
+    ],
+  },
+  {
     titulo: '⚠️ Erros e custos',
     itens: [
       'Operações textuais (IA) e gráficas (canvas) são separadas; nada de imagem é gerado quando só texto é pedido.',

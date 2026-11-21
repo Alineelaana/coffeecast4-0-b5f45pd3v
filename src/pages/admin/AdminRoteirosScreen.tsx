@@ -60,9 +60,9 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
-import { DivulgacaoInteligente } from '@/components/roteiros/DivulgacaoInteligente'
-import { PrepararEpisodioIA } from '@/components/roteiros/PrepararEpisodioIA'
-import { EstudioLogicaTela } from '@/components/estudio/EstudioLogicaTela'
+import DivulgacaoInteligente from '@/components/roteiros/DivulgacaoInteligente'
+import PrepararEpisodioIA from '@/components/roteiros/PrepararEpisodioIA'
+import EstudioLogicaTela from '@/components/estudio/EstudioLogicaTela'
 
 export default function AdminRoteirosScreen() {
   const { isMaster, isGerencial } = useAuth()
@@ -181,22 +181,10 @@ export default function AdminRoteirosScreen() {
     setSelectedRoteiro((prev) => (prev && prev.id === atualizado.id ? atualizado : prev))
   }
 
-  // Preparação do roteiro pela Nine (Etapa 1 do "Preparar Episódio com IA")
-  const handleSugestaoPreparacao = async (texto: string) => {
-    if (!divulgacaoRoteiro || !texto) return
-    try {
-      await pb.collection('roteiros_convidados').update(divulgacaoRoteiro.id, {
-        roteiro_final_texto: texto,
-      })
-      handleDivulgacaoRoteiroAtualizado({
-        ...divulgacaoRoteiro,
-        roteiro_final_texto: texto,
-      })
-      toast.success('Sugestão da Nine salva no roteiro final do convidado (revisável no editor).')
-    } catch (err) {
-      console.error('[AdminRoteirosScreen] erro ao salvar sugestão da preparação IA:', err)
-      toast.error('Não foi possível salvar a sugestão no roteiro. Verifique suas permissões.')
-    }
+  /** Sugestão da IA (roteiro_sugerido_nine) sincronizada na lista — o roteiro aprovado não é tocado. */
+  const handleSugestaoPreparacao = (atualizado: RoteiroConvidadoRecord) => {
+    setRoteiros((prev) => prev.map((r) => (r.id === atualizado.id ? atualizado : r)))
+    setSelectedRoteiro((prev) => (prev && prev.id === atualizado.id ? atualizado : prev))
   }
 
   const loadRoteiros = async () => {
@@ -2005,6 +1993,44 @@ export default function AdminRoteirosScreen() {
                         {savingRoteiro ? 'Salvando...' : 'Salvar Roteiro'}
                       </Button>
                     </div>
+
+                    {/* AÇÕES DE IA — Divulgação Inteligente, Preparar Episódio e Lógica da Tela */}
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-vinho/10">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => abrirDivulgacaoIA(selectedRoteiro)}
+                        disabled={savingRoteiro || regeneratingIndividual}
+                        className="bg-[#4B1E3F] hover:bg-[#5d2650] text-white font-bold text-xs rounded-xl min-h-[38px] px-3 flex items-center gap-1.5"
+                      >
+                        <Share2 className="w-3.5 h-3.5 text-dourado" />
+                        <span>Divulgação Inteligente com IA</span>
+                      </Button>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          setPrepararIAOpen(true)
+                        }}
+                        disabled={savingRoteiro || regeneratingIndividual}
+                        className="bg-[#C9971F] hover:bg-[#b8891b] text-white font-bold text-xs rounded-xl min-h-[38px] px-3 flex items-center gap-1.5"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Preparar Episódio com IA</span>
+                      </Button>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setLogicaTelaOpen(true)}
+                        className="border-dourado/60 text-vinho hover:bg-dourado/15 font-bold text-xs rounded-xl min-h-[38px] px-3 flex items-center gap-1.5"
+                      >
+                        <Layers className="w-3.5 h-3.5 text-dourado-dark" />
+                        <span>Lógica da Tela</span>
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="rot-final-texto" className="text-xs font-bold text-vinho">
@@ -2583,6 +2609,32 @@ export default function AdminRoteirosScreen() {
           </div>
         </div>
       )}
+
+      {/* PAINÉIS DE IA: DIVULGAÇÃO INTELIGENTE / PREPARAR EPISÓDIO / LÓGICA DA TELA */}
+      <Dialog open={divulgacaoOpen} onOpenChange={setDivulgacaoOpen}>
+        <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-lg text-[#4B1E3F]">
+              ✨ Divulgação Inteligente com IA — {divulgacaoRoteiro?.nome || ''}
+            </DialogTitle>
+          </DialogHeader>
+          {divulgacaoRoteiro && (
+            <DivulgacaoInteligente
+              roteiro={divulgacaoRoteiro}
+              onRoteiroAtualizado={handleDivulgacaoRoteiroAtualizado}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <PrepararEpisodioIA
+        open={prepararIAOpen}
+        onOpenChange={setPrepararIAOpen}
+        roteiro={selectedRoteiro}
+        onRoteiroAtualizado={handleSugestaoPreparacao}
+      />
+
+      <EstudioLogicaTela open={logicaTelaOpen} onOpenChange={setLogicaTelaOpen} />
 
       {/* MODAL DO EDITOR EDITORIAL DE ROTEIROS */}
       <RoteiroEditorModal
