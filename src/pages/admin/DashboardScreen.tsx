@@ -20,6 +20,7 @@ import {
   Clock,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import DashboardLogicaTela from '@/components/admin/DashboardLogicaTela'
 
 import { useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -28,6 +29,7 @@ export default function DashboardScreen() {
   const location = useLocation()
   const [stats, setStats] = useState({
     totalEpisodios: 0,
+    episodiosProgramados: 0,
     contatosNovos: 0,
     transacoesAbertas: 0,
     agendaProxima: 0,
@@ -76,15 +78,36 @@ export default function DashboardScreen() {
         )
         const saldoCalculado = totalHorasCompradas - totalHorasGastas
 
+        // Normaliza hoje (navegador) em YYYY-MM-DD para comparar datas de gravação
+        const now = new Date()
+        const todayYmd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+        const gravacaoYmd = (d?: string) => {
+          if (!d) return ''
+          const dt = new Date(d)
+          if (isNaN(dt.getTime())) return ''
+          return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+        }
+
+        // Status real de publicação: "em edição/programado" não conta como publicado
+        const publicados = epList.filter((ep) => (ep.status || 'publicado') === 'publicado').length
+        const programados = epList.length - publicados
+
+        // Agenda: apenas gravações de hoje em diante alimentam o indicador
+        const agendaFutura = agendaList.filter((a) => {
+          const ymd = gravacaoYmd(a.data_gravacao)
+          return ymd ? ymd >= todayYmd : false
+        })
+
         setStats({
-          totalEpisodios: epList.length,
+          totalEpisodios: publicados,
+          episodiosProgramados: programados,
           contatosNovos: contNovos,
           transacoesAbertas: transAbertas,
-          agendaProxima: agendaList.length,
+          agendaProxima: agendaFutura.length,
           saldoHoras: saldoCalculado,
         })
 
-        setProximasGravacoes(agendaList.slice(0, 5))
+        setProximasGravacoes(agendaFutura.slice(0, 5))
         setUltimosContatos(contatosList.slice(0, 5))
 
         // Agrupamento por tipo de transação (apenas despesas de custos para o gráfico de custos)
@@ -179,6 +202,7 @@ export default function DashboardScreen() {
               Ver Agenda Completa
             </button>
           </Link>
+          <DashboardLogicaTela />
         </div>
       </div>
 
@@ -194,7 +218,9 @@ export default function DashboardScreen() {
               {loading ? '-' : stats.totalEpisodios}
             </h3>
             <span className="text-[11px] text-dourado-dark font-medium mt-1 inline-block">
-              Temporada Oficial
+              {stats.episodiosProgramados > 0
+                ? `${stats.episodiosProgramados} programado(s) ainda não publicado(s)`
+                : 'Temporada Oficial'}
             </span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-vinho/10 text-vinho flex items-center justify-center">

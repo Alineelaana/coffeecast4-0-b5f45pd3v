@@ -33,8 +33,18 @@ const SECOES: { titulo: string; itens: string[] }[] = [
       'Campos: título do episódio, Data Agendamento, Data Gravação, Hora da Gravação (opcional — dia inteiro), Horas a Utilizar e Previsão de Postagem.',
       'Horas a Utilizar é o débito no Banco de Horas do estúdio (permite 0,5h; 0h = isento). Ao salvar, as horas são debitadas e o saldo aparece no topo da tela.',
       'Convidado(a): ao ativar, cadastre nome, empresa e biografia — dados que alimentam o episódio e os convites.',
+      'Reaproveitar cadastro existente: se o convidado(a) já respondeu o Formulário (módulo Formulários/Roteiros), escolha-o na lista e nome, empresa e biografia são preenchidos automaticamente — sem redigitar. Os campos continuam editáveis.',
       'Patrocínio: ao ativar, informe os patrocinadores do episódio.',
       'Imagens: até 6 por episódio (fotos do convidado, logo da empresa, marcas) — as já salvas podem ser abertas ou removidas.',
+    ],
+  },
+  {
+    titulo: '🔗 Integração com outras telas',
+    itens: [
+      'Formulários/Roteiros: os dados que o convidado preencheu (nome, empresa, biografia, tema) são reutilizados aqui — a Agenda nunca é a origem dessas informações, apenas as usa no compromisso.',
+      'Controle de Horas: as horas utilizadas por compromisso alimentam o saldo do Banco de Horas mostrado também no Dashboard e na tela de Horas.',
+      'Dashboard: os compromissos com gravação de hoje em diante aparecem no painel "Próximas Gravações" do Dashboard.',
+      'Convites: os dados do convidado e a data/hora de gravação aqui cadastrados são a base do convite gerado no módulo Convites.',
     ],
   },
   {

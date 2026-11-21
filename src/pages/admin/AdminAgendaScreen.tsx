@@ -8,7 +8,14 @@ import {
   getFileUrl,
   toInputDate,
 } from '@/lib/formatters'
-import type { AgendaRecord, HorasCompradasRecord } from '@/types/database'
+import type { AgendaRecord, HorasCompradasRecord, RoteiroConvidadoRecord } from '@/types/database'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { AuditoriaService } from '@/services/auditoria'
 import {
   Table,
@@ -42,6 +49,7 @@ import {
   CalendarCheck2,
   CalendarRange,
   List,
+  Sparkles,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -200,6 +208,9 @@ export default function AdminAgendaScreen() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<AgendaRecord | null>(null)
 
+  // Convidados cadastrados via Formulários/RoteiroConvidados — reaproveitados sem redigitar
+  const [convidadosCadastrados, setConvidadosCadastrados] = useState<RoteiroConvidadoRecord[]>([])
+
   // Form states
   const [titulo, setTitulo] = useState('')
   const [roteiro, setRoteiro] = useState('')
@@ -255,6 +266,15 @@ export default function AdminAgendaScreen() {
     loadAgenda()
   }, [])
 
+  // Carrega convidados cadastrados (Formulários) para reutilizar os dados
+  // sem redigitar: biografia, empresa e tema vêm do cadastro único.
+  useEffect(() => {
+    pb.collection('roteiros_convidados')
+      .getFullList<RoteiroConvidadoRecord>({ sort: '-created' })
+      .then((list) => setConvidadosCadastrados(list))
+      .catch(() => setConvidadosCadastrados([]))
+  }, [])
+
   const handleOpenCreate = () => {
     setEditingItem(null)
     const today = toInputDate(new Date().toISOString())
@@ -283,6 +303,20 @@ export default function AdminAgendaScreen() {
     handleOpenCreate()
     setDataAgendamento(dateYmd)
     setDataGravacao(dateYmd)
+  }
+
+  // Escolher um convidado já cadastrado no módulo Formulários preenche
+  // automaticamente nome, empresa e biografia — sem redigitar nada.
+  const handleSelecionarConvidadoCadastrado = (id: string) => {
+    if (!id) return
+    const c = convidadosCadastrados.find((x) => x.id === id)
+    if (!c) return
+    setTemConvidado(true)
+    setNomeConvidado(c.nome || '')
+    setEmpresa(c.nome_empresa || '')
+    setBiografiaConvidado(
+      c.biografia || [c.sobre_empresa, c.tema_enfatizar].filter(Boolean).join(' — '),
+    )
   }
 
   const handleOpenEdit = (item: AgendaRecord) => {
@@ -1038,6 +1072,31 @@ export default function AdminAgendaScreen() {
 
               {temConvidado && (
                 <div className="space-y-3 pt-2 border-t border-vinho/10">
+                  {convidadosCadastrados.length > 0 && (
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium text-vinho flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-dourado-dark" />
+                        Reaproveitar cadastro existente
+                      </Label>
+                      <Select onValueChange={handleSelecionarConvidadoCadastrado}>
+                        <SelectTrigger className="bg-marfim border-vinho/20 text-xs">
+                          <SelectValue placeholder="Escolher convidado(a) já cadastrado(a) nos Formulários..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white max-h-60">
+                          {convidadosCadastrados.map((c) => (
+                            <SelectItem key={c.id} value={c.id} className="text-xs">
+                              {c.nome}
+                              {c.nome_empresa ? ` — ${c.nome_empresa}` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-vinho/50">
+                        Preenche automaticamente nome, empresa e biografia. Ainda é possível editar
+                        os campos abaixo livremente.
+                      </p>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs font-medium text-vinho">Nome do Convidado</Label>
