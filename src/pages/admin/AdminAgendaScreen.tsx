@@ -46,6 +46,7 @@ import {
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AgendaCalendarView } from '@/components/admin/AgendaCalendarView'
+import AgendaLogicaTela from '@/components/admin/AgendaLogicaTela'
 
 function RoteiroExpandivel({
   roteiro,
@@ -276,6 +277,14 @@ export default function AdminAgendaScreen() {
     setModalOpen(true)
   }
 
+  // Clique no dia do calendário (fora de um compromisso): abre a criação
+  // do compromisso já com a data daquele dia preenchida.
+  const handleOpenCreateAtDate = (dateYmd: string) => {
+    handleOpenCreate()
+    setDataAgendamento(dateYmd)
+    setDataGravacao(dateYmd)
+  }
+
   const handleOpenEdit = (item: AgendaRecord) => {
     setEditingItem(item)
     setTitulo(item.titulo || '')
@@ -456,6 +465,8 @@ export default function AdminAgendaScreen() {
             </Link>
           )}
 
+          <AgendaLogicaTela />
+
           <Button
             onClick={handleOpenCreate}
             className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white font-semibold text-xs rounded-xl sm:rounded-full px-5 flex items-center justify-center gap-2 shadow-sm"
@@ -634,6 +645,8 @@ export default function AdminAgendaScreen() {
             onSelectDate={setSelectedCalendarDate}
             onEditItem={handleOpenEdit}
             onDeleteItem={handleDelete}
+            onCreateAtDate={handleOpenCreateAtDate}
+            onOpenItem={handleOpenEdit}
           />
         </div>
       )}

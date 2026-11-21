@@ -46,6 +46,10 @@ interface AgendaCalendarViewProps {
   onSelectDate: (dateYmd: string | null) => void
   onEditItem?: (item: AgendaRecord) => void
   onDeleteItem?: (id: string, titulo: string) => void
+  /** Clique no dia (fora de um compromisso): abre a criação com a data pré-selecionada */
+  onCreateAtDate?: (dateYmd: string) => void
+  /** Clique em um compromisso existente no calendário: abre visualização/edição */
+  onOpenItem?: (item: AgendaRecord) => void
 }
 
 const DIAS_DA_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -78,6 +82,8 @@ export function AgendaCalendarView({
   onSelectDate,
   onEditItem,
   onDeleteItem,
+  onCreateAtDate,
+  onOpenItem,
 }: AgendaCalendarViewProps) {
   // Data de "hoje" no navegador do usuário
   const todayYmd = useMemo(() => formatLocalYMD(new Date()), [])
@@ -494,58 +500,48 @@ export function AgendaCalendarView({
 
                     {/* Versão Desktop (Pills descritivas com título truncado) */}
                     <div className="hidden sm:block space-y-0.5 max-h-[58px] overflow-hidden">
-                      {gravPass.slice(0, 1).map((ev) => (
-                        <div
+                      {[
+                        ...gravPass.slice(0, 1),
+                        ...postPass.slice(0, 1),
+                        ...gravFut.slice(0, 1),
+                        ...postFut.slice(0, 1),
+                      ].map((ev) => (
+                        <button
                           key={ev.id}
-                          className="truncate text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-[#4b1e3f] text-white flex items-center gap-1 shadow-2xs"
-                          title={`Gravação realizada${ev.horaHhMm ? ` às ${ev.horaHhMm}` : ''}: ${ev.titulo}`}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onOpenItem?.(ev.record)
+                          }}
+                          className={`w-full truncate text-[10px] font-semibold px-1.5 py-0.5 rounded-md flex items-center gap-1 shadow-2xs cursor-pointer transition-all hover:brightness-125 focus:outline-hidden focus-visible:ring-1 focus-visible:ring-dourado ${
+                            ev.tipo === 'gravacao-passada'
+                              ? 'bg-[#4b1e3f] text-white'
+                              : ev.tipo === 'postagem-passada'
+                                ? 'bg-[#8a5b13] text-amber-50'
+                                : ev.tipo === 'gravacao-futura'
+                                  ? 'bg-[#1b4d3e] text-emerald-50'
+                                  : 'bg-[#a24857] text-rose-50'
+                          }`}
+                          title={`Abrir "${ev.titulo}" para visualizar/editar`}
                         >
-                          <Video className="w-2.5 h-2.5 text-[#d4af37] shrink-0" />
-                          {ev.horaHhMm && (
-                            <span className="text-[#d4af37] text-[9px] font-bold shrink-0">
-                              {ev.horaHhMm}
-                            </span>
+                          {ev.tipo === 'gravacao-passada' && (
+                            <Video className="w-2.5 h-2.5 text-[#d4af37] shrink-0" />
+                          )}
+                          {ev.tipo === 'gravacao-futura' && (
+                            <Video className="w-2.5 h-2.5 text-emerald-200 shrink-0" />
+                          )}
+                          {(ev.tipo === 'postagem-passada' || ev.tipo === 'postagem-futura') && (
+                            <Send
+                              className={`w-2.5 h-2.5 shrink-0 ${
+                                ev.tipo === 'postagem-passada' ? 'text-amber-200' : 'text-rose-200'
+                              }`}
+                            />
+                          )}
+                          {ev.horaHhMm && ev.tipo.startsWith('gravacao') && (
+                            <span className="text-[9px] font-bold shrink-0">{ev.horaHhMm}</span>
                           )}
                           <span className="truncate">{ev.titulo}</span>
-                        </div>
-                      ))}
-
-                      {postPass.slice(0, 1).map((ev) => (
-                        <div
-                          key={ev.id}
-                          className="truncate text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-[#8a5b13] text-amber-50 flex items-center gap-1 shadow-2xs"
-                          title={`Postagem realizada: ${ev.titulo}`}
-                        >
-                          <Send className="w-2.5 h-2.5 text-amber-200 shrink-0" />
-                          <span className="truncate">{ev.titulo}</span>
-                        </div>
-                      ))}
-
-                      {gravFut.slice(0, 1).map((ev) => (
-                        <div
-                          key={ev.id}
-                          className="truncate text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-[#1b4d3e] text-emerald-50 flex items-center gap-1 shadow-2xs"
-                          title={`Gravação futura${ev.horaHhMm ? ` às ${ev.horaHhMm}` : ''}: ${ev.titulo}`}
-                        >
-                          <Video className="w-2.5 h-2.5 text-emerald-200 shrink-0" />
-                          {ev.horaHhMm && (
-                            <span className="text-emerald-300 text-[9px] font-bold shrink-0">
-                              {ev.horaHhMm}
-                            </span>
-                          )}
-                          <span className="truncate">{ev.titulo}</span>
-                        </div>
-                      ))}
-
-                      {postFut.slice(0, 1).map((ev) => (
-                        <div
-                          key={ev.id}
-                          className="truncate text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-[#a24857] text-rose-50 flex items-center gap-1 shadow-2xs"
-                          title={`Prev. de postagem: ${ev.titulo}`}
-                        >
-                          <Send className="w-2.5 h-2.5 text-rose-200 shrink-0" />
-                          <span className="truncate">{ev.titulo}</span>
-                        </div>
+                        </button>
                       ))}
 
                       {cell.events.length > 2 && (
@@ -556,7 +552,11 @@ export function AgendaCalendarView({
                     </div>
                   </div>
                 ) : (
-                  <div className="h-4 sm:h-6" />
+                  <div className="h-4 sm:h-6 hidden sm:flex items-center justify-center">
+                    <span className="text-[9px] font-medium text-vinho/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                      + Agendar
+                    </span>
+                  </div>
                 )}
               </button>
             )
