@@ -30,6 +30,8 @@ import { useAuth } from '@/context/AuthContext'
 import { extractYouTubeId } from '@/lib/formatters'
 import { Badge } from '@/components/ui/badge'
 import { AuditoriaService } from '@/services/auditoria'
+import { gerarCapaIA, getCapaIaUrl } from '@/services/openaiCapa'
+import { Sparkles, Loader2 } from 'lucide-react'
 
 export default function AdminEpisodesScreen() {
   const { isMaster } = useAuth()
@@ -51,6 +53,42 @@ export default function AdminEpisodesScreen() {
   const [horaProgramada, setHoraProgramada] = useState<string>('10:00')
   const [saving, setSaving] = useState(false)
   const [syncingNow, setSyncingNow] = useState(false)
+
+  // Estado do botão "Gerar Capa com IA" por episódio
+  const [capaIaId, setCapaIaId] = useState<string | null>(null)
+
+  const handleGerarCapaIA = async (ep: EpisodioRecord) => {
+    setCapaIaId(ep.id)
+    try {
+      const res = await gerarCapaIA({ episodio_id: ep.id })
+      if (res?.sucesso) {
+        toast.success(res.mensagem || 'Capa gerada com IA e salva no episódio!')
+        if (isMaster) {
+          AuditoriaService.registrarEvento({
+            tipo_acao: 'criacao',
+            area_sistema: 'Episódios',
+            descricao: `Capa com IA (ChatGPT/OpenAI) gerada para o episódio #${ep.numero} "${ep.titulo}"`,
+            registro_afetado: ep.id,
+            tabela_afetada: 'episodios',
+          })
+        }
+        loadEpisodes()
+      } else {
+        toast.info(res?.error || 'Não foi possível gerar a capa com IA neste momento.')
+      }
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? ((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? '')
+          : ''
+      toast.error(
+        msg ||
+          'A IA não conseguiu gerar a capa agora. Tente novamente em instantes — o episódio continua intacto.',
+      )
+    } finally {
+      setCapaIaId(null)
+    }
+  }
 
   const loadEpisodes = async () => {
     try {
@@ -584,6 +622,20 @@ export default function AdminEpisodesScreen() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => handleGerarCapaIA(ep)}
+                    disabled={capaIaId !== null}
+                    className="h-9 w-9 p-0 text-dourado-dark hover:text-dourado hover:bg-dourado/10 min-h-[36px]"
+                    title="Gerar capa com IA (ChatGPT) — a capa anterior é mantida até a nova ser salva"
+                  >
+                    {capaIaId === ep.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => handleDelete(ep.id, ep.titulo)}
                     className="h-9 w-9 p-0 text-red-500 hover:text-red-700 min-h-[36px]"
                     title="Excluir episódio"
@@ -592,6 +644,20 @@ export default function AdminEpisodesScreen() {
                   </Button>
                 </div>
               </div>
+
+              {getCapaIaUrl(ep) && (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={getCapaIaUrl(ep)!}
+                    alt={`Capa do episódio #${ep.numero}`}
+                    className="w-24 h-14 object-cover rounded-lg border border-dourado/40 shrink-0"
+                  />
+                  <Badge className="bg-dourado/15 border border-dourado/40 text-[10px] text-vinho font-semibold w-fit">
+                    <Sparkles className="w-3 h-3 text-dourado-dark mr-1" />
+                    Capa com IA
+                  </Badge>
+                </div>
+              )}
 
               {ep.youtube_url && (
                 <div className="pt-2 border-t border-vinho/5">
@@ -713,6 +779,20 @@ export default function AdminEpisodesScreen() {
                         }
                       >
                         <Edit2 className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleGerarCapaIA(ep)}
+                        disabled={capaIaId !== null}
+                        className="h-8 w-8 p-0 text-dourado-dark hover:text-dourado hover:bg-dourado/10"
+                        title="Gerar capa com IA (ChatGPT) — a capa anterior é mantida até a nova ser salva"
+                      >
+                        {capaIaId === ep.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-3.5 h-3.5" />
+                        )}
                       </Button>
                       <Button
                         variant="ghost"

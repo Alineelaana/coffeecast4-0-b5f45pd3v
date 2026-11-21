@@ -48,6 +48,9 @@ export interface EpisodioRecord {
   youtube_url: string
   status?: EpisodioStatus
   data_publicacao_programada?: string
+  capa_ia?: string
+  collectionId?: string
+  collectionName?: string
   created: string
   updated: string
 }

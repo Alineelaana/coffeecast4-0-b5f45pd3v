@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-21T11:31:27.109Z",
+  "generatedAt": "2026-11-21T15:11:55.926Z",
   "collections": [
     {
       "name": "users",
@@ -177,6 +177,12 @@
         {
           "name": "data_publicacao_programada",
           "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "capa_ia",
+          "type": "file",
           "required": false,
           "system": false
         }

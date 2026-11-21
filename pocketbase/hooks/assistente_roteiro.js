@@ -338,6 +338,67 @@ routerAdd(
       let resultadoTexto = ''
       let agenteUsado = 'nenhum'
 
+      // Tentativa 0: ChatGPT (OpenAI) — motor principal quando a chave GCHAT_GPT está ativa
+      const apiKeyGchat = ($os.getenv('GCHAT_GPT') || '').trim()
+      if (apiKeyGchat) {
+        try {
+          const chatgptRes = $http.send({
+            url: 'https://api.openai.com/v1/chat/completions',
+            method: 'POST',
+            timeout: 60,
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + apiKeyGchat,
+            },
+            body: JSON.stringify({
+              model: 'gpt-4.1',
+              messages: [
+                { role: 'system', content: systemPromptEspecifico },
+                { role: 'user', content: userMessage },
+              ],
+              max_tokens: 8000,
+              temperature: 0.7,
+            }),
+          })
+
+          let gptParsed = null
+          try {
+            gptParsed = JSON.parse(chatgptRes.body)
+          } catch (_) {
+            gptParsed = null
+          }
+
+          const gptTexto =
+            gptParsed &&
+            gptParsed.choices &&
+            gptParsed.choices[0] &&
+            gptParsed.choices[0].message &&
+            typeof gptParsed.choices[0].message.content === 'string'
+              ? gptParsed.choices[0].message.content.trim()
+              : ''
+
+          if (
+            chatgptRes.statusCode >= 200 &&
+            chatgptRes.statusCode < 300 &&
+            gptTexto.length > 150
+          ) {
+            resultadoTexto = gptTexto
+            agenteUsado = 'chatgpt-openai'
+          } else {
+            console.log(
+              '[assistente_roteiro] ChatGPT indisponível (status ' +
+                chatgptRes.statusCode +
+                '); usando motor padrão da Nine.',
+            )
+          }
+        } catch (gptErr) {
+          console.log(
+            '[assistente_roteiro] Exceção na chamada ChatGPT; usando motor padrão da Nine:',
+            gptErr,
+          )
+        }
+      }
+
       // Tentativa 1: Agente nativo 'roteirista-coffeecast'
       if (typeof $ai !== 'undefined' && $ai.agent) {
         try {
@@ -422,6 +483,37 @@ routerAdd(
       const roteirosProcessadosRes = []
       for (let p = 0; p < convidadosDados.length; p++) {
         roteirosProcessadosRes.push({ id: convidadosDados[p].id, nome: convidadosDados[p].nome })
+      }
+
+      // Auditoria: registra qual motor gerou o roteiro
+      try {
+        const colAudit = $app.findCollectionByNameOrId('auditoria_eventos')
+        if (colAudit) {
+          const auditRec = new Record(colAudit)
+          auditRec.set('usuario_id', authUser.id)
+          auditRec.set('usuario_email', authUser.getString('email'))
+          auditRec.set('usuario_nome', authUser.getString('name') || 'Administrador')
+          auditRec.set('usuario_role', userRole)
+          auditRec.set('tipo_acao', 'criacao')
+          auditRec.set('area_sistema', 'Roteiros & Pautas')
+          auditRec.set(
+            'descricao',
+            'Roteiro gerado pela Nine' +
+              (agenteUsado === 'chatgpt-openai' ? ' com o motor ChatGPT (OpenAI)' : '') +
+              ' para "' +
+              nomesLista +
+              '".',
+          )
+          auditRec.set('resultado', 'sucesso')
+          auditRec.set('metadata', {
+            motor: agenteUsado,
+            tipo_geracao: semConvidados ? 'sem_convidados' : ehConjunto ? 'conjunto' : 'individual',
+            convidados: nomesArray.join(', '),
+          })
+          $app.save(auditRec)
+        }
+      } catch (auditErr) {
+        console.log('[assistente_roteiro] Auditoria falhou (não impeditiva):', auditErr)
       }
 
       return e.json(200, {
