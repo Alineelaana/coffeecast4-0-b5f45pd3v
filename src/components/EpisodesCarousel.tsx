@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, Play, Youtube, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { openExternalUrl, formatExternalUrl } from '@/lib/openUrl'
+import { getCapaIaUrl } from '@/services/openaiCapa'
 import type { EpisodioRecord } from '@/types/database'
 
 interface EpisodesCarouselProps {
@@ -259,6 +260,8 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
         {episodios.map((ep) => {
           const rawUrl = ep.youtube_url?.trim()
           const episodeUrl = rawUrl ? formatExternalUrl(rawUrl) : undefined
+          // Capa gerada por IA (ChatGPT) tem prioridade; sem capa IA, o card usa o estilo clássico
+          const capaIaUrl = getCapaIaUrl(ep)
 
           return (
             <a
@@ -283,6 +286,19 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
               {/* Brilho decorativo no canto superior do card */}
               <div className="absolute -top-10 -right-10 w-24 h-24 bg-dourado/10 rounded-full blur-xl group-hover:bg-dourado/20 transition-all pointer-events-none" />
 
+              {/* Capa gerada com IA (ChatGPT): imagem de fundo do card quando existir */}
+              {capaIaUrl && (
+                <img
+                  src={capaIaUrl}
+                  alt={`Capa do episódio #${ep.numero}`}
+                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                  loading="lazy"
+                />
+              )}
+              {capaIaUrl && (
+                <div className="absolute inset-0 bg-gradient-to-b from-vinho-dark/55 via-vinho/45 to-vinho-dark/80 pointer-events-none" />
+              )}
+
               {/* Cabeçalho do Card: Número do episódio e Canal */}
               <div className="space-y-2.5 sm:space-y-3 relative z-10 pointer-events-none">
                 <div className="flex items-center justify-between">
@@ -291,10 +307,17 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
                     Episódio #{ep.numero}
                   </span>
 
-                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] text-marfim/60 font-medium">
-                    <Youtube className="w-3.5 h-3.5 text-red-500 fill-red-500" />
-                    YouTube
-                  </span>
+                  {capaIaUrl ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-dourado bg-vinho-dark/60 border border-dourado/40 rounded-full px-2 py-0.5">
+                      <Sparkles className="w-3 h-3" />
+                      Capa IA
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] text-marfim/60 font-medium">
+                      <Youtube className="w-3.5 h-3.5 text-red-500 fill-red-500" />
+                      YouTube
+                    </span>
+                  )}
                 </div>
 
                 {/* Título com limite equilibrado para manter altura compacta e harmoniosa */}

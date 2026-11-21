@@ -359,6 +359,66 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
           'Ao desativar o atendimento automático, a Nine parará de responder no site até que seja reativada.',
       },
       {
+        id: 'motor-chatgpt-nine',
+        titulo: 'Motor de IA da Nine (ChatGPT — OpenAI)',
+        subtitulo: 'Como funciona o motor primário ChatGPT e o fallback silencioso',
+        icone: 'Sparkles',
+        rota: '/admin/nine',
+        perfisPermitidos: ['master', 'adm'],
+        ondeClicar:
+          'Menu lateral ➔ "Nine Assistente Virtual" — o badge "Motor:" fica no topo da tela.',
+        paraQueServe:
+          'Explica qual cérebro a Nine usa para pensar: quando a chave da OpenAI (ChatGPT) está ativa, a Nine usa o ChatGPT como motor primário para gerar pautas, roteiros e respostas; se a chave estiver ausente, expirada ou o serviço oscilar, o sistema entra automaticamente no motor de reserva, sem interromper o atendimento e sem mostrar erros técnicos.',
+        passoAPasso: [
+          'Acesse a tela da Nine (Menu lateral ➔ "Nine Assistente Virtual").',
+          'No topo da tela, confira o badge "Motor: ChatGPT (OpenAI)" — ele indica que a chave da OpenAI está ativa e a Nine está gerando conteúdo com o ChatGPT.',
+          'Se o badge indicar o motor padrão (local), a chave da OpenAI não está configurada ou não respondeu: a Nine continua funcionando normalmente com o motor de reserva.',
+          'Não é preciso salvar nada para trocar de motor: a escolha é automática e transparente a cada geração.',
+          'O fallback é silencioso: em qualquer instabilidade, a resposta simplesmente sai pelo motor de reserva, mantendo o mesmo tom editorial e as regras de negócio do prompt da Nine.',
+        ],
+        botoesPrincipais: [
+          {
+            nome: 'Badge Motor (ChatGPT/OpenAI)',
+            onde: 'Topo da tela da Nine',
+            paraQueServe:
+              'Mostra em tempo real qual motor de inteligência está em uso — "ChatGPT (OpenAI)" quando a chave está ativa.',
+            icone: 'Sparkles',
+          },
+        ],
+        atencao:
+          'A chave da OpenAI é um segredo guardado no servidor: nunca é exibida no navegador nem pedida em nenhuma tela do painel.',
+      },
+      {
+        id: 'capa-ia-episodios',
+        titulo: 'Gerar Capa de Episódio com IA (ChatGPT)',
+        subtitulo: 'Criação e publicação automática da arte de capa no carrossel e no modal',
+        icone: 'Image',
+        rota: '/admin/episodios',
+        perfisPermitidos: ['master', 'adm', 'gerencial'],
+        ondeClicar: 'Menu lateral ➔ "Episódios" — ícone de estrelas (✨) em cada linha da tabela.',
+        paraQueServe:
+          'Gera, com a IA (ChatGPT/OpenAI), uma arte de capa exclusiva para o episódio a partir do seu número e título. A capa gerada substitui a capa clássica nos cards do carrossel da Home e no modal do episódio no site público, com selo dourado "Capa IA".',
+        passoAPasso: [
+          'Na tabela de episódios, localize a linha do episódio e clique no botão de estrelas (✨ "Gerar capa com IA").',
+          'Aguarde alguns segundos: o botão mostra um ícone girando enquanto a arte é criada no servidor.',
+          'Ao concluir, aparece o aviso "Capa gerada com IA e salva no episódio!" e o episódio é recarregado já com a nova capa.',
+          'No site público, o card do episódio no carrossel e o modal passam a exibir a arte gerada, com o selo "Capa IA".',
+          'É possível gerar novamente a qualquer momento: cada geração cria uma nova arte. A capa anterior só é substituída quando a nova é salva com sucesso — se a IA falhar, a capa atual é mantida intacta.',
+        ],
+        botoesPrincipais: [
+          {
+            nome: 'Gerar capa com IA (ícone de estrelas ✨)',
+            onde: 'Coluna de ações de cada episódio na tabela',
+            paraQueServe:
+              'Solicita ao servidor a criação de uma nova capa com IA para o episódio. A capa anterior é mantida até a nova ser salva.',
+            icone: 'Sparkles',
+          },
+        ],
+        dica: 'O badge "Capa IA" aparece no card e no modal dos episódios que têm arte gerada por IA, tanto na Home pública quanto na área de membros.',
+        atencao:
+          'A geração depende da chave da OpenAI estar ativa no servidor. Se ela estiver indisponível, o sistema avisa de forma amigável e mantém a capa atual do episódio.',
+      },
+      {
         id: 'gestao-episodios',
         titulo: 'Gestão de Episódios & Programação de Lançamento',
         subtitulo: 'Cadastro imediato, programação com data e hora e publicação 100% automática',
@@ -404,6 +464,13 @@ export const GUIA_AJUDA_CATEGORIAS: GuiaCategoria[] = [
             paraQueServe:
               'Aciona uma verificação imediata dos episódios programados sem aguardar o próximo ciclo de 5 minutos do cron.',
             icone: 'RefreshCw',
+          },
+          {
+            nome: 'Gerar capa com IA (ícone de estrelas ✨)',
+            onde: 'Coluna de ações de cada episódio na tabela',
+            paraQueServe:
+              'Gera uma arte de capa exclusiva do episódio com a IA (ChatGPT/OpenAI) e a publica no carrossel e no modal do site, com selo "Capa IA". A capa anterior é mantida até a nova ser salva.',
+            icone: 'Sparkles',
           },
           {
             nome: 'Editar (ícone de lápis)',

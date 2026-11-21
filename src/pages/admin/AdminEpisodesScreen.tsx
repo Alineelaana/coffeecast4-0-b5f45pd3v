@@ -74,7 +74,7 @@ export default function AdminEpisodesScreen() {
         }
         loadEpisodes()
       } else {
-        toast.info(res?.error || 'Não foi possível gerar a capa com IA neste momento.')
+        toast.info(res?.mensagem || 'Não foi possível gerar a capa com IA neste momento.')
       }
     } catch (err: unknown) {
       const msg =

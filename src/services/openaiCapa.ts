@@ -46,11 +46,19 @@ export async function gerarCapaIa(episodioId: string): Promise<CapaIaResultado> 
   return gerarCapaIA({ episodio_id: episodioId })
 }
 
+/** Formato mínimo necessário para montar a URL de arquivo do PocketBase. */
+export type CapaIaFonte = {
+  id?: string
+  capa_ia?: string
+  collectionId?: string
+  collectionName?: string
+}
+
 /** URL completa da capa IA do episódio ('' quando o episódio ainda não tem capa IA). */
-export function getCapaIaUrl(ep?: EpisodioRecord | null): string {
-  if (!ep || !ep.capa_ia) return ''
+export function getCapaIaUrl(ep?: CapaIaFonte | null): string {
+  if (!ep || !ep.capa_ia || !ep.id) return ''
   try {
-    return pb.files.getURL(ep, ep.capa_ia)
+    return pb.files.getURL(ep as unknown as Record<string, unknown>, ep.capa_ia)
   } catch {
     return ''
   }

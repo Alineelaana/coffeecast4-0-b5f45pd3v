@@ -9,14 +9,19 @@ import {
 import { ExternalLink, Youtube, Sparkles, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatExternalUrl } from '@/lib/openUrl'
+import { getCapaIaUrl } from '@/services/openaiCapa'
 
 interface EpisodeModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   episode: {
+    id?: string
     numero: number
     titulo: string
     youtube_url: string
+    capa_ia?: string
+    collectionId?: string
+    collectionName?: string
   } | null
 }
 
@@ -24,6 +29,8 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ open, onOpenChange, 
   if (!episode) return null
 
   const validUrl = episode.youtube_url?.trim() ? formatExternalUrl(episode.youtube_url) : ''
+  // Capa gerada por IA (ChatGPT) — exibida quando o episódio já a possui; sem capa, mantém o layout clássico
+  const capaIaUrl = getCapaIaUrl(episode)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -50,6 +57,21 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ open, onOpenChange, 
               Informações sobre onde assistir ao episódio no YouTube
             </DialogDescription>
           </DialogHeader>
+
+          {/* Capa gerada com IA (ChatGPT) — imagem de arte do episódio */}
+          {capaIaUrl && (
+            <div className="relative rounded-2xl overflow-hidden border border-dourado/40 shadow-lg">
+              <img
+                src={capaIaUrl}
+                alt={`Capa do episódio #${episode.numero} — ${episode.titulo}`}
+                className="w-full h-auto object-cover"
+              />
+              <div className="absolute top-2 right-2 inline-flex items-center gap-1.5 bg-vinho-dark/80 border border-dourado/50 text-dourado text-[10px] font-semibold uppercase tracking-wide rounded-full px-2.5 py-1">
+                <Sparkles className="w-3 h-3" />
+                Capa com IA
+              </div>
+            </div>
+          )}
 
           {/* Card explicativo com identidade vinho, dourado e marfim */}
           <div className="bg-vinho/70 border border-dourado/30 rounded-2xl p-4 sm:p-6 text-center space-y-3 sm:space-y-4 shadow-inner">
