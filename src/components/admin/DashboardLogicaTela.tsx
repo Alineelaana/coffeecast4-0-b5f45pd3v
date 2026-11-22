@@ -52,6 +52,13 @@ const SECOES: { titulo: string; itens: string[] }[] = [
       'Não expõe dados comerciais confidenciais: mostra apenas contadores e os contatos mais recentes, conforme o perfil autenticado.',
     ],
   },
+  {
+    titulo: '📱 Comportamento mobile (leiaute tipo App)',
+    itens: [
+      'No celular, os botões do banner (Banco de Horas, Ver Agenda Completa e Lógica da Tela) empilham em coluna, cada um ocupando a largura total do banner, com altura de toque confortável (mínimo 44px).',
+      'O botão "Lógica da Tela" aparece em dourado sobre o fundo vinho, centralizado e sem cortes — no desktop ele volta ao visual compacto original ao lado dos demais botões.',
+    ],
+  },
 ]
 
 export default function DashboardLogicaTela() {
@@ -60,7 +67,11 @@ export default function DashboardLogicaTela() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 text-xs border-vinho/20">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-auto min-h-[44px] w-full justify-center text-dourado border-dourado/60 font-semibold bg-transparent hover:bg-dourado/10 hover:text-dourado active:bg-dourado/15 md:h-8 md:w-auto md:min-h-0 md:text-xs md:text-foreground md:font-medium md:border-vinho/20 md:hover:bg-accent md:hover:text-accent-foreground md:active:bg-transparent"
+        >
           <BookOpen className="mr-1.5 h-3.5 w-3.5 text-dourado" />
           Lógica da Tela
         </Button>
