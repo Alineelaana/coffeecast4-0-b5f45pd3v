@@ -88,6 +88,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
     setMenuOpen(false)
   }, [location.pathname, location.hash])
 
+  // Trava o scroll do fundo enquanto o menu em tela cheia está aberto (mobile)
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
+
   // Todas as páginas e seções solicitadas pelo usuário:
   // Início, Integrantes, Episódios, Depoimentos, Área do Convidado, Deixe seu depoimento,
   // Roteiro do Episódio, Participar, Contato, Nossos Momentos, Missão & Valores.
@@ -228,6 +236,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
           ? 'bg-vinho-dark/95 text-marfim shadow-xl backdrop-blur-md border-b border-dourado/40 py-1 sm:py-1.5'
           : 'bg-gradient-to-b from-[#36142d]/95 via-[#36142d]/75 to-transparent text-white py-1.5 sm:py-2'
       }`}
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
@@ -333,10 +342,109 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
                 />
               </button>
 
-              {/* DROPDOWN SUSPENSO INTERATIVO ANCORADO NO CABEÇALHO */}
+              {/* MENU MOBILE EM TELA CHEIA (≤768px): logotipo + links + botões sempre visíveis */}
               {menuOpen && (
                 <div
-                  className="absolute right-0 top-full mt-2 w-[calc(100vw-1.5rem)] sm:w-[540px] md:w-[620px] max-w-[95vw] bg-marfim text-vinho rounded-2xl shadow-2xl border-2 border-dourado/60 p-3 sm:p-4 z-[60] origin-top-right animate-in fade-in slide-in-from-top-3 duration-200 focus:outline-none"
+                  className="md:hidden fixed inset-0 z-[70] bg-marfim text-vinho flex flex-col animate-in fade-in duration-200"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Menu de páginas do CoffeeCast"
+                >
+                  <div
+                    className="flex items-center justify-between gap-2 px-4 py-3 border-b border-vinho/10 shrink-0 bg-marfim"
+                    style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
+                  >
+                    <HeaderNavbarLogo className="h-9 w-auto" />
+                    <button
+                      type="button"
+                      onClick={() => setMenuOpen(false)}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-vinho text-marfim active:scale-95 transition-transform"
+                      aria-label="Fechar menu"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <nav className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-2">
+                    {navLinks.map((item, idx) => {
+                      const isActive = item.isRoute && location.pathname === item.href
+                      const Icon = item.icon
+                      return (
+                        <Link
+                          key={item.label}
+                          to={item.href}
+                          onClick={(e) => handleNavClick(e, item.href, item.isRoute)}
+                          className={`flex items-center justify-between min-h-[52px] px-4 py-2.5 rounded-xl border text-left animate-in fade-in slide-in-from-right-4 duration-300 ${
+                            isActive
+                              ? 'bg-dourado/20 border-dourado font-bold'
+                              : 'bg-white border-vinho/10'
+                          }`}
+                          style={{
+                            animationDelay: `${idx * 40}ms`,
+                            animationFillMode: 'backwards',
+                          }}
+                          role="menuitem"
+                        >
+                          <span className="flex items-center gap-3 min-w-0">
+                            <span
+                              className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                                isActive ? 'bg-dourado text-vinho' : 'bg-vinho/5 text-vinho'
+                              }`}
+                            >
+                              <Icon className="w-5 h-5" />
+                            </span>
+                            <span className="font-serif text-base font-semibold leading-tight">
+                              {item.label}
+                            </span>
+                          </span>
+                          <ChevronRight className="w-4 h-4 text-vinho/40 shrink-0" />
+                        </Link>
+                      )
+                    })}
+                  </nav>
+
+                  <div
+                    className="shrink-0 border-t border-vinho/10 bg-marfim px-4 grid grid-cols-1 gap-2"
+                    style={{
+                      paddingTop: '0.75rem',
+                      paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))',
+                    }}
+                  >
+                    {user ? (
+                      <Link
+                        to="/membros"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center justify-center gap-2 h-12 rounded-xl bg-vinho text-marfim border border-dourado/50 text-sm font-semibold active:scale-[0.98] transition-transform"
+                      >
+                        <Sparkles className="w-4 h-4 text-dourado" />
+                        Área de Membros
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleMembersClick}
+                        className="flex items-center justify-center gap-2 h-12 rounded-xl bg-vinho text-marfim border border-dourado/40 text-sm font-semibold active:scale-[0.98] transition-transform"
+                      >
+                        <Lock className="w-4 h-4 text-dourado" />
+                        Área de Membros
+                      </button>
+                    )}
+                    <Link
+                      to={isAdmin ? '/admin' : '/login'}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 h-12 rounded-xl bg-dourado text-vinho border border-dourado-dark/30 text-sm font-bold active:scale-[0.98] transition-transform shadow-sm"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      {isAdmin ? 'Painel Admin' : 'Área Administrativa'}
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* DROPDOWN SUSPENSO INTERATIVO ANCORADO NO CABEÇALHO (DESKTOP ≥768px) */}
+              {menuOpen && (
+                <div
+                  className="hidden md:block absolute right-0 top-full mt-2 w-[calc(100vw-1.5rem)] sm:w-[540px] md:w-[620px] max-w-[95vw] bg-marfim text-vinho rounded-2xl shadow-2xl border-2 border-dourado/60 p-3 sm:p-4 z-[60] origin-top-right animate-in fade-in slide-in-from-top-3 duration-200 focus:outline-none"
                   role="menu"
                   aria-label="Menu de páginas do CoffeeCast"
                 >
