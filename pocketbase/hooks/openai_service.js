@@ -128,13 +128,36 @@ routerAdd(
       })
 
       let dadosImagem = null
+      let corpoNaoJson = false
       try {
-        dadosImagem = JSON.parse(res.raw || '{}')
-      } catch (_) {}
+        dadosImagem = JSON.parse(res.raw || res.body || '{}')
+      } catch (_) {
+        corpoNaoJson = true
+      }
       if (!dadosImagem && res.json) {
         try {
           dadosImagem = res.json
         } catch (_) {}
+      }
+
+      // Se o corpo veio com erro embutido (HTTP 200 com error), trata como falha
+      if (dadosImagem && dadosImagem.error) {
+        console.log(
+          '[openai_service] OpenAI retornou erro embutido no corpo (status ' +
+            (res.statusCode !== undefined ? res.statusCode : 'desconhecido') +
+            '): ' +
+            String(
+              dadosImagem.error.message ||
+                dadosImagem.error.code ||
+                JSON.stringify(dadosImagem.error),
+            ).slice(0, 300) +
+            ' — body: ' +
+            String(res.raw || res.body || '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .slice(0, 600),
+        )
+        dadosImagem = null
       }
 
       let imagemBase64 = ''
@@ -151,7 +174,15 @@ routerAdd(
         console.log(
           '[openai_service] Falha na geração de capa (status HTTP ' +
             (res.statusCode !== undefined ? res.statusCode : 'desconhecido') +
-            '). Caindo para aviso amigável no painel.',
+            '; ' +
+            (corpoNaoJson
+              ? 'corpo não é JSON válido (possível HTML de proxy/gateway)'
+              : 'resposta sem data[0].b64_json') +
+            '). Caindo para aviso amigável no painel. body: ' +
+            String(res.raw || res.body || '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .slice(0, 600),
         )
         return e.json(502, {
           error:

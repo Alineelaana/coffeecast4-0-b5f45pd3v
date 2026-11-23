@@ -469,6 +469,36 @@ routerAdd(
             gptParsed = null
           }
 
+          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
+          if (gptParsed && gptParsed.error) {
+            console.log(
+              '[assistente_roteiro] OpenAI retornou erro embutido no corpo (status ' +
+                chatgptRes.statusCode +
+                '): ' +
+                String(
+                  gptParsed.error.message ||
+                    gptParsed.error.code ||
+                    JSON.stringify(gptParsed.error),
+                ).slice(0, 300) +
+                ' — body: ' +
+                String(chatgptRes.body || '')
+                  .replace(/\s+/g, ' ')
+                  .trim()
+                  .slice(0, 600),
+            )
+            gptParsed = null
+          } else if (!gptParsed) {
+            console.log(
+              '[assistente_roteiro] OpenAI status ' +
+                chatgptRes.statusCode +
+                ' — corpo não é JSON válido (possível HTML de proxy/gateway) — body: ' +
+                String(chatgptRes.body || '')
+                  .replace(/\s+/g, ' ')
+                  .trim()
+                  .slice(0, 600),
+            )
+          }
+
           const gptTexto =
             gptParsed &&
             gptParsed.choices &&
@@ -489,6 +519,10 @@ routerAdd(
             console.log(
               '[assistente_roteiro] ChatGPT indisponível (status ' +
                 chatgptRes.statusCode +
+                '; finish_reason: ' +
+                (gptParsed && gptParsed.choices && gptParsed.choices[0]
+                  ? gptParsed.choices[0].finish_reason || '(sem finish_reason)'
+                  : 'sem choices') +
                 '); usando motor padrão da Nine.',
             )
           }

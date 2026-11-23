@@ -96,6 +96,35 @@ routerAdd(
         parsed = null
       }
 
+      // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca parsed = null
+      if (parsed && parsed.error) {
+        console.log(
+          '[openai_chat] OpenAI retornou erro embutido no corpo (status ' +
+            chatgptRes.statusCode +
+            '): ' +
+            String(parsed.error.message || parsed.error.code || JSON.stringify(parsed.error)).slice(
+              0,
+              300,
+            ) +
+            ' — body: ' +
+            String(chatgptRes.body || '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .slice(0, 600),
+        )
+        parsed = null
+      } else if (!parsed) {
+        console.log(
+          '[openai_chat] OpenAI status ' +
+            chatgptRes.statusCode +
+            ' — corpo não é JSON válido (possível HTML de proxy/gateway) — body: ' +
+            String(chatgptRes.body || '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .slice(0, 600),
+        )
+      }
+
       const textoChatgpt =
         parsed &&
         parsed.choices &&
@@ -143,7 +172,13 @@ routerAdd(
       console.log(
         '[openai_chat] OpenAI falhou (status ' +
           chatgptRes.statusCode +
-          '); caindo para o motor padrão.',
+          '); caindo para o motor padrão. ' +
+          (parsed
+            ? 'finish_reason: ' +
+              (parsed.choices && parsed.choices[0] && parsed.choices[0].finish_reason
+                ? parsed.choices[0].finish_reason
+                : '(sem finish_reason)')
+            : ''),
       )
       return e.json(200, {
         motor: 'skip-ai',

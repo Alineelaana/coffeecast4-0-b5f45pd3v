@@ -93,8 +93,29 @@ routerAdd(
           : ''
 
       if (!(imgRes.statusCode >= 200 && imgRes.statusCode < 300) || !b64) {
+        // Diagnóstico: registrar a causa EXATA (erro embutido, campo data ausente ou corpo não-JSON)
+        let motivo = 'corpo não é JSON válido (possível HTML de proxy/gateway)'
+        if (parsed) {
+          if (parsed.error) {
+            motivo =
+              'erro embutido no corpo: ' +
+              String(
+                parsed.error.message || parsed.error.code || JSON.stringify(parsed.error),
+              ).slice(0, 300)
+          } else {
+            motivo = 'resposta sem data[0].b64_json (campo ausente ou formato inesperado)'
+          }
+        }
         console.log(
-          '[episodio_capa_ia] OpenAI Images falhou (status ' + imgRes.statusCode + ') — sem b64',
+          '[episodio_capa_ia] OpenAI Images falhou (status ' +
+            imgRes.statusCode +
+            '; ' +
+            motivo +
+            ') — body: ' +
+            String(imgRes.body || '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .slice(0, 600),
         )
         return e.json(200, {
           sucesso: false,

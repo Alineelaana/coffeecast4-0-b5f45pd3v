@@ -140,8 +140,36 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
         : ''
 
     if (!ok || !content) {
+      // Diagnóstico: registrar a causa EXATA (erro embutido, finish_reason ou corpo não-JSON)
+      let motivo = 'corpo não é JSON válido (possível HTML de proxy/gateway)'
+      if (parsed) {
+        if (parsed.error) {
+          motivo =
+            'erro embutido no corpo: ' +
+            String(parsed.error.message || parsed.error.code || JSON.stringify(parsed.error)).slice(
+              0,
+              300,
+            )
+        } else {
+          const choice = parsed.choices && parsed.choices[0] ? parsed.choices[0] : null
+          const finish =
+            choice && choice.finish_reason ? choice.finish_reason : '(sem finish_reason)'
+          motivo =
+            choice && choice.message && typeof choice.message.content === 'string'
+              ? 'content vazio (finish_reason: ' + finish + ')'
+              : 'resposta sem choices/message/content (finish_reason: ' + finish + ')'
+        }
+      }
       console.log(
-        '[estudio_ia] OpenAI falhou (status ' + res.statusCode + ') — retornando fallback amigável',
+        '[estudio_ia] OpenAI status ' +
+          res.statusCode +
+          ' mas conteúdo vazio (' +
+          motivo +
+          ') — body: ' +
+          String(res.body || '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 600),
       )
       return e.json(200, {
         sucesso: false,
@@ -168,6 +196,10 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
       }
     }
     if (!dados) {
+      console.log(
+        '[estudio_ia] Resposta da IA sem JSON extraível — conteúdo recebido (primeiros 300 chars): ' +
+          String(content).replace(/\s+/g, ' ').trim().slice(0, 300),
+      )
       return e.json(200, {
         sucesso: false,
         chatgptAtivo: true,
@@ -274,6 +306,37 @@ routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
         : ''
 
     if (!ok || !content) {
+      // Diagnóstico: registrar a causa EXATA (erro embutido, finish_reason ou corpo não-JSON)
+      let motivo = 'corpo não é JSON válido (possível HTML de proxy/gateway)'
+      if (parsed) {
+        if (parsed.error) {
+          motivo =
+            'erro embutido no corpo: ' +
+            String(parsed.error.message || parsed.error.code || JSON.stringify(parsed.error)).slice(
+              0,
+              300,
+            )
+        } else {
+          const choice = parsed.choices && parsed.choices[0] ? parsed.choices[0] : null
+          const finish =
+            choice && choice.finish_reason ? choice.finish_reason : '(sem finish_reason)'
+          motivo =
+            choice && choice.message && typeof choice.message.content === 'string'
+              ? 'content vazio (finish_reason: ' + finish + ')'
+              : 'resposta sem choices/message/content (finish_reason: ' + finish + ')'
+        }
+      }
+      console.log(
+        '[estudio_ia] OpenAI status ' +
+          res.statusCode +
+          ' mas conteúdo vazio (' +
+          motivo +
+          ') — body: ' +
+          String(res.body || '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 600),
+      )
       return e.json(200, {
         sucesso: false,
         chatgptAtivo: true,
@@ -298,6 +361,10 @@ routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
       }
     }
     if (!dados || !Array.isArray(dados.propostas)) {
+      console.log(
+        '[estudio_ia] Resposta da IA sem JSON extraível (templates) — conteúdo recebido (primeiros 300 chars): ' +
+          String(content).replace(/\s+/g, ' ').trim().slice(0, 300),
+      )
       return e.json(200, {
         sucesso: false,
         chatgptAtivo: true,
