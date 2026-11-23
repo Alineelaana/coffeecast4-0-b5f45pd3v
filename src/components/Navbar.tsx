@@ -231,12 +231,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-[80] transition-all duration-300 ${
         scrolled
           ? 'bg-vinho-dark/95 text-marfim shadow-xl backdrop-blur-md border-b border-dourado/40 py-1 sm:py-1.5'
           : 'bg-gradient-to-b from-[#36142d]/95 via-[#36142d]/75 to-transparent text-white py-1.5 sm:py-2'
       }`}
-      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
+      }}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
@@ -320,7 +324,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
               <button
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}
-                className={`inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide transition-all shadow-md active:scale-95 cursor-pointer min-h-[36px] sm:min-h-[38px] shrink-0 border ${
+                className={`inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide transition-all shadow-md active:scale-95 cursor-pointer min-h-[44px] sm:min-h-[38px] shrink-0 border ${
                   menuOpen
                     ? 'bg-dourado-dark text-vinho border-dourado shadow-dourado/30 ring-2 ring-dourado/40'
                     : 'bg-dourado hover:bg-dourado-dark text-vinho border-dourado/80 hover:shadow-dourado/20'
