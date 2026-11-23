@@ -89,10 +89,87 @@ routerAdd(
         }),
       })
 
+      // -- Decodificação correta do corpo: no JSVM do PocketBase, resposta.body chega como
+      //    array de bytes (String(array) vira "123,10,32,..."); usar resposta.raw (string) ou
+      //    o helper global toString(bytes); último recurso: UTF-8 manual que preserva acentos pt-BR.
+      const decodificarCorpoResposta = function (resposta) {
+        if (!resposta) return ''
+        if (typeof resposta.raw === 'string' && resposta.raw.length > 0) {
+          return resposta.raw.replace(/^\uFEFF/, '')
+        }
+        const bytes = resposta.body
+        if (bytes == null) return ''
+        if (typeof bytes === 'string') return bytes
+        if (typeof toString === 'function') {
+          try {
+            const viaToString = toString(bytes)
+            if (typeof viaToString === 'string' && viaToString.length > 0) return viaToString
+          } catch (_) {}
+        }
+        if (!Array.isArray(bytes)) return String(bytes)
+        let saida = ''
+        let i = 0
+        while (i < bytes.length) {
+          const b = bytes[i]
+          let code = 0xfffd
+          if (b < 0x80) {
+            code = b
+            i += 1
+          } else if (b >= 0xc2 && b < 0xe0 && i + 1 < bytes.length) {
+            code = ((b & 0x1f) << 6) | (bytes[i + 1] & 0x3f)
+            i += 2
+          } else if (b >= 0xe0 && b < 0xf0 && i + 2 < bytes.length) {
+            code = ((b & 0x0f) << 12) | ((bytes[i + 1] & 0x3f) << 6) | (bytes[i + 2] & 0x3f)
+            i += 3
+          } else if (b >= 0xf0 && b < 0xf5 && i + 3 < bytes.length) {
+            code =
+              ((b & 0x07) << 18) |
+              ((bytes[i + 1] & 0x3f) << 12) |
+              ((bytes[i + 2] & 0x3f) << 6) |
+              (bytes[i + 3] & 0x3f)
+            i += 4
+          } else {
+            i += 1
+          }
+          if (code <= 0xffff) saida += String.fromCharCode(code)
+          else {
+            const c = code - 0x10000
+            saida += String.fromCharCode(0xd800 + (c >> 10), 0xdc00 + (c & 0x3ff))
+          }
+        }
+        return saida.replace(/^\uFEFF/, '')
+      }
+      const logarFalhaCorpo = function (tag, status, corpoTexto, erroParse) {
+        try {
+          const compacto = String(corpoTexto || '').replace(/\s+/g, ' ').trim()
+          const partes = [
+            '[' +
+              tag +
+              '] OpenAI status ' +
+              status +
+              ' — corpo não pôde ser interpretado como JSON (' +
+              (corpoTexto ? corpoTexto.length : 0) +
+              ' caracteres)',
+          ]
+          if (erroParse) {
+            partes.push(
+              'causa do JSON.parse: ' +
+                String(erroParse && erroParse.message ? erroParse.message : erroParse),
+            )
+          }
+          partes.push('início do corpo: ' + (compacto.slice(0, 300) || '(vazio)'))
+          partes.push('final do corpo: ' + (compacto.slice(-500) || '(vazio)'))
+          console.log(partes.join(' — '))
+        } catch (_) {}
+      }
+
+      const corpoTexto = decodificarCorpoResposta(chatgptRes)
       let parsed = null
+      let erroParseCorpo = null
       try {
-        parsed = JSON.parse(chatgptRes.body)
-      } catch (_) {
+        parsed = JSON.parse(corpoTexto)
+      } catch (errParseCorpo) {
+        erroParseCorpo = errParseCorpo
         parsed = null
       }
 
@@ -106,23 +183,15 @@ routerAdd(
               0,
               300,
             ) +
-            ' — body: ' +
-            String(chatgptRes.body || '')
+            ' — final do corpo: ' +
+            String(corpoTexto || '')
               .replace(/\s+/g, ' ')
               .trim()
-              .slice(0, 600),
+              .slice(-500),
         )
         parsed = null
       } else if (!parsed) {
-        console.log(
-          '[openai_chat] OpenAI status ' +
-            chatgptRes.statusCode +
-            ' — corpo não é JSON válido (possível HTML de proxy/gateway) — body: ' +
-            String(chatgptRes.body || '')
-              .replace(/\s+/g, ' ')
-              .trim()
-              .slice(0, 600),
-        )
+        logarFalhaCorpo('openai_chat', chatgptRes.statusCode, corpoTexto, erroParseCorpo)
       }
 
       const textoChatgpt =
