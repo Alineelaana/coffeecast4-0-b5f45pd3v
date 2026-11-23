@@ -431,6 +431,8 @@ export interface RoteiroEstruturado {
   enderecoEstudio?: string
   linkGps?: string
   avisoEstacionamento?: string
+  // Leiaute do PDF oficial: parágrafos da seção final "NOTAS DE PRODUÇÃO"
+  notasProducao?: string[]
   blocos: RoteiroBloco[]
 }
 

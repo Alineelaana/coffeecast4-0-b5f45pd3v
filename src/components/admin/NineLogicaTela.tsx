@@ -66,6 +66,15 @@ const SECOES: { titulo: string; itens: string[] }[] = [
     ],
   },
   {
+    titulo: '📝 Geração de roteiros (Nine Roteirista) e template oficial',
+    itens: [
+      'A Nine também é a roteirista editorial: em Roteiros → "Preparar Episódio com IA", o botão "Analisar dados e sugerir estrutura de roteiro" gera a pauta completa no leiaute oficial do PDF de referência (seções "NN / TÍTULO (~X MINUTOS)", subtítulos de contexto, perguntas numeradas, blocos CONDUÇÃO:/CUIDADO EDITORIAL:/OBSERVAÇÃO: e notas de produção).',
+      'Template do formato oficial vive na base de conhecimento (nine_conhecimento, título fixo, ativo=true) e é lido pelo backend a cada geração — editável pela equipe, sem código fixo.',
+      'Motor: ChatGPT (gpt-4.1) via segredo GCHAT_GPT, somente no backend — a resposta é decodificada UTF-8 byte a byte (aceita também string "num1,num2,..."), o que corrigiu o erro "Ocorreu um erro ao gerar o roteiro com IA".',
+      'A Nine NUNCA inventa dados: usa apenas as respostas reais do formulário do convidado e respeita os temas sensíveis declarados.',
+    ],
+  },
+  {
     titulo: '🔗 Onde o lead é trabalhado',
     itens: [
       'Painel Comercial de Leads (/admin/leads): histórico da conversa, resumo da IA, ações rápidas (registrar contato, agendar retorno, alterar status, observação) e tarefas de retorno.',

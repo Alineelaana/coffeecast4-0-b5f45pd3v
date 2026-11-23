@@ -1564,6 +1564,118 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
       break-inside: avoid;
     }
 
+    /* SUBTÍTULO "## ..." DO LEIAUTE OFICIAL */
+    .script-block-subtitulo {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 11.5pt;
+      font-style: italic;
+      font-weight: 700;
+      color: #D4AF37;
+      margin: 0 0 10px 0;
+    }
+
+    /* MARCAÇÃO DE TEMPO "(~X MINUTOS)" NO TÍTULO DA SEÇÃO */
+    .script-block-minutos {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 8.5pt;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: #9A7B1E;
+      white-space: nowrap;
+    }
+
+    /* BLOCOS EDITORIAIS CONDUÇÃO / CUIDADO EDITORIAL / OBSERVAÇÃO */
+    .editorial-note {
+      border-radius: 8px;
+      padding: 9px 13px;
+      margin: 6px 0;
+      font-size: 9.5pt;
+      line-height: 1.55;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .editorial-note .editorial-note-tag {
+      font-weight: 800;
+      font-size: 8pt;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .editorial-note.conducao {
+      background: #FFFFFF;
+      border: 1px solid rgba(75, 30, 63, 0.15);
+      border-left: 3.5px solid #4B1E3F;
+      color: #2C1820;
+    }
+    .editorial-note.conducao .editorial-note-tag {
+      color: #4B1E3F;
+    }
+    .editorial-note.cuidado {
+      background: #FEF2F2;
+      border: 1px solid #FCA5A5;
+      border-left: 3.5px solid #B91C1C;
+      color: #7F1D1D;
+    }
+    .editorial-note.cuidado .editorial-note-tag {
+      color: #B91C1C;
+    }
+    .editorial-note.observacao {
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-left: 3.5px solid #D4AF37;
+      color: #78350F;
+    }
+    .editorial-note.observacao .editorial-note-tag {
+      color: #92400E;
+    }
+
+    /* CABEÇALHO EDITORIAL EPISÓDIO / CONVIDADO(S) / TEMA CENTRAL / DURAÇÃO ESTIMADA */
+    .roteiro-meta-card {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 16px;
+      background: #FFFFFF;
+      border: 1.5px solid rgba(75, 30, 63, 0.18);
+      border-top: 3px solid #D4AF37;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .roteiro-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .roteiro-meta-label {
+      font-size: 7.5pt;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #D4AF37;
+    }
+    .roteiro-meta-value {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #4B1E3F;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    /* SEÇÃO FINAL NOTAS DE PRODUÇÃO */
+    .notas-producao-section .notas-producao-box {
+      background: #EFE9E0;
+      border: 1.5px solid rgba(212, 175, 55, 0.6);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 9.5pt;
+      line-height: 1.6;
+      color: #2C1820;
+    }
+
     /* RESUMO FINAL DE TEMPO */
     .script-time-summary {
       margin-top: 26px;
@@ -1702,7 +1814,7 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
     <!-- ========================================== -->
     <!-- PÁGINAS DE CONTEÚDO EDITORIAL DIAGRAMADAS   -->
     <!-- ========================================== -->
-    ${renderConteudoBlocos(estruturado, subCabecalhoDireita)}
+    ${renderConteudoBlocos(estruturado, subCabecalhoDireita, options)}
   </div>
 </body>
 </html>`
@@ -1711,7 +1823,11 @@ export function buildRoteiroOficialPdfHtml(options: BuildRoteiroOficialPdfOption
 /**
  * Renderiza os blocos do roteiro com quebra e diagramação profissional
  */
-function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: string): string {
+function renderConteudoBlocos(
+  est: RoteiroEstruturado,
+  subCabecalhoDireita: string,
+  options: BuildRoteiroOficialPdfOptions,
+): string {
   // Evitar qualquer quebra artificial vazia: se não houver blocos, não renderizar página vazia
   if (!est.blocos || est.blocos.length === 0) {
     return ''
@@ -1739,21 +1855,56 @@ function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: stri
       <div class="inner-page-content">
   `
 
+  // Cabeçalho editorial do PDF de referência (Thati): EPISÓDIO / CONVIDADO(S) / TEMA CENTRAL / DURAÇÃO ESTIMADA
+  const tituloEpisodio = escapeHtml(est.tituloEpisodio || options.titulo)
+  const subtituloEpisodio = escapeHtml(
+    est.subtituloEpisodio || options.subtitulo || 'O poder de transformar pessoas',
+  )
+  const temaCentral = (
+    (options.convidadosDetalhados?.map((c) => c.temaEnfatizar).filter(Boolean)[0] as string) || ''
+  ).trim()
+  const duracaoEstimadaTotal =
+    est.duracaoRoteiroMinutos ||
+    (est.blocos || []).reduce((soma, b) => soma + (Number(b.duracaoMinutos) || 0), 0) ||
+    55
+
+  htmlPaginas += `
+      <div class="roteiro-meta-card">
+        <div class="roteiro-meta-item">
+          <span class="roteiro-meta-label">EPISÓDIO</span>
+          <span class="roteiro-meta-value">${tituloEpisodio}</span>
+        </div>
+        <div class="roteiro-meta-item">
+          <span class="roteiro-meta-label">CONVIDADO(S)</span>
+          <span class="roteiro-meta-value">${subCabecalhoDireita}</span>
+        </div>
+        <div class="roteiro-meta-item">
+          <span class="roteiro-meta-label">TEMA CENTRAL</span>
+          <span class="roteiro-meta-value">${escapeHtml(temaCentral) || subtituloEpisodio}</span>
+        </div>
+        <div class="roteiro-meta-item">
+          <span class="roteiro-meta-label">DURAÇÃO ESTIMADA</span>
+          <span class="roteiro-meta-value">~${duracaoEstimadaTotal} MINUTOS</span>
+        </div>
+      </div>
+  `
+
   for (let b = 0; b < est.blocos.length; b++) {
     const bloco = est.blocos[b]
-    const ehAbertura = bloco.tipo === 'abertura'
-    const rotuloBloco = ehAbertura ? 'Abertura' : `Bloco ${bloco.numero}`
+    const numeroSecao = (bloco.numero || String(b + 1).padStart(2, '0')).padStart(2, '0')
 
     htmlPaginas += `
       <section class="script-block">
         <div class="script-block-header">
           <div class="script-block-title-wrap">
-            <span class="script-block-tag">${escapeHtml(rotuloBloco)}</span>
-            <h3 class="script-block-title">${escapeHtml(bloco.titulo)}</h3>
+            <h3 class="script-block-title">${numeroSecao} / ${escapeHtml(bloco.titulo)} <span class="script-block-minutos">(~${bloco.duracaoMinutos} MINUTOS)</span></h3>
           </div>
-          <span class="script-block-duration-badge">⏱ ${bloco.duracaoMinutos} MINUTOS</span>
         </div>
     `
+
+    if (bloco.subtitulo) {
+      htmlPaginas += `<div class="script-block-subtitulo">## ${escapeHtml(bloco.subtitulo)}</div>`
+    }
 
     if (bloco.textoIntro) {
       const paragrafos = bloco.textoIntro
@@ -1804,6 +1955,19 @@ function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: stri
       }
     }
 
+    // Blocos editoriais do leiaute oficial: CONDUÇÃO / CUIDADO EDITORIAL / OBSERVAÇÃO
+    const renderEditorialNote = (classe: string, rotulo: string, linhas?: string[]) => {
+      if (!linhas || linhas.length === 0) return
+      htmlPaginas += `
+        <div class="editorial-note ${classe}">
+          <span class="editorial-note-tag">${rotulo}</span>${linhas.map((l) => escapeHtml(l)).join('<br/>')}
+        </div>
+      `
+    }
+    renderEditorialNote('conducao', 'CONDUÇÃO:', bloco.linhasConducao)
+    renderEditorialNote('cuidado', 'CUIDADO EDITORIAL:', bloco.linhasCuidadoEditorial)
+    renderEditorialNote('observacao', 'OBSERVAÇÃO:', bloco.linhasObservacao)
+
     if (bloco.tipo === 'bate_bola') {
       if (bloco.itensBateBola && bloco.itensBateBola.length > 0) {
         htmlPaginas += `<ul class="bate-bola-list">`
@@ -1841,6 +2005,23 @@ function renderConteudoBlocos(est: RoteiroEstruturado, subCabecalhoDireita: stri
     }
 
     htmlPaginas += `</section>` // fecha .script-block
+  }
+
+  // Seção final NOTAS DE PRODUÇÃO do leiaute oficial do PDF de referência
+  const notasProducao = (est.notasProducao || []).filter((n) => n && n.trim())
+  if (notasProducao.length > 0) {
+    htmlPaginas += `
+  <section class="script-block notas-producao-section">
+    <div class="script-block-header">
+      <div class="script-block-title-wrap">
+        <h3 class="script-block-title">NOTAS DE PRODUÇÃO</h3>
+      </div>
+    </div>
+    <div class="notas-producao-box">
+      ${notasProducao.map((n) => `<p style="margin:0 0 8px 0;">${escapeHtml(n)}</p>`).join('')}
+    </div>
+  </section>
+`
   }
 
   // Resumo de tempo final

@@ -85,6 +85,27 @@ const SECOES: { titulo: string; itens: string[] }[] = [
     ],
   },
   {
+    titulo: '📄 Leiaute oficial do roteiro (PDF de referência — Thati)',
+    itens: [
+      'O roteiro segue o leiaute do PDF oficial de referência: cabeçalho do documento com EPISÓDIO, CONVIDADO(S), TEMA CENTRAL e DURAÇÃO ESTIMADA, seguido de seções numeradas no formato "NN / TÍTULO (~X MINUTOS)".',
+      'Dentro de cada seção: subtítulos de contexto ("## ..."), perguntas numeradas (01., 02., ...) com destinatário entre os convidados e itens de bate-bola com marcador.',
+      'Cada seção pode trazer blocos editoriais em caixa própria: CONDUÇÃO: (como conduzir), CUIDADO EDITORIAL: (temas sensíveis/direção) e OBSERVAÇÃO: (observações pontuais).',
+      'Fechamento do documento com a seção NOTAS DE PRODUÇÃO — parágrafos finais de apoio à equipe.',
+      'Marcações de tempo por seção "(~X MINUTOS)" e resumo final de duração (roteiro + respiro = total) para a gravação caber no tempo do episódio.',
+      'O PDF oficial (identidade vinho #4B1E3F / dourado #D4AF37) e o editor estruturado espelham exatamente esse leiaute — o que a equipe edita na tela é o que sai no PDF, pronto para impressão.',
+    ],
+  },
+  {
+    titulo: '🤖 Geração por IA com template oficial (e correção da decodificação)',
+    itens: [
+      'Template do formato oficial do roteiro vive na base de conhecimento da Nine (nine_conhecimento, título fixo, ativo=true) e é lido pelo backend a cada geração — editável pela equipe, nunca fixo no código.',
+      'Em "Preparar Episódio com IA", o botão "Analisar dados e sugerir estrutura de roteiro" envia o contexto do episódio + o template oficial ao ChatGPT (gpt-4.1, segredo GCHAT_GPT) e devolve o roteiro já no leiaute oficial.',
+      'Correção de decodificação aplicada: a resposta da OpenAI pode chegar como array de bytes; o backend decodifica UTF-8 byte a byte (também aceita string "num1,num2,...") antes de interpretar o JSON — fim do erro "Ocorreu um erro ao gerar o roteiro com IA" causado por body mal decodificado.',
+      'Parsing tolerante de JSON + logging da causa real (com amostra do corpo recebido) quando a IA responder fora do formato — falhas futuras ficam diagnosticáveis nos logs do backend.',
+      'Limite de saída ampliado (max_tokens 16384) para roteiros completos não serem cortados no meio de uma seção.',
+    ],
+  },
+  {
     titulo: '🗄️ Armazenamento, versionamento e permissões',
     itens: [
       'Coleção roteiros_convidados: dados do formulário, roteiro_final_texto, roteiro_estruturado (JSON dos blocos), status_aprovacao (rascunho/em_revisao/aprovado), divulgação e histórico.',
