@@ -19,8 +19,11 @@ export function cleanMarkdownSyntax(text: string): string {
       .replace(/\*(.*?)\*/g, '$1')
       .replace(/__(.*?)__/g, '$1')
       .replace(/_(.*?)_/g, '$1')
-      // Remover cerquilhas de títulos
-      .replace(/^#{1,6}\s+/gm, '')
+      // Remover cerquilhas de títulos — mas PRESERVAR o subtítulo "## ..." do leiaute oficial
+      // do PDF de referência (o parser extrai depois como bloco.subtitulo)
+      .replace(/^(?!## )#{1,6}\s+/gm, '')
+      // Subtítulos oficiais "## Título" viram marcador de preservação (mantém a hierarquia)
+      .replace(/^## (.+)$/gm, 'SUBTITULO_OFICIAL: $1')
       // Remover linhas divisórias de texto (---, ___, ===)
       .replace(/^[ \t]*[-_=]{3,}[ \t]*$/gm, '')
       // Remover citações markdown (>)
@@ -77,6 +80,9 @@ export function parseRoteiroTextToStructure(
   let paragrafosEncerramentoBuffer: string[] = []
   let itensBateBolaBuffer: string[] = []
   let perguntasBuffer: RoteiroBlocoPergunta[] = []
+  // "NOTAS DE PRODUÇÃO" do leiaute oficial do PDF — parágrafos após o marcador
+  let notasProducao: string[] = []
+  let coletandoNotasProducao = false
 
   const flushBloco = () => {
     if (!blocoAtual) return
@@ -178,15 +184,17 @@ export function parseRoteiroTextToStructure(
     }
 
     // Detecção de Bloco numerado em múltiplos formatos:
-    // Ex 1: "01 | Duas trajetórias... - 8 MINUTOS" ou "01 - Duas trajetórias..."
-    // Ex 2: "BLOCO 1 – Raízes, Origens e o Ponto de Encontro" ou "BLOCO 01 - ..." ou "BLOCO1 – ..."
-    // Ex 3: "BLOCO 4 – Bate-Bola com Café & Mensagem Final Inspiradora"
+    // Ex 1 (leiaute oficial do PDF): "01 / ABERTURA DA APRESENTADORA" — seções "NN / TÍTULO"
+    // Ex 2: "01 | Duas trajetórias... - 8 MINUTOS" ou "01 - Duas trajetórias..."
+    // Ex 3: "BLOCO 1 – Raízes, Origens e o Ponto de Encontro" ou "BLOCO 01 - ..." ou "BLOCO1 – ..."
+    // Ex 4: "BLOCO 4 – Bate-Bola com Café & Mensagem Final Inspiradora"
+    // Marcações de tempo podem vir no fim do título "(~2 min)" ou "(~10 min — ...)"
     const matchBlocoComPalavra = line.match(
-      /^bloco\s*(\d{1,2})\s*[:|—–-]\s*(.+?)(?:\s*[|—–-]\s*(\d+)\s*minutos?)?$/i,
+      /^bloco\s*(\d{1,2})\s*[:|—–/]\s*(.+?)(?:\s*[|—–/]\s*(\d+)\s*minutos?)?$/i,
     )
     const matchBlocoNum =
       matchBlocoComPalavra ||
-      line.match(/^(\d{2})\s*[|—–-]\s*(.+?)(?:\s*[|—–-]\s*(\d+)\s*minutos?)?$/i)
+      line.match(/^(\d{2})\s*[/|—–-]\s*(.+?)(?:\s*[|—–/]\s*(\d+)\s*minutos?)?$/i)
     if (matchBlocoNum) {
       flushBloco()
       const numRaw = matchBlocoNum[1]
@@ -200,9 +208,20 @@ export function parseRoteiroTextToStructure(
         i++
       }
 
+      // Marcação de tempo no formato "(~2 min)" ou "(~10 min — ...)" no fim do título
+      const matchDurMin = tit.match(/\(\s*~?\s*(\d+)\s*min/i)
+      if (matchDurMin) {
+        dur = parseInt(matchDurMin[1], 10)
+        tit = tit.replace(/\s*\(~?\s*\d+\s*min[^)]*\)\s*/i, ' ').trim()
+      }
+      tit = tit.replace(/\s*—\s*$/, '').trim()
+
       // Identificar tipo
       const titLower = tit.toLowerCase()
       let tipo: RoteiroBloco['tipo'] = 'perguntas'
+      if (titLower.includes('abertura') || titLower.includes('apresentadora')) {
+        tipo = 'abertura'
+      }
       if (titLower.includes('bate-bola') || titLower.includes('bate bola')) {
         tipo = 'bate_bola'
         dur = dur || 5
@@ -227,10 +246,6 @@ export function parseRoteiroTextToStructure(
     }
 
     // Detecção de linha de minutos avulsa logo após título
-    if (/^\d+\s*minutos?$/i.test(line) && blocoAtual && !blocoAtual.duracaoMinutos) {
-      blocoAtual.duracaoMinutos = parseInt(line, 10)
-      continue
-    }
 
     // Se ainda não temos bloco aberto, abrir automaticamente Bloco de Abertura
     if (!blocoAtual) {
@@ -241,6 +256,56 @@ export function parseRoteiroTextToStructure(
         duracaoMinutos: 3,
         tipo: 'abertura',
       }
+    }
+
+    // Subtítulo do leiaute oficial do PDF ("## Contexto do episódio" — vem limpo como SUBTITULO_OFICIAL: ...)
+    const matchSubtituloOficial = line.match(/^SUBTITULO_OFICIAL:\s*(.+)$/i)
+    if (matchSubtituloOficial && blocoAtual) {
+      blocoAtual.subtitulo = matchSubtituloOficial[1].trim()
+      continue
+    }
+
+    // "NOTAS DE PRODUÇÃO" encerra os blocos e inicia a coleta das notas finais
+    if (/^notas\s+de\s+produ[cç][ãa]o/i.test(line)) {
+      flushBloco()
+      coletandoNotasProducao = true
+      continue
+    }
+    if (coletandoNotasProducao) {
+      if (line.trim()) {
+        notasProducao.push(line.trim())
+      }
+      continue
+    }
+
+    // Blocos editoriais do leiaute oficial do PDF: CONDUÇÃO: / CUIDADO EDITORIAL: / OBSERVAÇÃO:
+    // Cada linha seguinte indentada ou em nova linha pertence ao último bloco aberto
+    const matchConducao = line.match(/^CONDU[CÇ][ÃA]O:\s*(.*)$/i)
+    if (matchConducao && blocoAtual) {
+      if (matchConducao[1].trim()) {
+        blocoAtual.linhasConducao = [...(blocoAtual.linhasConducao || []), matchConducao[1].trim()]
+      }
+      continue
+    }
+    const matchCuidado = line.match(/^CUIDADO EDITORIAL:\s*(.*)$/i)
+    if (matchCuidado && blocoAtual) {
+      if (matchCuidado[1].trim()) {
+        blocoAtual.linhasCuidadoEditorial = [
+          ...(blocoAtual.linhasCuidadoEditorial || []),
+          matchCuidado[1].trim(),
+        ]
+      }
+      continue
+    }
+    const matchObservacao = line.match(/^OBSERVA[CÇ][ÃA]O:\s*(.*)$/i)
+    if (matchObservacao && blocoAtual) {
+      if (matchObservacao[1].trim()) {
+        blocoAtual.linhasObservacao = [
+          ...(blocoAtual.linhasObservacao || []),
+          matchObservacao[1].trim(),
+        ]
+      }
+      continue
     }
 
     // Tratamento de conteúdo dentro do bloco ativo
@@ -351,6 +416,7 @@ export function parseRoteiroTextToStructure(
       meta?.linkGps ||
       'https://www.google.com/maps/dir/?api=1&destination=R.+Ulisses+Sarmento,+24,+Praia+do+Su%C3%A1,+Vit%C3%B3ria,+ES',
     avisoEstacionamento: 'ESTACIONAMENTO PRÓPRIO DISPONÍVEL AOS CONVIDADOS',
+    notasProducao,
     blocos,
   }
 }
@@ -370,16 +436,18 @@ export function formatStructureToRoteiroText(est: RoteiroEstruturado): string {
   parts.push('')
 
   for (const bloco of est.blocos) {
+    // Leiaute oficial: seções numeradas "NN / TÍTULO" + marcações de tempo "(~X MINUTOS)"
+    if (bloco.subtitulo) {
+      parts.push(`## ${bloco.subtitulo}`)
+    }
     if (bloco.tipo === 'abertura') {
-      parts.push(`${bloco.titulo}`)
-      parts.push(`${bloco.duracaoMinutos} MINUTOS\n`)
+      parts.push(`${bloco.numero} / ${bloco.titulo} (~${bloco.duracaoMinutos} MINUTOS)`)
       if (bloco.textoIntro) {
         parts.push(bloco.textoIntro)
       }
       parts.push('')
     } else if (bloco.tipo === 'bate_bola') {
-      parts.push(`${bloco.numero} | ${bloco.titulo}`)
-      parts.push(`${bloco.duracaoMinutos} MINUTOS\n`)
+      parts.push(`${bloco.numero} / ${bloco.titulo} (~${bloco.duracaoMinutos} MINUTOS)\n`)
       if (bloco.textoIntro) {
         parts.push(bloco.textoIntro)
         parts.push('')
@@ -395,8 +463,7 @@ export function formatStructureToRoteiroText(est: RoteiroEstruturado): string {
         parts.push('')
       }
     } else if (bloco.tipo === 'encerramento') {
-      parts.push(`${bloco.numero} | ${bloco.titulo}`)
-      parts.push(`${bloco.duracaoMinutos} MINUTOS\n`)
+      parts.push(`${bloco.numero} / ${bloco.titulo} (~${bloco.duracaoMinutos} MINUTOS)\n`)
       if (bloco.textoIntro) {
         parts.push(bloco.textoIntro)
         parts.push('')
@@ -413,8 +480,7 @@ export function formatStructureToRoteiroText(est: RoteiroEstruturado): string {
       }
     } else {
       // Perguntas normais
-      parts.push(`${bloco.numero} | ${bloco.titulo}`)
-      parts.push(`${bloco.duracaoMinutos} MINUTOS\n`)
+      parts.push(`${bloco.numero} / ${bloco.titulo} (~${bloco.duracaoMinutos} MINUTOS)\n`)
       if (bloco.textoIntro) {
         parts.push(bloco.textoIntro)
         parts.push('')
@@ -431,6 +497,18 @@ export function formatStructureToRoteiroText(est: RoteiroEstruturado): string {
         }
       }
     }
+
+    // Blocos editoriais do leiaute oficial: CONDUÇÃO / CUIDADO EDITORIAL / OBSERVAÇÃO
+    if (bloco.linhasConducao && bloco.linhasConducao.length > 0) {
+      parts.push(`CONDUÇÃO: ${bloco.linhasConducao.join(' ')}`)
+    }
+    if (bloco.linhasCuidadoEditorial && bloco.linhasCuidadoEditorial.length > 0) {
+      parts.push(`CUIDADO EDITORIAL: ${bloco.linhasCuidadoEditorial.join(' ')}`)
+    }
+    if (bloco.linhasObservacao && bloco.linhasObservacao.length > 0) {
+      parts.push(`OBSERVAÇÃO: ${bloco.linhasObservacao.join(' ')}`)
+    }
+    parts.push('')
   }
 
   const durRoteiro = est.duracaoRoteiroMinutos || 55

@@ -411,6 +411,11 @@ export interface RoteiroBloco {
   itensBateBola?: string[]
   perguntaEspecialFinal?: string
   paragrafosEncerramento?: string[]
+  // Leiaute do PDF oficial: subtitulo "## Contexto do episódio" + linhas CONDUÇÃO:/CUIDADO EDITORIAL:/OBSERVAÇÃO:
+  subtitulo?: string
+  linhasConducao?: string[]
+  linhasCuidadoEditorial?: string[]
+  linhasObservacao?: string[]
 }
 
 export interface RoteiroEstruturado {

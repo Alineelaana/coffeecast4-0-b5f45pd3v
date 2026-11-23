@@ -12,6 +12,12 @@
 // IMPORTANTE (JSVM do PocketBase): callbacks rodam em um pool de VM separado — NENHUMA
 // declaração top-level pode ser referenciada dentro deles. Toda a lógica vive inline no
 // corpo de cada callback (helpers duplicados de propósito).
+//
+// CORREÇÃO (causa raiz do "status 200 mas content vazio"): no JSVM do PocketBase,
+// resposta.body chega como ARRAY DE BYTES e o helper global toString(bytes) devolve a
+// representação Go da lista ("123,10,32,..." — string não-vazia que quebra o JSON.parse).
+// A decodificação abaixo NUNCA usa toString(): usa resposta.raw (string) ou o
+// decodificador UTF-8 manual byte a byte que preserva acentos pt-BR.
 
 // ---------- ROTA 1: Análise de divulgação do roteiro ----------
 routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
@@ -128,42 +134,28 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
       }),
     })
 
-    // -- inline: decodificação correta do corpo (ver openai_chat.js) --
-    const decodificarCorpoResposta = function (resposta) {
-      if (!resposta) return ''
-      if (typeof resposta.raw === 'string' && resposta.raw.length > 0) {
-        return resposta.raw.replace(/^\uFEFF/, '')
-      }
-      const bytes = resposta.body
-      if (bytes == null) return ''
-      if (typeof bytes === 'string') return bytes
-      if (typeof toString === 'function') {
-        try {
-          const viaToString = toString(bytes)
-          if (typeof viaToString === 'string' && viaToString.length > 0) return viaToString
-        } catch (_) {}
-      }
-      if (!Array.isArray(bytes)) return String(bytes)
+    // -- inline: decodificação correta do corpo (ver cabeçalho do arquivo) --
+    const decodificarBytesUtf8 = function (arrBytes) {
       let saida = ''
       let i = 0
-      while (i < bytes.length) {
-        const b = bytes[i]
+      while (i < arrBytes.length) {
+        const b = arrBytes[i]
         let code = 0xfffd
         if (b < 0x80) {
           code = b
           i += 1
-        } else if (b >= 0xc2 && b < 0xe0 && i + 1 < bytes.length) {
-          code = ((b & 0x1f) << 6) | (bytes[i + 1] & 0x3f)
+        } else if (b >= 0xc2 && b < 0xe0 && i + 1 < arrBytes.length) {
+          code = ((b & 0x1f) << 6) | (arrBytes[i + 1] & 0x3f)
           i += 2
-        } else if (b >= 0xe0 && b < 0xf0 && i + 2 < bytes.length) {
-          code = ((b & 0x0f) << 12) | ((bytes[i + 1] & 0x3f) << 6) | (bytes[i + 2] & 0x3f)
+        } else if (b >= 0xe0 && b < 0xf0 && i + 2 < arrBytes.length) {
+          code = ((b & 0x0f) << 12) | ((arrBytes[i + 1] & 0x3f) << 6) | (arrBytes[i + 2] & 0x3f)
           i += 3
-        } else if (b >= 0xf0 && b < 0xf5 && i + 3 < bytes.length) {
+        } else if (b >= 0xf0 && b < 0xf5 && i + 3 < arrBytes.length) {
           code =
             ((b & 0x07) << 18) |
-            ((bytes[i + 1] & 0x3f) << 12) |
-            ((bytes[i + 2] & 0x3f) << 6) |
-            (bytes[i + 3] & 0x3f)
+            ((arrBytes[i + 1] & 0x3f) << 12) |
+            ((arrBytes[i + 2] & 0x3f) << 6) |
+            (arrBytes[i + 3] & 0x3f)
           i += 4
         } else {
           i += 1
@@ -175,6 +167,49 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
         }
       }
       return saida.replace(/^\uFEFF/, '')
+    }
+    const decodificarCorpoResposta = function (resposta) {
+      if (!resposta) return ''
+      if (typeof resposta.raw === 'string' && resposta.raw.length > 0) {
+        return resposta.raw.replace(/^\uFEFF/, '')
+      }
+      const bytes = resposta.body
+      if (bytes == null) return ''
+      if (typeof bytes === 'string') {
+        // Defesa extra: se o corpo chegou como string com a REPRESENTAÇÃO Go da lista de
+        // bytes ("123,10,32,32,34,..."), decodifica byte a byte de volta ao UTF-8 real.
+        const compacta = bytes.replace(/\s+/g, '')
+        if (/^\d{1,3}(,\d{1,3})+$/.test(compacta)) {
+          const partes = compacta.split(',')
+          let reconstruida = ''
+          let valida = true
+          for (let r = 0; r < partes.length; r++) {
+            const v = parseInt(partes[r], 10)
+            if (isNaN(v) || v < 0 || v > 255) {
+              valida = false
+              break
+            }
+            reconstruida += String.fromCharCode(v)
+          }
+          if (valida) {
+            return decodificarBytesUtf8(
+              reconstruida.split('').map(function (c) {
+                return c.charCodeAt(0)
+              }),
+            )
+          }
+        }
+        return bytes.replace(/^\uFEFF/, '')
+      }
+      const pareceBytes =
+        Array.isArray(bytes) &&
+        bytes.length > 0 &&
+        typeof bytes[0] === 'number' &&
+        bytes[0] >= 0 &&
+        bytes[0] <= 255
+      if (Array.isArray(bytes) && !pareceBytes) return ''
+      if (!Array.isArray(bytes)) return String(bytes)
+      return decodificarBytesUtf8(bytes)
     }
     const logarFalhaCorpo = function (tag, status, corpoTexto, erroParse) {
       try {
@@ -239,7 +274,7 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
               : 'resposta sem choices/message/content (finish_reason: ' + finish + ')' + usageTxt
         }
       }
-      if (!parsed || parsed == null) {
+      if (!parsed) {
         logarFalhaCorpo('estudio_ia', res.statusCode, corpoTexto, erroParseCorpo)
       } else {
         console.log(
@@ -377,42 +412,28 @@ routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
       }),
     })
 
-    // -- inline: decodificação correta do corpo (ver openai_chat.js) --
-    const decodificarCorpoResposta = function (resposta) {
-      if (!resposta) return ''
-      if (typeof resposta.raw === 'string' && resposta.raw.length > 0) {
-        return resposta.raw.replace(/^\uFEFF/, '')
-      }
-      const bytes = resposta.body
-      if (bytes == null) return ''
-      if (typeof bytes === 'string') return bytes
-      if (typeof toString === 'function') {
-        try {
-          const viaToString = toString(bytes)
-          if (typeof viaToString === 'string' && viaToString.length > 0) return viaToString
-        } catch (_) {}
-      }
-      if (!Array.isArray(bytes)) return String(bytes)
+    // -- inline: decodificação correta do corpo (ver cabeçalho do arquivo) --
+    const decodificarBytesUtf8 = function (arrBytes) {
       let saida = ''
       let i = 0
-      while (i < bytes.length) {
-        const b = bytes[i]
+      while (i < arrBytes.length) {
+        const b = arrBytes[i]
         let code = 0xfffd
         if (b < 0x80) {
           code = b
           i += 1
-        } else if (b >= 0xc2 && b < 0xe0 && i + 1 < bytes.length) {
-          code = ((b & 0x1f) << 6) | (bytes[i + 1] & 0x3f)
+        } else if (b >= 0xc2 && b < 0xe0 && i + 1 < arrBytes.length) {
+          code = ((b & 0x1f) << 6) | (arrBytes[i + 1] & 0x3f)
           i += 2
-        } else if (b >= 0xe0 && b < 0xf0 && i + 2 < bytes.length) {
-          code = ((b & 0x0f) << 12) | ((bytes[i + 1] & 0x3f) << 6) | (bytes[i + 2] & 0x3f)
+        } else if (b >= 0xe0 && b < 0xf0 && i + 2 < arrBytes.length) {
+          code = ((b & 0x0f) << 12) | ((arrBytes[i + 1] & 0x3f) << 6) | (arrBytes[i + 2] & 0x3f)
           i += 3
-        } else if (b >= 0xf0 && b < 0xf5 && i + 3 < bytes.length) {
+        } else if (b >= 0xf0 && b < 0xf5 && i + 3 < arrBytes.length) {
           code =
             ((b & 0x07) << 18) |
-            ((bytes[i + 1] & 0x3f) << 12) |
-            ((bytes[i + 2] & 0x3f) << 6) |
-            (bytes[i + 3] & 0x3f)
+            ((arrBytes[i + 1] & 0x3f) << 12) |
+            ((arrBytes[i + 2] & 0x3f) << 6) |
+            (arrBytes[i + 3] & 0x3f)
           i += 4
         } else {
           i += 1
@@ -424,6 +445,47 @@ routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
         }
       }
       return saida.replace(/^\uFEFF/, '')
+    }
+    const decodificarCorpoResposta = function (resposta) {
+      if (!resposta) return ''
+      if (typeof resposta.raw === 'string' && resposta.raw.length > 0) {
+        return resposta.raw.replace(/^\uFEFF/, '')
+      }
+      const bytes = resposta.body
+      if (bytes == null) return ''
+      if (typeof bytes === 'string') {
+        const compacta = bytes.replace(/\s+/g, '')
+        if (/^\d{1,3}(,\d{1,3})+$/.test(compacta)) {
+          const partes = compacta.split(',')
+          let reconstruida = ''
+          let valida = true
+          for (let r = 0; r < partes.length; r++) {
+            const v = parseInt(partes[r], 10)
+            if (isNaN(v) || v < 0 || v > 255) {
+              valida = false
+              break
+            }
+            reconstruida += String.fromCharCode(v)
+          }
+          if (valida) {
+            return decodificarBytesUtf8(
+              reconstruida.split('').map(function (c) {
+                return c.charCodeAt(0)
+              }),
+            )
+          }
+        }
+        return bytes.replace(/^\uFEFF/, '')
+      }
+      const pareceBytes =
+        Array.isArray(bytes) &&
+        bytes.length > 0 &&
+        typeof bytes[0] === 'number' &&
+        bytes[0] >= 0 &&
+        bytes[0] <= 255
+      if (Array.isArray(bytes) && !pareceBytes) return ''
+      if (!Array.isArray(bytes)) return String(bytes)
+      return decodificarBytesUtf8(bytes)
     }
     const logarFalhaCorpo = function (tag, status, corpoTexto, erroParse) {
       try {
@@ -467,7 +529,6 @@ routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
         : ''
 
     if (!ok || !content) {
-      // Diagnóstico: registrar a causa EXATA (erro embutido, finish_reason, usage ou corpo não-JSON)
       let motivo = 'corpo não é JSON válido'
       if (parsed) {
         if (parsed.error) {

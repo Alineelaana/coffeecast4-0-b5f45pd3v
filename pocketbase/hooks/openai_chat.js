@@ -90,8 +90,11 @@ routerAdd(
       })
 
       // -- Decodificação correta do corpo: no JSVM do PocketBase, resposta.body chega como
-      //    array de bytes (String(array) vira "123,10,32,..."); usar resposta.raw (string) ou
-      //    o helper global toString(bytes); último recurso: UTF-8 manual que preserva acentos pt-BR.
+      //    ARRAY DE BYTES e o helper global toString(bytes) devolve a representação Go da
+      //    lista ("123,10,32,..." — string não-vazia que quebra o JSON.parse). Ordem:
+      //    resposta.raw (string) → decodificação UTF-8 manual byte a byte, preservando
+      //    acentos pt-BR. Também defende contra a representação textual da lista chegar
+      //    como string. NUNCA usar toString() aqui.
       const decodificarCorpoResposta = function (resposta) {
         if (!resposta) return ''
         if (typeof resposta.raw === 'string' && resposta.raw.length > 0) {
@@ -99,34 +102,57 @@ routerAdd(
         }
         const bytes = resposta.body
         if (bytes == null) return ''
-        if (typeof bytes === 'string') return bytes
-        if (typeof toString === 'function') {
-          try {
-            const viaToString = toString(bytes)
-            if (typeof viaToString === 'string' && viaToString.length > 0) return viaToString
-          } catch (_) {}
+        if (typeof bytes === 'string') {
+          // Defesa extra: representação Go da lista de bytes chegando como string
+          const compacta = bytes.replace(/\s+/g, '')
+          if (/^\d{1,3}(,\d{1,3})+$/.test(compacta)) {
+            let saidaRep = ''
+            const partes = compacta.split(',')
+            for (let r = 0; r < partes.length; r++) {
+              const v = parseInt(partes[r], 10)
+              if (isNaN(v) || v < 0 || v > 255) return bytes
+              saidaRep += String.fromCharCode(v)
+            }
+            return decodificarUtf8DeString(saidaRep)
+          }
+          return bytes.replace(/^\uFEFF/, '')
         }
-        if (!Array.isArray(bytes)) return String(bytes)
+        if (typeof bytes === 'object') {
+          if (Array.isArray(bytes) && bytes.length === 0) return ''
+          const pareceBytes =
+            Array.isArray(bytes) &&
+            bytes.length > 0 &&
+            typeof bytes[0] === 'number' &&
+            bytes[0] >= 0 &&
+            bytes[0] <= 255
+          if (Array.isArray(bytes) && !pareceBytes) return ''
+          return decodificarBytesUtf8(bytes)
+        }
+        return ''
+      }
+      // UTF-8 manual — preserva acentos pt-BR. (toString(bytes) NÃO serve aqui:
+      // no JSVM devolve a representação Go "123,10,32,..." e quebra o JSON.parse.)
+      const decodificarBytesUtf8 = function (arrBytes) {
         let saida = ''
         let i = 0
-        while (i < bytes.length) {
-          const b = bytes[i]
+        while (i < arrBytes.length) {
+          const b = arrBytes[i]
           let code = 0xfffd
           if (b < 0x80) {
             code = b
             i += 1
-          } else if (b >= 0xc2 && b < 0xe0 && i + 1 < bytes.length) {
-            code = ((b & 0x1f) << 6) | (bytes[i + 1] & 0x3f)
+          } else if (b >= 0xc2 && b < 0xe0 && i + 1 < arrBytes.length) {
+            code = ((b & 0x1f) << 6) | (arrBytes[i + 1] & 0x3f)
             i += 2
-          } else if (b >= 0xe0 && b < 0xf0 && i + 2 < bytes.length) {
-            code = ((b & 0x0f) << 12) | ((bytes[i + 1] & 0x3f) << 6) | (bytes[i + 2] & 0x3f)
+          } else if (b >= 0xe0 && b < 0xf0 && i + 2 < arrBytes.length) {
+            code = ((b & 0x0f) << 12) | ((arrBytes[i + 1] & 0x3f) << 6) | (arrBytes[i + 2] & 0x3f)
             i += 3
-          } else if (b >= 0xf0 && b < 0xf5 && i + 3 < bytes.length) {
+          } else if (b >= 0xf0 && b < 0xf5 && i + 3 < arrBytes.length) {
             code =
               ((b & 0x07) << 18) |
-              ((bytes[i + 1] & 0x3f) << 12) |
-              ((bytes[i + 2] & 0x3f) << 6) |
-              (bytes[i + 3] & 0x3f)
+              ((arrBytes[i + 1] & 0x3f) << 12) |
+              ((arrBytes[i + 2] & 0x3f) << 6) |
+              (arrBytes[i + 3] & 0x3f)
             i += 4
           } else {
             i += 1
@@ -138,6 +164,15 @@ routerAdd(
           }
         }
         return saida.replace(/^\uFEFF/, '')
+      }
+      // Decodifica uma string cujos code points são 1 byte cada (0–255) — usada após a
+      // reconstrução a partir da representação textual da lista de bytes.
+      const decodificarUtf8DeString = function (texto) {
+        return decodificarBytesUtf8(
+          texto.split('').map(function (c) {
+            return c.charCodeAt(0)
+          }),
+        )
       }
       const logarFalhaCorpo = function (tag, status, corpoTexto, erroParse) {
         try {

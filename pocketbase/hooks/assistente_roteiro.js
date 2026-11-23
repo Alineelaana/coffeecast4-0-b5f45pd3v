@@ -85,214 +85,14 @@ routerAdd(
           alertaTemaSensivel: alertaTemaSensivel,
           biografia: biografia,
         }
+      }
+
       const body = e.requestInfo().body || {}
       const roteiroId = (body.roteiro_id || '').trim()
       const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
         ? body.roteiros_vinculados_ids.filter(function (id) {
             return typeof id === 'string' && id.trim().length > 0
           })
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
-      const regenBloco = body.regenerar_bloco || null
-=======
-      const body = e.requestInfo().body || {}
-      const roteiroId = (body.roteiro_id || '').trim()
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-=======
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-=======
-          }
-
-          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
-          if (gptParsed && gptParsed.error) {)
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
-      const regenBloco = body.regenerar_bloco || null
-
-      let roteiroPrincipal = null
-      const listaRecords = []
-=======
-      const body = e.requestInfo().body || {}
-      const roteiroId = (body.roteiro_id || '').trim()
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
-      const regenBloco = body.regenerar_bloco || null
-
-      let roteiroPrincipal = null
-      const listaRecords = []
-=======
-      const body = e.requestInfo().body || {}
-      const roteiroId = (body.roteiro_id || '').trim()
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
-      const regenBloco = body.regenerar_bloco || null
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-=======
-      const body = e.requestInfo().body || {}
-      const roteiroId = (body.roteiro_id || '').trim()
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-=======
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-=======
-      const body = e.requestInfo().body || {}
-      const roteiroId = (body.roteiro_id || '').trim()
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
-      const regenBloco = body.regenerar_bloco || null
-=======
-      const body = e.requestInfo().body || {}
-      const roteiroId = (body.roteiro_id || '').trim()
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-=======
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-=======
-          }
-
-          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
-          if (gptParsed && gptParsed.error) {)
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
-=======
-      const body = e.requestInfo().body || {}
-      const roteiroId = (body.roteiro_id || '').trim()
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
-=======
-          }
-
-          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
-          if (gptParsed && gptParsed.error) {)
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-=======
-      const body = e.requestInfo().body || {}
-      const roteiroId = (body.roteiro_id || '').trim()
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-=======
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-=======
-          }
-
-          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
-          if (gptParsed && gptParsed.error) {)
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
-      const regenBloco = body.regenerar_bloco || null
-      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
-=======
-      const body = e.requestInfo().body || {}
-      const roteiroId = (body.roteiro_id || '').trim()
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
-=======
-          }
-
-          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
-          if (gptParsed && gptParsed.error) {)
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-=======
-      const body = e.requestInfo().body || {}
-      const roteiroId = (body.roteiro_id || '').trim()
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-
-      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
-=======
-      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
-        ? body.roteiros_vinculados_ids.filter(function (id) {
-            return typeof id === 'string' && id.trim().length > 0
-          })
-        : []
-=======
-          }
-
-          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
-          if (gptParsed && gptParsed.error) {)
         : []
 
       const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
@@ -679,7 +479,7 @@ routerAdd(
           const chatgptRes = $http.send({
             url: 'https://api.openai.com/v1/chat/completions',
             method: 'POST',
-            timeout: 60,
+            timeout: 120,
             headers: {
               'Content-Type': 'application/json',
               Authorization: 'Bearer ' + apiKeyGchat,
@@ -690,7 +490,7 @@ routerAdd(
                 { role: 'system', content: systemPromptEspecifico },
                 { role: 'user', content: userMessage },
               ],
-              max_tokens: 8000,
+              max_tokens: 16384,
               temperature: 0.7,
             }),
           })
@@ -707,53 +507,83 @@ routerAdd(
             }
             const bytes = resposta.body
             if (bytes == null) return ''
-            if (typeof bytes === 'string') return bytes
+            if (typeof bytes === 'string') {
+              // Defesa extra: se o corpo chegou como string com a REPRESENTAÇÃO Go da lista de
+              // bytes ("123,10,32,32,34,..."), decodifica byte a byte de volta ao UTF-8 real.
+              const compacta = bytes.replace(/\s+/g, '')
+              if (/^\d{1,3}(,\d{1,3})+$/.test(compacta)) {
+                let saidaRep = ''
+                const partes = compacta.split(',')
+                for (let r = 0; r < partes.length; r++) {
+                  const v = parseInt(partes[r], 10)
+                  if (isNaN(v) || v < 0 || v > 255) return bytes
+                  saidaRep += String.fromCharCode(v)
+                }
+                // Decodifica UTF-8 a partir dos code points de 1 byte reunidos.
+                return decodificarBytesUtf8(
+                  saidaRep.split('').map(function (c) {
+                    return c.charCodeAt(0)
+                  }),
+                )
+              }
+              return bytes.replace(/^\uFEFF/, '')
+            }
             if (typeof bytes === 'object') {
+              if (Array.isArray(bytes) && bytes.length === 0) return ''
               const pareceBytes =
                 Array.isArray(bytes) &&
                 bytes.length > 0 &&
                 typeof bytes[0] === 'number' &&
                 bytes[0] >= 0 &&
                 bytes[0] <= 255
-              if (Array.isArray(bytes) && !pareceBytes) return String(bytes)
-              // UTF-8 manual — preserva acentos pt-BR. (toString(bytes) NÃO serve aqui:
-              // no JSVM devolve a representação Go "123,10,32,..." e quebra o JSON.parse.)
-              let saida = ''
-              let i = 0
-              while (i < bytes.length) {
-                const b = bytes[i]
-                let code = 0xfffd
-                if (b < 0x80) {
-                  code = b
-                  i += 1
-                } else if (b >= 0xc2 && b < 0xe0 && i + 1 < bytes.length) {
-                  code = ((b & 0x1f) << 6) | (bytes[i + 1] & 0x3f)
-                  i += 2
-                } else if (b >= 0xe0 && b < 0xf0 && i + 2 < bytes.length) {
-                  code = ((b & 0x0f) << 12) | ((bytes[i + 1] & 0x3f) << 6) | (bytes[i + 2] & 0x3f)
-                  i += 3
-                } else if (b >= 0xf0 && b < 0xf5 && i + 3 < bytes.length) {
-                  code =
-                    ((b & 0x07) << 18) |
-                    ((bytes[i + 1] & 0x3f) << 12) |
-                    ((bytes[i + 2] & 0x3f) << 6) |
-                    (bytes[i + 3] & 0x3f)
-                  i += 4
-                } else {
-                  i += 1
-                }
-                if (code <= 0xffff) saida += String.fromCharCode(code)
-                else {
-                  const c = code - 0x10000
-                  saida += String.fromCharCode(0xd800 + (c >> 10), 0xdc00 + (c & 0x3ff))
-                }
-              }
-              return saida.replace(/^\uFEFF/, '')
+              if (Array.isArray(bytes) && !pareceBytes) return ''
+              return decodificarBytesUtf8(bytes)
             }
+            return ''
           }
+
+          // UTF-8 manual — preserva acentos pt-BR. (toString(bytes) NÃO serve aqui:
+          // no JSVM devolve a representação Go "123,10,32,..." e quebra o JSON.parse.)
+          const decodificarBytesUtf8 = function (arrBytes) {
+            let saida = ''
+            let i = 0
+            while (i < arrBytes.length) {
+              const b = arrBytes[i]
+              let code = 0xfffd
+              if (b < 0x80) {
+                code = b
+                i += 1
+              } else if (b >= 0xc2 && b < 0xe0 && i + 1 < arrBytes.length) {
+                code = ((b & 0x1f) << 6) | (arrBytes[i + 1] & 0x3f)
+                i += 2
+              } else if (b >= 0xe0 && b < 0xf0 && i + 2 < arrBytes.length) {
+                code =
+                  ((b & 0x0f) << 12) | ((arrBytes[i + 1] & 0x3f) << 6) | (arrBytes[i + 2] & 0x3f)
+                i += 3
+              } else if (b >= 0xf0 && b < 0xf5 && i + 3 < arrBytes.length) {
+                code =
+                  ((b & 0x07) << 18) |
+                  ((arrBytes[i + 1] & 0x3f) << 12) |
+                  ((arrBytes[i + 2] & 0x3f) << 6) |
+                  (arrBytes[i + 3] & 0x3f)
+                i += 4
+              } else {
+                i += 1
+              }
+              if (code <= 0xffff) saida += String.fromCharCode(code)
+              else {
+                const c = code - 0x10000
+                saida += String.fromCharCode(0xd800 + (c >> 10), 0xdc00 + (c & 0x3ff))
+              }
+            }
+            return saida.replace(/^\uFEFF/, '')
+          }
+
           const logarFalhaCorpo = function (tag, status, corpoTexto, erroParse) {
             try {
-              const compacto = String(corpoTexto || '').replace(/\s+/g, ' ').trim()
+              const compacto = String(corpoTexto || '')
+                .replace(/\s+/g, ' ')
+                .trim()
               const partes = [
                 '[' +
                   tag +
@@ -927,7 +757,6 @@ routerAdd(
               )
             }
           }
-=======
 
           // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
           if (gptParsed && gptParsed.error) {
@@ -948,7 +777,12 @@ routerAdd(
             )
             gptParsed = null
           } else if (!gptParsed) {
-            logarFalhaCorpo('assistente_roteiro', chatgptRes.statusCode, corpoTextoGpt, erroParseGpt)
+            logarFalhaCorpo(
+              'assistente_roteiro',
+              chatgptRes.statusCode,
+              corpoTextoGpt,
+              erroParseGpt,
+            )
           }
 
           const gptTexto =
@@ -976,7 +810,8 @@ routerAdd(
                 '; finish_reason: ' +
                 (choiceGpt ? choiceGpt.finish_reason || '(sem finish_reason)' : 'sem choices') +
                 (choiceGpt && choiceGpt.message && typeof choiceGpt.message.content === 'string'
-                  ? '; tamanho do content: ' + choiceGpt.message.content.trim().length +
+                  ? '; tamanho do content: ' +
+                    choiceGpt.message.content.trim().length +
                     ' (mínimo exigido: 150)'
                   : '') +
                 (gptParsed && gptParsed.usage
@@ -994,7 +829,7 @@ routerAdd(
       }
 
       // Tentativa 1: Agente nativo 'roteirista-coffeecast'
-      if (typeof $ai !== 'undefined' && $ai.agent) {
+      if (!resultadoTexto && typeof $ai !== 'undefined' && $ai.agent) {
         try {
           const agentResult = $ai.agent('roteirista-coffeecast').chat({
             user_id: authUser.id,
