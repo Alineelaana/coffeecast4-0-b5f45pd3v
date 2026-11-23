@@ -25,7 +25,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import nineProfileImg from '@/assets/chatgpt-image-17-de-set.de-2026-115658-201e0.png'
+
 import {
   FileText,
   Sparkles,
@@ -64,6 +64,19 @@ import DivulgacaoInteligente from '@/components/roteiros/DivulgacaoInteligente'
 import PrepararEpisodioIA from '@/components/roteiros/PrepararEpisodioIA'
 import EstudioLogicaTela from '@/components/estudio/EstudioLogicaTela'
 import RoteirosLogicaTela from '@/components/roteiros/RoteirosLogicaTela'
+import { NINE_ROTEIROS_AVATAR_SRC as nineProfileImg } from '@/assets/nineRoteirosAvatar'
+// Segurança de render: se qualquer dado do banco vier inesperado (nulo, campo
+// novo fora do formato, coleção sem registros), a tela mostra fallback em vez
+// de ficar branca. Detalhes no RoteirosErrorBoundary e nos guarded helpers abaixo.
+import { RoteirosErrorBoundary } from '@/components/admin/RoteirosErrorBoundary'
+import {
+  textoOuTraco,
+  dataOuTraco,
+  comoArray,
+  nomeOuFallback,
+  iniciaisSeguras,
+  renderSeguro,
+} from '@/components/roteiros/roteirosRenderGuard'
 
 export default function AdminRoteirosScreen() {
   const { isMaster, isGerencial } = useAuth()
