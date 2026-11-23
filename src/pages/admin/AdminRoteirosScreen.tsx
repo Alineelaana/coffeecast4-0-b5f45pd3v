@@ -78,7 +78,7 @@ import {
   renderSeguro,
 } from '@/components/roteiros/roteirosRenderGuard'
 
-export default function AdminRoteirosScreen() {
+function AdminRoteirosScreenInner() {
   const { isMaster, isGerencial } = useAuth()
   const [roteiros, setRoteiros] = useState<RoteiroConvidadoRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -209,7 +209,7 @@ export default function AdminRoteirosScreen() {
       const list = await pb.collection('roteiros_convidados').getFullList<RoteiroConvidadoRecord>({
         sort: '-created',
       })
-      setRoteiros(list)
+      setRoteiros(Array.isArray(list) ? list : [])
 
       // Se houver um selecionado, sincronizar dados atualizados
       if (selectedRoteiro) {
@@ -522,8 +522,10 @@ export default function AdminRoteirosScreen() {
       setJuntarAgenteUsado(data.agenteUsado)
 
       const convidadosAlvos = [
-        selectedRoteiro.nome,
-        ...roteiros.filter((r) => juntarSelecionados.includes(r.id)).map((r) => r.nome),
+        nomeOuFallback(selectedRoteiro.nome),
+        ...roteiros
+          .filter((r) => juntarSelecionados.includes(r.id))
+          .map((r) => nomeOuFallback(r.nome)),
       ].join(' & ')
 
       // Registrar auditoria da geração
@@ -563,8 +565,10 @@ export default function AdminRoteirosScreen() {
     if (!selectedRoteiro || !juntarResultado) return
 
     const convidadosVinculadosNomes = [
-      selectedRoteiro.nome,
-      ...roteiros.filter((r) => juntarSelecionados.includes(r.id)).map((r) => r.nome),
+      nomeOuFallback(selectedRoteiro.nome),
+      ...roteiros
+        .filter((r) => juntarSelecionados.includes(r.id))
+        .map((r) => nomeOuFallback(r.nome)),
     ]
     const tituloConjunto = `Episódio Conjunto: ${convidadosVinculadosNomes.join(' & ')}`
 
@@ -1023,15 +1027,17 @@ export default function AdminRoteirosScreen() {
                           />
                         ) : (
                           <div className="w-12 h-12 rounded-full bg-vinho/10 text-vinho font-bold flex items-center justify-center text-sm shrink-0">
-                            {item.nome.slice(0, 2).toUpperCase()}
+                            {iniciaisSeguras(item.nome)}
                           </div>
                         )}
                         <div>
-                          <h4 className="font-bold text-sm text-vinho">{item.nome}</h4>
+                          <h4 className="font-bold text-sm text-vinho">
+                            {nomeOuFallback(item.nome)}
+                          </h4>
                           <p className="text-[11px] text-vinho/70">
                             {item.tem_empresa && item.nome_empresa
                               ? item.nome_empresa
-                              : item.estado_civil}
+                              : textoOuTraco(item.estado_civil)}
                           </p>
                           <span className="text-[10px] text-vinho/50 flex items-center gap-1 mt-0.5">
                             <Clock className="w-3 h-3" />
@@ -1169,13 +1175,17 @@ export default function AdminRoteirosScreen() {
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-full bg-vinho/10 text-vinho font-bold flex items-center justify-center text-xs">
-                              {item.nome.slice(0, 2).toUpperCase()}
+                              {iniciaisSeguras(item.nome)}
                             </div>
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="font-bold text-xs text-vinho">{item.nome}</div>
-                          <div className="text-[11px] text-vinho/60">{item.estado_civil}</div>
+                          <div className="font-bold text-xs text-vinho">
+                            {nomeOuFallback(item.nome)}
+                          </div>
+                          <div className="text-[11px] text-vinho/60">
+                            {textoOuTraco(item.estado_civil)}
+                          </div>
                         </TableCell>
                         <TableCell className="text-xs text-vinho/80 whitespace-nowrap">
                           {formatDateBR(item.created)}
@@ -1581,12 +1591,12 @@ export default function AdminRoteirosScreen() {
                       />
                     ) : (
                       <div className="w-14 h-14 rounded-2xl bg-vinho text-dourado font-bold flex items-center justify-center text-lg">
-                        {selectedRoteiro.nome.slice(0, 2).toUpperCase()}
+                        {iniciaisSeguras(selectedRoteiro.nome)}
                       </div>
                     )}
                     <div>
                       <DialogTitle className="font-serif text-xl sm:text-2xl font-bold text-vinho">
-                        {selectedRoteiro.nome}
+                        {nomeOuFallback(selectedRoteiro.nome)}
                       </DialogTitle>
                       <p className="text-xs text-vinho/70">
                         Enviado em {formatDateBR(selectedRoteiro.created)}
@@ -2176,11 +2186,13 @@ export default function AdminRoteirosScreen() {
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-vinho text-dourado font-bold flex items-center justify-center text-sm">
-                        {selectedRoteiro.nome.slice(0, 2).toUpperCase()}
+                        {iniciaisSeguras(selectedRoteiro.nome)}
                       </div>
                     )}
                     <div>
-                      <h4 className="font-bold text-sm text-vinho">{selectedRoteiro.nome}</h4>
+                      <h4 className="font-bold text-sm text-vinho">
+                        {nomeOuFallback(selectedRoteiro.nome)}
+                      </h4>
                       <p className="text-xs text-vinho/70">
                         {selectedRoteiro.tem_empresa && selectedRoteiro.nome_empresa
                           ? selectedRoteiro.nome_empresa
@@ -2238,7 +2250,7 @@ export default function AdminRoteirosScreen() {
                     // Filtro de busca
                     if (juntarBusca.trim()) {
                       const termo = juntarBusca.toLowerCase().trim()
-                      const matchNome = r.nome.toLowerCase().includes(termo)
+                      const matchNome = (r.nome || '').toLowerCase().includes(termo)
                       const matchEmpresa = (r.nome_empresa || '').toLowerCase().includes(termo)
                       return matchNome || matchEmpresa
                     }
@@ -2288,12 +2300,12 @@ export default function AdminRoteirosScreen() {
                                 />
                               ) : (
                                 <div className="w-9 h-9 rounded-full bg-vinho/10 text-vinho font-bold flex items-center justify-center text-xs shrink-0">
-                                  {outro.nome.slice(0, 2).toUpperCase()}
+                                  {iniciaisSeguras(outro.nome)}
                                 </div>
                               )}
                               <div>
                                 <span className="font-bold text-xs text-vinho block">
-                                  {outro.nome}
+                                  {nomeOuFallback(outro.nome)}
                                 </span>
                                 <span className="text-[10px] text-vinho/65">
                                   {outro.tem_empresa && outro.nome_empresa
@@ -2342,10 +2354,10 @@ export default function AdminRoteirosScreen() {
                         Episódio oficial reunirá:{' '}
                         <strong>
                           {[
-                            selectedRoteiro.nome,
+                            nomeOuFallback(selectedRoteiro.nome),
                             ...roteiros
                               .filter((r) => juntarSelecionados.includes(r.id))
-                              .map((r) => r.nome),
+                              .map((r) => nomeOuFallback(r.nome)),
                           ].join(' & ')}
                         </strong>
                       </span>
@@ -2666,5 +2678,18 @@ export default function AdminRoteirosScreen() {
         }}
       />
     </div>
+  )
+}
+
+/**
+ * Roteiros com Error Boundary: qualquer erro inesperado de render nessa tela
+ * mostra o fallback vinho/dourado ("não foi possível carregar") em vez de
+ * apagar a página inteira (tela branca).
+ */
+export default function AdminRoteirosScreen() {
+  return (
+    <RoteirosErrorBoundary>
+      <AdminRoteirosScreenInner />
+    </RoteirosErrorBoundary>
   )
 }
