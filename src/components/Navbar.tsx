@@ -233,8 +233,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
     <header
       className={`fixed top-0 left-0 right-0 z-[80] transition-all duration-300 ${
         scrolled
-          ? 'bg-vinho-dark/95 text-marfim shadow-xl backdrop-blur-md border-b border-dourado/40 py-1 sm:py-1.5'
-          : 'bg-gradient-to-b from-[#36142d]/95 via-[#36142d]/75 to-transparent text-white py-1.5 sm:py-2'
+          ? 'bg-vinho-dark/95 text-marfim shadow-xl backdrop-blur-md border-b border-dourado/40 py-2.5 sm:py-1.5'
+          : 'bg-gradient-to-b from-[#36142d]/95 via-[#36142d]/75 to-transparent text-white py-3 sm:py-2'
       }`}
       style={{
         paddingTop: 'env(safe-area-inset-top)',
@@ -251,7 +251,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
             className="group flex items-center shrink-0 transition-transform hover:opacity-95 focus:outline-none py-0.5"
             aria-label="CoffeeCast 4.0 - Página Inicial"
           >
-            <HeaderNavbarLogo className="h-11 sm:h-14 md:h-16 lg:h-[4.25rem] xl:h-[4.5rem] w-auto transition-all duration-200 group-hover:scale-[1.02]" />
+            {/* Mobile: cabeçalho alto (na casa do dobro) para o botão Menu nunca ficar cortado pelo notch */}
+            <HeaderNavbarLogo className="h-16 sm:h-14 md:h-16 lg:h-[4.25rem] xl:h-[4.5rem] w-auto transition-all duration-200 group-hover:scale-[1.02]" />
           </Link>
 
           {/* Acessos diretos no cabeçalho + Botão de Menu Dropdown */}
@@ -358,7 +359,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMembersModal }) => {
                     className="flex items-center justify-between gap-2 px-4 py-3 border-b border-vinho/10 shrink-0 bg-marfim"
                     style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
                   >
-                    <HeaderNavbarLogo className="h-9 w-auto" />
+                    <HeaderNavbarLogo className="h-11 w-auto" />
                     <button
                       type="button"
                       onClick={() => setMenuOpen(false)}

@@ -14,7 +14,7 @@ export default function DepoimentoScreen() {
       {/* Navbar global consistente */}
       <Navbar onOpenMembersModal={() => setMembersModalOpen(true)} />
 
-      <main className="flex-1 pt-20 sm:pt-24 md:pt-28 pb-16 sm:pb-24">
+      <main className="flex-1 pt-32 sm:pt-24 md:pt-28 pb-16 sm:pb-24">
         {/* Cabeçalho Acolhedor na Identidade Visual Oficial */}
         <section className="relative px-4 sm:px-6 lg:px-8 py-10 sm:py-16 bg-gradient-to-b from-[#36142d] via-vinho to-[#36142d] text-marfim overflow-hidden">
           {/* Efeitos sutis de iluminação dourada e rosé */}
