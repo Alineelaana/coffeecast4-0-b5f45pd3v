@@ -85,14 +85,214 @@ routerAdd(
           alertaTemaSensivel: alertaTemaSensivel,
           biografia: biografia,
         }
-      }
-
       const body = e.requestInfo().body || {}
       const roteiroId = (body.roteiro_id || '').trim()
       const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
         ? body.roteiros_vinculados_ids.filter(function (id) {
             return typeof id === 'string' && id.trim().length > 0
           })
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
+      const regenBloco = body.regenerar_bloco || null
+=======
+      const body = e.requestInfo().body || {}
+      const roteiroId = (body.roteiro_id || '').trim()
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+=======
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+=======
+          }
+
+          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
+          if (gptParsed && gptParsed.error) {)
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
+      const regenBloco = body.regenerar_bloco || null
+
+      let roteiroPrincipal = null
+      const listaRecords = []
+=======
+      const body = e.requestInfo().body || {}
+      const roteiroId = (body.roteiro_id || '').trim()
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
+      const regenBloco = body.regenerar_bloco || null
+
+      let roteiroPrincipal = null
+      const listaRecords = []
+=======
+      const body = e.requestInfo().body || {}
+      const roteiroId = (body.roteiro_id || '').trim()
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
+      const regenBloco = body.regenerar_bloco || null
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+=======
+      const body = e.requestInfo().body || {}
+      const roteiroId = (body.roteiro_id || '').trim()
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+=======
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+=======
+      const body = e.requestInfo().body || {}
+      const roteiroId = (body.roteiro_id || '').trim()
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
+      const regenBloco = body.regenerar_bloco || null
+=======
+      const body = e.requestInfo().body || {}
+      const roteiroId = (body.roteiro_id || '').trim()
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+=======
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+=======
+          }
+
+          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
+          if (gptParsed && gptParsed.error) {)
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
+=======
+      const body = e.requestInfo().body || {}
+      const roteiroId = (body.roteiro_id || '').trim()
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
+=======
+          }
+
+          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
+          if (gptParsed && gptParsed.error) {)
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+=======
+      const body = e.requestInfo().body || {}
+      const roteiroId = (body.roteiro_id || '').trim()
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+=======
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+=======
+          }
+
+          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
+          if (gptParsed && gptParsed.error) {)
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
+      const regenBloco = body.regenerar_bloco || null
+      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
+=======
+      const body = e.requestInfo().body || {}
+      const roteiroId = (body.roteiro_id || '').trim()
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+      // Regeneração de um bloco específico pela Nine (preserva os demais blocos já aprovados)
+=======
+          }
+
+          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
+          if (gptParsed && gptParsed.error) {)
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+=======
+      const body = e.requestInfo().body || {}
+      const roteiroId = (body.roteiro_id || '').trim()
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+
+      const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
+=======
+      const idsVinculados = Array.isArray(body.roteiros_vinculados_ids)
+        ? body.roteiros_vinculados_ids.filter(function (id) {
+            return typeof id === 'string' && id.trim().length > 0
+          })
+        : []
+=======
+          }
+
+          // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
+          if (gptParsed && gptParsed.error) {)
         : []
 
       const semConvidados = body.sem_convidados === true || roteiroId === 'sem_convidados'
@@ -167,6 +367,35 @@ routerAdd(
         alertasSensiveisTodos.length > 0
           ? alertasSensiveisTodos.join('\n')
           : 'Nenhum declarado pelos convidados'
+
+      // ---------- TEMPLATE EDITÁVEL DO FORMATO OFICIAL (FRENTE 2) ----------
+      // Lê o registro semado pela migration 1753000100012 em nine_conhecimento —
+      // a estrutura/leiaute do roteiro NÃO é hardcoded aqui: a equipe edita o
+      // cadastro em Administração → Nine IA e a geração passa a usar o novo formato.
+      let templateFormatoOficial = ''
+      try {
+        const recsTemplate = $app.findRecordsByFilter(
+          'nine_conhecimento',
+          'titulo = "Roteiros — Template do formato oficial (leiaute do PDF de referência)" && ativo = true',
+          '-updated',
+          1,
+          0,
+        )
+        if (recsTemplate && recsTemplate.length > 0) {
+          templateFormatoOficial = (recsTemplate[0].getString('conteudo') || '').trim()
+        }
+      } catch (tplErr) {
+        console.log('[assistente_roteiro] Template de formato oficial não carregado:', tplErr)
+      }
+      const secaoTemplateFormato = templateFormatoOficial
+        ? [
+            '',
+            '### TEMPLATE DO FORMATO OFICIAL DO ROTEIRO (EDITÁVEL NA BASE DE CONHECIMENTO DA NINE):',
+            '• Além dos 9 blocos editoriais, o texto entregue segue EXATAMENTE o leiaute abaixo (seções "NN / TÍTULO", subtítulos "##", perguntas numeradas, CONDUÇÃO:, CUIDADO EDITORIAL:, OBSERVAÇÃO: e 10 / NOTAS DE PRODUÇÃO).',
+            templateFormatoOficial,
+            '• Em caso de conflito com as seções dos 9 blocos editoriais, os 9 BLOCOS prevalecem como CONTEÚDO; o TEMPLATE acima define o LEIAUTE (como o texto é apresentado).',
+          ].join('\n')
+        : ''
 
       // PROMPT EDITORIAL MESTRE DA NINE BASEADO NO MODELO DE GRAZI E MÁRCIO (ORVEX)
       const diretrizesEditoriaisMestre = [
@@ -358,6 +587,10 @@ routerAdd(
         ].join('\n')
       }
 
+      if (secaoTemplateFormato) {
+        systemPromptEspecifico = systemPromptEspecifico + '\n' + secaoTemplateFormato
+      }
+
       // Montagem dos dados de entrada
       const blocosFichas = []
       for (let n = 0; n < convidadosDados.length; n++) {
@@ -463,8 +696,10 @@ routerAdd(
           })
 
           // -- Decodificação correta do corpo: no JSVM do PocketBase, resposta.body chega como
-          //    array de bytes (String(array) vira "123,10,32,..."); usar resposta.raw (string) ou
-          //    o helper global toString(bytes); último recurso: UTF-8 manual que preserva acentos pt-BR.
+          //    array de bytes e o helper global toString(bytes) devolve a representação Go
+          //    "123,10,32,..." (string não-vazia que quebra o JSON.parse — CAUSA RAIZ do erro
+          //    "status 200 mas content vazio"). Ordem: resposta.raw (string) → UTF-8 manual que
+          //    preserva acentos pt-BR. Nunca usar toString() aqui.
           const decodificarCorpoResposta = function (resposta) {
             if (!resposta) return ''
             if (typeof resposta.raw === 'string' && resposta.raw.length > 0) {
@@ -473,44 +708,48 @@ routerAdd(
             const bytes = resposta.body
             if (bytes == null) return ''
             if (typeof bytes === 'string') return bytes
-            if (typeof toString === 'function') {
-              try {
-                const viaToString = toString(bytes)
-                if (typeof viaToString === 'string' && viaToString.length > 0) return viaToString
-              } catch (_) {}
-            }
-            if (!Array.isArray(bytes)) return String(bytes)
-            let saida = ''
-            let i = 0
-            while (i < bytes.length) {
-              const b = bytes[i]
-              let code = 0xfffd
-              if (b < 0x80) {
-                code = b
-                i += 1
-              } else if (b >= 0xc2 && b < 0xe0 && i + 1 < bytes.length) {
-                code = ((b & 0x1f) << 6) | (bytes[i + 1] & 0x3f)
-                i += 2
-              } else if (b >= 0xe0 && b < 0xf0 && i + 2 < bytes.length) {
-                code = ((b & 0x0f) << 12) | ((bytes[i + 1] & 0x3f) << 6) | (bytes[i + 2] & 0x3f)
-                i += 3
-              } else if (b >= 0xf0 && b < 0xf5 && i + 3 < bytes.length) {
-                code =
-                  ((b & 0x07) << 18) |
-                  ((bytes[i + 1] & 0x3f) << 12) |
-                  ((bytes[i + 2] & 0x3f) << 6) |
-                  (bytes[i + 3] & 0x3f)
-                i += 4
-              } else {
-                i += 1
+            if (typeof bytes === 'object') {
+              const pareceBytes =
+                Array.isArray(bytes) &&
+                bytes.length > 0 &&
+                typeof bytes[0] === 'number' &&
+                bytes[0] >= 0 &&
+                bytes[0] <= 255
+              if (Array.isArray(bytes) && !pareceBytes) return String(bytes)
+              // UTF-8 manual — preserva acentos pt-BR. (toString(bytes) NÃO serve aqui:
+              // no JSVM devolve a representação Go "123,10,32,..." e quebra o JSON.parse.)
+              let saida = ''
+              let i = 0
+              while (i < bytes.length) {
+                const b = bytes[i]
+                let code = 0xfffd
+                if (b < 0x80) {
+                  code = b
+                  i += 1
+                } else if (b >= 0xc2 && b < 0xe0 && i + 1 < bytes.length) {
+                  code = ((b & 0x1f) << 6) | (bytes[i + 1] & 0x3f)
+                  i += 2
+                } else if (b >= 0xe0 && b < 0xf0 && i + 2 < bytes.length) {
+                  code = ((b & 0x0f) << 12) | ((bytes[i + 1] & 0x3f) << 6) | (bytes[i + 2] & 0x3f)
+                  i += 3
+                } else if (b >= 0xf0 && b < 0xf5 && i + 3 < bytes.length) {
+                  code =
+                    ((b & 0x07) << 18) |
+                    ((bytes[i + 1] & 0x3f) << 12) |
+                    ((bytes[i + 2] & 0x3f) << 6) |
+                    (bytes[i + 3] & 0x3f)
+                  i += 4
+                } else {
+                  i += 1
+                }
+                if (code <= 0xffff) saida += String.fromCharCode(code)
+                else {
+                  const c = code - 0x10000
+                  saida += String.fromCharCode(0xd800 + (c >> 10), 0xdc00 + (c & 0x3ff))
+                }
               }
-              if (code <= 0xffff) saida += String.fromCharCode(code)
-              else {
-                const c = code - 0x10000
-                saida += String.fromCharCode(0xd800 + (c >> 10), 0xdc00 + (c & 0x3ff))
-              }
+              return saida.replace(/^\uFEFF/, '')
             }
-            return saida.replace(/^\uFEFF/, '')
           }
           const logarFalhaCorpo = function (tag, status, corpoTexto, erroParse) {
             try {
@@ -536,15 +775,159 @@ routerAdd(
             } catch (_) {}
           }
 
+          // -- Extração tolerante de JSON: cercas de código, maior objeto/array válido,
+          //    e reparo de JSON truncado (fechamento de chaves/colchetes) antes de desistir.
+          const extrairJsonTolerante = function (texto) {
+            if (!texto) return null
+            let t = String(texto).trim()
+            // 1) remover cercas de código markdown
+            const mFence = t.match(/```(?:json)?\s*([\s\S]*?)```/i)
+            if (mFence && mFence[1] && mFence[1].trim().length > 0) t = mFence[1].trim()
+            // 2) tentativa direta
+            try {
+              return JSON.parse(t)
+            } catch (_) {}
+            // 3) extrair do primeiro "{" ou "[" em diante e tentar de novo
+            const idxObj = t.indexOf('{')
+            const idxArr = t.indexOf('[')
+            let idx = -1
+            if (idxObj >= 0 && idxArr >= 0) idx = Math.min(idxObj, idxArr)
+            else idx = idxObj >= 0 ? idxObj : idxArr
+            if (idx > 0) t = t.slice(idx)
+            try {
+              return JSON.parse(t)
+            } catch (_) {}
+            // 4) varredura balanceada: extrair o maior objeto/array válido
+            let melhor = null
+            let melhorTam = 0
+            for (let s = 0; s < t.length; s++) {
+              const ch = t[s]
+              if (ch !== '{' && ch !== '[') continue
+              let prof = 0
+              let emStr = false
+              let esc = false
+              for (let e2 = s; e2 < t.length; e2++) {
+                const c2 = t[e2]
+                if (esc) {
+                  esc = false
+                  continue
+                }
+                if (c2 === '\\') {
+                  esc = true
+                  continue
+                }
+                if (c2 === '"') emStr = !emStr
+                if (emStr) continue
+                if (c2 === '{' || c2 === '[') prof++
+                else if (c2 === '}' || c2 === ']') {
+                  prof--
+                  if (prof === 0) {
+                    const cand = t.slice(s, e2 + 1)
+                    if (cand.length > melhorTam) {
+                      try {
+                        melhor = JSON.parse(cand)
+                        melhorTam = cand.length
+                      } catch (_) {}
+                    }
+                    break
+                  }
+                }
+              }
+            }
+            if (melhor) return melhor
+            // 5) reparo de truncamento: completar fechamentos de strings/arrays/objetos
+            let abertos = []
+            emStr = false
+            esc = false
+            for (let i2 = 0; i2 < t.length; i2++) {
+              const c3 = t[i2]
+              if (esc) {
+                esc = false
+                continue
+              }
+              if (c3 === '\\') {
+                esc = true
+                continue
+              }
+              if (c3 === '"') emStr = !emStr
+              if (emStr) continue
+              if (c3 === '{') abertos.push('}')
+              else if (c3 === '[') abertos.push(']')
+              else if (c3 === '}' || c3 === ']') abertos.pop()
+            }
+            let reparo = t
+            if (emStr) reparo += '"'
+            // remover vírgula/pontos pendurados no fim
+            reparo = reparo.replace(/[,\s]+$/, '')
+            for (let f = abertos.length - 1; f >= 0; f--) reparo += abertos[f]
+            if (abertos.length > 0 || emStr) {
+              try {
+                return JSON.parse(reparo)
+              } catch (_) {}
+              // tentar também cortando até a última vírgula/fechamento válido
+              const cortes = []
+              const idxUltV = reparo.lastIndexOf(',')
+              if (idxUltV > 0) cortes.push(reparo.slice(0, idxUltV))
+              const idxUltF = Math.max(reparo.lastIndexOf('}'), reparo.lastIndexOf(']'))
+              if (idxUltF > 0) cortes.push(reparo.slice(0, idxUltF + 1))
+              for (let ci = 0; ci < cortes.length; ci++) {
+                let c4 = cortes[ci]
+                if (c4) {
+                  // re-balancear o corte
+                  let ab2 = []
+                  let st2 = false
+                  let sc2 = false
+                  for (let i3 = 0; i3 < c4.length; i3++) {
+                    const c5 = c4[i3]
+                    if (sc2) {
+                      sc2 = false
+                      continue
+                    }
+                    if (c5 === '\\') {
+                      sc2 = true
+                      continue
+                    }
+                    if (c5 === '"') st2 = !st2
+                    if (st2) continue
+                    if (c5 === '{') ab2.push('}')
+                    else if (c5 === '[') ab2.push(']')
+                    else if (c5 === '}' || c5 === ']') ab2.pop()
+                  }
+                  if (st2) c4 += '"'
+                  c4 = c4.replace(/[,\s]+$/, '')
+                  for (let f2 = ab2.length - 1; f2 >= 0; f2--) c4 += ab2[f2]
+                  try {
+                    return JSON.parse(c4)
+                  } catch (_) {}
+                }
+              }
+            }
+            return null
+          }
+
           const corpoTextoGpt = decodificarCorpoResposta(chatgptRes)
           let gptParsed = null
           let erroParseGpt = null
+          let veioDeReparo = false
           try {
             gptParsed = JSON.parse(corpoTextoGpt)
           } catch (errParseGpt) {
             erroParseGpt = errParseGpt
             gptParsed = null
+            // Parsing tolerante (cercas, maior objeto válido, reparo de truncamento)
+            gptParsed = extrairJsonTolerante(corpoTextoGpt)
+            veioDeReparo = Boolean(gptParsed)
+            if (veioDeReparo) {
+              console.log(
+                '[assistente_roteiro] JSON.parse direto falhou (' +
+                  String(erroParseGpt && erroParseGpt.message ? erroParseGpt.message : '') +
+                  ') — recuperado via extração tolerante (corpo ' +
+                  corpoTextoGpt.length +
+                  ' caracteres).',
+              )
+            }
           }
+=======
 
           // Se o corpo veio com erro embutido (HTTP 200 com error) ou não é JSON, já marca gptParsed = null
           if (gptParsed && gptParsed.error) {

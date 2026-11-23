@@ -178,7 +178,9 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
     }
     const logarFalhaCorpo = function (tag, status, corpoTexto, erroParse) {
       try {
-        const compacto = String(corpoTexto || '').replace(/\s+/g, ' ').trim()
+        const compacto = String(corpoTexto || '')
+          .replace(/\s+/g, ' ')
+          .trim()
         const partes = [
           '[' +
             tag +
@@ -228,7 +230,8 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
             )
         } else {
           const choice = parsed.choices && parsed.choices[0] ? parsed.choices[0] : null
-          const finish = choice && choice.finish_reason ? choice.finish_reason : '(sem finish_reason)'
+          const finish =
+            choice && choice.finish_reason ? choice.finish_reason : '(sem finish_reason)'
           const usageTxt = parsed.usage ? ' — usage: ' + JSON.stringify(parsed.usage) : ''
           motivo =
             choice && choice.message && typeof choice.message.content === 'string'
@@ -245,7 +248,10 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
             ' mas conteúdo vazio (' +
             motivo +
             ') — final do corpo: ' +
-            String(corpoTexto || '').replace(/\s+/g, ' ').trim().slice(-500),
+            String(corpoTexto || '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .slice(-500),
         )
       }
       return e.json(200, {
@@ -421,7 +427,9 @@ routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
     }
     const logarFalhaCorpo = function (tag, status, corpoTexto, erroParse) {
       try {
-        const compacto = String(corpoTexto || '').replace(/\s+/g, ' ').trim()
+        const compacto = String(corpoTexto || '')
+          .replace(/\s+/g, ' ')
+          .trim()
         const partes = [
           '[' +
             tag +
@@ -471,7 +479,8 @@ routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
             )
         } else {
           const choice = parsed.choices && parsed.choices[0] ? parsed.choices[0] : null
-          const finish = choice && choice.finish_reason ? choice.finish_reason : '(sem finish_reason)'
+          const finish =
+            choice && choice.finish_reason ? choice.finish_reason : '(sem finish_reason)'
           const usageTxt = parsed.usage ? ' — usage: ' + JSON.stringify(parsed.usage) : ''
           motivo =
             choice && choice.message && typeof choice.message.content === 'string'
@@ -488,7 +497,10 @@ routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
             ' mas conteúdo vazio (' +
             motivo +
             ') — final do corpo: ' +
-            String(corpoTexto || '').replace(/\s+/g, ' ').trim().slice(-500),
+            String(corpoTexto || '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .slice(-500),
         )
       }
       return e.json(200, {

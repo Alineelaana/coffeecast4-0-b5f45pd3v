@@ -141,7 +141,9 @@ routerAdd(
       }
       const logarFalhaCorpo = function (tag, status, corpoTexto, erroParse) {
         try {
-          const compacto = String(corpoTexto || '').replace(/\s+/g, ' ').trim()
+          const compacto = String(corpoTexto || '')
+            .replace(/\s+/g, ' ')
+            .trim()
           const partes = [
             '[' +
               tag +
