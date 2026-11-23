@@ -1755,7 +1755,7 @@ function AdminRoteirosScreenInner() {
                         <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
                         <strong className="text-vinho">Temas sensíveis a EVITAR:</strong>
                       </div>
-                      {selectedRoteiro.tem_tema_sensivel &&
+                      {selectedRoteiro?.tem_tema_sensivel &&
                       selectedRoteiro.tema_sensivel_detalhes ? (
                         <p className="text-red-900 bg-red-50 p-2.5 rounded-xl border border-red-200 font-medium">
                           ATENÇÃO PRODUÇÃO: "{selectedRoteiro.tema_sensivel_detalhes}"
@@ -2317,7 +2317,7 @@ function AdminRoteirosScreenInner() {
                             </div>
 
                             <div className="flex items-center gap-2">
-                              {outro.tem_tema_sensivel && (
+                              {outro?.tem_tema_sensivel && (
                                 <Badge className="bg-red-50 text-red-800 border-red-200 text-[9px]">
                                   Tema Sensível
                                 </Badge>

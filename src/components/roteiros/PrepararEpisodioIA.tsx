@@ -76,8 +76,12 @@ export default function PrepararEpisodioIA({
   }
 
   const temasEvitar = useMemo(() => {
-    const rec = roteiro as unknown as Record<string, unknown>
-    const cru = (typeof rec.tema_sensivel_detalhes === 'string' && rec.tema_sensivel_detalhes) || ''
+    // Blindagem: este componente fica montado na tela de Roteiros mesmo sem
+    // roteiro selecionado (roteiro === null) — ler campos de null aqui derrubava
+    // a tela inteira ("Cannot read properties of null (reading 'tema_sensivel_detalhes')").
+    if (!roteiro) return []
+    const cru =
+      (typeof roteiro.tema_sensivel_detalhes === 'string' && roteiro.tema_sensivel_detalhes) || ''
     return cru
       .split(/[,;\n]/)
       .map((t) => t.trim())

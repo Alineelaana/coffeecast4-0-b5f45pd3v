@@ -71,15 +71,17 @@ export default function DivulgacaoInteligente({ roteiro, compacto, onRoteiroAtua
   const [edicoes, setEdicoes] = useState<Partial<Record<string, string>>>({})
   const [capaAberta, setCapaAberta] = useState(false)
 
-  // Restaura materiais já salvos neste roteiro
+  // Restaura materiais já salvos neste roteiro (blindagem: roteiro pode chegar nulo
+  // enquanto o painel troca de registro — nunca ler propriedades de null aqui)
   useEffect(() => {
+    if (!roteiro) return
     const prev = roteiroJson(roteiro)
     setSalvo(prev)
     setTituloSel(prev.titulo_divulgacao || '')
     setThumbSel(prev.titulo_thumbnail || '')
     setEdicoes({})
     setDadosIA(null)
-  }, [roteiro.id])
+  }, [roteiro?.id])
 
   const textoRede = (campo: CampoRede): string => edicoes[campo] ?? salvo.redes?.[campo] ?? ''
 
