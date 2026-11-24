@@ -45,6 +45,7 @@ import { getFileUrl } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useStorefront } from '@/context/StorefrontContext'
+import AdminLayoutLogicaTela from '@/components/admin/AdminLayoutLogicaTela'
 
 export default function AdminLayout() {
   const { user, logout, role, isMaster, isAdm, hasScreenPermission } = useAuth()
@@ -1026,26 +1027,34 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* CABEÇALHO MOBILE ESTILO APP */}
-      <header className="md:hidden bg-vinho text-white border-b-2 border-dourado px-4 py-2 flex items-center justify-between sticky top-0 z-40 shadow-md min-h-[56px]">
+      {/* CABEÇALHO MOBILE ESTILO APP — mesmo tratamento do site público (v0.0.195/0.0.196):
+          altura dobrada no celular (<768px), nunca comprimido, fora da área do notch
+          (safe-area-inset-top) e com todos os botões com toque mínimo de 44px. */}
+      <header
+        className="md:hidden bg-vinho text-white border-b-2 border-dourado px-3 py-3 flex items-center justify-between gap-2 sticky top-0 z-40 shadow-md"
+        style={{
+          paddingTop: 'calc(0.75rem + env(safe-area-inset-top))',
+          paddingBottom: '0.75rem',
+        }}
+      >
         <NavLink
           to="/admin"
           end
-          className="flex items-center gap-2 group p-1 -ml-1 rounded-xl active:scale-95 transition-transform"
+          className="flex items-center shrink-0 p-1 -ml-1 rounded-xl active:scale-95 transition-transform"
           title="Ir para a Visão Geral do Painel Administrativo"
           aria-label="Ir para a Visão Geral do Painel Administrativo"
         >
           <img
             src={officialLogo}
             alt="CoffeeCast 4.0 — Painel Administrativo"
-            className="h-10 w-auto max-w-[150px] object-contain drop-shadow-[0_2px_8px_rgba(212,175,55,0.35)] cursor-pointer"
+            className="h-16 w-auto max-w-[190px] object-contain drop-shadow-[0_2px_8px_rgba(212,175,55,0.35)] cursor-pointer"
           />
         </NavLink>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           <NavLink
             to="/admin/guia-ajuda"
-            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-vinho-light text-dourado active:scale-95 transition-all"
+            className="p-2 min-w-[44px] min-h-[44px] w-[44px] h-[44px] flex items-center justify-center rounded-xl bg-vinho-light text-dourado active:scale-95 transition-all"
             aria-label="Guia de Ajuda do Sistema"
             title="Guia de Ajuda & Primeiro Acesso"
           >
@@ -1054,7 +1063,7 @@ export default function AdminLayout() {
 
           <NavLink
             to="/admin/notificacoes"
-            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-vinho-light text-marfim relative active:scale-95 transition-all"
+            className="p-2 min-w-[44px] min-h-[44px] w-[44px] h-[44px] flex items-center justify-center rounded-xl bg-vinho-light text-marfim relative active:scale-95 transition-all"
             aria-label="Central de Notificações"
           >
             <Bell className="w-5 h-5 text-dourado" />
@@ -1065,48 +1074,52 @@ export default function AdminLayout() {
 
           <button
             onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-vinho-light text-marfim hover:bg-vinho-light/80 active:scale-95 transition-all"
+            className="p-2 min-w-[44px] min-h-[44px] w-[44px] h-[44px] flex items-center justify-center rounded-xl bg-vinho-light text-marfim hover:bg-vinho-light/80 active:scale-95 transition-all shrink-0"
             aria-label="Menu administrativo"
+            aria-expanded={mobileSidebarOpen}
           >
             {mobileSidebarOpen ? (
-              <X className="w-5 h-5 text-dourado" />
+              <X className="w-6 h-6 text-dourado stroke-[2.5]" />
             ) : (
-              <Menu className="w-5 h-5 text-dourado" />
+              <Menu className="w-6 h-6 text-dourado stroke-[2.5]" />
             )}
           </button>
         </div>
       </header>
-      {/* DRAWER MOBILE DA SIDEBAR ESTILO APP */}
+      {/* DRAWER MOBILE DA SIDEBAR ESTILO APP — tela cheia no celular (mesmo padrão do menu
+          público em tela cheia), com safe-area do iPhone respeitada e itens de toque >= 44px */}
       {mobileSidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex">
-          <div className="w-72 max-w-[85vw] bg-vinho text-marfim h-full flex flex-col p-4 shadow-2xl overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-vinho-light/40">
-              <NavLink
-                to="/admin"
-                end
-                onClick={() => setMobileSidebarOpen(false)}
-                className="group flex flex-col items-start p-1 rounded-xl active:scale-95 transition-transform"
-                title="Ir para a Visão Geral do Painel Administrativo"
-                aria-label="Ir para a Visão Geral do Painel Administrativo"
-              >
-                <img
-                  src={officialLogo}
-                  alt="CoffeeCast 4.0 — Painel Administrativo"
-                  className="h-11 w-auto max-w-[160px] object-contain drop-shadow-[0_2px_8px_rgba(212,175,55,0.35)] cursor-pointer"
-                />
-                <span className="text-[9px] uppercase tracking-wider text-dourado-light font-medium mt-1">
-                  Painel Administrativo
-                </span>
-              </NavLink>
-              <button
-                onClick={() => setMobileSidebarOpen(false)}
-                className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-marfim/70 hover:text-white hover:bg-white/10 active:scale-95 transition-all"
-                aria-label="Fechar menu"
-              >
-                <X className="w-5 h-5 text-dourado" />
-              </button>
-            </div>
-
+        <div className="md:hidden fixed inset-0 z-50 bg-vinho text-marfim flex flex-col animate-in fade-in duration-200">
+          <div
+            className="flex items-center justify-between px-4 pb-3 border-b border-dourado/40 shrink-0 bg-vinho"
+            style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}
+          >
+            <NavLink
+              to="/admin"
+              end
+              onClick={() => setMobileSidebarOpen(false)}
+              className="group flex flex-col items-start p-1 rounded-xl active:scale-95 transition-transform"
+              title="Ir para a Visão Geral do Painel Administrativo"
+              aria-label="Ir para a Visão Geral do Painel Administrativo"
+            >
+              <img
+                src={officialLogo}
+                alt="CoffeeCast 4.0 — Painel Administrativo"
+                className="h-12 w-auto max-w-[170px] object-contain drop-shadow-[0_2px_8px_rgba(212,175,55,0.35)] cursor-pointer"
+              />
+              <span className="text-[10px] uppercase tracking-wider text-dourado-light font-medium mt-1">
+                Painel Administrativo
+              </span>
+            </NavLink>
+            <button
+              onClick={() => setMobileSidebarOpen(false)}
+              className="p-2 min-w-[44px] min-h-[44px] w-[44px] h-[44px] flex items-center justify-center rounded-full bg-vinho-light text-marfim active:scale-95 transition-all shrink-0"
+              aria-label="Fechar menu"
+            >
+              <X className="w-5 h-5 text-dourado stroke-[2.5]" />
+            </button>
+          </div>
+          <div className="flex-1 flex flex-col min-h-0 bg-vinho shadow-2xl px-4 pt-3 pb-0 overflow-hidden">
             {/* CAMPO DE PESQUISA DE TELAS NO MOBILE (ACIMA DO MENU) */}
             <div className="pt-3 pb-2 border-b border-vinho-light/25">
               <div className="relative">
@@ -1151,7 +1164,7 @@ export default function AdminLayout() {
               )}
             </div>
 
-            <nav className="flex-1 py-3 space-y-1 overflow-y-auto">
+            <nav className="flex-1 min-h-0 py-3 space-y-1.5 overflow-y-auto overscroll-contain coffeecast-scrollbar">
               {hasNoResults ? (
                 <div className="py-6 px-2 text-center space-y-2">
                   <div className="w-9 h-9 rounded-full bg-vinho-dark/80 border border-dourado/30 flex items-center justify-center mx-auto text-dourado">
@@ -1197,14 +1210,22 @@ export default function AdminLayout() {
                               setMobileSidebarOpen(false)
                               setMenuSearchQuery('')
                             }}
-                            className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold min-h-[44px] transition-all active:scale-[0.98] ${
+                            className={`flex items-center justify-between min-h-[52px] px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] ${
                               isActive
                                 ? 'bg-vinho-light text-white border-l-4 border-dourado shadow-sm font-bold'
                                 : 'text-marfim/85 hover:bg-vinho-light/40'
                             }`}
                           >
-                            <div className="flex items-center gap-3">
-                              <Icon className="w-4 h-4 text-dourado shrink-0" />
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span
+                                className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                                  isActive
+                                    ? 'bg-dourado text-vinho'
+                                    : 'bg-vinho-light/40 text-dourado'
+                                }`}
+                              >
+                                <Icon className="w-5 h-5" />
+                              </span>
                               <span>{item.label}</span>
                             </div>
 
@@ -1227,14 +1248,20 @@ export default function AdminLayout() {
                       <button
                         type="button"
                         onClick={() => setMasterSubmenuOpen(!masterSubmenuOpen)}
-                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold min-h-[44px] transition-all ${
+                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold min-h-[48px] transition-all ${
                           isMasterPathActive
                             ? 'bg-vinho-dark text-dourado border border-dourado/40 shadow-xs'
                             : 'text-dourado-light hover:bg-vinho-light/40'
                         }`}
                       >
-                        <div className="flex items-center gap-2.5">
-                          <Shield className="w-4 h-4 text-dourado" />
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                              isMasterPathActive ? 'bg-dourado text-vinho' : 'bg-vinho-light/40'
+                            }`}
+                          >
+                            <Shield className="w-5 h-5 text-dourado" />
+                          </span>
                           <span>{isMaster ? 'Exclusivo Master' : 'Gestão do Site & Loja'}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -1265,15 +1292,15 @@ export default function AdminLayout() {
                                   setMobileSidebarOpen(false)
                                   setMenuSearchQuery('')
                                 }}
-                                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold min-h-[40px] transition-all ${
+                                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold min-h-[46px] transition-all ${
                                   isActive
                                     ? 'bg-vinho-light text-white border-l-3 border-dourado pl-2.5 font-bold'
                                     : 'text-marfim/80 hover:bg-vinho-light/40'
                                 }`}
                               >
-                                <div className="flex items-center gap-2.5 truncate">
+                                <div className="flex items-center gap-2.5 truncate min-h-[44px] py-1">
                                   <Icon
-                                    className={`w-3.5 h-3.5 shrink-0 ${
+                                    className={`w-4 h-4 shrink-0 ${
                                       isActive ? 'text-dourado' : 'text-dourado-light/70'
                                     }`}
                                   />
@@ -1301,11 +1328,14 @@ export default function AdminLayout() {
               )}
             </nav>
 
-            <div className="pt-4 border-t border-vinho-light/40 flex items-center justify-between">
+            <div
+              className="pt-4 border-t border-vinho-light/40 flex items-center justify-between shrink-0 bg-vinho"
+              style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+            >
               <NavLink
                 to="/perfil"
                 onClick={() => setMobileSidebarOpen(false)}
-                className="flex items-center gap-2 truncate max-w-[150px] p-1 rounded-lg hover:bg-white/5"
+                className="flex items-center gap-2 truncate max-w-[160px] min-h-[52px] p-1 rounded-lg hover:bg-white/5"
                 title="Meu Perfil"
               >
                 <div className="w-8 h-8 rounded-full bg-dourado/20 border border-dourado/60 flex items-center justify-center text-dourado font-bold text-xs uppercase overflow-hidden shrink-0">
@@ -1404,6 +1434,9 @@ export default function AdminLayout() {
               </span>
             </NavLink>
 
+            {/* Documentação de comportamento do layout administrativo (cabeçalho/menu mobile) */}
+            <AdminLayoutLogicaTela />
+
             <NavLink
               to="/admin/notificacoes"
               className="text-xs text-vinho hover:text-dourado-dark flex items-center gap-1.5 transition-colors font-semibold bg-marfim border border-vinho/15 hover:border-dourado px-3 py-1.5 rounded-full relative"
@@ -1469,7 +1502,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Conteúdo Dinâmico Renderizado pelas Rotas Admin */}
-        <main className="flex-1 p-3 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden w-full max-w-full">
+        <main className="flex-1 p-3 sm:p-6 lg:p-8 pb-[max(0.75rem,env(safe-area-inset-bottom))] overflow-y-auto overflow-x-hidden w-full max-w-full">
           <Outlet />
         </main>
       </div>
