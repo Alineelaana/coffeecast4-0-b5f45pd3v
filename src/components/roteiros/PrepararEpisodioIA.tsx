@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils'
 import type { RoteiroConvidadoRecord } from '@/types/database'
 import DivulgacaoInteligente from '@/components/roteiros/DivulgacaoInteligente'
 import { gerarDivulgacao, type DivulgacaoDados } from '@/services/estudio'
-import { Coffee, Loader2, ShieldCheck, Sparkles, Wand2 } from 'lucide-react'
+import { Coffee, Loader2, ShieldAlert, ShieldCheck, Sparkles, Wand2 } from 'lucide-react'
 
 type Etapa = 0 | 1 | 2
 
@@ -63,11 +63,13 @@ export default function PrepararEpisodioIA({
   const [etapa, setEtapa] = useState<Etapa>(0)
   const [sugestao, setSugestao] = useState('')
   const [gerando, setGerando] = useState(false)
+  const [erroAnalise, setErroAnalise] = useState('')
 
   const reset = () => {
     setEtapa(0)
     setSugestao('')
     setGerando(false)
+    setErroAnalise('')
   }
 
   const handleAbrir = (v: boolean) => {
@@ -92,6 +94,7 @@ export default function PrepararEpisodioIA({
   const gerarPreparacao = async () => {
     if (!roteiro) return
     setGerando(true)
+    setErroAnalise('')
     try {
       const res = await gerarDivulgacao({
         roteiro_id: roteiro.id,
@@ -117,11 +120,11 @@ export default function PrepararEpisodioIA({
         modo: 'gancho',
       })
       if (!res.sucesso || !res.dados) {
-        toast.error(
-          res.chatgptAtivo
-            ? res.mensagem || 'A IA não respondeu agora. Tente novamente em instantes.'
-            : 'ChatGPT (GCHAT_GPT) não configurado no backend — nada foi simulado.',
-        )
+        const msgFalha = res.chatgptAtivo
+          ? res.mensagem || 'A IA não respondeu agora. Tente novamente em instantes.'
+          : 'ChatGPT (GCHAT_GPT) não configurado no backend — nada foi simulado.'
+        setErroAnalise(msgFalha)
+        toast.error(msgFalha)
         return
       }
       const d: DivulgacaoDados = res.dados
@@ -135,15 +138,23 @@ export default function PrepararEpisodioIA({
           ? `\nFRASES DE IMPACTO\n${d.frases.map((f) => `• ${f.categoria}: ${f.frase}`).join('\n')}`
           : '',
       ].filter(Boolean)
+      if (partes.length === 0) {
+        const msgVazia =
+          'A IA respondeu, mas nenhuma sugestão utilizável foi extraída. Tente gerar novamente em instantes.'
+        setErroAnalise(msgVazia)
+        toast.error(msgVazia)
+        return
+      }
       setSugestao(partes.join('\n'))
       toast.success('Análise concluída — revise as sugestões antes de aplicar ao roteiro final.')
     } catch (e) {
       console.error('[PrepararEpisodioIA] erro na análise:', e)
-      toast.error(
+      const msgErro =
         e instanceof Error
           ? e.message
-          : 'Não foi possível preparar a análise agora. Tente novamente.',
-      )
+          : 'Não foi possível preparar a análise agora. Tente novamente.'
+      setErroAnalise(msgErro)
+      toast.error(msgErro)
     } finally {
       setGerando(false)
     }
@@ -262,6 +273,21 @@ export default function PrepararEpisodioIA({
                   aprovado. Temas marcados pelo convidado como "evitar" nunca são sugeridos.
                 </p>
               </div>
+
+              {erroAnalise && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-3"
+                >
+                  <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                  <div>
+                    <p className="text-[11px] font-bold text-red-800">
+                      A análise não foi concluída
+                    </p>
+                    <p className="text-[11px] text-red-700">{erroAnalise}</p>
+                  </div>
+                </div>
+              )}
 
               <Button
                 type="button"
