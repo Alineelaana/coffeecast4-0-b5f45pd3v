@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge'
 import { AuditoriaService } from '@/services/auditoria'
 import { gerarCapaIA, getCapaIaUrl } from '@/services/openaiCapa'
 import { getFileUrl, toInputDate } from '@/lib/formatters'
-import { Sparkles, Loader2, ImageIcon, Calendar } from 'lucide-react'
+import { Sparkles, Loader2, ImageIcon, Calendar, Eye } from 'lucide-react'
 
 export default function AdminEpisodesScreen() {
   const { isMaster } = useAuth()
@@ -748,6 +748,16 @@ export default function AdminEpisodesScreen() {
                 </div>
               )}
 
+              {/* Visualizações (página pública /episodio/:id) */}
+              <div className="flex items-center gap-1.5 text-[11px] text-vinho/70">
+                <Eye className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
+                <span className="font-semibold text-vinho">
+                  {typeof ep.visualizacoes === 'number' && ep.visualizacoes > 0
+                    ? `${ep.visualizacoes.toLocaleString('pt-BR')} visualizações`
+                    : 'Nenhuma visualização'}
+                </span>
+              </div>
+
               {ep.youtube_url && (
                 <div className="pt-2 border-t border-vinho/5">
                   <a
@@ -787,6 +797,7 @@ export default function AdminEpisodesScreen() {
                 <TableHead className="w-48 font-bold text-vinho text-xs">
                   Status / Publicação
                 </TableHead>
+                <TableHead className="w-28 font-bold text-vinho text-xs">Visualizações</TableHead>
                 <TableHead className="font-bold text-vinho text-xs">Link YouTube</TableHead>
                 <TableHead className="w-28 text-right font-bold text-vinho text-xs">
                   Ações
@@ -828,6 +839,17 @@ export default function AdminEpisodesScreen() {
                           Publicado no site
                         </Badge>
                       )}
+                    </TableCell>
+                    <TableCell className="text-xs text-vinho/70">
+                      <span
+                        className="inline-flex items-center gap-1.5 text-vinho font-semibold"
+                        title="Visualizações da página pública deste episódio no site"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-dourado-dark shrink-0" />
+                        {typeof ep.visualizacoes === 'number' && ep.visualizacoes > 0
+                          ? ep.visualizacoes.toLocaleString('pt-BR')
+                          : '0'}
+                      </span>
                     </TableCell>
                     <TableCell className="text-xs text-vinho/70">
                       {ep.youtube_url ? (

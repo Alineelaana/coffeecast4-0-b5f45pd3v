@@ -56,6 +56,8 @@ export interface EpisodioRecord {
   biografia_convidados?: string
   data_episodio?: string
   foto_convidados?: string
+  visualizacoes?: number
+  ultima_visualizacao?: string
   collectionId?: string
   collectionName?: string
   created: string

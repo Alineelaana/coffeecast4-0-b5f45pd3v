@@ -22,6 +22,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import DashboardLogicaTela from '@/components/admin/DashboardLogicaTela'
 import PendenciasHoje from '@/components/admin/PendenciasHoje'
+import EpisodiosMaisVistos from '@/components/admin/EpisodiosMaisVistos'
 
 import { useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -41,6 +42,7 @@ export default function DashboardScreen() {
   const [ultimosContatos, setUltimosContatos] = useState<ContatoRecord[]>([])
   const [transacoesPorTipo, setTransacoesPorTipo] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
+  const [episodios, setEpisodios] = useState<EpisodioRecord[]>([])
 
   useEffect(() => {
     const state = location.state as { blockedMaster?: boolean; message?: string } | null
@@ -110,6 +112,7 @@ export default function DashboardScreen() {
 
         setProximasGravacoes(agendaFutura.slice(0, 5))
         setUltimosContatos(contatosList.slice(0, 5))
+        setEpisodios(epList)
 
         // Agrupamento por tipo de transação (apenas despesas de custos para o gráfico de custos)
         const tipoMap: Record<string, number> = {
@@ -286,6 +289,9 @@ export default function DashboardScreen() {
           </div>
         </div>
       </div>
+
+      {/* Estatísticas de Visualizações dos Episódios (regra da matriz: só tela Episódios) */}
+      <EpisodiosMaisVistos episodios={episodios} loading={loading} />
 
       {/* Gráfico Visual de Gastos + Resumo Financeiro */}
       <div className="bg-white border border-vinho/10 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">

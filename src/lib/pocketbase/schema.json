@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T13:02:52.438Z",
+  "generatedAt": "2026-11-24T13:33:58.153Z",
   "collections": [
     {
       "name": "users",
@@ -225,6 +225,18 @@
         {
           "name": "foto_convidados",
           "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "visualizacoes",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ultima_visualizacao",
+          "type": "date",
           "required": false,
           "system": false
         }

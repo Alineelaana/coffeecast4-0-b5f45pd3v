@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import pb from '@/lib/pocketbase/client'
 import { getFileUrl, formatDateBR } from '@/lib/formatters'
 import { getCapaIaUrl } from '@/services/openaiCapa'
+import { registrarVisualizacao } from '@/services/visualizacoes'
 import type { EpisodioRecord } from '@/types/database'
 import {
   ArrowLeft,
@@ -18,6 +19,7 @@ import {
   SearchX,
   Coffee,
   User,
+  Eye,
 } from 'lucide-react'
 
 /**
@@ -31,6 +33,8 @@ export default function EpisodioScreen() {
   const [carregando, setCarregando] = useState(true)
   const [naoEncontrado, setNaoEncontrado] = useState(false)
   const [membersModalOpen, setMembersModalOpen] = useState(false)
+  // Mostra 0 enquanto o hook não responde (visualizações carregam sem bloquear a página)
+  const [visualizacoes, setVisualizacoes] = useState<number | null>(null)
 
   useEffect(() => {
     let cancelado = false
@@ -51,6 +55,14 @@ export default function EpisodioScreen() {
           setNaoEncontrado(true)
         } else {
           setEpisodio(ep)
+          // Contador público: 0 quando nunca foi visto; nunca bloqueia a renderização
+          setVisualizacoes(typeof ep.visualizacoes === 'number' ? ep.visualizacoes : 0)
+          // Registra a visualização em segundo plano (idempotente por aba — ver Lógica da Tela)
+          registrarVisualizacao(ep.id).then((contabilizada) => {
+            if (contabilizada && !cancelado) {
+              setVisualizacoes((atual) => (typeof atual === 'number' ? atual + 1 : 1))
+            }
+          })
         }
       } catch {
         if (!cancelado) setNaoEncontrado(true)
@@ -209,6 +221,14 @@ export default function EpisodioScreen() {
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-dourado/30 text-marfim/85 text-xs sm:text-sm font-medium">
                           <Calendar className="w-3.5 h-3.5 text-dourado shrink-0" />
                           {dataExibicao}
+                        </span>
+                      )}
+                      {visualizacoes !== null && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-dourado/30 text-marfim/85 text-xs sm:text-sm font-medium">
+                          <Eye className="w-3.5 h-3.5 text-dourado shrink-0" />
+                          {visualizacoes === 1
+                            ? '1 visualização'
+                            : `${visualizacoes} visualizações`}
                         </span>
                       )}
                     </div>

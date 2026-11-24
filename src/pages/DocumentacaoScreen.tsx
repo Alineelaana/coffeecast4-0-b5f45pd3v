@@ -790,6 +790,22 @@ export default function DocumentacaoScreen() {
                 botões têm área de toque confortável (mínimo 44px) e ocupam a largura total do card.
               </p>
               <p className="text-[#4B1E3F]/80 leading-relaxed">
+                <strong>Estatísticas de visualização:</strong> a página individual registra{' '}
+                <strong>visualizações reais do site público</strong>. Cada carregamento efetivo da
+                página /episodio/:id de um episódio publicado soma +1 ao contador (armazenado no
+                campo <em>visualizacoes</em> do episódio), sem exigir login. Para evitar dupla
+                contagem, o mesmo visitante não é contado novamente em um intervalo de 30 segundos
+                (recarregar a página em sequência rápida conta apenas uma vez). A página exibe o
+                contador de forma discreta, ao lado da data ("👁 N visualizações" ou "Nenhuma
+                visualização" quando ainda não houver acesso). No painel, a lista de episódios
+                mostra a coluna/linha de visualizações e o <strong>Dashboard</strong> ganhou a seção{' '}
+                <strong>"Estatísticas de Visualização"</strong>, com o{' '}
+                <strong>Episódio mais visto</strong>, o total geral e o ranking dos 3 mais vistos —
+                visível apenas para quem tem acesso à tela Episódios na matriz de permissões (Master
+                e Gerencial sempre; ADM somente se a tela estiver liberada).
+              </p>
+
+              <p className="text-[#4B1E3F]/80 leading-relaxed">
                 <strong>Página individual do episódio (/episodio/:id):</strong> clicar em um
                 episódio do carrossel (ou no botão do destaque da Home) abre uma página dedicada,
                 com capa, número, título, data, descrição e convidados. Os botões{' '}
