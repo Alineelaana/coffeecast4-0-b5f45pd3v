@@ -38,11 +38,23 @@ export const MomentsCarousel: React.FC<MomentsCarouselProps> = ({ momentos }) =>
   // Lista normalizada
   const slides =
     momentos.length > 0
-      ? momentos.map((m) => ({
-          url: m.imagem ? getFileUrl(m, m.imagem) : fallbackImages[0].url,
-          legenda: m.legenda || 'Momentos especiais das CoffeeCasters',
+      ? momentos.map((m) => {
+          const url = m.imagem ? getFileUrl(m, m.imagem) : fallbackImages[0].url
+          return {
+            url,
+            // Mesma foto em tamanhos menores (thumbs do PocketBase) + srcset:
+            // o celular baixa o tamanho adequado à tela, não o original.
+            urlPequena: m.imagem ? getFileUrl(m, m.imagem, '480x0') : url,
+            urlMedia: m.imagem ? getFileUrl(m, m.imagem, '960x0') : url,
+            legenda: m.legenda || 'Momentos especiais das CoffeeCasters',
+          }
+        })
+      : fallbackImages.map((f) => ({
+          url: f.url,
+          urlPequena: f.url,
+          urlMedia: f.url,
+          legenda: f.legenda,
         }))
-      : fallbackImages
 
   // Avanço automático a cada 3 segundos (exigência estrita do usuário)
   useEffect(() => {
@@ -99,6 +111,7 @@ export const MomentsCarousel: React.FC<MomentsCarouselProps> = ({ momentos }) =>
       <div className="relative w-full h-[320px] xs:h-[350px] sm:h-[460px] md:h-[540px] lg:h-[580px] overflow-hidden flex items-center justify-center">
         {slides.map((slide, index) => {
           const isActive = index === currentIndex
+          const deveCarregar = index <= 1 // apenas os 2 primeiros são acima da dobra
           return (
             <div
               key={index}
@@ -109,9 +122,11 @@ export const MomentsCarousel: React.FC<MomentsCarouselProps> = ({ momentos }) =>
               {/* Fundo suave com efeito blur da própria foto para harmonia visual */}
               <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <img
-                  src={slide.url}
+                  src={slide.urlPequena}
                   alt=""
                   aria-hidden="true"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover scale-110 blur-2xl opacity-25"
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-[#36142d]/70 via-[#36142d]/40 to-[#220c1c]/90" />
@@ -121,10 +136,11 @@ export const MomentsCarousel: React.FC<MomentsCarouselProps> = ({ momentos }) =>
               <div className="relative z-10 flex-1 w-full flex items-center justify-center p-3 sm:p-5 pb-16 md:pb-20">
                 <div className="relative max-h-full max-w-full flex items-center justify-center rounded-2xl overflow-hidden border border-dourado/40 shadow-[0_8px_30px_rgba(0,0,0,0.5),0_0_20px_rgba(212,175,55,0.18)] bg-black/30">
                   <img
-                    src={slide.url}
+                    src={deveCarregar ? slide.urlMedia : slide.urlPequena}
                     alt={slide.legenda}
                     className="max-h-[280px] sm:max-h-[370px] md:max-h-[440px] lg:max-h-[470px] w-auto max-w-full object-contain rounded-2xl select-none"
-                    loading="eager"
+                    loading={deveCarregar ? 'eager' : 'lazy'}
+                    decoding="async"
                   />
                 </div>
               </div>

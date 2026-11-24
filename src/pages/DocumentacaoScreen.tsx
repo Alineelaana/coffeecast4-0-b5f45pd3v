@@ -287,6 +287,22 @@ export default function DocumentacaoScreen() {
 
             <button
               type="button"
+              onClick={() => scrollTo('sec-backup-exportacao')}
+              className="text-left p-3.5 rounded-xl border border-[#4B1E3F]/10 hover:border-[#D4AF37] hover:bg-[#FAF8F5] transition-all flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="w-6 h-6 rounded-lg bg-[#4B1E3F] text-white flex items-center justify-center font-bold text-[11px]">
+                  6.1
+                </span>
+                <span className="text-[#4B1E3F] group-hover:text-[#4B1E3F] font-bold">
+                  Backup & Exportação (Lógica da Tela)
+                </span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#D4AF37] group-hover:translate-x-1 transition-transform" />
+            </button>
+
+            <button
+              type="button"
               onClick={() => scrollTo('sec-sales')}
               className="text-left p-3.5 rounded-xl border border-[#4B1E3F]/10 hover:border-[#D4AF37] hover:bg-[#FAF8F5] transition-all flex items-center justify-between group md:col-span-2"
             >
@@ -1206,6 +1222,89 @@ export default function DocumentacaoScreen() {
               <p className="leading-relaxed">
                 Os formulários preservam fotos de convidados, logomarcas e comprovantes existentes
                 quando campos não são re-enviados, evitando deleções acidentais.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================
+            SEÇÃO 6.1: BACKUP & EXPORTAÇÃO — LÓGICA DA TELA
+            ======================================================== */}
+        <section
+          id="sec-backup-exportacao"
+          className="bg-white rounded-3xl p-6 sm:p-10 border border-[#4B1E3F]/10 shadow-sm space-y-6 print:shadow-none print:border-none print:break-before-page"
+        >
+          <div className="flex items-center gap-3">
+            <span className="w-8 h-8 rounded-xl bg-[#4B1E3F] text-[#D4AF37] flex items-center justify-center font-serif font-black text-sm">
+              06
+            </span>
+            <div>
+              <h2 className="font-serif text-2xl sm:text-3xl font-extrabold text-[#4B1E3F]">
+                6.1 Backup & Exportação — Lógica da Tela
+              </h2>
+              <p className="text-xs text-[#4B1E3F]/70">
+                Proteção do ativo do negócio: leads, roteiros e demais dados sempre disponíveis para
+                download
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs text-[#2C1820]/80">
+            <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#4B1E3F]/10 space-y-2">
+              <h4 className="font-serif font-bold text-sm text-[#4B1E3F]">📊 O que a tela faz</h4>
+              <p className="leading-relaxed">
+                Localizada no submenu de gestão avançada do painel, a seção{' '}
+                <strong>Backup &amp; Exportação</strong> permite baixar as principais coleções do
+                sistema em dois formatos:
+              </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  <strong>CSV (Excel):</strong> separador ponto-e-vírgula e BOM UTF-8 — abre direto
+                  no Excel brasileiro com acentos corretos. Coleções: leads (contatos comerciais),
+                  contatos do site, episódios, agenda, roteiros, tarefas da Nine, patrocinadores e
+                  notificações.
+                </li>
+                <li>
+                  <strong>JSON (backup fiel):</strong> inclui todos os campos de cada registro,
+                  inclusive os opcionais vazios — formato ideal para restauração ou migração.
+                </li>
+              </ul>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#4B1E3F]/10 space-y-2">
+              <h4 className="font-serif font-bold text-sm text-[#4B1E3F]">
+                🗂️ Gerar backup completo
+              </h4>
+              <p className="leading-relaxed">
+                O botão <strong>"Gerar backup completo"</strong> reúne, em um único arquivo, todas
+                as coleções acima que o usuário pode ver. O nome do arquivo já traz a data e hora da
+                geração (ex.: <code>coffeecast-backup-2026-01-15-1010.json</code>). Ao final, a tela
+                informa quantos registros foram exportados por coleção.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#4B1E3F]/10 space-y-2">
+              <h4 className="font-serif font-bold text-sm text-[#4B1E3F]">🔒 Permissões</h4>
+              <p className="leading-relaxed">
+                A exportação usa a <strong>mesma matriz de permissões de telas do painel</strong>
+                (a mesma usada pela Nine Online): usuários que não podem ver uma tela não recebem os
+                dados dela na exportação. Master tem acesso a tudo; ADM enxerga apenas as telas
+                liberadas pelo Master em <strong>Usuários &amp; Permissões</strong>. A tela em si só
+                aparece no menu para perfis Master e ADM com a tela "backup_exportacao" liberada.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/40 space-y-2">
+              <h4 className="font-serif font-bold text-sm text-[#4B1E3F]">
+                ⭐ Recomendação de backup periódico
+              </h4>
+              <p className="leading-relaxed">
+                <strong>Gere um backup completo pelo menos uma vez por semana</strong> — ou sempre
+                após grandes cadastros (episódio novo, campanha de leads, mudança de roteiros). O
+                time comercial deve baixar leads com frequência maior (diária, se houver volume).
+                Guarde os arquivos em local seguro <strong>fora do site</strong> — HD externo,
+                Google Drive ou outro serviço de armazenamento — e mantenha versões antigas como
+                histórico.
               </p>
             </div>
           </div>

@@ -47,6 +47,7 @@ import AdminPoliticasScreen from '@/pages/admin/AdminPoliticasScreen'
 import AdminPatrocinadoresScreen from '@/pages/admin/AdminPatrocinadoresScreen'
 import AdminUsuariosScreen from '@/pages/admin/AdminUsuariosScreen'
 import AdminBackupsScreen from '@/pages/admin/AdminBackupsScreen'
+import AdminBackupExportacaoScreen from '@/pages/admin/AdminBackupExportacaoScreen'
 import AdminAuditoriaScreen from '@/pages/admin/AdminAuditoriaScreen'
 import AdminNotificacoesScreen from '@/pages/admin/AdminNotificacoesScreen'
 import AdminRoteirosScreen from '@/pages/admin/AdminRoteirosScreen'
@@ -393,6 +394,14 @@ export default function App() {
                 element={
                   <ProtectedRoute requireMaster>
                     <AdminBackupsScreen />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="backup-exportacao"
+                element={
+                  <ProtectedRoute screenKey="backup_exportacao">
+                    <AdminBackupExportacaoScreen />
                   </ProtectedRoute>
                 }
               />

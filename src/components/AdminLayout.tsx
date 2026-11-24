@@ -41,6 +41,7 @@ import {
   BarChart3,
   Target,
   Handshake,
+  DatabaseBackup,
 } from 'lucide-react'
 import { getFileUrl } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
@@ -74,6 +75,7 @@ export default function AdminLayout() {
     '/admin/usuarios',
     '/admin/chat/gestao',
     '/admin/backups',
+    '/admin/backup-exportacao',
     '/admin/documentacao',
   ].some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`))
 
@@ -517,6 +519,26 @@ export default function AdminLayout() {
       badge: 'Master',
       exact: false,
       keywords: ['backup', 'copia de seguranca', 'dump', 'restaurar', 'exportar banco', 'download'],
+    },
+    {
+      key: 'backup_exportacao',
+      label: 'Backup & Exportação',
+      path: '/admin/backup-exportacao',
+      icon: DatabaseBackup,
+      badge: 'Dados',
+      exact: false,
+      keywords: [
+        'backup',
+        'exportacao',
+        'csv',
+        'excel',
+        'json',
+        'download',
+        'copia de seguranca',
+        'exportar dados',
+        'leads',
+        'roteiros',
+      ],
     },
     {
       key: 'documentacao',
