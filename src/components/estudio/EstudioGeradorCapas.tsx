@@ -94,6 +94,8 @@ export default function EstudioGeradorCapas({ preset, onSalvo }: Props) {
   const [gerando, setGerando] = useState(false)
   const [exportando, setExportando] = useState(false)
   const [capaGerada, setCapaGerada] = useState<string>('')
+  const [erroGeracao, setErroGeracao] = useState('')
+  const [avisosGeracao, setAvisosGeracao] = useState<string[]>([])
   const [salvando, setSalvando] = useState(false)
   const previewRef = useRef<HTMLImageElement>(null)
   const inputFotosRef = useRef<HTMLInputElement>(null)
@@ -258,6 +260,8 @@ export default function EstudioGeradorCapas({ preset, onSalvo }: Props) {
   async function gerarCapa() {
     if (!podeGerar) return
     setGerando(true)
+    setErroGeracao('')
+    setAvisosGeracao([])
     try {
       const templateSelRec = templates.find((t) => t.id === templateSel)
       const input: EstudioCapaInput = {
@@ -275,6 +279,7 @@ export default function EstudioGeradorCapas({ preset, onSalvo }: Props) {
       }
       const res = await comporCapa(input, 'base')
       setCapaGerada(res.dataUrl)
+      setAvisosGeracao(res.avisos)
       if (res.avisos.length) {
         toast({ title: 'Capa gerada com avisos', description: res.avisos.join(' ') })
       } else {
@@ -284,11 +289,14 @@ export default function EstudioGeradorCapas({ preset, onSalvo }: Props) {
         })
       }
     } catch (err) {
-      toast({
-        title: 'Erro ao gerar capa',
-        description: err instanceof Error ? err.message : 'Tente novamente.',
-        variant: 'destructive',
-      })
+      const mensagem =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Não foi possível compor a capa. Tente novamente.'
+      setCapaGerada('')
+      setErroGeracao(mensagem)
+      toast({ title: 'Erro ao gerar capa', description: mensagem, variant: 'destructive' })
+      console.error('Estúdio Criativo IA: falha ao compor a capa:', err)
     } finally {
       setGerando(false)
     }
@@ -345,6 +353,7 @@ export default function EstudioGeradorCapas({ preset, onSalvo }: Props) {
   async function salvarCapa(status: 'rascunho' | 'oficial') {
     if (!capaGerada) return
     setSalvando(true)
+    setErroGeracao('')
     try {
       const blob = dataUrlParaBlob(capaGerada)
       const nome = nomeArquivoCapa(tituloCapa || roteiroSel?.titulo || 'capa', 'png')
@@ -370,7 +379,11 @@ export default function EstudioGeradorCapas({ preset, onSalvo }: Props) {
       })
       onSalvo?.()
     } catch (err) {
-      toast({ title: 'Erro ao salvar', description: String(err), variant: 'destructive' })
+      const mensagem =
+        err instanceof Error && err.message ? err.message : 'Não foi possível salvar a capa.'
+      setErroGeracao(mensagem)
+      toast({ title: 'Erro ao salvar', description: mensagem, variant: 'destructive' })
+      console.error('Estúdio Criativo IA: falha ao salvar a capa:', err)
     } finally {
       setSalvando(false)
     }
@@ -669,10 +682,36 @@ export default function EstudioGeradorCapas({ preset, onSalvo }: Props) {
                 />
               ) : (
                 <div className="flex aspect-video items-center justify-center text-center text-xs text-muted-foreground p-6">
-                  A prévia aparecerá aqui após clicar em <strong>&nbsp;GERAR CAPA COM IA</strong>.
+                  {gerando ? (
+                    <span className="flex flex-col items-center gap-2">
+                      <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#4B1E3F]/30 border-t-[#4B1E3F]" />
+                      Compondo a capa… aguarde um instante.
+                    </span>
+                  ) : (
+                    <span>
+                      A prévia aparecerá aqui após clicar em{' '}
+                      <strong>&nbsp;GERAR CAPA COM IA</strong>.
+                    </span>
+                  )}
                 </div>
               )}
             </div>
+            {erroGeracao && (
+              <div
+                role="alert"
+                className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
+                <strong>Erro ao gerar a capa:</strong> {erroGeracao}
+              </div>
+            )}
+            {avisosGeracao.length > 0 && !erroGeracao && (
+              <div
+                role="status"
+                className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700"
+              >
+                <strong>Capa gerada com avisos:</strong> {avisosGeracao.join(' ')}
+              </div>
+            )}
             {capaGerada && (
               <>
                 <div className="grid grid-cols-2 gap-2">

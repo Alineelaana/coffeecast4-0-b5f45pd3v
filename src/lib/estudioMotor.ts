@@ -175,14 +175,32 @@ export function templateMestrePremiumDourado(): { nome: string; camadas: Estudio
   }
 }
 
+/** Número finito ou fallback — nunca deixa undefined/NaN atravessar para o canvas. */
+function numeroSeguro(valor: unknown, fallback?: number): number | undefined {
+  if (typeof valor === 'number' && isFinite(valor)) return valor
+  return fallback
+}
+
 // ---------- Carregamento de imagens ----------
+// Com TIMEOUT: uma foto/logomarca que falha (404/CORS/rede lenta) NUNCA deixa a
+// prévia pendente para sempre — resolve null e a capa é desenhada sem a imagem.
 function carregarImagem(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
     if (!src) return resolve(null)
     const img = new Image()
+    let resolvido = false
+    const concluir = (resultado: HTMLImageElement | null) => {
+      if (resolvido) return
+      resolvido = true
+      clearTimeout(timer)
+      img.onload = null
+      img.onerror = null
+      resolve(resultado)
+    }
+    const timer = setTimeout(() => concluir(null), 8000)
+    img.onload = () => concluir(img)
+    img.onerror = () => concluir(null)
     img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
-    img.onerror = () => resolve(null)
     img.src = src
   })
 }
@@ -522,12 +540,27 @@ export async function comporCapa(
   if (!ctx) throw new Error('Canvas indisponível neste navegador.')
 
   const avisos: string[] = []
-  const camadas =
-    input.templateJson &&
-    Array.isArray(input.templateJson.camadas) &&
-    input.templateJson.camadas.length
+  // Camadas do banco mescladas com as coordenadas oficiais do Template Mestre:
+  // registros antigos podem ter sido salvos sem x/y/w/h — sem isso o canvas recebe
+  // NaN e silenciosamente não desenha a camada (prévia "eterna" com fundo vazio).
+  const oficiais = templateMestrePremiumDourado().camadas
+  const brutas =
+    input.templateJson && Array.isArray(input.templateJson.camadas)
       ? input.templateJson.camadas
-      : templateMestrePremiumDourado().camadas
+      : []
+  const camadas: EstudioCamada[] = oficiais.map((oficial) => {
+    const doBanco = brutas.find((c) => c.tipo === oficial.tipo)
+    if (!doBanco) return oficial
+    return {
+      ...oficial,
+      ...doBanco,
+      x: numeroSeguro(doBanco.x, oficial.x) as number,
+      y: numeroSeguro(doBanco.y, oficial.y) as number,
+      w: numeroSeguro(doBanco.w, oficial.w) as number,
+      h: numeroSeguro(doBanco.h, oficial.h) as number,
+      tamanho: numeroSeguro(doBanco.tamanho, oficial.tamanho),
+    }
+  })
 
   const get = (tipo: EstudioCamada['tipo']): EstudioCamada | undefined =>
     camadas.find((c) => c.tipo === tipo)

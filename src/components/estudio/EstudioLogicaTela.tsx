@@ -37,6 +37,10 @@ const SECOES: { titulo: string; itens: string[] }[] = [
       'Ajuste automático do título: quebras, tamanho e alinhamento calculados conforme o texto.',
       'Exportação real: PNG/JPG em 1280×720 (YouTube HD), 1920×1080 (Full HD) e 3840×2160 (4K) — ampliação avisada ao usuário.',
       'Ajustes de título, foto, logo e resolução NÃO chamam API de imagem (controle de custos).',
+      'RESILIÊNCIA: as camadas do template vêm do banco mescladas com as coordenadas oficiais do motor — registro sem x/y/w/h (ou com valor inválido) usa o padrão do Template Mestre, nunca NaN.',
+      'RESILIÊNCIA: todo carregamento de foto/logomarca tem TIMEOUT de 8s — imagem que falha (404/CORS/rede) resolve vazio, a capa é gerada SEM ela e a prévia NUNCA fica travada ("carregando" eterno).',
+      'AVISOS: quando fotos/logomarcas não carregam, o modal mostra banner âmbar com o motivo e o toast confirma que a capa saiu mesmo assim.',
+      'FALHAS: exceção de composição ou de salvamento limpa a prévia e mostra banner vermelho role=alert + toast destrutivo — nunca falha silenciosa nem botão travado.',
     ],
   },
   {
