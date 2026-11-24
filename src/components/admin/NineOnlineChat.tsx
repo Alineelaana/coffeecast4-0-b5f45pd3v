@@ -1,6 +1,7 @@
 // src/components/admin/NineOnlineChat.tsx
 // Nine Online — assistente virtual do PAINEL ADMINISTRATIVO (CoffeeCast 4.0).
-// Botão redondo fixo na lateral direita + painel de chat deslizante.
+// Aba/etiqueta vertical fixa na borda DIREITA (meio da tela no desktop,
+// estilo "tab recolhida" — referência Aglets ERP) + painel de chat deslizante.
 //
 // - Só é renderizado dentro do AdminLayout (nunca no site público).
 // - Foto de perfil: a MESMA imagem da Nine do site público (src/assets/nineAvatar.ts).
@@ -117,39 +118,55 @@ export const NineOnlineChat: React.FC = () => {
 
   return (
     <>
-      {/* BOTÃO FLUTUANTE — lateral direita, discreto, toque >= 44px no celular.
-          z-40: fica sobre o conteúdo normal, mas ABAIXO do drawer/gaveta (z-50),
-          de modais e do cabeçalho móvel (z-40 com painel fechado ele fica abaixo
-          dos elementos de navegação críticos graças à posição na borda direita). */}
+      {/* ABA/ETIQUETA FIXA — grudada na borda DIREITA da tela, formato vertical
+          estreito de "tab recolhida" (metade da altura da janela no desktop),
+          meio saindo da borda, com a foto da Nine dentro e tooltip ao passar
+          o mouse ("Nine Online — Assistente IA"). Diferencia a Nine Online do
+          painel da Nine do site público (que usa botão redondo flutuante).
+          - Desktop (md+): verticalmente centrada (top-1/2), colada em right-0,
+            cantos arredondados só do lado esquerdo; ~48px de largura, não sobrepõe
+            conteúdo de leitura (fica na margem da janela) e não afeta o scroll.
+          - Celular: mesma aba na borda direita, posicionada mais abaixo para não
+            cobrir a leitura do meio da tela, com área de toque de 44px+.
+          - z-40: acima do conteúdo normal, ABAIXO de drawer/gaveta (z-50),
+            modais e cabeçalho móvel — nunca cobre menus nem navegação.
+          - Com o painel aberto ela desliza para fora (o X do painel fecha). */}
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label={open ? 'Fechar chat com a Nine Online' : 'Falar com a Nine Online'}
-        title={open ? 'Fechar chat da Nine Online' : 'Falar com a Nine Online'}
+        onClick={() => setOpen(true)}
+        aria-label="Abrir Nine Online — Assistente IA"
+        title="Nine Online — Assistente IA"
+        aria-hidden={open}
+        tabIndex={open ? -1 : 0}
         className={cn(
-          'fixed z-40 right-3 sm:right-5 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] md:bottom-5',
-          'group flex items-center justify-center rounded-full',
-          'w-11 h-11 sm:w-14 sm:h-14 p-0',
-          'bg-gradient-to-tr from-[#4B1E3F] to-[#6B2A57] ring-2 ring-[#D4AF37]/80',
-          'shadow-[0_8px_24px_rgba(75,30,63,0.45)]',
-          'transition-all duration-200 hover:scale-105 active:scale-95',
+          'fixed z-40 right-0',
+          'bottom-[calc(5.5rem+env(safe-area-inset-bottom))] translate-y-0',
+          'md:top-1/2 md:bottom-auto md:-translate-y-1/2',
+          'group flex flex-col items-center justify-center gap-1',
+          'w-11 md:w-12 h-16 md:h-24 p-1.5 md:p-2',
+          'rounded-l-2xl',
+          'bg-gradient-to-b from-[#4B1E3F] to-[#6B2A57] ring-2 ring-inset ring-[#D4AF37]/80',
+          'shadow-[-6px_6px_20px_rgba(75,30,63,0.35)]',
+          'transition-all duration-300 hover:w-12 md:hover:w-14 hover:from-[#6B2A57] hover:to-[#4B1E3F] active:scale-[0.97]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]',
+          open && 'translate-x-full opacity-0 pointer-events-none',
         )}
       >
         <img
           src={NINE_AVATAR_SRC}
           alt="Nine Online — Assistente Virtual do Painel CoffeeCast 4.0"
-          className="w-full h-full object-cover rounded-full pointer-events-none select-none"
+          className="w-8 h-8 md:w-10 md:h-10 object-cover rounded-full ring-2 ring-dourado/70 pointer-events-none select-none"
           loading="lazy"
         />
-        <span className="pointer-events-none absolute right-full mr-3 hidden md:block whitespace-nowrap rounded-lg bg-vinho text-marfim text-xs font-medium px-3 py-1.5 shadow-lg opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 border border-dourado/50">
-          Falar com a Nine Online
+        <span
+          aria-hidden
+          className="hidden md:block font-serif text-[10px] leading-none text-dourado tracking-wide select-none"
+        >
+          NINE
         </span>
-        {open && (
-          <span className="absolute inset-0 rounded-full bg-vinho/80 flex items-center justify-center">
-            <X className="w-5 h-5 sm:w-6 sm:h-6 text-dourado stroke-[2.5]" />
-          </span>
-        )}
+        <span className="pointer-events-none absolute right-full mr-3 top-1/2 -translate-y-1/2 hidden md:block whitespace-nowrap rounded-lg bg-vinho text-marfim text-xs font-medium px-3 py-1.5 shadow-lg opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 border border-dourado/50">
+          Nine Online — Assistente IA
+        </span>
       </button>
 
       {/* PAINEL DE CHAT — desliza pela lateral direita. No celular ocupa a

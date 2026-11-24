@@ -26,7 +26,7 @@ const SECOES: { titulo: string; itens: string[] }[] = [
   {
     titulo: '🔓 Onde aparece (visibilidade)',
     itens: [
-      'O botão redondo da Nine Online só existe DENTRO do AdminLayout — ou seja, só para usuários logados na área administrativa (perfis Master, ADM e Gerencial).',
+      'A aba/etiqueta da Nine Online só existe DENTRO do AdminLayout — ou seja, só para usuários logados na área administrativa (perfis Master, ADM e Gerencial).',
       'No site público e nas telas de login/recuperação de senha a Nine Online NUNCA aparece — a Nine do site é o widget próprio (NineChatWidget) e continua intacto.',
       'Se a sessão expirar, o componente deixa de ser renderizado junto com o painel: o botão some sozinho.',
     ],
@@ -64,8 +64,11 @@ const SECOES: { titulo: string; itens: string[] }[] = [
   {
     titulo: '💬 Comportamento do chat',
     itens: [
-      'O botão de acionar fica fixo na lateral direita, sobre o conteúdo, sem cobrir botões, menus nem dados — no desktop fica em z-40, a ~1,25rem da borda e acima da rolagem.',
-      'Ao clicar, o painel desliza pela lateral direita: ~408px de largura no desktop, largura total no celular (respeitando o cabeçalho mobile de ~96px e a safe-area do iPhone).',
+      'O disparador é uma ABA/ETIQUETA VERTICAL grudada na borda DIREITA da tela (estilo "tab recolhida"), com a foto da Nine dentro — visual exclusivo da Nine Online, para diferenciar da Nine do site público.',
+      'No desktop ela fica na metade vertical da janela (top-1/2), colada em right-0 com cantos arredondados só do lado esquerdo — ~48px de largura, fica na margem da janela, não sobrepõe conteúdo de leitura e não afeta o scroll.',
+      'No celular a mesma aba fica na borda direita, posicionada mais abaixo (~5,5rem da base + safe-area do iPhone), com área de toque de 44px+ (44x64px) e camada z-40 — abaixo de gavetas (z-50), modais e cabeçalho móvel: nunca cobre leitura nem navegação.',
+      'Ao passar o mouse (desktop) aparece o tooltip "Nine Online — Assistente IA".',
+      'Ao clicar, o painel desliza pela lateral direita: ~408px de largura no desktop, largura total no celular (respeitando o cabeçalho mobile de ~96px e a safe-area do iPhone). Com o painel aberto, a aba desliza para fora da tela; ao fechar, ela volta e o histórico continua.',
       'O histórico da sessão é preservado ao fechar e reabrir o painel; carregando e erros seguem o padrão do sistema (banner vermelho dentro do painel + toast na base).',
       'Cabeçalho do painel: foto da Nine, nome "Nine Online" e botão fechar (X). Botão e itens de toque com mínimo 44px no celular.',
     ],
