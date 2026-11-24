@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T11:39:43.066Z",
+  "generatedAt": "2026-11-24T11:47:32.815Z",
   "collections": [
     {
       "name": "users",
@@ -3452,6 +3452,140 @@
       "indexes": [
         "CREATE INDEX idx_notificacoes_created ON notificacoes (created DESC)",
         "CREATE INDEX idx_notificacoes_lida ON notificacoes (lida)"
+      ]
+    },
+    {
+      "name": "patrocinadores",
+      "type": "base",
+      "apiRules": {
+        "list": "role = \"master\" || role = \"adm\" || role = \"gerencial\" || @request.auth.role ~ \"master\" || @request.auth.role ~ \"adm\" || @request.auth.role ~ \"gerencial\"",
+        "view": "role = \"master\" || role = \"adm\" || role = \"gerencial\" || @request.auth.role ~ \"master\" || @request.auth.role ~ \"adm\" || @request.auth.role ~ \"gerencial\"",
+        "create": "role = \"master\" || role = \"adm\" || role = \"gerencial\" || @request.auth.role ~ \"master\" || @request.auth.role ~ \"adm\" || @request.auth.role ~ \"gerencial\"",
+        "update": "role = \"master\" || role = \"adm\" || role = \"gerencial\" || @request.auth.role ~ \"master\" || @request.auth.role ~ \"adm\" || @request.auth.role ~ \"gerencial\"",
+        "delete": "role = \"master\" || @request.auth.role ~ \"master\" || @request.auth.role ~ \"adm\""
+      },
+      "fields": [
+        {
+          "name": "empresa",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "segmento",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "website",
+          "type": "url",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "instagram",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "logo",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "contato_nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "contato_cargo",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "contato_email",
+          "type": "email",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "contato_telefone",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "modalidade",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["cota_master", "cota_episodio", "permuta", "apoio", "outro"]
+        },
+        {
+          "name": "valor_contrato",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "contrapartidas",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["prospect", "em_negociacao", "ativo", "pausado", "encerrado"]
+        },
+        {
+          "name": "episodios",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "episodios"
+        },
+        {
+          "name": "materiais",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "entregas",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "pendencias",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "observacoes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "role",
+          "type": "text",
+          "required": false,
+          "system": false
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_patrocinadores_empresa ON patrocinadores (empresa)",
+        "CREATE INDEX idx_patrocinadores_status ON patrocinadores (status)"
       ]
     }
   ]

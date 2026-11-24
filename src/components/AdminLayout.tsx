@@ -40,6 +40,7 @@ import {
   Search,
   BarChart3,
   Target,
+  Handshake,
 } from 'lucide-react'
 import { getFileUrl } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
@@ -384,6 +385,26 @@ export default function AdminLayout() {
         'repositorio',
         'biblioteca',
         'download',
+      ],
+    },
+    {
+      key: 'patrocinadores',
+      label: 'Patrocinadores & Parceiros',
+      path: '/admin/patrocinadores',
+      icon: Handshake,
+      exact: false,
+      keywords: [
+        'patrocinador',
+        'patrocinio',
+        'parceiro',
+        'parceiros',
+        'cota',
+        'cotasp',
+        'contrapartidas',
+        'permuta',
+        'apoio',
+        'marca',
+        'anunciante',
       ],
     },
     {
