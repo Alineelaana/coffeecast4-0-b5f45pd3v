@@ -31,7 +31,8 @@ import { extractYouTubeId } from '@/lib/formatters'
 import { Badge } from '@/components/ui/badge'
 import { AuditoriaService } from '@/services/auditoria'
 import { gerarCapaIA, getCapaIaUrl } from '@/services/openaiCapa'
-import { Sparkles, Loader2 } from 'lucide-react'
+import { getFileUrl, toInputDate } from '@/lib/formatters'
+import { Sparkles, Loader2, ImageIcon, Calendar } from 'lucide-react'
 
 export default function AdminEpisodesScreen() {
   const { isMaster } = useAuth()
@@ -53,6 +54,14 @@ export default function AdminEpisodesScreen() {
   const [linkYoutube, setLinkYoutube] = useState<string>('')
   const [dataProgramada, setDataProgramada] = useState<string>('')
   const [horaProgramada, setHoraProgramada] = useState<string>('10:00')
+
+  // Campos extras da página individual de episódio (todos opcionais)
+  const [descricao, setDescricao] = useState<string>('')
+  const [convidados, setConvidados] = useState<string>('')
+  const [biografiaConvidados, setBiografiaConvidados] = useState<string>('')
+  const [dataEpisodio, setDataEpisodio] = useState<string>('')
+  const [fotoConvidados, setFotoConvidados] = useState<File | null>(null)
+  const [fotoAtualUrl, setFotoAtualUrl] = useState<string>('')
   const [saving, setSaving] = useState(false)
   const [syncingNow, setSyncingNow] = useState(false)
 
@@ -141,6 +150,16 @@ export default function AdminEpisodesScreen() {
     }
   }
 
+  // Limpa os campos extras da página individual
+  const resetCamposExtras = () => {
+    setDescricao('')
+    setConvidados('')
+    setBiografiaConvidados('')
+    setDataEpisodio('')
+    setFotoConvidados(null)
+    setFotoAtualUrl('')
+  }
+
   // Abertura do modal de Criação Imediata
   const handleOpenCreate = () => {
     setEditingEp(null)
@@ -151,6 +170,7 @@ export default function AdminEpisodesScreen() {
     setLinkSpotify('')
     setLinkYoutube('')
     setDataProgramada('')
+    resetCamposExtras()
     setModalOpen(true)
   }
 
@@ -163,6 +183,7 @@ export default function AdminEpisodesScreen() {
     setYoutubeUrl('')
     setLinkSpotify('')
     setLinkYoutube('')
+    resetCamposExtras()
     // Sugere a data de amanhã às 10:00 (horário padrão dos episódios aos sábados)
     const amanha = new Date()
     amanha.setDate(amanha.getDate() + 1)
@@ -182,6 +203,13 @@ export default function AdminEpisodesScreen() {
     setYoutubeUrl(ep.youtube_url || '')
     setLinkSpotify(ep.link_spotify || '')
     setLinkYoutube(ep.link_youtube || '')
+    // Campos extras da página individual
+    setDescricao(ep.descricao || '')
+    setConvidados(ep.convidados || '')
+    setBiografiaConvidados(ep.biografia_convidados || '')
+    setDataEpisodio(toInputDate(ep.data_episodio || ''))
+    setFotoConvidados(null)
+    setFotoAtualUrl(getFileUrl(ep, ep.foto_convidados))
     if (ep.data_publicacao_programada) {
       try {
         const d = new Date(ep.data_publicacao_programada)
@@ -270,14 +298,21 @@ export default function AdminEpisodesScreen() {
         return
       }
 
-      const payload = {
-        numero: numInt,
-        titulo: titulo.trim(),
-        youtube_url: youtubeUrl.trim(),
-        link_spotify: linkSpotify.trim(),
-        link_youtube: linkYoutube.trim(),
-        status: 'publicado' as const,
-        data_publicacao_programada: '',
+      // FormData: permite anexar a foto dos convidados no mesmo envio (PocketBase files)
+      const payload = new FormData()
+      payload.append('numero', String(numInt))
+      payload.append('titulo', titulo.trim())
+      payload.append('youtube_url', youtubeUrl.trim())
+      payload.append('link_spotify', linkSpotify.trim())
+      payload.append('link_youtube', linkYoutube.trim())
+      payload.append('status', 'publicado')
+      payload.append('data_publicacao_programada', '')
+      payload.append('descricao', descricao.trim())
+      payload.append('convidados', convidados.trim())
+      payload.append('biografia_convidados', biografiaConvidados.trim())
+      payload.append('data_episodio', dataEpisodio ? `${dataEpisodio} 00:00:00` : '')
+      if (fotoConvidados) {
+        payload.append('foto_convidados', fotoConvidados)
       }
 
       if (editingEp) {
@@ -288,7 +323,7 @@ export default function AdminEpisodesScreen() {
         AuditoriaService.registrarEvento({
           tipo_acao: 'edicao',
           area_sistema: 'Episódios',
-          descricao: `Episódio #${numInt} "${payload.titulo}" editado com sucesso`,
+          descricao: `Episódio #${numInt} "${titulo.trim()}" editado com sucesso`,
           registro_afetado: editingEp.id,
           tabela_afetada: 'episodios',
           diff_antes: antigo,
@@ -303,7 +338,7 @@ export default function AdminEpisodesScreen() {
         AuditoriaService.registrarEvento({
           tipo_acao: 'criacao',
           area_sistema: 'Episódios',
-          descricao: `Novo episódio criado: #${numInt} "${payload.titulo}"`,
+          descricao: `Novo episódio criado: #${numInt} "${titulo.trim()}"`,
           registro_afetado: created.id,
           tabela_afetada: 'episodios',
           diff_depois: created,
@@ -388,14 +423,21 @@ export default function AdminEpisodesScreen() {
       )
       const dataIsoString = scheduledDateObj.toISOString()
 
-      const payload = {
-        numero: numInt,
-        titulo: titulo.trim(),
-        youtube_url: youtubeUrl.trim(),
-        link_spotify: linkSpotify.trim(),
-        link_youtube: linkYoutube.trim(),
-        status: 'programado' as const,
-        data_publicacao_programada: dataIsoString,
+      // FormData: permite anexar a foto dos convidados no mesmo envio (PocketBase files)
+      const payload = new FormData()
+      payload.append('numero', String(numInt))
+      payload.append('titulo', titulo.trim())
+      payload.append('youtube_url', youtubeUrl.trim())
+      payload.append('link_spotify', linkSpotify.trim())
+      payload.append('link_youtube', linkYoutube.trim())
+      payload.append('status', 'programado')
+      payload.append('data_publicacao_programada', dataIsoString)
+      payload.append('descricao', descricao.trim())
+      payload.append('convidados', convidados.trim())
+      payload.append('biografia_convidados', biografiaConvidados.trim())
+      payload.append('data_episodio', dataEpisodio ? `${dataEpisodio} 00:00:00` : '')
+      if (fotoConvidados) {
+        payload.append('foto_convidados', fotoConvidados)
       }
 
       if (editingEp) {
@@ -405,7 +447,7 @@ export default function AdminEpisodesScreen() {
         AuditoriaService.registrarEvento({
           tipo_acao: 'edicao',
           area_sistema: 'Episódios',
-          descricao: `Episódio programado #${numInt} "${payload.titulo}" atualizado para ${formatarDataHoraBR(dataIsoString)}`,
+          descricao: `Episódio programado #${numInt} "${titulo.trim()}" atualizado para ${formatarDataHoraBR(dataIsoString)}`,
           registro_afetado: editingEp.id,
           tabela_afetada: 'episodios',
           diff_antes: antigo,
@@ -421,7 +463,7 @@ export default function AdminEpisodesScreen() {
         AuditoriaService.registrarEvento({
           tipo_acao: 'criacao',
           area_sistema: 'Episódios',
-          descricao: `Episódio #${numInt} "${payload.titulo}" programado para publicação em ${formatarDataHoraBR(dataIsoString)}`,
+          descricao: `Episódio #${numInt} "${titulo.trim()}" programado para publicação em ${formatarDataHoraBR(dataIsoString)}`,
           registro_afetado: created.id,
           tabela_afetada: 'episodios',
           diff_depois: created,
@@ -946,6 +988,107 @@ export default function AdminEpisodesScreen() {
               </p>
             </div>
 
+            {/* Campos da página individual (todos opcionais) */}
+            <div className="space-y-4 pt-3 border-t border-dourado/30">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-dourado-dark flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                Página individual do episódio (opcional)
+              </p>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="ep-descricao" className="text-xs font-semibold text-vinho">
+                  Descrição
+                </Label>
+                <textarea
+                  id="ep-descricao"
+                  rows={4}
+                  placeholder="Resumo do episódio — o que foi conversado, temas, curiosidades…"
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                  className="w-full bg-white border border-vinho/20 rounded-md px-3 py-2 text-sm focus-visible:ring-dourado focus:outline-none resize-y"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="ep-convidados" className="text-xs font-semibold text-vinho">
+                  Convidados
+                </Label>
+                <Input
+                  id="ep-convidados"
+                  placeholder="Ex.: Maria Silva, consultora financeira"
+                  value={convidados}
+                  onChange={(e) => setConvidados(e.target.value)}
+                  className="bg-white border-vinho/20 text-sm focus-visible:ring-dourado"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="ep-bio" className="text-xs font-semibold text-vinho">
+                  Biografia dos convidados
+                </Label>
+                <textarea
+                  id="ep-bio"
+                  rows={3}
+                  placeholder="Mini-biografia exibida em 'Sobre os convidados' na página do episódio."
+                  value={biografiaConvidados}
+                  onChange={(e) => setBiografiaConvidados(e.target.value)}
+                  className="w-full bg-white border border-vinho/20 rounded-md px-3 py-2 text-sm focus-visible:ring-dourado focus:outline-none resize-y"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="ep-data-episodio"
+                  className="text-xs font-semibold text-vinho flex items-center gap-1.5"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-dourado-dark" />
+                  Data do episódio
+                </Label>
+                <Input
+                  id="ep-data-episodio"
+                  type="date"
+                  value={dataEpisodio}
+                  onChange={(e) => setDataEpisodio(e.target.value)}
+                  className="bg-white border-vinho/20 text-sm focus-visible:ring-dourado"
+                />
+                <p className="text-[11px] text-vinho/60">
+                  Data da gravação/exibição. Sem ela, o site usa a data de cadastro.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="ep-foto-convidados"
+                  className="text-xs font-semibold text-vinho flex items-center gap-1.5"
+                >
+                  <ImageIcon className="w-3.5 h-3.5 text-dourado-dark" />
+                  Foto dos convidados
+                </Label>
+                {fotoAtualUrl && (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={fotoAtualUrl}
+                      alt="Foto atual dos convidados"
+                      className="w-20 h-20 object-cover rounded-xl border border-dourado/50"
+                    />
+                    <span className="text-[11px] text-vinho/60">
+                      Foto atual — envie um novo arquivo para substituir.
+                    </span>
+                  </div>
+                )}
+                <Input
+                  id="ep-foto-convidados"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setFotoConvidados(e.target.files?.[0] ?? null)}
+                  className="bg-white border-vinho/20 text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-vinho file:text-white file:text-xs file:font-semibold focus-visible:ring-dourado"
+                />
+                <p className="text-[11px] text-vinho/60">
+                  Usada como capa na página individual quando não houver capa com IA.
+                </p>
+              </div>
+            </div>
+
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
@@ -1072,6 +1215,107 @@ export default function AdminEpisodesScreen() {
               <p className="text-[11px] text-vinho/60">
                 Se preenchido, o site exibe o botão "Assistir no YouTube" neste episódio.
               </p>
+            </div>
+
+            {/* Campos da página individual (todos opcionais) */}
+            <div className="space-y-4 pt-3 border-t border-dourado/30">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-dourado-dark flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                Página individual do episódio (opcional)
+              </p>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="prog-ep-descricao" className="text-xs font-semibold text-vinho">
+                  Descrição
+                </Label>
+                <textarea
+                  id="prog-ep-descricao"
+                  rows={4}
+                  placeholder="Resumo do episódio — o que foi conversado, temas, curiosidades…"
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                  className="w-full bg-white border border-vinho/20 rounded-md px-3 py-2 text-sm focus-visible:ring-dourado focus:outline-none resize-y"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="prog-ep-convidados" className="text-xs font-semibold text-vinho">
+                  Convidados
+                </Label>
+                <Input
+                  id="prog-ep-convidados"
+                  placeholder="Ex.: Maria Silva, consultora financeira"
+                  value={convidados}
+                  onChange={(e) => setConvidados(e.target.value)}
+                  className="bg-white border-vinho/20 text-sm focus-visible:ring-dourado"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="prog-ep-bio" className="text-xs font-semibold text-vinho">
+                  Biografia dos convidados
+                </Label>
+                <textarea
+                  id="prog-ep-bio"
+                  rows={3}
+                  placeholder="Mini-biografia exibida em 'Sobre os convidados' na página do episódio."
+                  value={biografiaConvidados}
+                  onChange={(e) => setBiografiaConvidados(e.target.value)}
+                  className="w-full bg-white border border-vinho/20 rounded-md px-3 py-2 text-sm focus-visible:ring-dourado focus:outline-none resize-y"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="prog-ep-data-episodio"
+                  className="text-xs font-semibold text-vinho flex items-center gap-1.5"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-dourado-dark" />
+                  Data do episódio
+                </Label>
+                <Input
+                  id="prog-ep-data-episodio"
+                  type="date"
+                  value={dataEpisodio}
+                  onChange={(e) => setDataEpisodio(e.target.value)}
+                  className="bg-white border-vinho/20 text-sm focus-visible:ring-dourado"
+                />
+                <p className="text-[11px] text-vinho/60">
+                  Data da gravação/exibição. Sem ela, o site usa a data de cadastro.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="prog-ep-foto-convidados"
+                  className="text-xs font-semibold text-vinho flex items-center gap-1.5"
+                >
+                  <ImageIcon className="w-3.5 h-3.5 text-dourado-dark" />
+                  Foto dos convidados
+                </Label>
+                {fotoAtualUrl && (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={fotoAtualUrl}
+                      alt="Foto atual dos convidados"
+                      className="w-20 h-20 object-cover rounded-xl border border-dourado/50"
+                    />
+                    <span className="text-[11px] text-vinho/60">
+                      Foto atual — envie um novo arquivo para substituir.
+                    </span>
+                  </div>
+                )}
+                <Input
+                  id="prog-ep-foto-convidados"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setFotoConvidados(e.target.files?.[0] ?? null)}
+                  className="bg-white border-vinho/20 text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-vinho file:text-white file:text-xs file:font-semibold focus-visible:ring-dourado"
+                />
+                <p className="text-[11px] text-vinho/60">
+                  Usada como capa na página individual quando não houver capa com IA.
+                </p>
+              </div>
             </div>
 
             {/* 4. Espaço para Data E Hora para programar quando vai para o site */}

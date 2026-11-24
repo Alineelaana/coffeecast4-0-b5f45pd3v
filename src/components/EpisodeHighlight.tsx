@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { Play, Sparkles, Youtube, Radio, Calendar, Video, Music2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { formatExternalUrl } from '@/lib/openUrl'
 import type { EpisodioRecord } from '@/types/database'
 
@@ -179,29 +179,16 @@ export const EpisodeHighlight: React.FC<EpisodeHighlightProps> = ({
                   </div>
                 )}
 
-                {latestEpisode.youtube_url?.trim() ? (
-                  <a
-                    href={formatExternalUrl(latestEpisode.youtube_url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => {
-                      onWatchEpisode(latestEpisode)
-                    }}
-                    className="w-full gold-gradient text-vinho hover:opacity-95 font-bold py-3.5 min-h-[48px] text-xs sm:text-sm rounded-xl shadow-lg hover:shadow-xl flex items-center justify-center gap-2.5 transition-all hover:scale-[1.01] active:scale-[0.99] border border-dourado group cursor-pointer no-underline text-center"
-                  >
-                    <Play className="w-4 h-4 fill-vinho text-vinho shrink-0 group-hover:scale-110 transition-transform" />
-                    <span>Clique aqui para assistir nosso novo episódio do canal 🎬</span>
-                  </a>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={() => onWatchEpisode(latestEpisode)}
-                    className="w-full gold-gradient text-vinho hover:opacity-95 font-bold py-3.5 min-h-[48px] text-xs sm:text-sm rounded-xl shadow-lg hover:shadow-xl flex items-center justify-center gap-2.5 transition-all hover:scale-[1.01] active:scale-[0.99] border border-dourado group cursor-pointer"
-                  >
-                    <Play className="w-4 h-4 fill-vinho text-vinho shrink-0 group-hover:scale-110 transition-transform" />
-                    <span>Clique aqui para assistir nosso novo episódio do canal 🎬</span>
-                  </Button>
-                )}
+                <Link
+                  to={`/episodio/${latestEpisode.id}`}
+                  onClick={() => {
+                    onWatchEpisode(latestEpisode)
+                  }}
+                  className="w-full gold-gradient text-vinho hover:opacity-95 font-bold py-3.5 min-h-[48px] text-xs sm:text-sm rounded-xl shadow-lg hover:shadow-xl flex items-center justify-center gap-2.5 transition-all hover:scale-[1.01] active:scale-[0.99] border border-dourado group cursor-pointer no-underline text-center"
+                >
+                  <Play className="w-4 h-4 fill-vinho text-vinho shrink-0 group-hover:scale-110 transition-transform" />
+                  <span>Ver nosso novo episódio 🎬</span>
+                </Link>
               </div>
             )}
 

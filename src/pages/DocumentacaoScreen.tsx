@@ -773,6 +773,19 @@ export default function DocumentacaoScreen() {
                 conteúdo em nova aba; sem link cadastrado, nenhum botão aparece. No celular os
                 botões têm área de toque confortável (mínimo 44px) e ocupam a largura total do card.
               </p>
+              <p className="text-[#4B1E3F]/80 leading-relaxed">
+                <strong>Página individual do episódio (/episodio/:id):</strong> clicar em um
+                episódio do carrossel (ou no botão do destaque da Home) abre uma página dedicada,
+                com capa, número, título, data, descrição e convidados. Os botões{' '}
+                <strong>"Ouvir no Spotify"</strong> e <strong>"Assistir no YouTube"</strong> só
+                aparecem quando o link correspondente está cadastrado no painel. Nela também é
+                possível preencher (tudo opcional): <strong>Descrição</strong>,{' '}
+                <strong>Convidados</strong>, <strong>Biografia dos convidados</strong>,{' '}
+                <strong>Data do episódio</strong> e <strong>Foto dos convidados</strong> (usada como
+                capa quando não houver capa com IA). O episódio precisa estar com status{' '}
+                <strong>publicado</strong> para ser acessível — caso contrário, o visitante vê a
+                mensagem "Episódio não encontrado".
+              </p>
             </div>
 
             {/* Nossos Momentos */}

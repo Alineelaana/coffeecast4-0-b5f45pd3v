@@ -1,4 +1,6 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
+
 import {
   Dialog,
   DialogContent,
@@ -6,7 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { ExternalLink, Youtube, Sparkles, X, Music2 } from 'lucide-react'
+import { ExternalLink, Youtube, Sparkles, X, Music2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatExternalUrl } from '@/lib/openUrl'
 import { getCapaIaUrl } from '@/services/openaiCapa'
@@ -165,6 +167,17 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ open, onOpenChange, 
               )}
             </div>
           )}
+
+          {/* Link para a página individual do episódio (mesma aba) */}
+          <Link
+            to={`/episodio/${episode.id ?? ''}`}
+            className="w-full min-h-[44px] py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-dourado/40 hover:border-dourado text-marfim font-semibold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.98] no-underline cursor-pointer relative z-20"
+            onClick={() => onOpenChange(false)}
+          >
+            <Sparkles className="w-4 h-4 text-dourado shrink-0" />
+            <span>Ver episódio completo</span>
+            <ArrowRight className="w-4 h-4 text-dourado shrink-0" />
+          </Link>
 
           <p className="text-center text-[10px] sm:text-[11px] text-marfim/50 italic">
             O conteúdo será aberto em uma nova aba com total segurança.

@@ -15,6 +15,7 @@ import Index from '@/pages/Index'
 import ConvidadoScreen from '@/pages/ConvidadoScreen'
 import DepoimentoScreen from '@/pages/DepoimentoScreen'
 import RoteiroScreen from '@/pages/RoteiroScreen'
+import EpisodioScreen from '@/pages/EpisodioScreen'
 import PoliticaScreen from '@/pages/PoliticaScreen'
 import StorefrontPage from '@/pages/StorefrontPage'
 import LoginScreen from '@/pages/LoginScreen'
@@ -76,6 +77,7 @@ export default function App() {
             <Route path="/loja/:slug/*" element={<StorefrontPage />} />
             <Route path="/loja/:slug" element={<StorefrontPage />} />
             <Route path="/convidado" element={<ConvidadoScreen />} />
+            <Route path="/episodio/:id" element={<EpisodioScreen />} />
             <Route path="/roteiro" element={<RoteiroScreen />} />
             <Route path="/depoimento" element={<DepoimentoScreen />} />
             <Route path="/privacidade" element={<Navigate to="/politica/privacidade" replace />} />

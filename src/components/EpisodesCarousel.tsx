@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Play, Youtube, Sparkles, Music2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { openExternalUrl, formatExternalUrl } from '@/lib/openUrl'
+import { formatExternalUrl } from '@/lib/openUrl'
 import { getCapaIaUrl } from '@/services/openaiCapa'
 import type { EpisodioRecord } from '@/types/database'
 
@@ -14,6 +15,7 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
   episodios,
   onSelectEpisode,
 }) => {
+  const navigate = useNavigate()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -144,23 +146,6 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
     }, 120)
   }
 
-  // Abre o link do YouTube diretamente contornando bloqueios de iframe/pop-up
-  const openEpisodeDirectly = (ep: EpisodioRecord, e?: React.MouseEvent | React.KeyboardEvent) => {
-    const rawUrl = ep.youtube_url?.trim()
-    if (!rawUrl) {
-      if (onSelectEpisode) {
-        onSelectEpisode(ep)
-      }
-      return
-    }
-
-    const normalizedUrl = formatExternalUrl(rawUrl)
-    openExternalUrl(normalizedUrl, e?.nativeEvent || e)
-    if (onSelectEpisode) {
-      onSelectEpisode(ep)
-    }
-  }
-
   // Handler seguro de clique para card ou botão
   const handleEpisodeClick = (ep: EpisodioRecord, e: React.MouseEvent) => {
     // Se o usuário estava arrastando o carrossel, cancela a ação de clique/navegação
@@ -174,21 +159,12 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
       return
     }
 
-    // Se o evento veio de um <a> com href válido nativo, não precisamos chamar preventDefault
-    // a menos que não tenha URL ou tenhamos um callback personalizado
-    const rawUrl = ep.youtube_url?.trim()
-    if (!rawUrl) {
-      e.preventDefault()
-      if (onSelectEpisode) {
-        onSelectEpisode(ep)
-      }
-      return
-    }
-
-    // Chamamos o callback opcional sem cancelar o comportamento padrão do <a> se for clique nativo
     if (onSelectEpisode) {
       onSelectEpisode(ep)
     }
+    // Navega na MESMA aba para a página individual do episódio
+    e.preventDefault()
+    navigate(`/episodio/${ep.id}`)
   }
 
   if (!episodios || episodios.length === 0) {
@@ -258,8 +234,6 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
         }}
       >
         {episodios.map((ep) => {
-          const rawUrl = ep.youtube_url?.trim()
-          const episodeUrl = rawUrl ? formatExternalUrl(rawUrl) : undefined
           // Links opcionais de Spotify e YouTube (link_youtube) exibidos como botões dedicados
           const spotifyUrl = ep.link_spotify?.trim()
             ? formatExternalUrl(ep.link_spotify.trim())
@@ -273,21 +247,17 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
           return (
             <a
               key={ep.id}
-              href={episodeUrl || '#'}
-              target={episodeUrl ? '_blank' : undefined}
-              rel={episodeUrl ? 'noopener noreferrer' : undefined}
+              href={`/episodio/${ep.id}`}
               onClick={(e) => {
                 handleEpisodeClick(ep, e)
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                  if (!episodeUrl) {
-                    e.preventDefault()
-                    openEpisodeDirectly(ep, e)
-                  }
+                  e.preventDefault()
+                  navigate(`/episodio/${ep.id}`)
                 }
               }}
-              aria-label={`Episódio #${ep.numero}: ${ep.titulo}. Abrir e assistir em nova guia no YouTube.`}
+              aria-label={`Episódio #${ep.numero}: ${ep.titulo}. Abrir a página do episódio.`}
               className="flex-shrink-0 w-[240px] xs:w-[260px] sm:w-[290px] md:w-[320px] snap-start bg-gradient-to-b from-vinho-dark via-vinho to-vinho-dark border border-dourado/35 hover:border-dourado rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-dourado no-underline select-none"
             >
               {/* Brilho decorativo no canto superior do card */}
