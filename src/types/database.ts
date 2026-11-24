@@ -49,6 +49,8 @@ export interface EpisodioRecord {
   status?: EpisodioStatus
   data_publicacao_programada?: string
   capa_ia?: string
+  link_spotify?: string
+  link_youtube?: string
   collectionId?: string
   collectionName?: string
   created: string

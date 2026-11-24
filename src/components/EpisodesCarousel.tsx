@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Play, Youtube, Sparkles } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Play, Youtube, Sparkles, Music2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { openExternalUrl, formatExternalUrl } from '@/lib/openUrl'
 import { getCapaIaUrl } from '@/services/openaiCapa'
@@ -260,6 +260,13 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
         {episodios.map((ep) => {
           const rawUrl = ep.youtube_url?.trim()
           const episodeUrl = rawUrl ? formatExternalUrl(rawUrl) : undefined
+          // Links opcionais de Spotify e YouTube (link_youtube) exibidos como botões dedicados
+          const spotifyUrl = ep.link_spotify?.trim()
+            ? formatExternalUrl(ep.link_spotify.trim())
+            : ''
+          const linkYoutubeUrl = ep.link_youtube?.trim()
+            ? formatExternalUrl(ep.link_youtube.trim())
+            : ''
           // Capa gerada por IA (ChatGPT) tem prioridade; sem capa IA, o card usa o estilo clássico
           const capaIaUrl = getCapaIaUrl(ep)
 
@@ -329,12 +336,43 @@ export const EpisodesCarousel: React.FC<EpisodesCarouselProps> = ({
                 </h3>
               </div>
 
-              {/* Rodapé do Card: Botão de ação visual com área de toque mínima confortável */}
-              <div className="pt-3 sm:pt-4 border-t border-white/10 mt-3 relative z-10 pointer-events-none">
+              {/* Rodapé do Card: Botões de ação com área de toque mínima confortável (44px) */}
+              <div className="pt-3 sm:pt-4 border-t border-white/10 mt-3 relative z-10">
+                {/* Botão principal de assistir (comportamento existente preservado) */}
                 <div className="w-full bg-dourado group-hover:bg-dourado-dark text-vinho font-bold py-2.5 sm:py-2.5 min-h-[44px] text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all group-hover:scale-[1.02] active:scale-[0.98]">
                   <Play className="w-3.5 h-3.5 fill-vinho shrink-0" />
                   <span>Clique aqui para assistir</span>
                 </div>
+
+                {/* Botões dedicados de Spotify e YouTube — só aparecem quando o episódio tem o link */}
+                {(spotifyUrl || linkYoutubeUrl) && (
+                  <div className="grid grid-cols-1 gap-2 mt-2 min-w-0">
+                    {spotifyUrl && (
+                      <a
+                        href={spotifyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full min-h-[44px] px-3 py-2.5 rounded-xl bg-[#1DB954] hover:bg-[#1ed760] text-[#0b2e17] font-bold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.98] no-underline cursor-pointer"
+                      >
+                        <Music2 className="w-4 h-4 shrink-0" />
+                        <span>Ouvir no Spotify</span>
+                      </a>
+                    )}
+                    {linkYoutubeUrl && (
+                      <a
+                        href={linkYoutubeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full min-h-[44px] px-3 py-2.5 rounded-xl bg-[#FF0000] hover:bg-[#e60000] text-white font-bold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.98] no-underline cursor-pointer"
+                      >
+                        <Youtube className="w-4 h-4 fill-white text-transparent shrink-0" />
+                        <span>Assistir no YouTube</span>
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             </a>
           )

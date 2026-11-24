@@ -49,6 +49,8 @@ export default function AdminEpisodesScreen() {
   const [numero, setNumero] = useState<string>('')
   const [titulo, setTitulo] = useState<string>('')
   const [youtubeUrl, setYoutubeUrl] = useState<string>('')
+  const [linkSpotify, setLinkSpotify] = useState<string>('')
+  const [linkYoutube, setLinkYoutube] = useState<string>('')
   const [dataProgramada, setDataProgramada] = useState<string>('')
   const [horaProgramada, setHoraProgramada] = useState<string>('10:00')
   const [saving, setSaving] = useState(false)
@@ -146,6 +148,8 @@ export default function AdminEpisodesScreen() {
     setNumero(String(nextNum))
     setTitulo('')
     setYoutubeUrl('')
+    setLinkSpotify('')
+    setLinkYoutube('')
     setDataProgramada('')
     setModalOpen(true)
   }
@@ -157,6 +161,8 @@ export default function AdminEpisodesScreen() {
     setNumero(String(nextNum))
     setTitulo('')
     setYoutubeUrl('')
+    setLinkSpotify('')
+    setLinkYoutube('')
     // Sugere a data de amanhã às 10:00 (horário padrão dos episódios aos sábados)
     const amanha = new Date()
     amanha.setDate(amanha.getDate() + 1)
@@ -174,6 +180,8 @@ export default function AdminEpisodesScreen() {
     setNumero(ep.numero !== undefined && ep.numero !== null ? String(ep.numero) : '1')
     setTitulo(ep.titulo || '')
     setYoutubeUrl(ep.youtube_url || '')
+    setLinkSpotify(ep.link_spotify || '')
+    setLinkYoutube(ep.link_youtube || '')
     if (ep.data_publicacao_programada) {
       try {
         const d = new Date(ep.data_publicacao_programada)
@@ -216,6 +224,13 @@ export default function AdminEpisodesScreen() {
     )
   }
 
+  // Validação opcional da URL do Spotify (só valida quando algo foi digitado)
+  const isValidOptionalUrl = (url: string) => {
+    const trimmed = url.trim()
+    if (!trimmed) return true
+    return /^https?:\/\/.+/i.test(trimmed)
+  }
+
   // Salvar Episódio Normal (Publicação Imediata / Edição)
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -241,10 +256,26 @@ export default function AdminEpisodesScreen() {
         return
       }
 
+      if (!isValidOptionalUrl(linkSpotify)) {
+        toast.error('O link do Spotify deve começar com https:// (ou ser deixado em branco).')
+        setSaving(false)
+        return
+      }
+
+      if (!isValidOptionalUrl(linkYoutube)) {
+        toast.error(
+          'O link alternativo do YouTube deve começar com https:// (ou ser deixado em branco).',
+        )
+        setSaving(false)
+        return
+      }
+
       const payload = {
         numero: numInt,
         titulo: titulo.trim(),
         youtube_url: youtubeUrl.trim(),
+        link_spotify: linkSpotify.trim(),
+        link_youtube: linkYoutube.trim(),
         status: 'publicado' as const,
         data_publicacao_programada: '',
       }
@@ -316,6 +347,20 @@ export default function AdminEpisodesScreen() {
         return
       }
 
+      if (!isValidOptionalUrl(linkSpotify)) {
+        toast.error('O link do Spotify deve começar com https:// (ou ser deixado em branco).')
+        setSaving(false)
+        return
+      }
+
+      if (!isValidOptionalUrl(linkYoutube)) {
+        toast.error(
+          'O link alternativo do YouTube deve começar com https:// (ou ser deixado em branco).',
+        )
+        setSaving(false)
+        return
+      }
+
       if (!dataProgramada) {
         toast.error('Selecione a data para programar a publicação do episódio.')
         setSaving(false)
@@ -347,6 +392,8 @@ export default function AdminEpisodesScreen() {
         numero: numInt,
         titulo: titulo.trim(),
         youtube_url: youtubeUrl.trim(),
+        link_spotify: linkSpotify.trim(),
+        link_youtube: linkYoutube.trim(),
         status: 'programado' as const,
         data_publicacao_programada: dataIsoString,
       }
@@ -865,6 +912,40 @@ export default function AdminEpisodesScreen() {
               />
             </div>
 
+            <div className="space-y-1.5">
+              <Label htmlFor="ep-spotify" className="text-xs font-semibold text-vinho">
+                Link do Spotify (opcional)
+              </Label>
+              <Input
+                id="ep-spotify"
+                type="url"
+                placeholder="https://open.spotify.com/episode/..."
+                value={linkSpotify}
+                onChange={(e) => setLinkSpotify(e.target.value)}
+                className="bg-white border-vinho/20 text-sm focus-visible:ring-dourado"
+              />
+              <p className="text-[11px] text-vinho/60">
+                Se preenchido, o site exibe o botão "Ouvir no Spotify" neste episódio.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="ep-link-youtube" className="text-xs font-semibold text-vinho">
+                Link do YouTube (opcional)
+              </Label>
+              <Input
+                id="ep-link-youtube"
+                type="url"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={linkYoutube}
+                onChange={(e) => setLinkYoutube(e.target.value)}
+                className="bg-white border-vinho/20 text-sm focus-visible:ring-dourado"
+              />
+              <p className="text-[11px] text-vinho/60">
+                Se preenchido, o site exibe o botão "Assistir no YouTube" neste episódio.
+              </p>
+            </div>
+
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
@@ -954,6 +1035,42 @@ export default function AdminEpisodesScreen() {
               />
               <p className="text-[11px] text-vinho/60">
                 Aceita URLs completas do YouTube, formatos curtos (youtu.be) ou YouTube Shorts.
+              </p>
+            </div>
+
+            {/* 3.1 Link do Spotify (opcional) */}
+            <div className="space-y-1.5">
+              <Label htmlFor="prog-ep-spotify" className="text-xs font-semibold text-vinho">
+                3.1 Link do Spotify (opcional)
+              </Label>
+              <Input
+                id="prog-ep-spotify"
+                type="url"
+                placeholder="https://open.spotify.com/episode/..."
+                value={linkSpotify}
+                onChange={(e) => setLinkSpotify(e.target.value)}
+                className="bg-white border-vinho/20 text-sm focus-visible:ring-dourado"
+              />
+              <p className="text-[11px] text-vinho/60">
+                Se preenchido, o site exibe o botão "Ouvir no Spotify" neste episódio.
+              </p>
+            </div>
+
+            {/* 3.2 Link do YouTube alternativo (opcional) */}
+            <div className="space-y-1.5">
+              <Label htmlFor="prog-ep-link-youtube" className="text-xs font-semibold text-vinho">
+                3.2 Link do YouTube (opcional)
+              </Label>
+              <Input
+                id="prog-ep-link-youtube"
+                type="url"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={linkYoutube}
+                onChange={(e) => setLinkYoutube(e.target.value)}
+                className="bg-white border-vinho/20 text-sm focus-visible:ring-dourado"
+              />
+              <p className="text-[11px] text-vinho/60">
+                Se preenchido, o site exibe o botão "Assistir no YouTube" neste episódio.
               </p>
             </div>
 

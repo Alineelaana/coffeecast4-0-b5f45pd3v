@@ -765,6 +765,14 @@ export default function DocumentacaoScreen() {
                 Cadastro, numeração e atualização dos episódios exibidos no carrossel da Home.
                 Suporte direto a links de vídeos tradicionais e Shorts do YouTube.
               </p>
+              <p className="text-[#4B1E3F]/80 leading-relaxed">
+                Cada episódio também aceita <strong>Link do Spotify</strong> e{' '}
+                <strong>Link do YouTube</strong> (opcionais). Quando preenchidos, o site público
+                exibe os botões <strong>"Ouvir no Spotify"</strong> e{' '}
+                <strong>"Assistir no YouTube"</strong> no card do episódio e no modal, abrindo o
+                conteúdo em nova aba; sem link cadastrado, nenhum botão aparece. No celular os
+                botões têm área de toque confortável (mínimo 44px) e ocupam a largura total do card.
+              </p>
             </div>
 
             {/* Nossos Momentos */}

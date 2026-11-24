@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { ExternalLink, Youtube, Sparkles, X } from 'lucide-react'
+import { ExternalLink, Youtube, Sparkles, X, Music2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatExternalUrl } from '@/lib/openUrl'
 import { getCapaIaUrl } from '@/services/openaiCapa'
@@ -20,6 +20,8 @@ interface EpisodeModalProps {
     titulo: string
     youtube_url: string
     capa_ia?: string
+    link_spotify?: string
+    link_youtube?: string
     collectionId?: string
     collectionName?: string
   } | null
@@ -29,6 +31,13 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ open, onOpenChange, 
   if (!episode) return null
 
   const validUrl = episode.youtube_url?.trim() ? formatExternalUrl(episode.youtube_url) : ''
+  // Links opcionais dedicados de Spotify e YouTube exibidos como botões adicionais no modal
+  const validSpotifyUrl = episode.link_spotify?.trim()
+    ? formatExternalUrl(episode.link_spotify)
+    : ''
+  const validLinkYoutubeUrl = episode.link_youtube?.trim()
+    ? formatExternalUrl(episode.link_youtube)
+    : ''
   // Capa gerada por IA (ChatGPT) — exibida quando o episódio já a possui; sem capa, mantém o layout clássico
   const capaIaUrl = getCapaIaUrl(episode)
 
@@ -127,8 +136,38 @@ export const EpisodeModal: React.FC<EpisodeModalProps> = ({ open, onOpenChange, 
             </Button>
           </div>
 
+          {/* Botões dedicados de Spotify e YouTube — só aparecem quando o episódio tem o link */}
+          {(validSpotifyUrl || validLinkYoutubeUrl) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 relative z-20">
+              {validSpotifyUrl && (
+                <a
+                  href={validSpotifyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full min-h-[46px] py-3 rounded-xl bg-[#1DB954] hover:bg-[#1ed760] text-[#0b2e17] font-bold text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] no-underline cursor-pointer"
+                >
+                  <Music2 className="w-4 h-4 shrink-0" />
+                  <span>Ouvir no Spotify</span>
+                  <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                </a>
+              )}
+              {validLinkYoutubeUrl && (
+                <a
+                  href={validLinkYoutubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full min-h-[46px] py-3 rounded-xl bg-[#FF0000] hover:bg-[#e60000] text-white font-bold text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] no-underline cursor-pointer"
+                >
+                  <Youtube className="w-4 h-4 fill-white text-transparent shrink-0" />
+                  <span>Assistir no YouTube</span>
+                  <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                </a>
+              )}
+            </div>
+          )}
+
           <p className="text-center text-[10px] sm:text-[11px] text-marfim/50 italic">
-            O vídeo será aberto em uma nova aba com total segurança.
+            O conteúdo será aberto em uma nova aba com total segurança.
           </p>
         </div>
       </DialogContent>

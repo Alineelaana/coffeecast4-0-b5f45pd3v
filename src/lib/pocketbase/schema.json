@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T11:57:28.587Z",
+  "generatedAt": "2026-11-24T12:00:34.297Z",
   "collections": [
     {
       "name": "users",
@@ -183,6 +183,18 @@
         {
           "name": "capa_ia",
           "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "link_spotify",
+          "type": "url",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "link_youtube",
+          "type": "url",
           "required": false,
           "system": false
         }

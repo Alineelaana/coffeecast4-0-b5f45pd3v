@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Play, Sparkles, Youtube, Radio, Calendar, Video } from 'lucide-react'
+import { Play, Sparkles, Youtube, Radio, Calendar, Video, Music2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatExternalUrl } from '@/lib/openUrl'
 import type { EpisodioRecord } from '@/types/database'
@@ -64,6 +64,14 @@ export const EpisodeHighlight: React.FC<EpisodeHighlightProps> = ({
     periodicidadeTexto && periodicidadeTexto.trim()
       ? periodicidadeTexto
       : 'Todo sábado às 10h sai um episódio novo no canal do YouTube!'
+
+  // Links opcionais dedicados do último episódio (Spotify / link_youtube)
+  const spotifyUrl = latestEpisode?.link_spotify?.trim()
+    ? formatExternalUrl(latestEpisode.link_spotify.trim())
+    : ''
+  const linkYoutubeUrl = latestEpisode?.link_youtube?.trim()
+    ? formatExternalUrl(latestEpisode.link_youtube.trim())
+    : ''
 
   return (
     <div className="w-full relative">
@@ -142,6 +150,34 @@ export const EpisodeHighlight: React.FC<EpisodeHighlightProps> = ({
                 >
                   {latestEpisode.titulo}
                 </p>
+
+                {/* Links dedicados do último episódio — só quando existirem */}
+                {(spotifyUrl || linkYoutubeUrl) && (
+                  <div className="grid grid-cols-1 gap-2 min-w-0">
+                    {spotifyUrl && (
+                      <a
+                        href={spotifyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full min-h-[44px] px-3 py-2.5 rounded-xl bg-[#1DB954] hover:bg-[#1ed760] text-[#0b2e17] font-bold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.98] no-underline cursor-pointer"
+                      >
+                        <Music2 className="w-4 h-4 shrink-0" />
+                        <span>Ouvir no Spotify</span>
+                      </a>
+                    )}
+                    {linkYoutubeUrl && (
+                      <a
+                        href={linkYoutubeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full min-h-[44px] px-3 py-2.5 rounded-xl bg-[#FF0000] hover:bg-[#e60000] text-white font-bold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.98] no-underline cursor-pointer"
+                      >
+                        <Youtube className="w-4 h-4 fill-white text-transparent shrink-0" />
+                        <span>Assistir no YouTube</span>
+                      </a>
+                    )}
+                  </div>
+                )}
 
                 {latestEpisode.youtube_url?.trim() ? (
                   <a
