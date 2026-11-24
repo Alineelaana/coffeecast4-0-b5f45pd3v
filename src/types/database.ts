@@ -51,6 +51,11 @@ export interface EpisodioRecord {
   capa_ia?: string
   link_spotify?: string
   link_youtube?: string
+  descricao?: string
+  convidados?: string
+  biografia_convidados?: string
+  data_episodio?: string
+  foto_convidados?: string
   collectionId?: string
   collectionName?: string
   created: string
