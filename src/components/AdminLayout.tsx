@@ -46,6 +46,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useStorefront } from '@/context/StorefrontContext'
 import AdminLayoutLogicaTela from '@/components/admin/AdminLayoutLogicaTela'
+import NineOnlineChat from '@/components/admin/NineOnlineChat'
 
 export default function AdminLayout() {
   const { user, logout, role, isMaster, isAdm, hasScreenPermission } = useAuth()
@@ -1506,6 +1507,11 @@ export default function AdminLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* NINE ONLINE — assistente virtual do painel, embutida na lateral direita.
+          Só existe aqui dentro (usuário logado na área administrativa); some se a
+          sessão expirar, pois o AdminLayout nem é renderizado. */}
+      <NineOnlineChat />
     </div>
   )
 }
