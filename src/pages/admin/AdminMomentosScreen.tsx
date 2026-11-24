@@ -6,7 +6,6 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import pb from '@/lib/pocketbase/client'
-import { formatDateBR } from '@/lib/formatters'
 import { otimizarImagem } from '@/lib/imagemOptimizer'
 import type { MomentoRecord } from '@/types/database'
 import { Button } from '@/components/ui/button'
@@ -40,8 +39,7 @@ export default function AdminMomentosScreen() {
   const [excluindo, setExcluindo] = useState<string | null>(null)
 
   const [editandoId, setEditandoId] = useState<string | null>(null)
-  const [titulo, setTitulo] = useState('')
-  const [data, setData] = useState('')
+  const [legenda, setLegenda] = useState('')
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [infoOtimizacao, setInfoOtimizacao] = useState<string | null>(null)
@@ -68,8 +66,7 @@ export default function AdminMomentosScreen() {
 
   const abrirNovo = () => {
     setEditandoId(null)
-    setTitulo('')
-    setData('')
+    setLegenda('')
     setArquivo(null)
     setPreviewUrl('')
     setInfoOtimizacao(null)
@@ -78,8 +75,7 @@ export default function AdminMomentosScreen() {
 
   const abrirEdicao = (m: MomentoRecord) => {
     setEditandoId(m.id)
-    setTitulo(m.titulo || '')
-    setData(formatDateBR(m.data))
+    setLegenda(m.legenda || '')
     setArquivo(null)
     setPreviewUrl(m.imagem ? getFileUrl(m, m.imagem, '600x0') : '')
     setInfoOtimizacao(null)
@@ -104,10 +100,6 @@ export default function AdminMomentosScreen() {
   }
 
   const handleSalvar = async () => {
-    if (!titulo.trim()) {
-      toast.error('Informe o título do momento.')
-      return
-    }
     if (!editandoId && !arquivo) {
       toast.error('Selecione uma imagem para o momento.')
       return
@@ -115,8 +107,7 @@ export default function AdminMomentosScreen() {
     setSalvando(true)
     try {
       const formData = new FormData()
-      formData.append('titulo', titulo.trim())
-      if (data) formData.append('data', data)
+      if (legenda.trim()) formData.append('legenda', legenda.trim())
       if (arquivo) formData.append('imagem', arquivo)
       if (editandoId) {
         await pb.collection('momentos').update(editandoId, formData)
@@ -173,24 +164,21 @@ export default function AdminMomentosScreen() {
             <TableHeader>
               <TableRow className="bg-marfim/60">
                 <TableHead className="text-vinho font-bold text-[11px]">Imagem</TableHead>
-                <TableHead className="text-vinho font-bold text-[11px]">Título</TableHead>
-                <TableHead className="text-vinho font-bold text-[11px] hidden md:table-cell">
-                  Data
-                </TableHead>
+                <TableHead className="text-vinho font-bold text-[11px]">Legenda</TableHead>
                 <TableHead className="text-vinho font-bold text-[11px] text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {carregando && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8">
+                  <TableCell colSpan={3} className="text-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-dourado mx-auto" />
                   </TableCell>
                 </TableRow>
               )}
               {!carregando && momentos.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-xs text-vinho/60 py-8">
+                  <TableCell colSpan={3} className="text-center text-xs text-vinho/60 py-8">
                     Nenhum momento cadastrado ainda.
                   </TableCell>
                 </TableRow>
@@ -201,7 +189,7 @@ export default function AdminMomentosScreen() {
                     {m.imagem ? (
                       <img
                         src={getFileUrl(m, m.imagem, '100x100')}
-                        alt={m.titulo}
+                        alt={m.legenda || 'Momento'}
                         loading="lazy"
                         decoding="async"
                         className="w-12 h-12 rounded-lg object-cover border border-vinho/10"
@@ -213,10 +201,7 @@ export default function AdminMomentosScreen() {
                     )}
                   </TableCell>
                   <TableCell className="py-3 text-xs font-semibold text-vinho">
-                    {m.titulo || '(sem título)'}
-                  </TableCell>
-                  <TableCell className="py-3 text-xs text-vinho/70 hidden md:table-cell">
-                    {formatDateBR(m.data)}
+                    {m.legenda || '(sem legenda)'}
                   </TableCell>
                   <TableCell className="py-3 text-right">
                     <div className="flex items-center justify-end gap-1.5">
@@ -259,20 +244,11 @@ export default function AdminMomentosScreen() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-vinho">Título</Label>
+              <Label className="text-xs font-bold text-vinho">Legenda</Label>
               <Input
-                value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
+                value={legenda}
+                onChange={(e) => setLegenda(e.target.value)}
                 placeholder="Ex.: Gravação com convidada especial"
-                className="bg-white"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-vinho">Data</Label>
-              <Input
-                type="date"
-                value={data}
-                onChange={(e) => setData(e.target.value)}
                 className="bg-white"
               />
             </div>

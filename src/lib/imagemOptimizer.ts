@@ -7,10 +7,28 @@ export const LARGURA_MAXIMA_UPLOAD = 1600
 export const QUALIDADE_JPEG = 0.8
 
 /**
- * Redimensiona a imagem se for maior que 1600px de largura e comprime em JPEG.
+ * Otimiza a imagem para upload: redimensiona se for maior que 1600px de
+ * largura e comprime em JPEG ~80%. Retorna o arquivo otimizado e uma
+ * mensagem descritiva do que foi feito (para exibir no admin).
  * Imagens menores ou PNG com transparência são devolvidas como estão (o
  * PocketBase aplica o limite de tamanho já configurado na collection).
  */
+export async function otimizarImagem(
+  file: File,
+  larguraMax = LARGURA_MAXIMA_UPLOAD,
+  qualidade = QUALIDADE_JPEG,
+): Promise<{ file: File; info: string | null }> {
+  const original = await otimizarImagemParaUpload(file, larguraMax, qualidade)
+  if (original === file) return { file, info: null }
+  const porcentagem = Math.round((1 - original.size / file.size) * 100)
+  const kb = (bytes: number) => Math.round(bytes / 1024)
+  return {
+    file: original,
+    info: `Imagem otimizada: ${kb(file.size)} KB → ${kb(original.size)} KB (-${Math.max(0, porcentagem)}%).`,
+  }
+}
+
+/** Redimensiona a imagem se for maior que 1600px de largura e comprime em JPEG. */
 export async function otimizarImagemParaUpload(
   file: File,
   larguraMax = LARGURA_MAXIMA_UPLOAD,
