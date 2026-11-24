@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import DashboardLogicaTela from '@/components/admin/DashboardLogicaTela'
+import PendenciasHoje from '@/components/admin/PendenciasHoje'
 
 import { useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -205,6 +206,9 @@ export default function DashboardScreen() {
           <DashboardLogicaTela />
         </div>
       </div>
+
+      {/* Pendências de hoje — contadores reais, clicáveis e filtrados por permissão de tela */}
+      <PendenciasHoje />
 
       {/* 4 Cards de Métricas Principais */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

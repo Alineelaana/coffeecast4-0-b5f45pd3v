@@ -41,14 +41,14 @@ const SECOES: { titulo: string; itens: string[] }[] = [
     ],
   },
   {
-    titulo: '🗂️ Fontes de dados (somente leitura)',
+    titulo: '🗂️ Fontes de dados (leitura + UMA escrita)',
     itens: [
       'Episódios e status de publicação → coleção "episodios".',
       'Gravações agendadas, datas e convidados → coleção "agenda".',
       'Leads e status comercial (ex.: "Aguardando contato") → coleção "contatos".',
       'Tarefas de retorno → coleção "nine_tarefas". Roteiros de convidados → "roteiros_convidados".',
       'Convites, portfolios, momentos, depoimentos e integrantes → coleções "convites", "portfolios", "momentos", "depoimentos" e "integrantes".',
-      'Todas as ferramentas do agente são somente leitura (list/read): a Nine Online NÃO cria, NÃO edita e NÃO exclui registros — ela indica a tela correta do painel para a ação.',
+      'Consultas são sempre somente leitura. A ÚNICA escrita permitida é CRIAR tarefas na "nine_tarefas" — e apenas isso: a Nine Online NÃO edita, NÃO exclui e NÃO cria nenhum outro tipo de registro (episódio, lead, gravação, roteiro…), indicando a tela correta do painel para essas ações.',
     ],
   },
   {
