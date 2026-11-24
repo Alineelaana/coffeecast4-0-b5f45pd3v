@@ -57,7 +57,7 @@ export default function EpisodioScreen() {
           setEpisodio(ep)
           // Contador público: 0 quando nunca foi visto; nunca bloqueia a renderização
           setVisualizacoes(typeof ep.visualizacoes === 'number' ? ep.visualizacoes : 0)
-          // Registra a visualização em segundo plano (idempotente por aba — ver Lógica da Tela)
+          // Registra a visualização em segundo plano (uma por carregamento da página — ver Lógica da Tela)
           registrarVisualizacao(ep.id).then((contabilizada) => {
             if (contabilizada && !cancelado) {
               setVisualizacoes((atual) => (typeof atual === 'number' ? atual + 1 : 1))

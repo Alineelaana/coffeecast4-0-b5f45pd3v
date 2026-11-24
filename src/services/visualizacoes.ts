@@ -1,55 +1,37 @@
 // Serviço de registro de visualização de episódio (página pública /episodio/:id).
 // Chama o hook de backend episodio_visualizacao.js (POST /backend/v1/episodios/visualizacao).
 //
-// Antidupla-contagem no navegador: um carimbo por episódio é guardado em sessionStorage
-// enquanto a aba vive — recarregar a página (F5) NÃO repete o carimbo, mas abrir o
-// episódio de novo em outra visita/aba conta normalmente (com janela de 30s no servidor).
+// Antidupla-contagem no navegador: o guarda vive APENAS na memória deste módulo
+// (um carregamento da página = um módulo novo = guarda zerado). Cada carregamento
+// efetivo da página conta sempre — recarregar (F5) AUMENTA o contador, de propósito.
+// O guarda existe só para o duplo-invocação do effect no React (StrictMode /
+// re-render): a segunda chamada do MESMO carregamento não repete a contagem.
 
 import pb from '@/lib/pocketbase/client'
 
-const CHAVE_SESSAO = 'cc4_visualizacoes_episodio'
-
-function carimbosDaSessao(): Record<string, string> {
-  try {
-    const bruto = sessionStorage.getItem(CHAVE_SESSAO)
-    if (!bruto) return {}
-    const parsed = JSON.parse(bruto) as Record<string, string>
-    return parsed && typeof parsed === 'object' ? parsed : {}
-  } catch {
-    return {}
-  }
-}
-
-function salvarCarimbos(mapa: Record<string, string>) {
-  try {
-    sessionStorage.setItem(CHAVE_SESSAO, JSON.stringify(mapa))
-  } catch {
-    // sessionStorage indisponível (modo privado etc.) — segue sem persistir
-  }
-}
+// Ids de episódio já contabilizados NESTE carregamento da página (em memória, volátil).
+const jaContabilizadosNesteCarregamento = new Set<string>()
 
 /**
- * Registra uma visualização (idempotente por aba): retorna true apenas na PRIMEIRA
- * chamada bem-sucedida por episódio naquela aba do navegador.
+ * Registra uma visualização (uma por carregamento efetivo da página): retorna true
+ * apenas na PRIMEIRA chamada bem-sucedida por episódio dentro deste carregamento —
+ * recarregar a página (F5) recomeça do zero e conta de novo, por design.
  */
 export async function registrarVisualizacao(episodioId: string): Promise<boolean> {
   if (!episodioId) return false
 
-  const carimbos = carimbosDaSessao()
-  if (carimbos[episodioId]) {
-    // Já contabilizamos este episódio nesta aba — não repete (evita dupla contagem no refresh)
+  if (jaContabilizadosNesteCarregamento.has(episodioId)) {
+    // Já contabilizado neste mesmo carregamento (duplo effect do React) — não repete
     return false
   }
 
-  const carimbo = String(Date.now())
   try {
     const res = await pb.send('/backend/v1/episodios/visualizacao', {
       method: 'POST',
-      body: { episodio_id: episodioId, carimbo },
+      body: { episodio_id: episodioId },
     })
     if (res && (res as { sucesso?: boolean }).sucesso) {
-      carimbos[episodioId] = carimbo
-      salvarCarimbos(carimbos)
+      jaContabilizadosNesteCarregamento.add(episodioId)
       return (res as { contabilizado?: boolean }).contabilizado === true
     }
     return false
