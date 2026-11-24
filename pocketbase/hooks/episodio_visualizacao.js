@@ -46,6 +46,21 @@ routerAdd(
       episodio.set('ultima_visualizacao', new Date().toISOString())
       $app.save(episodio)
 
+      // Histórico por período: um registro por visualização na coleção de eventos.
+      // $app.save no hook ignora as regras de API — o create público continua bloqueado.
+      // Se a coleção não existir numa cópia antiga do banco, a visualização NÃO é
+      // descartada: só o histórico fica sem o evento.
+      try {
+        const evento = new Record($app.findCollectionByNameOrId('episodio_visualizacoes'))
+        evento.set('episodio', episodio.id)
+        $app.save(evento)
+      } catch (errHist) {
+        console.log(
+          '[episodio_visualizacao] Falha ao registrar histórico de visualização:',
+          errHist,
+        )
+      }
+
       return e.json(200, {
         sucesso: true,
         contabilizado: true,

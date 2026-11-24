@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T13:48:12.480Z",
+  "generatedAt": "2026-11-24T14:03:57.498Z",
   "collections": [
     {
       "name": "users",
@@ -3640,6 +3640,44 @@
       "indexes": [
         "CREATE INDEX idx_patrocinadores_empresa ON patrocinadores (empresa)",
         "CREATE INDEX idx_patrocinadores_status ON patrocinadores (status)"
+      ]
+    },
+    {
+      "name": "episodio_visualizacoes",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role ~ 'master' || @request.auth.role ~ 'adm' || @request.auth.role ~ 'gerencial')",
+        "view": "@request.auth.id != '' && (@request.auth.role ~ 'master' || @request.auth.role ~ 'adm' || @request.auth.role ~ 'gerencial')",
+        "create": null,
+        "update": null,
+        "delete": null
+      },
+      "fields": [
+        {
+          "name": "episodio",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "episodios"
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_episodio_visualizacoes_episodio_created ON episodio_visualizacoes (episodio, created)",
+        "CREATE INDEX idx_episodio_visualizacoes_created ON episodio_visualizacoes (created)"
       ]
     }
   ]

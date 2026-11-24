@@ -43,6 +43,9 @@ const SECOES: { titulo: string; itens: string[] }[] = [
       'Próximas Gravações: os 5 compromissos futuros mais próximos, com convidado(a) e data — clique em "Ver todas" para abrir a Agenda.',
       'Últimas Propostas Recebidas: os 5 contatos mais recentes com o status de atendimento — clique em "Ver todas" para abrir Contatos & Leads.',
       'Distribuição de Gastos: gráfico real por categoria (gravação, edição, equipamento, marketing etc.), somando apenas despesas.',
+      'Estatísticas de Visualização: episódio mais visto, total geral e ranking (card e gráfico só para quem tem a tela Episódios liberada).',
+      'Visualizações por período: gráfico de área com a evolução das visualizações somadas de todos os episódios — seletor de período (7/30/90 dias) e granularidade (Dia, Semana ou Mês). Períodos sem visualização aparecem como ZERO (série contínua).',
+      'IMPORTANTE: o histórico por período começa a valer a partir da publicação desta versão — o acumulado antigo dos episódios não tem datas, então o passado não aparece no gráfico. Cada visualização registrada cria um evento anônimo na coleção "episodio_visualizacoes" (sem IP nem identificação), escrita pelo mesmo hook do contador.',
     ],
   },
   {

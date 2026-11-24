@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import DashboardLogicaTela from '@/components/admin/DashboardLogicaTela'
 import PendenciasHoje from '@/components/admin/PendenciasHoje'
 import EpisodiosMaisVistos from '@/components/admin/EpisodiosMaisVistos'
+import GraficoVisualizacoesPeriodo from '@/components/admin/GraficoVisualizacoesPeriodo'
 
 import { useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -292,6 +293,8 @@ export default function DashboardScreen() {
 
       {/* Estatísticas de Visualizações dos Episódios (regra da matriz: só tela Episódios) */}
       <EpisodiosMaisVistos episodios={episodios} loading={loading} />
+      {/* Gráfico de visualizações por período (mesma regra de permissão do card acima) */}
+      <GraficoVisualizacoesPeriodo />
 
       {/* Gráfico Visual de Gastos + Resumo Financeiro */}
       <div className="bg-white border border-vinho/10 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">

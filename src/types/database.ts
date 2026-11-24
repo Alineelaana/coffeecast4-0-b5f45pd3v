@@ -109,6 +109,13 @@ export interface DepoimentoConvidadoRecord {
   updated: string
 }
 
+export interface EpisodioVisualizacaoRecord {
+  id: string
+  episodio: string
+  created: string
+  updated: string
+}
+
 export interface MomentoRecord {
   id: string
   legenda?: string

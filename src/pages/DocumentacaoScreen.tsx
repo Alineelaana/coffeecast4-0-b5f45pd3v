@@ -806,7 +806,19 @@ export default function DocumentacaoScreen() {
                 <strong>"Estatísticas de Visualização"</strong>, com o{' '}
                 <strong>Episódio mais visto</strong>, o total geral e o ranking dos 3 mais vistos —
                 visível apenas para quem tem acesso à tela Episódios na matriz de permissões (Master
-                e Gerencial sempre; ADM somente se a tela estiver liberada).
+                e Gerencial sempre; ADM somente se a tela estiver liberada). Abaixo do card, o{' '}
+                <strong>gráfico "Visualizações por período"</strong> mostra a evolução das
+                visualizações somadas de todos os episódios, com seletor de período (7, 30 ou 90
+                dias) e granularidade <strong>Dia</strong>, <strong>Semana</strong> ou{' '}
+                <strong>Mês</strong>; períodos sem visualização aparecem como zero. Cada
+                visualização também cria um evento anônimo na coleção{' '}
+                <em>episodio_visualizacoes</em> (só o episódio e a data — sem IP nem identificação).
+                <strong>
+                  {' '}
+                  O histórico por período começa a valer a partir da publicação desta versão
+                </strong>
+                : o acumulado antigo dos episódios não tem datas, então o passado não aparece no
+                gráfico — a série é construída a partir dos eventos registrados daqui em diante.
               </p>
 
               <p className="text-[#4B1E3F]/80 leading-relaxed">
