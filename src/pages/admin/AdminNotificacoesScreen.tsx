@@ -23,9 +23,21 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
+// Registro da collection "notificacoes" (notificações automáticas do sistema)
+interface NotificacaoSistemaRecord {
+  id: string
+  tipo: 'lead' | 'roteiro' | 'gravacao'
+  titulo: string
+  mensagem: string
+  referencia_tipo?: string
+  referencia_id?: string
+  lida: boolean
+  created: string
+}
+
 export interface NotificationItem {
   id: string
-  origem: 'depoimento' | 'contato' | 'roteiro'
+  origem: 'depoimento' | 'contato' | 'roteiro' | 'sistema'
   titulo: string
   subtitulo: string
   resumo: string
@@ -35,16 +47,20 @@ export interface NotificationItem {
   targetPath: string
   recordId: string
   foto?: string
-  rawRecord: DepoimentoConvidadoRecord | ContatoRecord | RoteiroConvidadoRecord
+  rawRecord:
+    | DepoimentoConvidadoRecord
+    | ContatoRecord
+    | RoteiroConvidadoRecord
+    | NotificacaoSistemaRecord
 }
 
 export default function AdminNotificacoesScreen() {
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtroOrigem, setFiltroOrigem] = useState<'todos' | 'roteiro' | 'depoimento' | 'contato'>(
-    'todos',
-  )
+  const [filtroOrigem, setFiltroOrigem] = useState<
+    'todos' | 'roteiro' | 'depoimento' | 'contato' | 'sistema'
+  >('todos')
   const [filtroLidas, setFiltroLidas] = useState<'todos' | 'nao_lidas' | 'lidas'>('nao_lidas')
 
   const loadNotifications = async () => {
@@ -123,6 +139,41 @@ export default function AdminNotificacoesScreen() {
         })
       })
 
+      // Notificações automáticas do sistema (collection "notificacoes" — hooks de sistema:
+      // lead novo, roteiro aguardando aprovação, gravação < 48h). NÃO LIDAS DESTACADAS.
+      try {
+        const sisList = await pb.collection('notificacoes').getFullList<NotificacaoSistemaRecord>({
+          sort: '-created',
+        })
+        sisList.forEach((n) => {
+          const destinoPorTipo: Record<string, string> = {
+            lead: '/admin/leads',
+            roteiro: '/admin/roteiros',
+            gravacao: '/admin/agenda',
+          }
+          const rotuloPorTipo: Record<string, string> = {
+            lead: 'Lead Comercial',
+            roteiro: 'Roteiro (Aprovação)',
+            gravacao: 'Gravação (48h)',
+          }
+          list.push({
+            id: `sis_${n.id}`,
+            origem: 'sistema',
+            titulo: n.titulo,
+            subtitulo: rotuloPorTipo[n.tipo] || 'Notificação automática',
+            resumo: n.mensagem,
+            data: n.created,
+            lida: Boolean(n.lida),
+            statusOriginal: n.tipo,
+            targetPath: destinoPorTipo[n.tipo] || '/admin/notificacoes',
+            recordId: n.id,
+            rawRecord: n,
+          })
+        })
+      } catch (e) {
+        console.warn('Erro ao carregar notificações do sistema:', e)
+      }
+
       // Ordenar por data decrescente
       list.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
 
@@ -144,6 +195,7 @@ export default function AdminNotificacoesScreen() {
     let unsubRot: (() => void) | undefined
     let unsubDep: (() => void) | undefined
     let unsubCont: (() => void) | undefined
+    let unsubSis: (() => void) | undefined
 
     pb.collection('roteiros_convidados')
       .subscribe('*', () => {
@@ -172,10 +224,20 @@ export default function AdminNotificacoesScreen() {
       })
       .catch(() => {})
 
+    pb.collection('notificacoes')
+      .subscribe('*', () => {
+        loadNotifications()
+      })
+      .then((unsub) => {
+        unsubSis = unsub
+      })
+      .catch(() => {})
+
     return () => {
       if (unsubRot) unsubRot()
       if (unsubDep) unsubDep()
       if (unsubCont) unsubCont()
+      if (unsubSis) unsubSis()
     }
   }, [])
 
@@ -184,7 +246,11 @@ export default function AdminNotificacoesScreen() {
     if (e) e.stopPropagation()
 
     try {
-      if (item.origem === 'roteiro') {
+      if (item.origem === 'sistema') {
+        await pb.collection('notificacoes').update(item.recordId, {
+          lida: true,
+        })
+      } else if (item.origem === 'roteiro') {
         await pb.collection('roteiros_convidados').update(item.recordId, {
           visualizado: true,
         })
@@ -214,7 +280,12 @@ export default function AdminNotificacoesScreen() {
     try {
       await Promise.all(
         naoLidas.map((item) => {
-          if (item.origem === 'roteiro') {
+          if (item.origem === 'sistema') {
+            return pb
+              .collection('notificacoes')
+              .update(item.recordId, { lida: true })
+              .catch(() => {})
+          } else if (item.origem === 'roteiro') {
             return pb
               .collection('roteiros_convidados')
               .update(item.recordId, { visualizado: true })
@@ -245,7 +316,11 @@ export default function AdminNotificacoesScreen() {
   const handleAbrirDestino = async (item: NotificationItem) => {
     if (!item.lida) {
       // Marca como lida em background
-      if (item.origem === 'roteiro') {
+      if (item.origem === 'sistema') {
+        pb.collection('notificacoes')
+          .update(item.recordId, { lida: true })
+          .catch(() => {})
+      } else if (item.origem === 'roteiro') {
         pb.collection('roteiros_convidados')
           .update(item.recordId, { visualizado: true })
           .catch(() => {})
@@ -274,6 +349,7 @@ export default function AdminNotificacoesScreen() {
   const naoLidasRot = notifications.filter((n) => !n.lida && n.origem === 'roteiro').length
   const naoLidasDep = notifications.filter((n) => !n.lida && n.origem === 'depoimento').length
   const naoLidasCont = notifications.filter((n) => !n.lida && n.origem === 'contato').length
+  const naoLidasSis = notifications.filter((n) => !n.lida && n.origem === 'sistema').length
 
   return (
     <div className="space-y-6">
@@ -291,7 +367,8 @@ export default function AdminNotificacoesScreen() {
             )}
           </div>
           <p className="text-xs text-vinho/70 mt-0.5">
-            Novos depoimentos enviados e propostas de contato preenchidas no site do CoffeeCast 4.0.
+            Depoimentos e propostas do site + notificações automáticas do sistema (lead novo,
+            roteiro aguardando aprovação, gravação marcada para menos de 48h).
           </p>
         </div>
 
@@ -308,7 +385,7 @@ export default function AdminNotificacoesScreen() {
       </div>
 
       {/* Contadores e Filtros Rápidos */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <div
           onClick={() => {
             setFiltroOrigem('todos')
@@ -392,6 +469,30 @@ export default function AdminNotificacoesScreen() {
           <p className="text-2xl font-serif font-bold mt-2">{naoLidasCont}</p>
           <span className="text-[11px] opacity-75">Formulário de participação</span>
         </div>
+
+        {/* Notificações automáticas do sistema (sino acionável) */}
+        <div
+          onClick={() => {
+            setFiltroOrigem('sistema')
+            setFiltroLidas('nao_lidas')
+          }}
+          className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+            filtroOrigem === 'sistema' && filtroLidas === 'nao_lidas'
+              ? 'bg-vinho text-white border-vinho shadow-md'
+              : 'bg-white text-vinho border-vinho/10 hover:border-dourado/60'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider opacity-80">
+              Sistema (Sino)
+            </span>
+            <Bell className="w-4 h-4 text-dourado" />
+          </div>
+          <p className="text-2xl font-serif font-bold mt-2">{naoLidasSis}</p>
+          <span className="text-[11px] opacity-75">
+            Lead novo, roteiro p/ aprovar, gravação 48h
+          </span>
+        </div>
       </div>
 
       {/* Barra de Filtros refinados */}
@@ -434,6 +535,15 @@ export default function AdminNotificacoesScreen() {
           >
             <Inbox className="w-3.5 h-3.5 text-dourado shrink-0" />
             <span>Contatos</span>
+          </button>
+          <button
+            onClick={() => setFiltroOrigem('sistema')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              filtroOrigem === 'sistema' ? 'bg-vinho text-white' : 'text-vinho/70 hover:bg-vinho/5'
+            }`}
+          >
+            <Bell className="w-3.5 h-3.5 text-dourado shrink-0" />
+            <span>Sistema (Sino)</span>
           </button>
         </div>
 
@@ -490,6 +600,8 @@ export default function AdminNotificacoesScreen() {
           filtered.map((item) => {
             const isRoteiro = item.origem === 'roteiro'
             const isDepoimento = item.origem === 'depoimento'
+            const isSistema = item.origem === 'sistema'
+            const isContato = item.origem === 'contato'
             return (
               <div
                 key={item.id}
@@ -513,14 +625,18 @@ export default function AdminNotificacoesScreen() {
                     ) : (
                       <div
                         className={`w-11 h-11 rounded-full flex items-center justify-center ${
-                          isRoteiro
-                            ? 'bg-vinho text-dourado border border-dourado/40'
-                            : isDepoimento
-                              ? 'bg-dourado/20 text-vinho border border-dourado/40'
-                              : 'bg-vinho/10 text-vinho border border-vinho/20'
+                          isSistema
+                            ? 'bg-dourado text-vinho border border-dourado-dark/40'
+                            : isRoteiro
+                              ? 'bg-vinho text-dourado border border-dourado/40'
+                              : isDepoimento
+                                ? 'bg-dourado/20 text-vinho border border-dourado/40'
+                                : 'bg-vinho/10 text-vinho border border-vinho/20'
                         }`}
                       >
-                        {isRoteiro ? (
+                        {isSistema ? (
+                          <Bell className="w-5 h-5 text-vinho" />
+                        ) : isRoteiro ? (
                           <FileText className="w-5 h-5 text-dourado" />
                         ) : isDepoimento ? (
                           <MessageSquareQuote className="w-5 h-5 text-dourado-dark" />
@@ -540,18 +656,22 @@ export default function AdminNotificacoesScreen() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                          isRoteiro
-                            ? 'bg-vinho text-white'
-                            : isDepoimento
-                              ? 'bg-dourado/20 text-vinho border border-dourado/40'
-                              : 'bg-vinho/10 text-vinho border border-vinho/20'
+                          isSistema
+                            ? 'bg-dourado text-vinho'
+                            : isRoteiro
+                              ? 'bg-vinho text-white'
+                              : isDepoimento
+                                ? 'bg-dourado/20 text-vinho border border-dourado/40'
+                                : 'bg-vinho/10 text-vinho border border-vinho/20'
                         }`}
                       >
-                        {isRoteiro
-                          ? 'Roteiro de Episódio'
-                          : isDepoimento
-                            ? 'Depoimento'
-                            : 'Contato / Proposta'}
+                        {isSistema
+                          ? item.subtitulo
+                          : isRoteiro
+                            ? 'Roteiro de Episódio'
+                            : isDepoimento
+                              ? 'Depoimento'
+                              : 'Contato / Proposta'}
                       </Badge>
 
                       {!item.lida && (

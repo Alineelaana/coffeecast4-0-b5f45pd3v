@@ -47,6 +47,7 @@ import { Badge } from '@/components/ui/badge'
 import { useStorefront } from '@/context/StorefrontContext'
 import AdminLayoutLogicaTela from '@/components/admin/AdminLayoutLogicaTela'
 import NineOnlineChat from '@/components/admin/NineOnlineChat'
+import SinoNotificacoes from '@/components/admin/SinoNotificacoes'
 
 export default function AdminLayout() {
   const { user, logout, role, isMaster, isAdm, hasScreenPermission } = useAuth()
@@ -1438,19 +1439,9 @@ export default function AdminLayout() {
             {/* Documentação de comportamento do layout administrativo (cabeçalho/menu mobile) */}
             <AdminLayoutLogicaTela />
 
-            <NavLink
-              to="/admin/notificacoes"
-              className="text-xs text-vinho hover:text-dourado-dark flex items-center gap-1.5 transition-colors font-semibold bg-marfim border border-vinho/15 hover:border-dourado px-3 py-1.5 rounded-full relative"
-              title="Central de Notificações"
-            >
-              <Bell className="w-3.5 h-3.5 text-dourado-dark" />
-              <span>Notificações</span>
-              {unreadNotificationsCount > 0 && (
-                <Badge className="bg-amber-500 text-white font-bold text-[10px] px-1.5 py-0 rounded-full h-4 min-w-[16px] flex items-center justify-center">
-                  {unreadNotificationsCount}
-                </Badge>
-              )}
-            </NavLink>
+            {/* Sino de notificações acionáveis (leads, roteiros, gravações) — dados reais
+                da collection "notificacoes", com dropdown e marcação de lida. */}
+            <SinoNotificacoes />
 
             <NavLink
               to="/membros"

@@ -45,6 +45,16 @@ const SECOES: { titulo: string; itens: string[] }[] = [
     ],
   },
   {
+    titulo: '🔔 Notificações acionáveis (sino no Topbar)',
+    itens: [
+      'O sino "Notificações" do Topbar (desktop) mostra o badge com o total de não lidas, alimentado pela collection real "notificacoes" do PocketBase.',
+      'Notificações são criadas automaticamente pelo sistema em 3 situações: lead novo no Painel Comercial, roteiro de convidado aguardando aprovação e gravação marcada para menos de 48h (inclui re-agendamento).',
+      'Cada item do dropdown é ACIONÁVEL: ao clicar, você navega direto para a tela relacionada (lead → Leads, roteiro → Roteiros, gravação → Agenda) e a notificação é marcada como lida automaticamente.',
+      '"Marcar todas" no cabeçalho do dropdown limpa o badge de uma vez; o ícone de sino no cabeçalho mobile continua levando à Central de Notificações (/admin/notificacoes).',
+      'A atualização é em tempo real (realtime): assim que um lead entra ou uma gravação é agendada, o badge e a lista se atualizam sem recarregar a página.',
+    ],
+  },
+  {
     titulo: '🔒 O que NÃO mudou',
     itens: [
       'Nenhuma funcionalidade foi alterada: navegação, permissões, badges, busca de telas, logout e seletor de loja continuam iguais.',
