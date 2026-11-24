@@ -793,12 +793,16 @@ export default function DocumentacaoScreen() {
                 <strong>Estatísticas de visualização:</strong> a página individual registra{' '}
                 <strong>visualizações reais do site público</strong>. Cada carregamento efetivo da
                 página /episodio/:id de um episódio publicado soma +1 ao contador (armazenado no
-                campo <em>visualizacoes</em> do episódio), sem exigir login. Para evitar dupla
-                contagem, o mesmo visitante não é contado novamente em um intervalo de 30 segundos
-                (recarregar a página em sequência rápida conta apenas uma vez). A página exibe o
-                contador de forma discreta, ao lado da data ("👁 N visualizações" ou "Nenhuma
-                visualização" quando ainda não houver acesso). No painel, a lista de episódios
-                mostra a coluna/linha de visualizações e o <strong>Dashboard</strong> ganhou a seção{' '}
+                campo <em>visualizacoes</em> do episódio), sem exigir login. Recarregar a página
+                (F5) conta novamente — cada acesso real é uma visualização. Para evitar dupla
+                contagem dentro do MESMO carregamento (duplo disparo do efeito do React), o guarda
+                vive apenas na memória do navegador durante aquela abertura da página: abrir a
+                página de novo, em nova aba ou recarregar, conta de novo. O incremento é atômico no
+                servidor (hook de backend, sem leitura-escrita pelo cliente), então acessos
+                simultâneos não sobrescrevem o contador. A página exibe o contador de forma
+                discreta, ao lado da data ("👁 N visualizações" ou "Nenhuma visualização" quando
+                ainda não houver acesso). No painel, a lista de episódios mostra a coluna/linha de
+                visualizações e o <strong>Dashboard</strong> ganhou a seção{' '}
                 <strong>"Estatísticas de Visualização"</strong>, com o{' '}
                 <strong>Episódio mais visto</strong>, o total geral e o ranking dos 3 mais vistos —
                 visível apenas para quem tem acesso à tela Episódios na matriz de permissões (Master
