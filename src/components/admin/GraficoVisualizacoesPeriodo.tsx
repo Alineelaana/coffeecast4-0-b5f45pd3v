@@ -1,10 +1,13 @@
 // Gráfico "Visualizações por período" — série temporal das visualizações somadas
-// de todos os episódios, alimentada pela coleção episodio_visualizacoes (um registro
-// por visualização, criado pelo hook de backend).
+// de todos os episódios (ou de um episódio específico), alimentada pela coleção
+// episodio_visualizacoes (um registro por visualização, criado pelo hook de backend).
 //
+// - Seletor de episódio: "Todos os episódios" (padrão) ou um episódio específico,
+//   com a mesma etiqueta da tabela de Episódios ("#N — título").
 // - Seletor de período: 7 / 30 / 90 dias (padrão 30).
 // - Seletor de granularidade: Dia / Semana / Mês (padrão Dia).
-// - Dias/linhas do período sem visualizações aparecem como ZERO (série contínua).
+// - Dias/linhas do período sem visualizações aparecem como ZERO (série contínua) —
+//   inclusive quando o episódio escolhido não teve nenhuma no período.
 // - Estado vazio: a coleção nasce vazia — o histórico por período começa a valer a
 //   partir da publicação desta versão (o acumulado antigo não tem datas).
 // - Permissão: mesma matriz do card "Estatísticas de Visualização" — só renderiza com
@@ -22,15 +25,16 @@ import {
   YAxis,
 } from 'recharts'
 import pb from '@/lib/pocketbase/client'
-import type { EpisodioVisualizacaoRecord } from '@/types/database'
+import type { EpisodioRecord, EpisodioVisualizacaoRecord } from '@/types/database'
 import { useAuth } from '@/context/AuthContext'
-import { BarChart3, CalendarDays } from 'lucide-react'
+import { BarChart3, CalendarDays, Clapperboard } from 'lucide-react'
 
 const VINHO = '#4B1E3F'
 const DOURADO = '#D4AF37'
 
 type Periodo = 7 | 30 | 90
 type Granularidade = 'dia' | 'semana' | 'mes'
+type EpisodioSelecionado = 'todos' | string
 
 const PERIODOS: { valor: Periodo; rotulo: string }[] = [
   { valor: 7, rotulo: '7 dias' },
@@ -77,9 +81,11 @@ export default function GraficoVisualizacoesPeriodo() {
 
   const [periodo, setPeriodo] = useState<Periodo>(30)
   const [granularidade, setGranularidade] = useState<Granularidade>('dia')
+  const [episodioSelecionado, setEpisodioSelecionado] = useState<EpisodioSelecionado>('todos')
   const [carregando, setCarregando] = useState(true)
   const [falhou, setFalhou] = useState(false)
   const [eventos, setEventos] = useState<EpisodioVisualizacaoRecord[]>([])
+  const [episodios, setEpisodios] = useState<EpisodioRecord[]>([])
 
   useEffect(() => {
     if (!autorizado) return
@@ -92,13 +98,19 @@ export default function GraficoVisualizacoesPeriodo() {
         inicio.setHours(0, 0, 0, 0)
         inicio.setDate(inicio.getDate() - (periodo - 1))
         const inicioIso = inicio.toISOString()
-        const lista = await pb
-          .collection('episodio_visualizacoes')
-          .getFullList<EpisodioVisualizacaoRecord>({
+        const [lista, listaEpisodios] = await Promise.all([
+          pb.collection('episodio_visualizacoes').getFullList<EpisodioVisualizacaoRecord>({
             filter: `created >= "${inicioIso}"`,
-            fields: 'id,created',
-          })
+            fields: 'id,created,episodio',
+          }),
+          // Lista para o dropdown de episódios (etiqueta igual à tabela: "#N — título")
+          pb.collection('episodios').getFullList<EpisodioRecord>({
+            sort: 'numero',
+            fields: 'id,numero,titulo',
+          }),
+        ])
         setEventos(lista)
+        setEpisodios(listaEpisodios)
       } catch {
         setFalhou(true)
         setEventos([])
@@ -134,6 +146,7 @@ export default function GraficoVisualizacoesPeriodo() {
     }
 
     eventos.forEach((ev) => {
+      if (episodioSelecionado !== 'todos' && ev.episodio !== episodioSelecionado) return
       const d = new Date(ev.created)
       if (isNaN(d.getTime())) return
       if (d < inicio) return
@@ -147,25 +160,32 @@ export default function GraficoVisualizacoesPeriodo() {
         periodo: rotuloBucket(chave, granularidade),
         visualizacoes: valor,
       }))
-  }, [eventos, periodo, granularidade])
+  }, [eventos, periodo, granularidade, episodioSelecionado])
 
   if (!autorizado) return null
 
   const totalPeriodo = serie.reduce((acc, p) => acc + p.visualizacoes, 0)
   const temDados = totalPeriodo > 0
+  const episodioEscolhido =
+    episodioSelecionado !== 'todos'
+      ? episodios.find((e) => e.id === episodioSelecionado)
+      : undefined
+  const rotuloEpisodio = episodioEscolhido
+    ? `#${episodioEscolhido.numero} — ${episodioEscolhido.titulo}`
+    : 'Todos os episódios'
 
   return (
     <div className="bg-marfim/60 border border-vinho/10 rounded-2xl p-4 sm:p-5 space-y-4">
       {/* Título + seletor de período */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h4 className="font-serif text-sm sm:text-base font-bold text-vinho flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-dourado" />
             Visualizações por período
           </h4>
-          <p className="text-[11px] text-vinho/60 mt-0.5">
+          <p className="text-[11px] text-vinho/60 mt-0.5 break-words">
             {temDados
-              ? `Últimos ${periodo} dias • ${totalPeriodo.toLocaleString('pt-BR')} ${
+              ? `${rotuloEpisodio} • Últimos ${periodo} dias • ${totalPeriodo.toLocaleString('pt-BR')} ${
                   totalPeriodo === 1 ? 'visualização' : 'visualizações'
                 }`
               : 'Série temporal das páginas dos episódios'}
@@ -189,24 +209,42 @@ export default function GraficoVisualizacoesPeriodo() {
         </div>
       </div>
 
-      {/* Seletor de granularidade */}
-      <div className="flex items-center gap-2">
-        <CalendarDays className="w-3.5 h-3.5 text-vinho/40 shrink-0" />
-        <div className="flex gap-1.5">
-          {GRANULARIDADES.map((g) => (
-            <button
-              key={g.valor}
-              type="button"
-              onClick={() => setGranularidade(g.valor)}
-              className={`px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-semibold border transition-colors ${
-                granularidade === g.valor
-                  ? 'bg-dourado/20 text-vinho border-dourado'
-                  : 'bg-white text-vinho/50 border-vinho/10 hover:border-dourado/50'
-              }`}
-            >
-              {g.rotulo}
-            </button>
-          ))}
+      {/* Seletores: episódio + granularidade */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <Clapperboard className="w-3.5 h-3.5 text-vinho/40 shrink-0" />
+          <select
+            value={episodioSelecionado}
+            onChange={(e) => setEpisodioSelecionado(e.target.value)}
+            aria-label="Filtrar por episódio"
+            className="min-h-[28px] max-w-full sm:max-w-[260px] rounded-full border border-vinho/15 bg-white px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold text-vinho focus:outline-none focus:ring-2 focus:ring-dourado/50 truncate"
+          >
+            <option value="todos">Todos os episódios</option>
+            {episodios.map((ep) => (
+              <option key={ep.id} value={ep.id}>
+                #{ep.numero} — {ep.titulo}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <CalendarDays className="w-3.5 h-3.5 text-vinho/40 shrink-0" />
+          <div className="flex gap-1.5">
+            {GRANULARIDADES.map((g) => (
+              <button
+                key={g.valor}
+                type="button"
+                onClick={() => setGranularidade(g.valor)}
+                className={`px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-semibold border transition-colors ${
+                  granularidade === g.valor
+                    ? 'bg-dourado/20 text-vinho border-dourado'
+                    : 'bg-white text-vinho/50 border-vinho/10 hover:border-dourado/50'
+                }`}
+              >
+                {g.rotulo}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -219,16 +257,18 @@ export default function GraficoVisualizacoesPeriodo() {
         <div className="h-[220px] flex items-center justify-center text-xs text-vinho/60">
           Não foi possível carregar o gráfico agora. Tente novamente mais tarde.
         </div>
-      ) : !temDados ? (
-        <div className="h-[220px] flex flex-col items-center justify-center text-center px-4 gap-2 border border-dashed border-vinho/15 rounded-xl bg-white/50">
-          <BarChart3 className="w-6 h-6 text-dourado" />
-          <p className="text-xs text-vinho/70 max-w-xs">
-            Os dados de período começam a ser registrados a partir de agora. O acumulado antigo dos
-            episódios não tem datas, então o passado não aparece no gráfico.
-          </p>
-        </div>
       ) : (
         <div className="w-full">
+          {!temDados && (
+            <p className="text-[11px] text-vinho/60 text-center mb-2 border border-dashed border-vinho/15 rounded-xl bg-white/50 px-4 py-2">
+              Nenhuma visualização no período selecionado
+              {episodioSelecionado !== 'todos' ? ' para este episódio' : ''}. O histórico por
+              período começa a valer a partir da publicação desta versão — o acumulado antigo dos
+              episódios não tem datas.
+            </p>
+          )}
+          {/* A série nunca fica vazia: dias do período sem visualização são ZERO, */}
+          {/* inclusive com episódio específico escolhido — gráfico sempre desenhado. */}
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={serie} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
               <defs>
