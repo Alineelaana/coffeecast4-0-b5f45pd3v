@@ -128,7 +128,17 @@ export default function PrepararEpisodioIA({
         return
       }
       const d: DivulgacaoDados = res.dados
-      const g = d.gancho || {}
+      // Blindagem dupla: o hook novo aninha os ganchos em d.gancho; versões antigas da
+      // produção devolviam as chaves no topo de d (sucesso true com campos vazios aqui).
+      const ganchosTopo = d as unknown as Record<string, unknown>
+      const g = {
+        gancho_emocional:
+          d.gancho?.gancho_emocional || (ganchosTopo.gancho_emocional as string) || '',
+        gancho_informativo:
+          d.gancho?.gancho_informativo || (ganchosTopo.gancho_informativo as string) || '',
+        gancho_curiosidade:
+          d.gancho?.gancho_curiosidade || (ganchosTopo.gancho_curiosidade as string) || '',
+      }
       const partes = [
         g.gancho_emocional ? `GANCHO EMOCIONAL\n${g.gancho_emocional}` : '',
         g.gancho_informativo ? `\nGANCHO INFORMATIVO\n${g.gancho_informativo}` : '',
@@ -139,7 +149,9 @@ export default function PrepararEpisodioIA({
           : '',
       ].filter(Boolean)
       if (partes.length === 0) {
+        // Nunca genérico demais: se o hook explicou a causa, mostrar a causa real.
         const msgVazia =
+          res.mensagem ||
           'A IA respondeu, mas nenhuma sugestão utilizável foi extraída. Tente gerar novamente em instantes.'
         setErroAnalise(msgVazia)
         toast.error(msgVazia)

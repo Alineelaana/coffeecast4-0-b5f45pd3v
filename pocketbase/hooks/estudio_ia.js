@@ -65,10 +65,13 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
 
     let instrucao = ''
     if (modo === 'gancho') {
+      // IMPORTANTE: o frontend (PrepararEpisodioIA) lê d.gancho.gancho_emocional etc. —
+      // as chaves DEBEM vir aninhadas em "gancho" (o formato antigo devolvia tudo no
+      // topo de "dados", que o frontend não lia: sucesso true com campos vazios).
       instrucao =
         'Encontre o MELHOR GANCHO do episódio para divulgação. Analise o conteúdo real e responda JSON: ' +
-        '{"tema_principal":"...","diferencial":"...","gancho_emocional":"...","gancho_informativo":"...",' +
-        '"gancho_curiosidade":"...","titulo_youtube":"...","texto_thumbnail":"... (máx 28 caracteres, caixa alta sem gritar)"}'
+        '{"gancho":{"tema_principal":"...","diferencial":"...","gancho_emocional":"...","gancho_informativo":"...",' +
+        '"gancho_curiosidade":"...","titulo_youtube":"...","texto_thumbnail":"... (máx 28 caracteres, caixa alta sem gritar)"}}'
     } else if (modo === 'titulos') {
       instrucao =
         'Gere 3 NOVOS títulos para YouTube (diferentes dos anteriores), um por estilo. Responda JSON apenas com {"titulos":[...]} no mesmo formato anterior.'
@@ -297,7 +300,7 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
       })
     }
 
-    // -- inline: extrair JSON da resposta --
+    // -- inline: extrair JSON da resposta (tolerante) --
     let txt = String(content).trim()
     txt = txt
       .replace(/```json/gi, '')
@@ -306,22 +309,78 @@ routerAdd('POST', '/backend/v1/estudio/divulgacao', (e) => {
     const ini = txt.indexOf('{')
     const fim = txt.lastIndexOf('}')
     let dados = null
+    let causaFalhaParse = ''
     if (ini !== -1 && fim > ini) {
       try {
         dados = JSON.parse(txt.slice(ini, fim + 1))
-      } catch (_) {
+      } catch (errJson) {
         dados = null
+        causaFalhaParse = String(errJson && errJson.message ? errJson.message : errJson)
       }
     }
     if (!dados) {
+      // Diagnóstico: registrar o conteúdo DECODIFICADO que a IA devolveu (primeiros ~600 chars)
       console.log(
-        '[estudio_ia] Resposta da IA sem JSON extraível — conteúdo recebido (primeiros 300 chars): ' +
-          String(content).replace(/\s+/g, ' ').trim().slice(0, 300),
+        '[estudio_ia] Resposta da IA sem JSON extraível (causa do parse: ' +
+          (causaFalhaParse || 'nenhum objeto encontrado') +
+          ') — conteúdo decodificado (primeiros 600 chars): ' +
+          String(content).replace(/\s+/g, ' ').trim().slice(0, 600),
       )
       return e.json(200, {
         sucesso: false,
         chatgptAtivo: true,
-        mensagem: 'A IA respondeu em formato inesperado. Tente gerar novamente.',
+        mensagem:
+          'A IA respondeu em formato inesperado (sem JSON válido). Tente gerar novamente em instantes.',
+      })
+    }
+
+    // -- normalização: aceitar chaves top-level OU aninhadas (defesa contra variações da IA) --
+    const paraTexto = (v) => (typeof v === 'string' ? v.trim() : '')
+    if (dados.gancho && typeof dados.gancho === 'object') {
+      dados.gancho.tema_principal = paraTexto(dados.gancho.tema_principal)
+      dados.gancho.diferencial = paraTexto(dados.gancho.diferencial)
+      dados.gancho.gancho_emocional = paraTexto(dados.gancho.gancho_emocional)
+      dados.gancho.gancho_informativo = paraTexto(dados.gancho.gancho_informativo)
+      dados.gancho.gancho_curiosidade = paraTexto(dados.gancho.gancho_curiosidade)
+    } else if (dados.gancho_emocional || dados.gancho_informativo || dados.gancho_curiosidade) {
+      // IA devolveu as chaves no topo — reaninha para o formato que o frontend espera
+      dados.gancho = {
+        tema_principal: paraTexto(dados.tema_principal),
+        diferencial: paraTexto(dados.diferencial),
+        gancho_emocional: paraTexto(dados.gancho_emocional),
+        gancho_informativo: paraTexto(dados.gancho_informativo),
+        gancho_curiosidade: paraTexto(dados.gancho_curiosidade),
+        titulo_youtube: paraTexto(dados.titulo_youtube),
+        texto_thumbnail: paraTexto(dados.texto_thumbnail),
+      }
+      delete dados.gancho_emocional
+      delete dados.gancho_informativo
+      delete dados.gancho_curiosidade
+    }
+    if (dados.descricao !== undefined) dados.descricao = paraTexto(dados.descricao)
+    if (!Array.isArray(dados.frases)) dados.frases = []
+
+    // -- nunca devolver sucesso true com dados vazios: isso engana o frontend --
+    const g0 = dados.gancho || {}
+    const temUtil =
+      (dados.descricao && dados.descricao.length > 0) ||
+      (Array.isArray(dados.frases) && dados.frases.length > 0) ||
+      g0.gancho_emocional ||
+      g0.gancho_informativo ||
+      g0.gancho_curiosidade ||
+      (Array.isArray(dados.titulos) && dados.titulos.length > 0)
+    if (!temUtil) {
+      console.log(
+        '[estudio_ia] JSON extraído mas SEM campos utilizáveis — chaves recebidas: ' +
+          Object.keys(dados).join(', ') +
+          ' — conteúdo decodificado (primeiros 600 chars): ' +
+          String(content).replace(/\s+/g, ' ').trim().slice(0, 600),
+      )
+      return e.json(200, {
+        sucesso: false,
+        chatgptAtivo: true,
+        mensagem:
+          'A IA respondeu, mas o conteúdo veio sem os campos esperados (gancho/descrição/frases). Tente gerar novamente em instantes.',
       })
     }
 
@@ -580,17 +639,23 @@ routerAdd('POST', '/backend/v1/estudio/templates', (e) => {
     const ini = txt.indexOf('{')
     const fim = txt.lastIndexOf('}')
     let dados = null
+    let causaFalhaParseTpl = ''
     if (ini !== -1 && fim > ini) {
       try {
         dados = JSON.parse(txt.slice(ini, fim + 1))
-      } catch (_) {
+      } catch (errJsonTpl) {
         dados = null
+        causaFalhaParseTpl = String(
+          errJsonTpl && errJsonTpl.message ? errJsonTpl.message : errJsonTpl,
+        )
       }
     }
     if (!dados || !Array.isArray(dados.propostas)) {
       console.log(
-        '[estudio_ia] Resposta da IA sem JSON extraível (templates) — conteúdo recebido (primeiros 300 chars): ' +
-          String(content).replace(/\s+/g, ' ').trim().slice(0, 300),
+        '[estudio_ia] Resposta da IA sem JSON extraível (templates — causa do parse: ' +
+          (causaFalhaParseTpl || 'nenhum objeto com "propostas"') +
+          ') — conteúdo decodificado (primeiros 600 chars): ' +
+          String(content).replace(/\s+/g, ' ').trim().slice(0, 600),
       )
       return e.json(200, {
         sucesso: false,

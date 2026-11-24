@@ -106,6 +106,16 @@ const SECOES: { titulo: string; itens: string[] }[] = [
     ],
   },
   {
+    titulo: '🪝 Análise de gancho ("Preparar Episódio" — extração corrigida)',
+    itens: [
+      'No modo "gancho", o backend devolve as sugestões aninhadas em dados.gancho (gancho_emocional, gancho_informativo, gancho_curiosidade, tema_principal, titulo_youtube, texto_thumbnail) — o mesmo formato do modo "completo". Versões antigas devolviam as chaves no topo de dados e o painel mostrava "nenhuma sugestão utilizável" com sucesso true.',
+      'O frontend aceita as chaves aninhadas OU no topo (blindagem dupla) e, se nada vier utilizável, mostra a causa real retornada pelo backend — nunca um "sucesso" vazio.',
+      'Se o hook receber conteúdo vazio, ilegível ou sem os campos esperados, responde sucesso=false com mensagem clara e registra o conteúdo decodificado (primeiros ~600 chars) nos logs do backend.',
+      'Se a resposta vier como texto solto contendo JSON, o hook extrai do primeiro "{" ao último "}" antes de falhar.',
+      'As sugestões são registradas em roteiro_sugerido_nine, apenas para REVISÃO — o roteiro aprovado nunca é substituído automaticamente.',
+    ],
+  },
+  {
     titulo: '🗄️ Armazenamento, versionamento e permissões',
     itens: [
       'Coleção roteiros_convidados: dados do formulário, roteiro_final_texto, roteiro_estruturado (JSON dos blocos), status_aprovacao (rascunho/em_revisao/aprovado), divulgação e histórico.',
