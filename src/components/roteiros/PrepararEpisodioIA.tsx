@@ -7,7 +7,7 @@
 // API real usada: src/services/estudio.ts (gerarDivulgacao / montarContextoRoteiro via hook
 // /backend/v1/estudio/*, segredo GCHAT_GPT). Cliente PocketBase: default export apenas.
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import pb from '@/lib/pocketbase/client'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -64,6 +64,16 @@ export default function PrepararEpisodioIA({
   const [sugestao, setSugestao] = useState('')
   const [gerando, setGerando] = useState(false)
   const [erroAnalise, setErroAnalise] = useState('')
+  // Mobile (leiaute tipo App): ao surgir um erro, o banner é rolado para o MEIO da
+  // área visível do modal — nunca fica atrás do header sticky do painel (~96px).
+  const erroRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!erroAnalise || !erroRef.current) return
+    const t = window.setTimeout(() => {
+      erroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 150)
+    return () => window.clearTimeout(t)
+  }, [erroAnalise])
 
   const reset = () => {
     setEtapa(0)
@@ -194,7 +204,7 @@ export default function PrepararEpisodioIA({
 
   return (
     <Dialog open={open} onOpenChange={handleAbrir}>
-      <DialogContent className="max-w-3xl w-[95vw] max-h-[92vh] bg-[#FBF6EC] border-2 border-[#C9971F] rounded-3xl p-5 sm:p-7 flex flex-col">
+      <DialogContent className="max-w-3xl w-[95vw] max-h-[92dvh] bg-[#FBF6EC] border-2 border-[#C9971F] rounded-3xl p-4 sm:p-7 flex flex-col">
         <DialogHeader className="space-y-1.5">
           <DialogTitle className="font-serif text-xl sm:text-2xl text-[#4B1E3F] flex items-center gap-2">
             <Wand2 className="w-5 h-5 text-[#8a6d1c]" />
@@ -237,7 +247,9 @@ export default function PrepararEpisodioIA({
                   >
                     {e.id + 1}
                   </span>
-                  <span className="text-[11px] font-bold text-[#4B1E3F] truncate">{e.titulo}</span>
+                  <span className="text-[11px] font-bold text-[#4B1E3F] leading-tight break-words whitespace-normal">
+                    {e.titulo}
+                  </span>
                 </div>
                 <p className="text-[10px] text-[#4B1E3F]/60 mt-1 line-clamp-2">{e.desc}</p>
               </button>
@@ -245,7 +257,7 @@ export default function PrepararEpisodioIA({
           </div>
         </div>
 
-        <ScrollArea className="flex-1 max-h-[52vh] pr-2 mt-4">
+        <ScrollArea className="flex-1 min-h-0 max-h-full pr-2 mt-4">
           {/* ETAPA 1 — Preparação do Roteiro */}
           {etapa === 0 && (
             <div className="space-y-4">
@@ -288,15 +300,17 @@ export default function PrepararEpisodioIA({
 
               {erroAnalise && (
                 <div
+                  ref={erroRef}
                   role="alert"
-                  className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-3"
+                  aria-live="assertive"
+                  className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-3 ring-2 ring-red-300/60 break-words"
                 >
                   <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
                   <div>
                     <p className="text-[11px] font-bold text-red-800">
                       A análise não foi concluída
                     </p>
-                    <p className="text-[11px] text-red-700">{erroAnalise}</p>
+                    <p className="text-[11px] text-red-700 break-words">{erroAnalise}</p>
                   </div>
                 </div>
               )}
@@ -305,7 +319,7 @@ export default function PrepararEpisodioIA({
                 type="button"
                 disabled={gerando}
                 onClick={gerarPreparacao}
-                className="w-full bg-[#4B1E3F] hover:bg-[#5d2650] text-white font-bold rounded-xl h-11"
+                className="w-full bg-[#4B1E3F] hover:bg-[#5d2650] text-white font-bold rounded-xl h-11 whitespace-normal text-center leading-tight px-3"
               >
                 {gerando ? (
                   <>

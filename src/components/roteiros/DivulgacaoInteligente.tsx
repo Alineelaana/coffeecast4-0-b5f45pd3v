@@ -218,9 +218,9 @@ export default function DivulgacaoInteligente({ roteiro, compacto, onRoteiroAtua
     <Card className="border-[#C9971F]/40 bg-gradient-to-b from-[#FBF6EC] to-white shadow-md">
       <CardContent className="space-y-4 p-5">
         {!compacto && (
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-1">
-              <h3 className="font-serif text-lg font-bold text-[#4B1E3F]">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+            <div className="space-y-1 min-w-0">
+              <h3 className="font-serif text-lg font-bold text-[#4B1E3F] break-words">
                 ✨ DIVULGAÇÃO INTELIGENTE COM IA
               </h3>
               <p className="text-xs text-muted-foreground max-w-2xl">
@@ -375,7 +375,7 @@ export default function DivulgacaoInteligente({ roteiro, compacto, onRoteiroAtua
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Input
-                  className="h-9 text-sm flex-1 min-w-64"
+                  className="h-9 text-sm flex-1 min-w-0 w-full sm:w-auto sm:min-w-64"
                   value={tituloSel}
                   onChange={(e) => setTituloSel(e.target.value)}
                   placeholder="Título de divulgação (editável)"
@@ -417,7 +417,7 @@ export default function DivulgacaoInteligente({ roteiro, compacto, onRoteiroAtua
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Input
-                    className="h-9 text-sm flex-1 min-w-64"
+                    className="h-9 text-sm flex-1 min-w-0 w-full sm:w-auto sm:min-w-64"
                     value={thumbSel}
                     maxLength={40}
                     onChange={(e) => setThumbSel(e.target.value)}
@@ -587,7 +587,7 @@ export default function DivulgacaoInteligente({ roteiro, compacto, onRoteiroAtua
                 🎨 CRIAR CAPA DO EPISÓDIO COM IA
               </Button>
               <Dialog open={capaAberta} onOpenChange={setCapaAberta}>
-                <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
+                <DialogContent className="max-w-5xl max-h-[92dvh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="font-serif text-lg">
                       Capa do episódio — Estúdio Criativo IA

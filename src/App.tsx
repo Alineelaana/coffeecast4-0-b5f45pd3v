@@ -8,6 +8,7 @@ import { NineChatWidget } from '@/components/NineChatWidget'
 import { RedefinirSenhaObrigatoriaScreen } from '@/components/RedefinirSenhaObrigatoriaScreen'
 import { useAuth } from '@/context/AuthContext'
 import { Toaster } from 'sonner'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 // Public Pages
 import Index from '@/pages/Index'
@@ -59,6 +60,10 @@ function AppAuthenticatedGate() {
 }
 
 export default function App() {
+  // Mobile (leiaute tipo App): toasts em bottom-center — no topo ficam atrás da
+  // status bar (black-translucent) e do header sticky do painel (~96px), que era
+  // exatamente o banner vermelho cortado do relato da usuária. Desktop intocado.
+  const isMobile = useIsMobile()
   return (
     <AuthProvider>
       <StorefrontProvider>
@@ -411,8 +416,8 @@ export default function App() {
         </BrowserRouter>
       </StorefrontProvider>
 
-      {/* Notificações Toaster elegantes */}
-      <Toaster position="top-right" richColors closeButton />
+      {/* Notificações Toaster elegantes (mobile: base da tela para nunca ficar atrás do header) */}
+      <Toaster position={isMobile ? 'bottom-center' : 'top-right'} richColors closeButton />
     </AuthProvider>
   )
 }

@@ -647,17 +647,17 @@ export function RoteiroEditorModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[92vh] flex flex-col p-0 gap-0 overflow-hidden bg-background">
+      <DialogContent className="max-w-5xl max-h-[92dvh] flex flex-col p-0 gap-0 overflow-hidden bg-background">
         {/* CABEÇALHO DO MODAL */}
         <DialogHeader className="p-5 border-b bg-card/60 shrink-0">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+          <div className="flex flex-col sm:flex-wrap sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
                 <Edit3 className="w-5 h-5 text-amber-500" />
               </div>
-              <div>
-                <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                  <span>Editor Editorial do Roteiro</span>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg sm:text-xl font-bold flex items-center gap-2 flex-wrap">
+                  <span className="break-words">Editor Editorial do Roteiro</span>
                   <Badge
                     variant={
                       statusAprovacao === 'aprovado'
@@ -743,7 +743,8 @@ export function RoteiroEditorModal({
         </DialogHeader>
 
         {/* BARRA DE METADADOS DINÂMICOS DO EPISÓDIO */}
-        <div className="px-5 py-3 bg-muted/40 border-b flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div className="px-3 sm:px-5 py-3 bg-muted/40 border-b flex flex-wrap items-center justify-between gap-4 text-xs">
+          {/* flex-wrap garante que no celular a barra quebre em linhas sem cortar o texto */}
           <div className="flex items-center gap-4 flex-wrap flex-1">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-muted-foreground">Status:</span>
@@ -751,7 +752,7 @@ export function RoteiroEditorModal({
                 value={statusAprovacao}
                 onValueChange={(val: RoteiroStatusAprovacao) => setStatusAprovacao(val)}
               >
-                <SelectTrigger className="h-7 text-xs w-[150px]">
+                <SelectTrigger className="h-7 text-xs w-[130px] sm:w-[150px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -803,8 +804,8 @@ export function RoteiroEditorModal({
           </div>
         </div>
 
-        {/* CORPO DE EDIÇÃO COM SCROLL */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-6">
+        {/* CORPO DE EDIÇÃO COM SCROLL (min-h-0: no celular o flex não estoura o max-h do modal) */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-5 space-y-6">
           {/* SEÇÃO 1: INFORMAÇÕES DA CAPA E GRAVAÇÃO */}
           <div className="p-4 rounded-xl border bg-card/40 space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
@@ -1314,14 +1315,14 @@ export function RoteiroEditorModal({
         </div>
 
         {/* RODAPÉ DO MODAL */}
-        <div className="p-4 border-t bg-card/60 flex items-center justify-between gap-4 shrink-0">
-          <div className="text-xs text-muted-foreground">
+        <div className="p-3 sm:p-4 border-t bg-card/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
+          <div className="text-xs text-muted-foreground break-words max-w-full sm:max-w-[40%]">
             {nomesConvidados.length > 1
               ? `Roteiro Conjunto (${nomesConvidados.join(' & ')})`
               : `Roteiro Individual: ${roteiro.nome}`}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <Button
               type="button"
               variant="outline"
