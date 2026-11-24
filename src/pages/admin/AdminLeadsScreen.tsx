@@ -430,7 +430,10 @@ export default function AdminLeadsScreen() {
             size="sm"
             variant={ordenacao === o.valor ? 'default' : 'outline'}
             onClick={() => setOrdenacao(o.valor)}
-            className={cn(ordenacao === o.valor && 'bg-vinho text-white hover:bg-vinho-dark')}
+            className={cn(
+              'min-h-[36px] px-3 text-xs break-words whitespace-normal',
+              ordenacao === o.valor && 'bg-vinho text-white hover:bg-vinho-dark',
+            )}
           >
             {o.rotulo}
           </Button>
@@ -454,7 +457,10 @@ export default function AdminLeadsScreen() {
                     : [...atual, m.valor],
                 )
               }
-              className={cn(ativo && 'bg-vinho text-white hover:bg-vinho-dark')}
+              className={cn(
+                'min-h-[36px] px-3 text-xs break-words whitespace-normal',
+                ativo && 'bg-vinho text-white hover:bg-vinho-dark',
+              )}
             >
               {m.rotulo}
             </Button>
@@ -798,7 +804,7 @@ export default function AdminLeadsScreen() {
           }
         }}
       >
-        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto bg-marfim">
+        <DialogContent className="max-h-[85dvh] max-w-[calc(100vw-1.5rem)] sm:max-w-2xl overflow-y-auto bg-marfim">
           <DialogHeader>
             <DialogTitle className="font-serif text-vinho">
               {leadDetalhe ? leadDetalhe.lead.nome_completo : 'Carregando…'}
@@ -851,7 +857,7 @@ export default function AdminLeadsScreen() {
           }
         }}
       >
-        <DialogContent className="max-w-lg bg-marfim">
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-lg bg-marfim">
           <DialogHeader>
             <DialogTitle className="font-serif text-vinho">Registrar Contato</DialogTitle>
             <DialogDescription>
@@ -948,7 +954,7 @@ export default function AdminLeadsScreen() {
           }
         }}
       >
-        <DialogContent className="max-w-md bg-marfim">
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-md bg-marfim">
           <DialogHeader>
             <DialogTitle className="font-serif text-vinho">Agendar Retorno</DialogTitle>
             <DialogDescription>
@@ -1006,7 +1012,7 @@ export default function AdminLeadsScreen() {
           }
         }}
       >
-        <DialogContent className="max-w-md bg-marfim">
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-md bg-marfim">
           <DialogHeader>
             <DialogTitle className="font-serif text-vinho">Alterar Status</DialogTitle>
             <DialogDescription>
@@ -1052,7 +1058,7 @@ export default function AdminLeadsScreen() {
           }
         }}
       >
-        <DialogContent className="max-w-md bg-marfim">
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-md bg-marfim">
           <DialogHeader>
             <DialogTitle className="font-serif text-vinho">Adicionar Observação</DialogTitle>
             <DialogDescription>{leadAcao?.nome_completo}</DialogDescription>

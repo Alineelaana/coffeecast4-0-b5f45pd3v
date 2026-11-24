@@ -1577,7 +1577,7 @@ function AdminRoteirosScreenInner() {
 
       {/* MODAL DE DETALHES DO ROTEIRO */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado p-6 sm:p-8 rounded-3xl">
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-4xl max-h-[92dvh] overflow-y-auto bg-marfim border-2 border-dourado p-4 sm:p-8 rounded-3xl break-words">
           {selectedRoteiro && (
             <div className="space-y-6">
               <DialogHeader className="border-b border-vinho/15 pb-4">
@@ -2143,7 +2143,7 @@ function AdminRoteirosScreenInner() {
 
       {/* MODAL: JUNTAR ROTEIROS (EPISÓDIOS CONJUNTOS / CASAL / PARCERIA) */}
       <Dialog open={modalJuntarOpen} onOpenChange={setModalJuntarOpen}>
-        <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto bg-marfim border-2 border-dourado p-6 sm:p-8 rounded-3xl">
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-4xl max-h-[92dvh] overflow-y-auto bg-marfim border-2 border-dourado p-4 sm:p-8 rounded-3xl break-words">
           {selectedRoteiro && (
             <div className="space-y-6">
               <DialogHeader className="border-b border-vinho/15 pb-4">
@@ -2640,7 +2640,7 @@ function AdminRoteirosScreenInner() {
 
       {/* PAINÉIS DE IA: DIVULGAÇÃO INTELIGENTE / PREPARAR EPISÓDIO / LÓGICA DA TELA */}
       <Dialog open={divulgacaoOpen} onOpenChange={setDivulgacaoOpen}>
-        <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-4xl max-h-[92dvh] overflow-y-auto break-words">
           <DialogHeader>
             <DialogTitle className="font-serif text-lg text-[#4B1E3F]">
               ✨ Divulgação Inteligente com IA — {divulgacaoRoteiro?.nome || ''}

@@ -86,7 +86,7 @@ export default function AgendaLogicaTela() {
           Lógica da Tela
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl bg-marfim">
+      <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-2xl bg-marfim">
         <DialogHeader>
           <DialogTitle className="font-serif text-xl text-vinho">
             Lógica da Tela — Agenda & Planejamento

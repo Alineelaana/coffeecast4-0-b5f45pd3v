@@ -136,7 +136,7 @@ export default function RoteirosLogicaTela({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="font-serif text-xl">
             Lógica da Tela — Roteiros &amp; Pautas (Nine IA)

@@ -472,7 +472,7 @@ export default function AdminContatosScreen() {
 
       {/* Modal de Detalhes com todas as informações cadastradas */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="w-[94vw] max-w-xl max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-8 rounded-2xl">
+        <DialogContent className="w-[94vw] max-w-xl max-h-[92dvh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-8 rounded-2xl break-words">
           {selectedContato && (
             <div className="space-y-6">
               <DialogHeader>

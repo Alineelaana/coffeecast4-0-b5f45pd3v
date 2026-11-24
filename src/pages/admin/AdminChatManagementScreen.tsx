@@ -278,9 +278,9 @@ export default function AdminChatManagementScreen() {
         </div>
       </div>
 
-      {/* TABELA DE CONVERSAS */}
-      <div className="bg-white rounded-3xl border border-vinho/10 shadow-sm overflow-hidden">
-        <Table>
+      {/* TABELA DE CONVERSAS (mobile: rolagem horizontal controlada — nunca cortar a tela) */}
+      <div className="bg-white rounded-3xl border border-vinho/10 shadow-sm overflow-hidden overflow-x-auto">
+        <Table className="min-w-[720px] md:min-w-0">
           <TableHeader className="bg-marfim/80 border-b border-vinho/10">
             <TableRow>
               <TableHead className="font-serif font-bold text-vinho text-xs">
@@ -468,7 +468,7 @@ export default function AdminChatManagementScreen() {
 
       {/* MODAL: HISTÓRICO COMPLETO & AUDITORIA DA CONVERSA */}
       <Dialog open={messagesModalOpen} onOpenChange={setMessagesModalOpen}>
-        <DialogContent className="sm:max-w-3xl bg-[#FAF8F5] border-2 border-dourado/40 rounded-3xl p-6 max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-3xl bg-[#FAF8F5] border-2 border-dourado/40 rounded-3xl p-4 sm:p-6 max-h-[92dvh] flex flex-col">
           <DialogHeader className="border-b border-vinho/10 pb-3 shrink-0">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
@@ -524,12 +524,12 @@ export default function AdminChatManagementScreen() {
                         size="sm"
                       />
                       <div className="space-y-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                           <span className="text-xs font-bold text-vinho">
                             {rem?.name || 'Membro'}
                           </span>
                           <UserRoleBadge role={rem?.role || 'prata'} size="sm" />
-                          <span className="text-[10px] text-vinho/50">
+                          <span className="text-[10px] text-vinho/50 whitespace-nowrap">
                             {new Date(m.created).toLocaleString('pt-BR', {
                               dateStyle: 'short',
                               timeStyle: 'medium',
@@ -570,7 +570,7 @@ export default function AdminChatManagementScreen() {
         open={Boolean(deleteConversaTarget)}
         onOpenChange={(open) => !open && setDeleteConversaTarget(null)}
       >
-        <DialogContent className="sm:max-w-md bg-white border border-red-200 rounded-2xl p-6">
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-md bg-white border border-red-200 rounded-2xl p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="font-serif font-bold text-base text-red-700 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-red-600" />
@@ -611,7 +611,7 @@ export default function AdminChatManagementScreen() {
         open={Boolean(deleteMsgTarget)}
         onOpenChange={(open) => !open && setDeleteMsgTarget(null)}
       >
-        <DialogContent className="sm:max-w-md bg-white border border-red-200 rounded-2xl p-6">
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-md bg-white border border-red-200 rounded-2xl p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="font-serif font-bold text-base text-red-700 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-red-600" />

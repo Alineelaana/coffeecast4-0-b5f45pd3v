@@ -94,7 +94,7 @@ export function DialogVerConversa({
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="max-w-lg bg-marfim border-dourado/30">
+      <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-lg bg-marfim border-dourado/30">
         <DialogHeader>
           <DialogTitle className="font-serif text-vinho">
             Conversa com {lead?.nome_completo || 'lead'}
@@ -223,7 +223,7 @@ export function DialogResumoIa({
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="max-w-lg bg-marfim border-dourado/30">
+      <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-lg bg-marfim border-dourado/30">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-serif text-vinho">
             <Bot className="h-5 w-5 text-dourado" /> Resumo IA — {lead?.nome_completo}
@@ -307,7 +307,7 @@ export function DialogRegistrarContato({
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="max-w-md bg-marfim border-dourado/30">
+      <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-md bg-marfim border-dourado/30">
         <DialogHeader>
           <DialogTitle className="font-serif text-vinho">Registrar Contato</DialogTitle>
           <DialogDescription className="text-vinho/60">
@@ -427,7 +427,7 @@ export function DialogAgendarRetorno({
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="max-w-md bg-marfim border-dourado/30">
+      <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-md bg-marfim border-dourado/30">
         <DialogHeader>
           <DialogTitle className="font-serif text-vinho">Agendar Retorno</DialogTitle>
           <DialogDescription className="text-vinho/60">
@@ -532,7 +532,7 @@ export function DialogAlterarStatus({
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="max-w-md bg-marfim border-dourado/30">
+      <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-md bg-marfim border-dourado/30">
         <DialogHeader>
           <DialogTitle className="font-serif text-vinho">Alterar Status</DialogTitle>
           <DialogDescription className="text-vinho/60">
@@ -625,7 +625,7 @@ export function DialogObservacao({
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="max-w-md bg-marfim border-dourado/30">
+      <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-md bg-marfim border-dourado/30">
         <DialogHeader>
           <DialogTitle className="font-serif text-vinho">Adicionar Observação</DialogTitle>
           <DialogDescription className="text-vinho/60">
@@ -708,7 +708,7 @@ export function DialogTarefas({
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="max-w-xl bg-marfim border-dourado/30">
+      <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-xl bg-marfim border-dourado/30">
         <DialogHeader>
           <DialogTitle className="font-serif text-vinho">Tarefas de Retorno</DialogTitle>
           <DialogDescription className="text-vinho/60">

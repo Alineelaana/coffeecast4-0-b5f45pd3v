@@ -772,7 +772,7 @@ export default function AdminAgendaScreen() {
 
                     <div>
                       <span className="text-[10px] text-vinho/60 block">Convidado(a)</span>
-                      <span className="font-medium text-vinho truncate block">
+                      <span className="font-medium text-vinho break-words block">
                         {item.tem_convidado ? item.nome_convidado || 'A definir' : 'Sem convidado'}
                       </span>
                     </div>
@@ -913,7 +913,7 @@ export default function AdminAgendaScreen() {
 
       {/* Modal de Agendamento Completo */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="w-[94vw] max-w-2xl bg-marfim border-2 border-dourado/50 text-vinho max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
+        <DialogContent className="w-[94vw] max-w-2xl bg-marfim border-2 border-dourado/50 text-vinho max-h-[92dvh] overflow-y-auto p-4 sm:p-6 rounded-2xl break-words">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho">
               {editingItem ? 'Editar Agendamento' : 'Novo Agendamento de Episódio'}

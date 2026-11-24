@@ -1032,7 +1032,7 @@ export default function AdminUsuariosScreen() {
 
       {/* Modal de Criação de Usuário */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="w-[94vw] max-w-md max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-6 rounded-2xl">
+        <DialogContent className="w-[94vw] max-w-[calc(100vw-1.5rem)] sm:max-w-md max-h-[92dvh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-4 sm:p-6 rounded-2xl break-words">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho">
               Criar Novo Acesso Administrativo

@@ -1621,7 +1621,7 @@ export default function AdminAuditoriaScreen() {
           MODAL: DETALHES DO EVENTO & DIFF ANTES / DEPOIS
       ======================================================== */}
       <Dialog open={detalheModalOpen} onOpenChange={setDetalheModalOpen}>
-        <DialogContent className="w-[94vw] max-w-3xl max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-5 sm:p-6 rounded-2xl">
+        <DialogContent className="w-[94vw] max-w-3xl max-h-[92dvh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-5 sm:p-6 rounded-2xl break-words">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho flex items-center gap-2">
               <FileText className="w-5 h-5 text-dourado-dark" />
@@ -1779,7 +1779,7 @@ export default function AdminAuditoriaScreen() {
           MODAL: CRIAÇÃO / EDIÇÃO DE REGRA DE MONITORAMENTO
       ======================================================== */}
       <Dialog open={regraModalOpen} onOpenChange={setRegraModalOpen}>
-        <DialogContent className="w-[94vw] max-w-lg max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-5 sm:p-6 rounded-2xl">
+        <DialogContent className="w-[94vw] max-w-lg max-h-[92dvh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-5 sm:p-6 rounded-2xl break-words">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho flex items-center gap-2">
               <Sliders className="w-5 h-5 text-dourado-dark" />
@@ -1922,7 +1922,7 @@ export default function AdminAuditoriaScreen() {
           MODAL: GERENCIAR STATUS DE ALERTA
       ======================================================== */}
       <Dialog open={alertaModalOpen} onOpenChange={setAlertaModalOpen}>
-        <DialogContent className="w-[94vw] max-w-md max-h-[90vh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-5 sm:p-6 rounded-2xl">
+        <DialogContent className="w-[94vw] max-w-md max-h-[92dvh] overflow-y-auto bg-marfim border-2 border-dourado/50 text-vinho p-5 sm:p-6 rounded-2xl break-words">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-bold text-vinho flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber-500" />

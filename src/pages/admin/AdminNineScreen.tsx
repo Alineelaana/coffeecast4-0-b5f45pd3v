@@ -1050,9 +1050,9 @@ export default function AdminNineScreen() {
             ABA 1: CONVERSAS & CAIXA DE ENTRADA
            ========================================================================= */}
         <TabsContent value="conversas" className="mt-0">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[720px] max-h-[85vh]">
-            {/* Coluna Esquerda: Lista de Conversas (4 colunas no lg) */}
-            <div className="lg:col-span-4 bg-white rounded-2xl border border-vinho/10 shadow-xs flex flex-col overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[720px] lg:max-h-[85vh]">
+            {/* Coluna Esquerda: Lista de Conversas (4 colunas no lg) — no mobile, altura limitada para não ocupar a tela toda */}
+            <div className="lg:col-span-4 bg-white rounded-2xl border border-vinho/10 shadow-xs flex flex-col overflow-hidden max-h-[45dvh] lg:max-h-none">
               {/* Barra de Filtros e Busca */}
               <div className="p-3.5 border-b border-vinho/10 space-y-2 bg-[#FAF8F5]/60">
                 <div className="relative">
@@ -1249,7 +1249,7 @@ export default function AdminNineScreen() {
                     </div>
 
                     {/* BOTÕES DE CONTROLE: INTERROMPER NINE / ASSUMIR HUMANO / RETOMAR AUTOMÁTICO */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                       {activeConversation.modo_atendimento === 'automatico' ? (
                         <Button
                           variant="destructive"
@@ -1280,7 +1280,7 @@ export default function AdminNineScreen() {
 
                   {/* Faixa de Aviso de Modo */}
                   <div
-                    className={`px-4 py-2 text-xs flex items-center justify-between border-b ${
+                    className={`px-4 py-2 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 border-b ${
                       activeConversation.modo_atendimento === 'automatico'
                         ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
                         : activeConversation.modo_atendimento === 'aguardando_humano'
@@ -1422,12 +1422,14 @@ export default function AdminNineScreen() {
                       }}
                       className="space-y-2"
                     >
-                      <div className="flex items-center justify-between text-[11px] text-vinho/60">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-vinho/60 gap-0.5">
                         <span className="font-medium flex items-center gap-1 text-blue-800">
                           <Headphones className="w-3 h-3 text-blue-600" />
                           Responder como {user?.name || 'Equipe CoffeeCast'} (Modo Humano):
                         </span>
-                        <span>O visitante verá esta mensagem no balão do site</span>
+                        <span className="break-words">
+                          O visitante verá esta mensagem no balão do site
+                        </span>
                       </div>
 
                       <div className="flex items-end gap-2">
@@ -2018,7 +2020,7 @@ export default function AdminNineScreen() {
           MODAL: ADICIONAR OU EDITAR ENTRADA DE CONHECIMENTO
          ========================================================================= */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-[620px] bg-white border-vinho/20 rounded-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-[620px] bg-white border-vinho/20 rounded-2xl max-h-[92dvh] overflow-y-auto break-words">
           <DialogHeader>
             <DialogTitle className="font-serif font-bold text-xl text-vinho flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-dourado" />
@@ -2188,7 +2190,7 @@ export default function AdminNineScreen() {
           MODAL: CONFIRMAR EXCLUSÃO DE CONHECIMENTO
          ========================================================================= */}
       <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
-        <DialogContent className="sm:max-w-[420px] bg-white border-vinho/20 rounded-2xl">
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-[420px] bg-white border-vinho/20 rounded-2xl break-words">
           <DialogHeader>
             <DialogTitle className="font-serif font-bold text-lg text-vinho flex items-center gap-2">
               <Trash2 className="w-5 h-5 text-red-600" />

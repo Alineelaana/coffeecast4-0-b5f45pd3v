@@ -416,8 +416,21 @@ export default function App() {
         </BrowserRouter>
       </StorefrontProvider>
 
-      {/* Notificações Toaster elegantes (mobile: base da tela para nunca ficar atrás do header) */}
-      <Toaster position={isMobile ? 'bottom-center' : 'top-right'} richColors closeButton />
+      {/* Notificações Toaster (mobile: base da tela, acima da safe-area do iPhone — nunca cortado no topo) */}
+      <Toaster
+        position={isMobile ? 'bottom-center' : 'top-right'}
+        richColors
+        closeButton
+        offset={isMobile ? 24 : undefined}
+        mobileOffset={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+        toastOptions={{
+          classNames: {
+            toast: 'max-w-[calc(100vw-2rem)] sm:max-w-sm break-words text-sm leading-snug',
+            title: 'break-words',
+            description: 'break-words',
+          },
+        }}
+      />
     </AuthProvider>
   )
 }
