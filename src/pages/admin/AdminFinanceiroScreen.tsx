@@ -38,12 +38,21 @@ import {
   Sparkles,
   Users,
   Info,
+  Repeat,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
+import {
+  gerarDatasRecorrencia,
+  dividirValorIgualmente,
+  ROTULO_RECORRENCIA,
+} from '@/lib/financeiroRecorrencia'
+import FinanceiroLogicaTela from '@/components/admin/FinanceiroLogicaTela'
 
 // As 4 integrantes oficiais do CoffeeCast 4.0
 const INTEGRANTES_DEFAULT = ['Aline Lana', 'Dayana Ribas', 'Rosi Lima', 'Flávia Franco']
+
+type ModoRecorrencia = 'unico' | 'mensal' | 'periodo'
 
 export default function AdminFinanceiroScreen() {
   const [transacoes, setTransacoes] = useState<TransacaoRecord[]>([])
@@ -67,6 +76,28 @@ export default function AdminFinanceiroScreen() {
   // Divisão por integrante (string editável por integrante no formulário)
   const [divisaoForm, setDivisaoForm] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+
+  // Recorrência: repete o lançamento mensalmente ou em um período com data inicial e final
+  const [modoRecorrencia, setModoRecorrencia] = useState<ModoRecorrencia>('unico')
+  const [recorrenciaFim, setRecorrenciaFim] = useState('')
+  // Rateio igual: marcar integrantes e dividir o valor total igualmente entre elas
+  const [rateioSelecionadas, setRateioSelecionadas] = useState<string[]>([])
+  const [rateioValorTotal, setRateioValorTotal] = useState('')
+  const [rateioAtivo, setRateioAtivo] = useState(false)
+
+  // Derivados da recorrência: datas de cada ocorrência e valor por lançamento
+  const datasRecorrencia =
+    !editingItem && modoRecorrencia !== 'unico' && dataVencimento
+      ? gerarDatasRecorrencia(dataVencimento, recorrenciaFim || undefined)
+      : []
+  const valorLancamento = parseFloat(valor.replace(',', '.')) || 0
+  const previewRateio = useMemo(
+    () =>
+      rateioAtivo && rateioSelecionadas.length > 0
+        ? dividirValorIgualmente(valorLancamento, rateioSelecionadas)
+        : {},
+    [rateioAtivo, rateioSelecionadas, valorLancamento],
+  )
 
   const loadData = async () => {
     try {
@@ -107,7 +138,8 @@ export default function AdminFinanceiroScreen() {
     setTipoMovimentacao('despesa')
     setTipo('gravacao')
     setValor('')
-    setDataVencimento(toInputDate(new Date().toISOString()))
+    const hoje = toInputDate(new Date().toISOString())
+    setDataVencimento(hoje)
     setSituacao('em_aberto')
     // Vazio por padrão — o sistema NÃO deve dividir automaticamente
     const initialDiv: Record<string, string> = {}
@@ -115,6 +147,12 @@ export default function AdminFinanceiroScreen() {
       initialDiv[nome] = ''
     })
     setDivisaoForm(initialDiv)
+    // Recorrência e rateio só se aplicam a novos lançamentos
+    setModoRecorrencia('unico')
+    setRecorrenciaFim(hoje)
+    setRateioAtivo(false)
+    setRateioSelecionadas([])
+    setRateioValorTotal('')
     setModalOpen(true)
   }
 
@@ -142,6 +180,12 @@ export default function AdminFinanceiroScreen() {
       })
     }
     setDivisaoForm(initialDiv)
+    // Recorrência e rateio são recurso de criação; edição permanece individual
+    setModoRecorrencia('unico')
+    setRecorrenciaFim('')
+    setRateioAtivo(false)
+    setRateioSelecionadas([])
+    setRateioValorTotal('')
     setModalOpen(true)
   }
 
@@ -167,24 +211,97 @@ export default function AdminFinanceiroScreen() {
         }
       })
 
-      const payload: Partial<TransacaoRecord> = {
-        descricao: descricao.trim(),
-        tipo,
-        valor: valNum,
-        data_vencimento: toInputDate(dataVencimento),
-        situacao,
-        tipo_movimentacao: tipoMovimentacao,
-        origem: editingItem?.origem || 'manual',
-        divisao_integrantes: Object.keys(divisaoObj).length > 0 ? divisaoObj : null,
+      // ── Divisão igualmente entre integrantes selecionadas (prévia = valores salvos) ──
+      let divisaoFinal = divisaoObj
+      if (rateioAtivo && !editingItem) {
+        if (rateioSelecionadas.length === 0) {
+          toast.error('Selecione pelo menos uma integrante para dividir o valor.')
+          setSaving(false)
+          return
+        }
+        const totalRateio = parseFloat(rateioValorTotal.replace(',', '.'))
+        if (isNaN(totalRateio) || totalRateio <= 0) {
+          toast.error('Informe o valor total para dividir entre as integrantes.')
+          setSaving(false)
+          return
+        }
+        if (Math.abs(valNum - totalRateio) > 0.009) {
+          toast.error(
+            'O valor do lançamento deve ser igual ao valor total a dividir. Ajuste um dos dois.',
+          )
+          setSaving(false)
+          return
+        }
+        divisaoFinal = dividirValorIgualmente(totalRateio, rateioSelecionadas)
+      }
+
+      // ── Recorrência: gera N lançamentos (só na criação) ──
+      let datasGeradas: string[] = [dataVencimento]
+      if (!editingItem && modoRecorrencia !== 'unico') {
+        const dataFinalRec = recorrenciaFim || dataVencimento
+        if (dataFinalRec < dataVencimento) {
+          toast.error('A data final da recorrência deve ser maior ou igual à data inicial.')
+          setSaving(false)
+          return
+        }
+        datasGeradas = datasRecorrencia.length > 0 ? datasRecorrencia : [dataVencimento]
+        if (datasGeradas.length > 120) {
+          toast.error('Período muito longo: limite de 120 repetições mensais por lançamento.')
+          setSaving(false)
+          return
+        }
+      }
+
+      const grupoId =
+        !editingItem && datasGeradas.length > 1
+          ? crypto.randomUUID()
+          : (editingItem?.grupo_recorrencia_id ?? null)
+
+      const rotulo =
+        datasGeradas.length > 1
+          ? `${ROTULO_RECORRENCIA} · ${datasGeradas.length}x · ${formatDateBR(dataVencimento)} a ${formatDateBR(recorrenciaFim || dataVencimento)}`
+          : null
+
+      const criarUm = (dataISO: string, valorLanc: number, divisao: Record<string, number>) => {
+        const payload: Partial<TransacaoRecord> = {
+          descricao: descricao.trim(),
+          tipo,
+          valor: valorLanc,
+          data_vencimento: toInputDate(dataISO),
+          situacao,
+          tipo_movimentacao: tipoMovimentacao,
+          origem: editingItem?.origem || 'manual',
+          divisao_integrantes: Object.keys(divisao).length > 0 ? divisao : null,
+          grupo_recorrencia_id: grupoId,
+          recorrencia_rotulo: rotulo,
+        }
+        return pb.collection('transacoes').create(payload)
       }
 
       if (editingItem) {
-        await pb.collection('transacoes').update(editingItem.id, payload)
+        await pb.collection('transacoes').update(editingItem.id, {
+          descricao: descricao.trim(),
+          tipo,
+          valor: valNum,
+          data_vencimento: toInputDate(dataVencimento),
+          situacao,
+          tipo_movimentacao: tipoMovimentacao,
+          origem: editingItem.origem || 'manual',
+          divisao_integrantes: Object.keys(divisaoFinal).length > 0 ? divisaoFinal : null,
+        })
         toast.success(
           tipoMovimentacao === 'receita' ? 'Receita atualizada!' : 'Despesa atualizada!',
         )
+      } else if (datasGeradas.length > 1) {
+        // Cria os N lançamentos da recorrência (valores já podem vir rateados)
+        await Promise.all(datasGeradas.map((dataISO) => criarUm(dataISO, valNum, divisaoFinal)))
+        toast.success(
+          `${datasGeradas.length} lançamentos criados com sucesso!${
+            Object.keys(divisaoFinal).length > 0 ? ' Valor dividido entre as integrantes.' : ''
+          }`,
+        )
       } else {
-        await pb.collection('transacoes').create(payload)
+        await criarUm(dataVencimento, valNum, divisaoFinal)
         toast.success(
           tipoMovimentacao === 'receita' ? 'Receita cadastrada!' : 'Despesa cadastrada!',
         )
@@ -331,6 +448,8 @@ export default function AdminFinanceiroScreen() {
           Novo Lançamento
         </Button>
       </div>
+
+      <FinanceiroLogicaTela />
 
       {/* Cards de Resumo Integrados: Receitas (Horas/Entradas), Despesas e Saldo */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
@@ -574,6 +693,15 @@ export default function AdminFinanceiroScreen() {
                         </Badge>
                       </Link>
                     )}
+                    {item.grupo_recorrencia_id && (
+                      <Badge
+                        className="text-[9px] font-bold bg-vinho/10 text-vinho border border-vinho/20 inline-flex items-center gap-1"
+                        title={item.recorrencia_rotulo || 'Lançamento repetido'}
+                      >
+                        <Repeat className="w-2.5 h-2.5" />
+                        {item.recorrencia_rotulo || 'Repetição'}
+                      </Badge>
+                    )}
                     <Badge variant="outline" className="text-[10px] border-vinho/20 text-vinho">
                       {tipoLabels[item.tipo] || item.tipo}
                     </Badge>
@@ -712,6 +840,15 @@ export default function AdminFinanceiroScreen() {
                             Origem: Controle de Horas
                           </Badge>
                         </Link>
+                      )}
+                      {item.grupo_recorrencia_id && (
+                        <Badge
+                          className="text-[9px] font-bold bg-vinho/10 text-vinho border border-vinho/20 inline-flex items-center gap-1"
+                          title={item.recorrencia_rotulo || 'Lançamento repetido'}
+                        >
+                          <Repeat className="w-2.5 h-2.5" />
+                          {item.recorrencia_rotulo || 'Repetição'}
+                        </Badge>
                       )}
                     </div>
 
@@ -1000,6 +1137,214 @@ export default function AdminFinanceiroScreen() {
               </div>
             </div>
 
+            {/* ── Seção Recorrência (só na criação) ── */}
+            {!editingItem && (
+              <div className="border border-dourado/40 bg-dourado/5 rounded-xl p-3.5 space-y-3">
+                <div className="flex items-center justify-between gap-2 border-b border-dourado/30 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Repeat className="w-4 h-4 text-dourado-dark shrink-0" />
+                    <span className="text-xs font-bold text-vinho">
+                      Repetir Lançamento (Recorrência)
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-vinho/60 hidden sm:inline">
+                    Gera vários lançamentos de uma vez
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-vinho">Repetir</Label>
+                  <Select
+                    value={modoRecorrencia}
+                    onValueChange={(val: ModoRecorrencia) => setModoRecorrencia(val)}
+                  >
+                    <SelectTrigger className="bg-white border-vinho/20 text-xs font-semibold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unico">Não repetir (lançamento único)</SelectItem>
+                      <SelectItem value="mensal">Mensal (todo mês, mesma data)</SelectItem>
+                      <SelectItem value="periodo">Período personalizado (início e fim)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {modoRecorrencia !== 'unico' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="t-rec-ini" className="text-xs font-semibold text-vinho">
+                        Data inicial {modoRecorrencia === 'periodo' ? '*' : ''}
+                      </Label>
+                      <Input
+                        id="t-rec-ini"
+                        type="date"
+                        value={dataVencimento}
+                        onChange={(e) => {
+                          setDataVencimento(e.target.value)
+                          if (recorrenciaFim && e.target.value > recorrenciaFim) {
+                            setRecorrenciaFim(e.target.value)
+                          }
+                        }}
+                        className="bg-white border-vinho/20 text-sm"
+                      />
+                      <span className="text-[10px] text-vinho/60">
+                        É a mesma data de vencimento do 1º lançamento
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="t-rec-fim" className="text-xs font-semibold text-vinho">
+                        Data final *
+                      </Label>
+                      <Input
+                        id="t-rec-fim"
+                        type="date"
+                        required
+                        min={dataVencimento}
+                        value={recorrenciaFim}
+                        onChange={(e) => setRecorrenciaFim(e.target.value)}
+                        className="bg-white border-vinho/20 text-sm"
+                      />
+                      <span className="text-[10px] text-vinho/60">
+                        {datasRecorrencia.length} lançamento
+                        {datasRecorrencia.length === 1 ? '' : 's'} serão criados
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Seção Divisão igualmente entre integrantes (só na criação) ── */}
+            {!editingItem && (
+              <div className="border border-dourado/40 bg-white/70 rounded-xl p-3.5 space-y-3">
+                <div className="flex items-center justify-between gap-2 border-b border-vinho/10 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-dourado-dark shrink-0" />
+                    <span className="text-xs font-bold text-vinho">
+                      Dividir igualmente entre integrantes
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setRateioAtivo((prev) => !prev)}
+                    aria-pressed={rateioAtivo}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-dourado-dark ${
+                      rateioAtivo ? 'bg-vinho' : 'bg-vinho/25'
+                    }`}
+                    aria-label="Ativar divisão igual entre integrantes"
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        rateioAtivo ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {rateioAtivo && (
+                  <div className="space-y-3">
+                    <p className="text-[11px] text-vinho/70 leading-relaxed">
+                      Marque as integrantes e informe o valor total. O sistema divide em partes
+                      iguais (a última é ajustada em centavos para fechar o total exato).
+                    </p>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="t-rateio-total" className="text-xs font-semibold text-vinho">
+                        Valor total a dividir (R$) *
+                      </Label>
+                      <Input
+                        id="t-rateio-total"
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Ex.: 1.000,00"
+                        value={rateioValorTotal}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setRateioValorTotal(v)
+                          // Mantém o campo "Valor (R$)" principal em sincronia para bater com o rateio
+                          if (v.trim() !== '') setValor(v)
+                        }}
+                        className="bg-white border-vinho/20 text-sm font-bold"
+                      />
+                    </div>
+
+                    <div className="space-y-2 pt-1">
+                      <Label className="text-xs font-semibold text-vinho">
+                        Integrantes que dividem o valor
+                      </Label>
+                      {nomesIntegrantes.map((nome) => {
+                        const checked = rateioSelecionadas.includes(nome)
+                        const parcela = previewRateio[nome]
+                        return (
+                          <div
+                            key={nome}
+                            className={`flex items-center justify-between gap-2 p-2 rounded-lg border transition-all ${
+                              checked
+                                ? 'bg-dourado/10 border-dourado/50'
+                                : 'bg-white border-vinho/10'
+                            }`}
+                          >
+                            <label
+                              htmlFor={`rateio-${nome}`}
+                              className="flex items-center gap-2 cursor-pointer flex-1 min-w-0"
+                            >
+                              <input
+                                type="checkbox"
+                                id={`rateio-${nome}`}
+                                checked={checked}
+                                onChange={() => {
+                                  setRateioSelecionadas((prev) =>
+                                    prev.includes(nome)
+                                      ? prev.filter((n) => n !== nome)
+                                      : [...prev, nome],
+                                  )
+                                }}
+                                className="w-4 h-4 accent-[#4B1E3F] cursor-pointer shrink-0"
+                              />
+                              <span className="text-xs font-semibold text-vinho truncate">
+                                {nome}
+                              </span>
+                            </label>
+                            {checked && parcela !== undefined && (
+                              <span className="text-xs font-bold text-vinho shrink-0">
+                                {formatCurrencyBRL(parcela)}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Prévia do rateio */}
+                    {rateioSelecionadas.length > 0 &&
+                      parseFloat(rateioValorTotal.replace(',', '.')) > 0 && (
+                        <div className="mt-2 p-2.5 bg-marfim/60 border border-vinho/10 rounded-lg space-y-1">
+                          <span className="text-[10px] font-bold text-vinho flex items-center gap-1">
+                            <Info className="w-3 h-3 text-dourado-dark" />
+                            Prévia do rateio ({rateioSelecionadas.length} integrante
+                            {rateioSelecionadas.length === 1 ? '' : 's'}):
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {rateioSelecionadas.map((nome) => (
+                              <span
+                                key={nome}
+                                className="inline-flex items-center gap-1 text-[10px] bg-white border border-vinho/10 px-2 py-0.5 rounded-md text-vinho font-medium"
+                              >
+                                <span className="text-vinho/70">{nome.split(' ')[0]}:</span>
+                                <strong className="text-vinho font-bold">
+                                  {formatCurrencyBRL(previewRateio[nome] || 0)}
+                                </strong>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Seção Divisão entre integrantes */}
             <div className="border border-vinho/15 bg-white/70 rounded-xl p-3.5 space-y-3">
               <div className="flex items-center justify-between gap-2 border-b border-vinho/10 pb-2">
@@ -1109,6 +1454,31 @@ export default function AdminFinanceiroScreen() {
               })()}
             </div>
 
+            {!editingItem && modoRecorrencia !== 'unico' && datasRecorrencia.length > 0 && (
+              <div className="p-2.5 bg-marfim/60 border border-vinho/10 rounded-lg">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-bold text-vinho flex items-center gap-1">
+                    <Repeat className="w-3 h-3 text-dourado-dark" />
+                    Resumo da repetição:
+                  </span>
+                  <span className="text-[10px] font-bold text-vinho">
+                    {datasRecorrencia.length} lançamento
+                    {datasRecorrencia.length === 1 ? '' : 's'}
+                  </span>
+                </div>
+                <p className="text-[10px] text-vinho/70 mt-0.5">
+                  {formatCurrencyBRL(valorLancamento)} cada · de {formatDateBR(datasRecorrencia[0])}{' '}
+                  até {formatDateBR(datasRecorrencia[datasRecorrencia.length - 1])}
+                  {rateioAtivo && rateioSelecionadas.length > 0
+                    ? ` · dividido entre ${rateioSelecionadas.length} integrante${rateioSelecionadas.length === 1 ? '' : 's'}`
+                    : ''}
+                </p>
+                <p className="text-[9px] text-vinho/50 mt-0.5">
+                  {datasRecorrencia.map((d) => formatDateBR(d).slice(0, 5)).join(' · ')}
+                </p>
+              </div>
+            )}
+
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
@@ -1123,7 +1493,11 @@ export default function AdminFinanceiroScreen() {
                 disabled={saving}
                 className="w-full sm:w-auto min-h-[44px] bg-vinho hover:bg-vinho-light text-white text-xs font-bold px-5"
               >
-                {saving ? 'Salvando...' : 'Salvar Movimentação'}
+                {saving
+                  ? 'Salvando...'
+                  : !editingItem && datasRecorrencia.length > 1
+                    ? `Criar ${datasRecorrencia.length} lançamentos`
+                    : 'Salvar Movimentação'}
               </Button>
             </div>
           </form>

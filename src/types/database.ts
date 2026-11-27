@@ -284,7 +284,7 @@ export interface NineLeadDetalhe {
 }
 
 export type TransacaoMovimentacao = 'receita' | 'despesa'
-export type TransacaoOrigem = 'manual' | 'horas_compradas'
+export type TransacaoOrigem = 'manual' | 'horas_compradas' | 'recorrencia' | 'recorrencia_origem'
 
 export interface DivisaoIntegranteItem {
   nome: string
@@ -316,6 +316,8 @@ export interface TransacaoRecord {
   origem?: TransacaoOrigem
   horas_compradas_id?: string
   divisao_integrantes?: Record<string, number> | null
+  grupo_recorrencia_id?: string | null
+  recorrencia_rotulo?: string | null
   created: string
   updated: string
 }
