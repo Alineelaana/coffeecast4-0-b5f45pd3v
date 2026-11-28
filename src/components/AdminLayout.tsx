@@ -1415,7 +1415,6 @@ export default function AdminLayout() {
               </Button>
             </div>
           </div>
-          <div className="flex-1" onClick={() => setMobileSidebarOpen(false)} />
         </div>
       )}
 
