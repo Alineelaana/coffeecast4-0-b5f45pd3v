@@ -1,13 +1,23 @@
 /**
  * Generates the CoffeeCast 4.0 web app icons as PNG files in public/icons/.
- * Runs as an executable browser-free test in `bun test scripts/icon-gen.test.mjs`
- * (the project's test runner). The generated PNGs are committed in public/icons/.
+ * Source of truth: the OFFICIAL transparent art of the symbol (cup + heart
+ * steam + star, RGBA with alpha). Zero dependencies — decodes/encodes PNG and
+ * resizes with plain Node buffers, so it runs anywhere (`node scripts/iconGen.mjs`).
  *
  * Icons produced (committed static assets, served without login):
- *   apple-touch-icon.png  180x180 - iPhone Safari home screen (full art)
- *   icon-192.png          192x192 - Android/Chrome (purpose any)
- *   icon-512.png          512x512 - Android/Chrome (purpose any)
- *   icon-maskable-512.png 512x512 - Android/Chrome (purpose maskable, ivory bg + safe margin)
+ *   apple-touch-icon.png  180x180 - iPhone Safari home screen, IVORY background
+ *                                   (Safari composites transparent icons over
+ *                                   black — an opaque ivory tile is the only
+ *                                   way to keep the brand look)
+ *   icon-192.png          192x192 - Android/Chrome (purpose any, TRANSPARENT)
+ *   icon-512.png          512x512 - Android/Chrome (purpose any, TRANSPARENT)
+ *   icon-maskable-512.png 512x512 - Android/Chrome (purpose maskable, ivory bg
+ *                                   + >= 30% safe margin for the circular mask)
+ *
+ * The drawing, colors and proportions of the symbol are preserved: the only
+ * adaptations are the bounding-box cutout (alpha > threshold) and the margins
+ * each target requires. A red-halo cleanup runs defensively ONLY if saturated
+ * red fringe pixels are actually present (the official art is clean).
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { inflateSync, inflateRawSync, deflateSync } from 'node:zlib'
@@ -16,18 +26,22 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
-const ART_PATH = path.join(ROOT, 'src/assets/chatgpt-image-16-de-set.de-2026-190040-04898.png')
+const ART_PATH = path.join(
+  ROOT,
+  'src/assets/icone-coffeecast-xicara-com-vapor-em-coracao-cf69e.png',
+)
 const OUT_DIR = path.join(ROOT, 'public/icons')
 
-export const MARFIM = [0xfa, 0xf6, 0xef] // ~#FAF6EF - brand ivory
-const DARK_THRESHOLD = 30 // luminance below this = black background
-const ALPHA_MIN = 40 // alpha below this = transparent bg / red halo
+export const MARFIM = [0xf7, 0xe9, 0xdd] // #F7E9DD - brand ivory (maskable/apple bg)
+const ALPHA_MIN = 40 // alpha below this = transparent background
+// Saturated pure-red halo (compression fringe) — removed ONLY if present.
+const HALO_MIN_PRESENT = 4 // count of halo pixels that triggers the cleanup
 
 export const ICON_TARGETS = [
-  { file: 'apple-touch-icon.png', size: 180, margin: 0.06 },
-  { file: 'icon-192.png', size: 192, margin: 0.06 },
-  { file: 'icon-512.png', size: 512, margin: 0.06 },
-  { file: 'icon-maskable-512.png', size: 512, margin: 0.3 },
+  { file: 'apple-touch-icon.png', size: 180, margin: 0.06, background: 'ivory' },
+  { file: 'icon-192.png', size: 192, margin: 0.06, background: 'transparent' },
+  { file: 'icon-512.png', size: 512, margin: 0.06, background: 'transparent' },
+  { file: 'icon-maskable-512.png', size: 512, margin: 0.3, background: 'ivory' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -221,104 +235,38 @@ function luminance(data, i) {
   return 0.299 * data[i * 4] + 0.587 * data[i * 4 + 1] + 0.114 * data[i * 4 + 2]
 }
 
-// Saturated pure-red halo (compression fringe of the art) — never part of the brand symbol
-function isRedHalo(data, i) {
+// Saturated pure-red halo (compression fringe) — never part of the brand symbol
+export function isRedHalo(data, i) {
   return data[i * 4] >= 150 && data[i * 4 + 1] <= 85 && data[i * 4 + 2] <= 85
 }
 
-// Background (black-bg art) = near-black OR saturated red halo
-function isBackground(data, i) {
-  if (luminance(data, i) <= DARK_THRESHOLD) return true
-  return isRedHalo(data, i)
-}
-
-function hasTransparentBackground(img) {
+export function countRedHaloPixels(img) {
   const { width, height, data } = img
-  const samples = [
-    [0, 0],
-    [width - 1, 0],
-    [0, height - 1],
-    [width - 1, height - 1],
-    [width >> 1, height - 1],
-  ]
-  const transparent = samples.filter(([x, y]) => data[(y * width + x) * 4 + 3] < ALPHA_MIN).length
-  return transparent >= 3
+  let count = 0
+  for (let i = 0; i < width * height; i++) if (isRedHalo(data, i)) count++
+  return count
 }
 
-// ---------------------------------------------------------------------------
-// Symbol cutout:
-//  - transparent art: keep everything with alpha >= ALPHA_MIN (visible bbox)
-//  - black-bg art: 8-connected flood fill from the cup center, discarding the
-//    black background, the red halo and the wordmark (separate component)
-// ---------------------------------------------------------------------------
+// Straight alpha bbox of everything visible (alpha >= ALPHA_MIN)
 export function cutoutSymbol(img) {
   const { width, height, data } = img
-  const n = width * height
-  const inside = new Uint8Array(n)
-
-  // 8-connected flood fill from the cup center (~55% of the height) — works for
-  // both backgrounds: black-bg art uses isBackground(); transparent art treats
-  // alpha < ALPHA_MIN as background. The wordmark is a separate component and
-  // is left out, so only the symbol keeps its place in the icon.
-  const transparentBg = hasTransparentBackground(img)
-  const bg = transparentBg ? (i) => data[i * 4 + 3] < ALPHA_MIN : (i) => isBackground(data, i)
-  const stack = new Int32Array(n)
-  let top = 0
-  const cx = Math.floor(width / 2)
-  const cy = Math.floor(height * 0.55)
-  let seed = -1
-  let bestDist = Infinity
-  for (let y = Math.floor(height * 0.3); y < Math.floor(height * 0.8); y++) {
-    for (let x = Math.floor(width * 0.2); x < Math.floor(width * 0.8); x++) {
-      const i = y * width + x
-      if (bg(i)) continue
-      const d = (x - cx) * (x - cx) + (y - cy) * (y - cy)
-      if (d < bestDist) {
-        bestDist = d
-        seed = i
-      }
-    }
-  }
-  if (seed < 0) throw new Error('symbol not found in art')
-  inside[seed] = 1
-  stack[top++] = seed
-  while (top > 0) {
-    const i = stack[--top]
-    const x = i % width
-    const y = (i - x) / width
-    for (let dy = -1; dy <= 1; dy++) {
-      const ny = y + dy
-      if (ny < 0 || ny >= height) continue
-      for (let dx = -1; dx <= 1; dx++) {
-        if (!dx && !dy) continue
-        const nx = x + dx
-        if (nx < 0 || nx >= width) continue
-        const ni = ny * width + nx
-        if (!inside[ni] && !bg(ni)) {
-          inside[ni] = 1
-          stack[top++] = ni
-        }
-      }
-    }
-  }
-
-  // bounding box
   let minX = width,
     minY = height,
-    maxX = 0,
-    maxY = 0
+    maxX = -1,
+    maxY = -1
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      if (!inside[y * width + x]) continue
+      if (data[(y * width + x) * 4 + 3] < ALPHA_MIN) continue
       if (x < minX) minX = x
       if (x > maxX) maxX = x
       if (y < minY) minY = y
       if (y > maxY) maxY = y
     }
   }
+  if (maxX < 0) throw new Error('symbol not found in art (no visible pixels)')
+
   const w = maxX - minX + 1
   const h = maxY - minY + 1
-
   const out = Buffer.alloc(w * h * 4)
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -327,24 +275,17 @@ export function cutoutSymbol(img) {
       out[di] = data[si * 4]
       out[di + 1] = data[si * 4 + 1]
       out[di + 2] = data[si * 4 + 2]
-      out[di + 3] = inside[si] ? data[si * 4 + 3] : 0
-      if (inside[si]) {
-        const edge =
-          (x > 0 && !inside[si - 1]) ||
-          (x < w - 1 && !inside[si + 1]) ||
-          (y > 0 && !inside[si - width]) ||
-          (y < h - 1 && !inside[si + width])
-        if (edge && out[di + 3] === 255) out[di + 3] = 224
-      }
+      out[di + 3] = data[si * 4 + 3]
     }
   }
   return { width: w, height: h, data: out }
 }
 
 // ---------------------------------------------------------------------------
-// Icon assembly: centered symbol with margin over ivory background
+// Icon assembly: centered symbol with margin, over transparent or ivory
 // ---------------------------------------------------------------------------
-export function assembleIcon(size, symbol, marginRatio) {
+export function assembleIcon(size, symbol, marginRatio, background) {
+  const bg = background ?? 'ivory'
   const scale = Math.min(
     (size * (1 - marginRatio)) / symbol.width,
     (size * (1 - marginRatio)) / symbol.height,
@@ -354,11 +295,13 @@ export function assembleIcon(size, symbol, marginRatio) {
   const scaled = resize(symbol, dw, dh)
 
   const canvas = Buffer.alloc(size * size * 4)
-  for (let i = 0; i < size * size; i++) {
-    canvas[i * 4] = MARFIM[0]
-    canvas[i * 4 + 1] = MARFIM[1]
-    canvas[i * 4 + 2] = MARFIM[2]
-    canvas[i * 4 + 3] = 255
+  if (bg === 'ivory') {
+    for (let i = 0; i < size * size; i++) {
+      canvas[i * 4] = MARFIM[0]
+      canvas[i * 4 + 1] = MARFIM[1]
+      canvas[i * 4 + 2] = MARFIM[2]
+      canvas[i * 4 + 3] = 255
+    }
   }
   const ox = Math.round((size - dw) / 2)
   const oy = Math.round((size - dh) / 2)
@@ -367,10 +310,16 @@ export function assembleIcon(size, symbol, marginRatio) {
       const di = ((y + oy) * size + (x + ox)) * 4
       const si = (y * dw + x) * 4
       const a = scaled.data[si + 3] / 255
-      for (let ch = 0; ch < 3; ch++) {
-        canvas[di + ch] = Math.round(scaled.data[si + ch] * a + canvas[di + ch] * (1 - a))
+      if (bg === 'transparent') {
+        // straight alpha out: symbol color premultiplied by its own alpha
+        for (let ch = 0; ch < 3; ch++) canvas[di + ch] = Math.round(scaled.data[si + ch] * a)
+        canvas[di + 3] = Math.round(a * 255)
+      } else {
+        for (let ch = 0; ch < 3; ch++) {
+          canvas[di + ch] = Math.round(scaled.data[si + ch] * a + canvas[di + ch] * (1 - a))
+        }
+        canvas[di + 3] = 255
       }
-      canvas[di + 3] = 255
     }
   }
   return encodePng(size, size, canvas)
@@ -388,7 +337,7 @@ export function gerarIcones() {
   const symbol = cutoutSymbol(art)
   mkdirSync(OUT_DIR, { recursive: true })
   for (const t of ICON_TARGETS) {
-    const png = assembleIcon(t.size, symbol, t.margin)
+    const png = assembleIcon(t.size, symbol, t.margin, t.background)
     writeFileSync(path.join(OUT_DIR, t.file), png)
   }
   return { generated: true, files: ICON_TARGETS.map((t) => 'public/icons/' + t.file) }

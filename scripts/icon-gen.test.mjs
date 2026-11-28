@@ -1,18 +1,22 @@
 /**
- * Executable test/generator: builds the CoffeeCast 4.0 web-app icons from the
- * official art and VERIFIES they exist, have the exact required dimensions and
- * carry the expected content (ivory background at the corners, symbol in the
- * middle). Run: node --test scripts/icon-gen.test.mjs
- * The icons themselves are COMMITTED in public/icons/ — this test is the proof
- * that the fatal v0.0.228 mistake (icons pointing to PNGs that never existed)
- * does not repeat.
+ * Executable test: builds the CoffeeCast 4.0 web-app icons from the OFFICIAL
+ * TRANSPARENT art and VERIFIES the committed PNGs have the exact required
+ * dimensions, the expected background (transparent for "any" icons, ivory
+ * #F7E9DD for maskable/apple) and the symbol present in the middle.
+ * Run: node --test scripts/icon-gen.test.mjs
  *
- * Ported from bun:test to node:test: same zero-dependency pipeline, but runs
- * on plain Node — the runtime available in this environment's QA pipeline.
+ * The icons themselves are COMMITTED in public/icons/ by the user running
+ * `node scripts/iconGen.mjs` (the builder blocks AI writes to *.png) — this
+ * test is the proof that the v0.0.228 mistake (icons pointing to PNGs that
+ * never existed) does not repeat.
+ *
+ * NOTE: the committed PNGs in this repository were generated from the OLD
+ * black-background art. After running `node scripts/iconGen.mjs` locally with
+ * the new transparent art, this test validates the NEW generation.
  */
-import { describe, it, before } from 'node:test'
+import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { existsSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -21,35 +25,48 @@ import {
   resize,
   cutoutSymbol,
   assembleIcon,
+  countRedHaloPixels,
   MARFIM,
   ICON_TARGETS,
 } from './iconGen.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
-const ART_PATH = path.join(ROOT, 'src/assets/chatgpt-image-16-de-set.de-2026-190040-04898.png')
+const ART_PATH = path.join(
+  ROOT,
+  'src/assets/icone-coffeecast-xicara-com-vapor-em-coracao-cf69e.png',
+)
 const OUT_DIR = path.join(ROOT, 'public/icons')
 
 const art = decodePng(readFileSync(ART_PATH))
 const symbol = cutoutSymbol(art)
 
-// generates (once) the committed PNGs from the official art
-mkdirSync(OUT_DIR, { recursive: true })
-for (const t of ICON_TARGETS) {
-  const p = path.join(OUT_DIR, t.file)
-  if (!existsSync(p)) writeFileSync(p, assembleIcon(t.size, symbol, t.margin))
-}
-
 describe('CoffeeCast web app icons', () => {
-  it('arte oficial anexada decodifica como PNG grande e quadrado', () => {
+  it('arte oficial (transparente) decodifica como PNG grande e quadrado', () => {
     assert.ok(art.width > 400)
     assert.equal(art.width, art.height)
+    // corners transparent (the art is the symbol over alpha, not over black)
+    const at = (x, y) => {
+      const i = (y * art.width + x) * 4
+      return [art.data[i], art.data[i + 1], art.data[i + 2], art.data[i + 3]]
+    }
+    assert.ok(at(0, 0)[3] < 40)
+    assert.ok(at(art.width - 1, art.height - 1)[3] < 40)
   })
 
-  it('símbolo recortado é menor que a arte e tem conteúdo', () => {
+  it('símbolo recortado é menor que a arte e tem conteúdo opaco', () => {
     assert.ok(symbol.width > 100)
     assert.ok(symbol.height > 100)
     assert.ok(symbol.width <= art.width)
+    let opaque = 0
+    for (let i = 0; i < symbol.width * symbol.height; i++) {
+      if (symbol.data[i * 4 + 3] >= 200) opaque++
+    }
+    assert.ok(opaque > 1000)
+  })
+
+  it('arte anexa não tem halo vermelho relevante (limpeza defensiva inativa)', () => {
+    assert.ok(countRedHaloPixels(art) < 4)
   })
 
   for (const t of ICON_TARGETS) {
@@ -59,7 +76,7 @@ describe('CoffeeCast web app icons', () => {
         t.size +
         'x' +
         t.size +
-        'px, fundo marfim e símbolo',
+        'px, fundo correto e símbolo',
       () => {
         const pngPath = path.join(OUT_DIR, t.file)
         assert.ok(existsSync(pngPath))
@@ -79,24 +96,44 @@ describe('CoffeeCast web app icons', () => {
           Math.abs(c[0] - MARFIM[0]) <= 24 &&
           Math.abs(c[1] - MARFIM[1]) <= 24 &&
           Math.abs(c[2] - MARFIM[2]) <= 24
-        // all 4 corners = brand ivory (no black background left over)
-        assert.ok(nearIvory(at(2, 2)))
-        assert.ok(nearIvory(at(img.width - 3, 2)))
-        assert.ok(nearIvory(at(2, img.height - 3)))
-        assert.ok(nearIvory(at(img.width - 3, img.height - 3)))
-        // opaque PNG (home-screen icons cannot be translucent)
-        assert.equal(at(2, 2)[3], 255)
-        // the symbol is drawn (center band darker than the ivory bg)
-        let sum = 0
-        let count = 0
+
+        if (t.background === 'transparent') {
+          // all 4 corners fully transparent (no black, no ivory residue)
+          for (const [x, y] of [
+            [2, 2],
+            [img.width - 3, 2],
+            [2, img.height - 3],
+            [img.width - 3, img.height - 3],
+          ]) {
+            assert.equal(at(x, y)[3], 0, `corner ${x},${y} deve ser alfa 0`)
+          }
+        } else {
+          // all 4 corners = brand ivory, fully opaque (no black background left)
+          assert.ok(nearIvory(at(2, 2)))
+          assert.ok(nearIvory(at(img.width - 3, 2)))
+          assert.ok(nearIvory(at(2, img.height - 3)))
+          assert.ok(nearIvory(at(img.width - 3, img.height - 3)))
+          assert.equal(at(2, 2)[3], 255)
+        }
+
+        // the symbol is drawn in the central band (non-background pixels there)
+        let symbolPx = 0
         for (let y = Math.floor(t.size * 0.4); y < Math.floor(t.size * 0.6); y++) {
           for (let x = Math.floor(t.size * 0.35); x < Math.floor(t.size * 0.65); x++) {
             const i = (y * t.size + x) * 4
-            sum += 0.299 * img.data[i] + 0.587 * img.data[i + 1] + 0.114 * img.data[i + 2]
-            count++
+            const [r, g, b, a] = [img.data[i], img.data[i + 1], img.data[i + 2], img.data[i + 3]]
+            if (t.background === 'transparent') {
+              if (a > 0) symbolPx++
+            } else if (
+              Math.abs(r - MARFIM[0]) > 24 ||
+              Math.abs(g - MARFIM[1]) > 24 ||
+              Math.abs(b - MARFIM[2]) > 24
+            ) {
+              symbolPx++
+            }
           }
         }
-        assert.ok(sum / count < 235)
+        assert.ok(symbolPx > 100, 'símbolo deve ocupar a faixa central')
       },
     )
   }
@@ -104,30 +141,22 @@ describe('CoffeeCast web app icons', () => {
   it('regeneração a partir da arte é determinística (mesmos bytes do arquivo commitado)', () => {
     for (const t of ICON_TARGETS) {
       const committed = readFileSync(path.join(OUT_DIR, t.file))
-      const regenerated = assembleIcon(t.size, symbol, t.margin)
+      const regenerated = assembleIcon(t.size, symbol, t.margin, t.background)
       assert.equal(Buffer.compare(committed, regenerated), 0)
     }
   })
 
-  it('sanidade do pipeline: resize do símbolo para 180px mantém pixels não-marfim', () => {
+  it('sanidade do pipeline: resize do símbolo para 180px mantém pixels visíveis', () => {
     const scaled = resize(
       symbol,
       168,
       Math.max(1, Math.round((168 * symbol.height) / symbol.width)),
     )
-    let nonIvory = 0
+    let visible = 0
     for (let i = 0; i < scaled.width * scaled.height; i++) {
-      const r = scaled.data[i * 4]
-      const g = scaled.data[i * 4 + 1]
-      const b = scaled.data[i * 4 + 2]
-      if (
-        Math.abs(r - MARFIM[0]) > 24 ||
-        Math.abs(g - MARFIM[1]) > 24 ||
-        Math.abs(b - MARFIM[2]) > 24
-      )
-        nonIvory++
+      if (scaled.data[i * 4 + 3] > 0) visible++
     }
-    assert.ok(nonIvory > 1000)
+    assert.ok(visible > 1000)
   })
 
   it('encodePng produz PNG decodificável de mesmas dimensões', () => {
