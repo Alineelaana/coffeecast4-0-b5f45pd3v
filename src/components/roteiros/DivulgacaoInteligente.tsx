@@ -51,7 +51,8 @@ interface DivulgacaoSalva {
   atualizada_em?: string
 }
 
-function roteiroJson(roteiro: RoteiroConvidadoRecord): DivulgacaoSalva {
+function roteiroJson(roteiro: RoteiroConvidadoRecord | null | undefined): DivulgacaoSalva {
+  if (!roteiro) return {}
   const raw = (roteiro as unknown as Record<string, unknown>).divulgacao_ia
   if (!raw) return {}
   try {
@@ -152,6 +153,7 @@ export default function DivulgacaoInteligente({ roteiro, compacto, onRoteiroAtua
 
   /** Persiste no roteiro (divulgacao_ia + divulgacao_gerada_em + histórico de versões). */
   async function salvarNoRoteiro(parcial: Partial<DivulgacaoSalva>, rotulo: string) {
+    if (!roteiro) return
     setSalvando(rotulo)
     try {
       const atual: DivulgacaoSalva = {

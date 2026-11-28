@@ -165,7 +165,12 @@ export const AuditoriaService = {
     } catch (err) {
       console.warn('[AuditoriaService] Buscando eventos locais de contingência:', err)
       const stored = localStorage.getItem(LOCAL_AUDIT_KEY)
-      let list: AuditoriaEventoRecord[] = stored ? JSON.parse(stored) : []
+      let list: AuditoriaEventoRecord[] = []
+      try {
+        list = stored ? (JSON.parse(stored) as AuditoriaEventoRecord[]) : []
+      } catch {
+        list = []
+      }
 
       if (list.length === 0) {
         list = this._gerarMocksIniciais()
@@ -225,7 +230,13 @@ export const AuditoriaService = {
     } catch (err) {
       console.warn('[AuditoriaService] Usando regras locais:', err)
       const stored = localStorage.getItem(LOCAL_REGRAS_KEY)
-      if (stored) return JSON.parse(stored)
+      if (stored) {
+        try {
+          return JSON.parse(stored) as AuditoriaRegraRecord[]
+        } catch {
+          /* cai nos defaults abaixo */
+        }
+      }
 
       const defaults: AuditoriaRegraRecord[] = [
         {
@@ -331,7 +342,12 @@ export const AuditoriaService = {
     } catch (err) {
       console.warn('[AuditoriaService] Salvando regra localmente:', err)
       const stored = localStorage.getItem(LOCAL_REGRAS_KEY)
-      const list: AuditoriaRegraRecord[] = stored ? JSON.parse(stored) : []
+      let list: AuditoriaRegraRecord[] = []
+      try {
+        list = stored ? (JSON.parse(stored) as AuditoriaRegraRecord[]) : []
+      } catch {
+        list = []
+      }
       if (regra.id) {
         const idx = list.findIndex((r) => r.id === regra.id)
         if (idx >= 0) {
@@ -365,8 +381,14 @@ export const AuditoriaService = {
     } catch (_) {
       const stored = localStorage.getItem(LOCAL_REGRAS_KEY)
       if (stored) {
-        const list = JSON.parse(stored).filter((r: any) => r.id !== id)
-        localStorage.setItem(LOCAL_REGRAS_KEY, JSON.stringify(list))
+        try {
+          const list = (JSON.parse(stored) as AuditoriaRegraRecord[]).filter(
+            (r: any) => r.id !== id,
+          )
+          localStorage.setItem(LOCAL_REGRAS_KEY, JSON.stringify(list))
+        } catch {
+          /* lista local corrompida — ignora */
+        }
       }
     }
   },
@@ -386,11 +408,15 @@ export const AuditoriaService = {
       console.warn('[AuditoriaService] Usando alertas locais:', err)
       const stored = localStorage.getItem(LOCAL_ALERTAS_KEY)
       if (stored) {
-        let list: AuditoriaAlertaRecord[] = JSON.parse(stored)
-        if (filtroStatus && filtroStatus !== 'todos') {
-          list = list.filter((a) => a.status === filtroStatus)
+        try {
+          let list: AuditoriaAlertaRecord[] = JSON.parse(stored)
+          if (filtroStatus && filtroStatus !== 'todos') {
+            list = list.filter((a) => a.status === filtroStatus)
+          }
+          return list
+        } catch {
+          /* segue para os mocks abaixo */
         }
-        return list
       }
       const mocks: AuditoriaAlertaRecord[] = [
         {
@@ -492,25 +518,29 @@ export const AuditoriaService = {
     // Fallback local
     const stored = localStorage.getItem(LOCAL_ALERTAS_KEY)
     if (stored) {
-      const list: AuditoriaAlertaRecord[] = JSON.parse(stored)
-      const item = list.find((a) => a.id === alertaId)
-      if (item) {
-        item.status = novoStatus
-        if (!item.historico_status) item.historico_status = []
-        item.historico_status.push({
-          status: novoStatus,
-          alterado_por_nome: userName,
-          data: nowIso,
-          observacao,
-        })
-        if (novoStatus === 'resolvido') {
-          item.resolvido_por_nome = userName
-          item.data_resolucao = nowIso
-        } else if (novoStatus === 'visualizado') {
-          item.visualizado_por_nome = userName
-          item.data_visualizacao = nowIso
+      try {
+        const list: AuditoriaAlertaRecord[] = JSON.parse(stored)
+        const item = list.find((a) => a.id === alertaId)
+        if (item) {
+          item.status = novoStatus
+          if (!item.historico_status) item.historico_status = []
+          item.historico_status.push({
+            status: novoStatus,
+            alterado_por_nome: userName,
+            data: nowIso,
+            observacao,
+          })
+          if (novoStatus === 'resolvido') {
+            item.resolvido_por_nome = userName
+            item.data_resolucao = nowIso
+          } else if (novoStatus === 'visualizado') {
+            item.visualizado_por_nome = userName
+            item.data_visualizacao = nowIso
+          }
+          localStorage.setItem(LOCAL_ALERTAS_KEY, JSON.stringify(list))
         }
-        localStorage.setItem(LOCAL_ALERTAS_KEY, JSON.stringify(list))
+      } catch {
+        /* lista local corrompida — ignora */
       }
     }
   },
