@@ -8,12 +8,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="CoffeeCast 4.0" />
     <title>CoffeeCast4.0 | Podcast de Negócios e Histórias Inspiradoras</title>
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
-    <link rel="icon" type="image/png" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <!-- ?v=2: cache-busting — Safari e a borda HTTP guardavam cópias antigas/quebradas dos PNGs; a query força nova busca -->
+    <link rel="icon" href="/favicon.ico?v=2" sizes="32x32" />
+    <link rel="icon" type="image/png" sizes="180x180" href="/icons/apple-touch-icon.png?v=2" />
     <!-- iPhone/Safari: apple-touch-icon precisa ser PNG — SVG não é suportado como ícone da tela de início -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png?v=2" />
     <!-- Android/Chrome: o host estático não serve arquivos .webmanifest — usar /manifest.json -->
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="/manifest.json?v=2" />
     <meta
       name="description"
       content="CoffeeCast 4.0: podcast sobre empreendedorismo, negócios, liderança e histórias inspiradoras. Mais que conversas, histórias que transformam."

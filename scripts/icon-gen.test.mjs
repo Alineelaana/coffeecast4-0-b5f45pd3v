@@ -5,6 +5,10 @@
  * #F7E9DD for maskable/apple) and the symbol present in the middle.
  * Run: node --test scripts/icon-gen.test.mjs
  *
+ * Fonte: src/assets/icone-coffeecast-xicara-com-vapor-em-coracao-eb9fc.png
+ * (nova arte oficial anexada pelo usuário — xícara rosé com vapor em coração
+ * e estrela, fundo transparente).
+ *
  * The icons themselves are COMMITTED in public/icons/ by the user running
  * `node scripts/iconGen.mjs` (the builder blocks AI writes to *.png) — this
  * test is the proof that the v0.0.228 mistake (icons pointing to PNGs that
@@ -34,17 +38,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const ART_PATH = path.join(
   ROOT,
-  'src/assets/icone-coffeecast-xicara-com-vapor-em-coracao-cf69e.png',
+  'src/assets/icone-coffeecast-xicara-com-vapor-em-coracao-eb9fc.png',
 )
 const OUT_DIR = path.join(ROOT, 'public/icons')
 
 const art = decodePng(readFileSync(ART_PATH))
-const symbol = cutoutSymbol(art)
+const symbol = cutoutSymbol(removerFundoPretoSePresente(art))
 
 describe('CoffeeCast web app icons', () => {
-  it('arte oficial (transparente) decodifica como PNG grande e quadrado', () => {
+  it('arte oficial (transparente) decodifica como PNG grande (pode ser retangular)', () => {
     assert.ok(art.width > 400)
-    assert.equal(art.width, art.height)
+    assert.ok(art.height > 400)
     // corners transparent (the art is the symbol over alpha, not over black)
     const at = (x, y) => {
       const i = (y * art.width + x) * 4

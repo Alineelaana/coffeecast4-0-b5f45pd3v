@@ -28,7 +28,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const ART_PATH = path.join(
   ROOT,
-  'src/assets/icone-coffeecast-xicara-com-vapor-em-coracao-cf69e.png',
+  'src/assets/icone-coffeecast-xicara-com-vapor-em-coracao-eb9fc.png',
 )
 const OUT_DIR = path.join(ROOT, 'public/icons')
 
@@ -267,6 +267,7 @@ export function cutoutSymbol(img) {
 
   const w = maxX - minX + 1
   const h = maxY - minY + 1
+  if (w < 50 || h < 50) throw new Error('symbol implausibly small (' + w + 'x' + h + ')')
   const out = Buffer.alloc(w * h * 4)
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -279,6 +280,31 @@ export function cutoutSymbol(img) {
     }
   }
   return { width: w, height: h, data: out }
+}
+
+// Defensive: some exports of the art arrive with an opaque near-black
+// background instead of transparency. ONLY if every corner is opaque and
+// near-black, those pixels become transparent so the alpha-bbox cutout sees
+// only the symbol. No-op on the official transparent art.
+export function removerFundoPretoSePresente(img) {
+  const { width, height, data } = img
+  const corners = [
+    [0, 0],
+    [width - 1, 0],
+    [0, height - 1],
+    [width - 1, height - 1],
+  ]
+  const opaqueBlack = corners.every(([x, y]) => {
+    const i = (y * width + x) * 4
+    return data[i + 3] > 200 && data[i] < 48 && data[i + 1] < 48 && data[i + 2] < 48
+  })
+  if (!opaqueBlack) return img
+  for (let i = 0; i < width * height; i++) {
+    if (data[i * 4] < 48 && data[i * 4 + 1] < 48 && data[i * 4 + 2] < 48 && data[i * 4 + 3] > 0) {
+      data[i * 4 + 3] = 0
+    }
+  }
+  return img
 }
 
 // ---------------------------------------------------------------------------
@@ -329,12 +355,11 @@ export function assembleIcon(size, symbol, marginRatio, background) {
 // Generate icons (idempotent: only runs if a PNG is missing)
 // ---------------------------------------------------------------------------
 export function gerarIcones() {
-  const missing = ICON_TARGETS.some((t) => !existsSync(path.join(OUT_DIR, t.file)))
-  if (!missing) {
-    return { generated: false, files: ICON_TARGETS.map((t) => 'public/icons/' + t.file) }
-  }
+  // Always regenerates: the source art can change (new official version) and
+  // the committed PNGs must never go stale behind it. Output is deterministic,
+  // so re-running on an unchanged art rewrites identical bytes.
   const art = decodePng(readFileSync(ART_PATH))
-  const symbol = cutoutSymbol(art)
+  const symbol = cutoutSymbol(removerFundoPretoSePresente(art))
   mkdirSync(OUT_DIR, { recursive: true })
   for (const t of ICON_TARGETS) {
     const png = assembleIcon(t.size, symbol, t.margin, t.background)
@@ -347,9 +372,5 @@ const invokedDirectly =
   process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 if (invokedDirectly) {
   const r = gerarIcones()
-  console.log(
-    r.generated
-      ? 'OK: icons generated: ' + r.files.join(', ')
-      : 'icons already exist, nothing to do',
-  )
+  console.log('OK: icons generated: ' + r.files.join(', '))
 }
