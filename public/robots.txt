@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Não indexar área administrativa e áreas de membro
+Disallow: /admin
+Disallow: /admin/
+Disallow: /membros
+Disallow: /chat
+Disallow: /perfil
+Disallow: /redefinir-senha
+Disallow: /reset-password
+
+Sitemap: https://coffeecast4.com/sitemap.xml
