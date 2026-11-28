@@ -108,10 +108,10 @@ Para mais esclarecimentos sobre nossas políticas, entre em contato com nossa eq
 
                 <div className="pt-8 border-t border-vinho/10 text-xs text-vinho/60 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <a
-                    href="https://api.whatsapp.com/send/?phone=5531991297619&text=Ol%C3%A1%20quero%20falar%20na%20SAF%20Tecnologia%20e%20Gest%C3%A3o%20LTDA.&type=phone_number&app_absent=0"
+                    href="https://saftecnologiaegestao.com.br/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="Falar com a SAF Tecnologia e Gestão LTDA. pelo WhatsApp"
+                    aria-label="Conhecer o site da SAF Tecnologia e Gestão LTDA (abre em nova aba)"
                     className="hover:text-dourado-dark hover:underline transition-colors py-1 inline-block"
                   >
                     Site criado e gerenciado por SAF TECNOLOGIA E GESTAO LTDA

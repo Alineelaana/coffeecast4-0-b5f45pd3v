@@ -303,10 +303,10 @@ export const Footer: React.FC<FooterProps> = ({
           <p>© {currentYear} CoffeeCast 4.0 — Todos os direitos reservados.</p>
 
           <a
-            href="https://api.whatsapp.com/send/?phone=5531991297619&text=Ol%C3%A1%20quero%20falar%20na%20SAF%20Tecnologia%20e%20Gest%C3%A3o%20LTDA.&type=phone_number&app_absent=0"
+            href="https://saftecnologiaegestao.com.br/"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Falar com a SAF Tecnologia e Gestão LTDA. pelo WhatsApp"
+            aria-label="Conhecer o site da SAF Tecnologia e Gestão LTDA (abre em nova aba)"
             className="font-medium text-marfim/85 hover:text-dourado bg-vinho/40 hover:bg-vinho/70 px-3 py-2 sm:py-1.5 rounded-md border border-white/10 hover:border-dourado/40 transition-all duration-200 inline-flex items-center justify-center gap-1.5 underline-offset-4 hover:underline cursor-pointer group/creditos min-h-[44px] sm:min-h-0"
           >
             <span>{rodapeCreditos}</span>
